@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: '/zaterdagvoetbal/',
+  // Use './' for local file access, '/zaterdagvoetbal/' for GitHub Pages
+  base: './',
 })
