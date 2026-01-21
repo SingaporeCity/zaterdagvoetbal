@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zaterdagvoetbal Kelderklasse - Begin Onderaan, Eindig Bovenaan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-overhaul.css">
+</head>
+<body>
+    <!-- Grass texture overlay -->
+    <div class="grass-overlay"></div>
+
+    <!-- Main App Container -->
+    <div id="app">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="club-badge">
+                    <svg viewBox="0 0 100 120" class="badge-svg" id="club-badge-svg">
+                        <!-- Shield background -->
+                        <path d="M50 5 L95 25 L95 70 Q95 100 50 115 Q5 100 5 70 L5 25 Z" fill="var(--primary-green)" stroke="var(--cream)" stroke-width="3" id="badge-path"/>
+
+                        <!-- Inner shield decoration -->
+                        <path d="M50 12 L88 28 L88 68 Q88 93 50 107 Q12 93 12 68 L12 28 Z" fill="none" stroke="var(--cream)" stroke-width="1" opacity="0.3"/>
+
+                        <!-- Goal net symbol -->
+                        <g transform="translate(35, 25)">
+                            <!-- Goal posts -->
+                            <rect x="0" y="8" width="3" height="22" fill="var(--cream)"/>
+                            <rect x="27" y="8" width="3" height="22" fill="var(--cream)"/>
+                            <rect x="0" y="5" width="30" height="4" fill="var(--cream)"/>
+                            <!-- Net lines -->
+                            <line x1="4" y1="9" x2="4" y2="30" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="10" y1="9" x2="10" y2="30" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="15" y1="9" x2="15" y2="30" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="20" y1="9" x2="20" y2="30" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="26" y1="9" x2="26" y2="30" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="3" y1="15" x2="27" y2="15" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="3" y1="22" x2="27" y2="22" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
+                            <!-- Ball going in -->
+                            <circle cx="15" cy="20" r="6" fill="var(--orange)" stroke="var(--cream)" stroke-width="1"/>
+                            <path d="M12 17 L18 23 M18 17 L12 23" stroke="var(--cream)" stroke-width="0.8" opacity="0.7"/>
+                        </g>
+
+                        <!-- FC text -->
+                        <text x="50" y="70" text-anchor="middle" fill="var(--cream)" font-family="Bebas Neue, sans-serif" font-size="11" letter-spacing="2" id="badge-text-fc">FC</text>
+
+                        <!-- GOALS text -->
+                        <text x="50" y="85" text-anchor="middle" fill="var(--orange)" font-family="Bebas Neue, sans-serif" font-size="16" font-weight="bold" letter-spacing="1" id="badge-text-1">GOALS</text>
+
+                        <!-- MAKEN text -->
+                        <text x="50" y="100" text-anchor="middle" fill="var(--cream)" font-family="Bebas Neue, sans-serif" font-size="12" letter-spacing="2" id="badge-text-2">MAKEN</text>
+                    </svg>
+                </div>
+                <div class="club-info">
+                    <h1 class="club-name" id="club-name-display">FC Goals Maken</h1>
+                    <span class="club-division">6e Klasse B</span>
+                </div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                            <polyline points="9,22 9,12 15,12 15,22"/>
+                        </svg>
+                    </span>
+                    <span>Dashboard</span>
+                </li>
+                <li class="nav-item" data-page="mijnteam">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                    </span>
+                    <span>Mijn Club</span>
+                </li>
+                <li class="nav-item" data-page="squad">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 010 7.75"/>
+                        </svg>
+                    </span>
+                    <span>Selectie</span>
+                </li>
+                <li class="nav-item has-submenu" data-page="tactics">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <line x1="12" y1="3" x2="12" y2="21"/>
+                            <line x1="3" y1="12" x2="21" y2="12"/>
+                        </svg>
+                    </span>
+                    <span>Tactiek</span>
+                    <ul class="nav-submenu">
+                        <li data-tab="opstelling">Opstelling</li>
+                        <li data-tab="tactiek">Tactiek</li>
+                        <li data-tab="specialisten">Specialisten</li>
+                        <li data-tab="activiteiten">Activiteiten</li>
+                    </ul>
+                </li>
+                <li class="nav-item has-submenu" data-page="training">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12,6 12,12 16,14"/>
+                        </svg>
+                    </span>
+                    <span>Training</span>
+                    <span class="nav-badge training-badge">!</span>
+                    <ul class="nav-submenu">
+                        <li data-tab="positie">Positietraining</li>
+                        <li data-tab="wedstrijd">Wedstrijdvoorbereiding</li>
+                    </ul>
+                </li>
+                <li class="nav-item" data-page="scout">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                    </span>
+                    <span>Scout</span>
+                </li>
+                <li class="nav-item" data-page="jeugdteam">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2a3 3 0 100 6 3 3 0 000-6z"/>
+                            <path d="M19 8a2 2 0 100 4 2 2 0 000-4z"/>
+                            <path d="M5 8a2 2 0 100 4 2 2 0 000-4z"/>
+                            <path d="M12 10v10"/>
+                            <path d="M7 20l5-5 5 5"/>
+                            <path d="M19 14v4"/>
+                            <path d="M5 14v4"/>
+                        </svg>
+                    </span>
+                    <span>Jeugdteam</span>
+                </li>
+                <li class="nav-item" data-page="stadium">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 22V4c0-1.1.9-2 2-2h12a2 2 0 012 2v18"/>
+                            <path d="M2 22h20"/>
+                            <path d="M8 6h8"/>
+                            <path d="M8 10h8"/>
+                            <path d="M8 14h4"/>
+                        </svg>
+                    </span>
+                    <span>Stadion</span>
+                </li>
+                <li class="nav-item" data-page="transfers">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="17,1 21,5 17,9"/>
+                            <path d="M3 11V9a4 4 0 014-4h14"/>
+                            <polyline points="7,23 3,19 7,15"/>
+                            <path d="M21 13v2a4 4 0 01-4 4H3"/>
+                        </svg>
+                    </span>
+                    <span>Transfers</span>
+                </li>
+                <li class="nav-item" data-page="sponsors">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M9 12h6M12 9v6"/>
+                        </svg>
+                    </span>
+                    <span>Sponsors</span>
+                </li>
+                <li class="nav-item" data-page="activities">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                    </span>
+                    <span>Activiteiten</span>
+                </li>
+                <li class="nav-item" data-page="finances">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"/>
+                            <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                        </svg>
+                    </span>
+                    <span>Financiën</span>
+                </li>
+                <li class="nav-item" data-page="staff">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M22 21v-2a4 4 0 00-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 010 7.75"/>
+                        </svg>
+                    </span>
+                    <span>Stafcentrum</span>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="quick-stats">
+                    <div class="stat">
+                        <span class="stat-label">Budget</span>
+                        <span class="stat-value budget-display">€5.000</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Positie</span>
+                        <span class="stat-value position-display">3e</span>
+                    </div>
+                    <div class="stat stat-streak" id="sidebar-streak" onclick="claimDailyBonus()">
+                        <span class="stat-label">🔥 Streak</span>
+                        <span class="stat-value streak-display">0 dagen</span>
+                    </div>
+                </div>
+                <div class="save-load-buttons">
+                    <button id="save-game-btn" class="btn btn-small" title="Spel opslaan">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                            <polyline points="17,21 17,13 7,13 7,21"/>
+                            <polyline points="7,3 7,8 15,8"/>
+                        </svg>
+                        <span>Opslaan</span>
+                    </button>
+                    <button id="export-save-btn" class="btn btn-small btn-secondary" title="Exporteer save">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                            <polyline points="7,10 12,15 17,10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                    <button id="import-save-btn" class="btn btn-small btn-secondary" title="Importeer save">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                            <polyline points="17,8 12,3 7,8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Global Top Bar - Budget & Manager -->
+            <div class="global-top-bar" id="global-top-bar">
+                <div class="gtb-budget">
+                    <span class="gtb-icon">💰</span>
+                    <span class="gtb-value" id="global-budget-amount">€5.000</span>
+                </div>
+                <div class="gtb-divider"></div>
+                <div class="gtb-manager">
+                    <span class="gtb-title" id="global-manager-title">Beginnende Coach</span>
+                    <span class="gtb-level">Niv. <span id="global-manager-level">1</span></span>
+                </div>
+            </div>
+
+            <!-- Dashboard Page -->
+            <section id="dashboard" class="page active">
+                <!-- Page Header -->
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Dashboard</h2>
+                        <p class="page-subtitle handwritten">Seizoen <span id="season-number">1</span> • Week <span id="week-number">4</span></p>
+                    </div>
+                </header>
+                <!-- Hidden elements for JS compatibility -->
+                <span id="header-budget" style="display:none;"></span>
+                <span id="trainer-title" style="display:none;"></span>
+                <span id="trainer-level" style="display:none;"></span>
+                <div id="xp-fill" style="display:none;"></div>
+
+                <!-- Dashboard 3x3 Grid -->
+                <div class="dash-grid">
+                    <!-- MATCH CARD - Row 1, Col 1-2 (2 wide, 1 high) -->
+                    <div class="dash-cell dash-match">
+                        <div class="match-card">
+                            <div class="card-header match-card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                                </svg>
+                                <span>Volgende Wedstrijd</span>
+                                <span class="match-meta"><span class="match-league">6e Klasse B</span> · Week <span id="poster-matchday">4</span></span>
+                            </div>
+                            <div class="match-body">
+                                <div class="match-team home">
+                                    <div class="team-badge home-badge">
+                                        <svg viewBox="0 0 60 72">
+                                            <path d="M30 3 L57 15 L57 42 Q57 60 30 69 Q3 60 3 42 L3 15 Z" fill="var(--primary-green)" stroke="var(--cream)" stroke-width="2"/>
+                                        </svg>
+                                    </div>
+                                    <span class="team-name" id="home-team-name">FC Goals Maken</span>
+                                </div>
+                                <div class="match-center">
+                                    <div class="match-vs">VS</div>
+                                    <div class="match-timer">
+                                        <span id="timer-hours">00</span>:<span id="timer-minutes">00</span>:<span id="timer-seconds">00</span>
+                                    </div>
+                                </div>
+                                <div class="match-team away">
+                                    <div class="team-badge away-badge">
+                                        <svg viewBox="0 0 60 72">
+                                            <path d="M30 3 L57 15 L57 42 Q57 60 30 69 Q3 60 3 42 L3 15 Z" fill="#c62828" stroke="#fff" stroke-width="2"/>
+                                        </svg>
+                                    </div>
+                                    <span class="team-name" id="away-team-name">FC Rivaal</span>
+                                </div>
+                            </div>
+                            <button id="play-match-btn" class="match-play-btn">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg>
+                                SPEEL WEDSTRIJD
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STANDINGS - Row 1-2, Col 3 (1 wide, 2 high) -->
+                    <div class="dash-cell dash-standings">
+                        <div class="standings-card">
+                            <div class="card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                                <span>Competitiestand</span>
+                            </div>
+                            <div class="standings-table-wrapper">
+                                <table class="standings-table">
+                                    <thead>
+                                        <tr><th>#</th><th>Club</th><th>W</th><th>G</th><th>V</th><th>P</th></tr>
+                                    </thead>
+                                    <tbody id="standings-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STAR PLAYERS - Row 2, Col 1 (1x1) -->
+                    <div class="dash-cell dash-stars">
+                        <div class="stars-card">
+                            <div class="card-header">
+                                <svg viewBox="0 0 24 24" fill="#ffd700" width="18" height="18">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                </svg>
+                                <span>Sterspelers</span>
+                            </div>
+                            <div class="stars-list" id="dashboard-starplayers">
+                                <!-- Filled by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TO DO - Row 2-3, Col 2 (1 wide, 2 high) -->
+                    <div class="dash-cell dash-todo">
+                        <div class="todo-card">
+                            <div class="card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                    <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                                </svg>
+                                <span>Taken</span>
+                            </div>
+                            <div class="todo-list">
+                                <a class="todo-item" onclick="navigateTo('tactics')">
+                                    <div class="todo-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                                    </div>
+                                    <span class="todo-label">Opstelling</span>
+                                    <span class="todo-arrow">→</span>
+                                </a>
+                                <a class="todo-item" onclick="navigateTo('tactics', 'tactiek')">
+                                    <div class="todo-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                    </div>
+                                    <span class="todo-label">Tactiek</span>
+                                    <span class="todo-arrow">→</span>
+                                </a>
+                                <a class="todo-item" onclick="navigateTo('training')">
+                                    <div class="todo-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11v11h-11z"/><path d="M6.5 1v5.5M17.5 1v5.5M1 6.5h5.5M17.5 6.5H23M6.5 17.5v5.5M17.5 17.5v5.5M1 17.5h5.5M17.5 17.5H23"/></svg>
+                                    </div>
+                                    <span class="todo-label">Training</span>
+                                    <span class="todo-arrow">→</span>
+                                </a>
+                                <a class="todo-item" onclick="navigateTo('scout')">
+                                    <div class="todo-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                    </div>
+                                    <span class="todo-label">Scouten</span>
+                                    <span class="todo-arrow">→</span>
+                                </a>
+                                <a class="todo-item" onclick="navigateTo('stadium')">
+                                    <div class="todo-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+                                    </div>
+                                    <span class="todo-label">Stadion</span>
+                                    <span class="todo-arrow">→</span>
+                                </a>
+                                <a class="todo-item" onclick="navigateTo('sponsors')">
+                                    <div class="todo-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4M2 11h20"/></svg>
+                                    </div>
+                                    <span class="todo-label">Sponsors</span>
+                                    <span class="todo-arrow">→</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TOP TALENTS - Row 3, Col 1 (1x1) -->
+                    <div class="dash-cell dash-talents">
+                        <div class="talents-card">
+                            <div class="card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="2" width="18" height="18">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                </svg>
+                                <span>Toptalenten</span>
+                            </div>
+                            <div class="talents-list" id="dashboard-toptalents">
+                                <!-- Filled by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CHAIRMAN - Row 3, Col 3 (1x1) -->
+                    <div class="dash-cell dash-chairman">
+                        <div class="chairman-card">
+                            <div class="card-header chairman-card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                <span>Voorzitter</span>
+                            </div>
+                            <div class="chairman-body">
+                                <div class="chairman-avatar">
+                                    <svg viewBox="0 0 50 55">
+                                        <ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/>
+                                        <ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/>
+                                        <circle cx="19" cy="20" r="2.5" fill="white"/>
+                                        <circle cx="31" cy="20" r="2.5" fill="white"/>
+                                        <circle cx="19" cy="20.5" r="1.2" fill="#333"/>
+                                        <circle cx="31" cy="20.5" r="1.2" fill="#333"/>
+                                        <circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/>
+                                        <circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/>
+                                        <line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/>
+                                        <path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/>
+                                        <path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/>
+                                        <path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/>
+                                        <path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/>
+                                        <path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/>
+                                    </svg>
+                                </div>
+                                <p class="chairman-message" id="chairman-tip">Welkom trainer!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden elements for JS -->
+                <span id="xp-current" style="display:none;">0</span>
+                <span id="xp-target" style="display:none;">100</span>
+                <span id="newspaper-week" style="display:none;">4</span>
+                <div id="daily-streak" style="display:none;"></div>
+            </section>
+
+            <!-- Mijn Team Page -->
+            <section id="mijnteam" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Mijn Team</h2>
+                        <p class="page-subtitle handwritten">Geef je club identiteit!</p>
+                    </div>
+                </header>
+
+                <div class="mijnteam-container">
+                    <!-- Team Identity Card -->
+                    <div class="team-identity-card">
+                        <div class="team-badge-preview">
+                            <svg viewBox="0 0 100 120" class="badge-preview-svg" id="badge-preview-svg">
+                                <!-- Will be populated by JS -->
+                            </svg>
+                        </div>
+
+                        <div class="team-settings-form">
+                            <h3>Club Identiteit</h3>
+
+                            <div class="settings-notice" id="settings-notice">
+                                <span class="notice-icon">⚠️</span>
+                                <p>Je kunt je clubnaam en kleuren <strong>1x per seizoen</strong> wijzigen. Kies zorgvuldig!</p>
+                            </div>
+
+                            <div class="settings-locked" id="settings-locked" style="display: none;">
+                                <span class="locked-icon">🔒</span>
+                                <p>Je hebt je club dit seizoen al aangepast. Wacht tot volgend seizoen om wijzigingen te maken.</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="team-name-input">Clubnaam</label>
+                                <input type="text" id="team-name-input" class="form-input" maxlength="25" placeholder="FC Goals Maken">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Clubkleuren</label>
+                                <div class="color-pickers">
+                                    <div class="color-picker-item">
+                                        <label for="team-primary-color">Primair</label>
+                                        <input type="color" id="team-primary-color" value="#1b5e20">
+                                    </div>
+                                    <div class="color-picker-item">
+                                        <label for="team-secondary-color">Secundair</label>
+                                        <input type="color" id="team-secondary-color" value="#f5f0e1">
+                                    </div>
+                                    <div class="color-picker-item">
+                                        <label for="team-accent-color">Accent</label>
+                                        <input type="color" id="team-accent-color" value="#ff9800">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Voorbeeld Tenue</label>
+                                <div class="kit-preview" id="kit-preview">
+                                    <svg viewBox="0 0 80 100" class="kit-svg">
+                                        <!-- Shirt -->
+                                        <path d="M20 25 L10 35 L10 50 L15 50 L15 85 L65 85 L65 50 L70 50 L70 35 L60 25 L55 15 L45 10 L35 10 L25 15 Z"
+                                              fill="var(--kit-primary)" stroke="var(--kit-secondary)" stroke-width="2" id="kit-shirt"/>
+                                        <!-- Collar -->
+                                        <path d="M35 10 Q40 15 45 10" fill="none" stroke="var(--kit-accent)" stroke-width="3"/>
+                                        <!-- Shorts -->
+                                        <path d="M20 85 L20 95 L35 95 L40 85 L45 95 L60 95 L60 85"
+                                              fill="var(--kit-secondary)" stroke="var(--kit-primary)" stroke-width="1.5"/>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary btn-save-team" id="save-team-btn">
+                                Wijzigingen Opslaan
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Club Stats -->
+                    <div class="club-stats-card">
+                        <h3>Club Statistieken</h3>
+                        <div class="club-stats-grid">
+                            <div class="club-stat-item">
+                                <span class="stat-icon">📅</span>
+                                <span class="stat-label">Opgericht</span>
+                                <span class="stat-value" id="club-founded">Seizoen 1</span>
+                            </div>
+                            <div class="club-stat-item">
+                                <span class="stat-icon">🏆</span>
+                                <span class="stat-label">Kampioenschappen</span>
+                                <span class="stat-value" id="club-titles">0</span>
+                            </div>
+                            <div class="club-stat-item">
+                                <span class="stat-icon">⬆️</span>
+                                <span class="stat-label">Hoogste Klasse</span>
+                                <span class="stat-value" id="club-highest-div">6e Klasse</span>
+                            </div>
+                            <div class="club-stat-item">
+                                <span class="stat-icon">⚽</span>
+                                <span class="stat-label">Totaal Doelpunten</span>
+                                <span class="stat-value" id="club-total-goals">0</span>
+                            </div>
+                            <div class="club-stat-item">
+                                <span class="stat-icon">🎮</span>
+                                <span class="stat-label">Wedstrijden Gespeeld</span>
+                                <span class="stat-value" id="club-total-matches">0</span>
+                            </div>
+                            <div class="club-stat-item">
+                                <span class="stat-icon">⭐</span>
+                                <span class="stat-label">Reputatie</span>
+                                <span class="stat-value" id="club-reputation">10</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Achievements Section -->
+                    <div class="achievements-section">
+                        <div class="achievements-header">
+                            <h3>🏆 Prestaties</h3>
+                            <button class="btn btn-sm btn-toggle-achievements" id="toggle-achievements">
+                                Toon Alle
+                            </button>
+                        </div>
+                        <div class="achievements-progress" id="achievements-progress">
+                            <span class="progress-text">0 / 0 behaald</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="achievements-grid" id="achievements-grid" style="display: none;">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Jeugdteam Page -->
+            <section id="jeugdteam" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Jeugdteam</h2>
+                        <p class="page-subtitle handwritten">De sterren van morgen!</p>
+                    </div>
+                    <div class="header-right">
+                        <div class="youth-stats">
+                            <div class="squad-stat">
+                                <span class="stat-number" id="youth-count">0</span>
+                                <span class="stat-label">Jeugdspelers</span>
+                            </div>
+                            <div class="squad-stat">
+                                <span class="stat-number" id="youth-talents">0</span>
+                                <span class="stat-label">Supertalenten</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="jeugdteam-layout">
+                    <!-- Left sidebar: Academy + Scouting -->
+                    <div class="youth-sidebar">
+                        <div class="youth-academy-card">
+                            <div class="academy-header">
+                                <span class="academy-icon">🏟️</span>
+                                <span class="academy-title">Jeugdacademie</span>
+                            </div>
+                            <div class="academy-level-display" id="academy-level-display">
+                                <span class="level-name" id="academy-level">Niveau 1</span>
+                            </div>
+                            <button class="btn btn-secondary btn-academy-upgrade" id="btn-academy-upgrade">
+                                Upgrade
+                            </button>
+                            <div class="academy-benefits" id="academy-benefits">
+                                <div class="benefit-item">⚽ Meer jeugdspelers</div>
+                                <div class="benefit-item">⭐ Hogere kans toptalent</div>
+                            </div>
+                        </div>
+
+                        <div class="youth-scouting-card">
+                            <div class="scouting-header">
+                                <span class="scouting-icon">🔍</span>
+                                <span class="scouting-title">Scoutingsnetwerk</span>
+                            </div>
+                            <div class="scouting-level-display">
+                                <span class="scouting-level-name" id="current-network-name">Geen</span>
+                            </div>
+                            <button class="btn btn-secondary btn-scouting-upgrade" onclick="navigateTo('stadium'); setTimeout(() => document.getElementById('stadium-tab-scouting')?.click(), 100);">
+                                Upgraden →
+                            </button>
+                        </div>
+
+                        <div class="youth-tip">
+                            💡 Spelers 16+ kunnen contract tekenen. Elk seizoen worden spelers 1 jaar ouder.
+                        </div>
+                    </div>
+
+                    <!-- Main content: Players -->
+                    <div class="youth-main">
+                        <div class="youth-tabs">
+                            <button class="youth-tab active" data-age="12-13">Pupillen</button>
+                            <button class="youth-tab" data-age="14-15">Junioren</button>
+                            <button class="youth-tab" data-age="16-17">Aspiranten</button>
+                        </div>
+
+                        <div class="youth-players-grid" id="youth-players-grid">
+                            <!-- Populated by JS -->
+                        </div>
+
+                        <div class="youth-empty-state" id="youth-empty-state" style="display: none;">
+                            <div class="empty-icon">⚽</div>
+                            <h3>Geen jeugdspelers</h3>
+                            <p>Upgrade je jeugdacademie om jeugdspelers te genereren.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Squad Page -->
+            <section id="squad" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Selectie</h2>
+                        <p class="page-subtitle handwritten">Jouw spelers, jouw team</p>
+                    </div>
+                    <div class="header-right">
+                        <div class="squad-stats">
+                            <div class="squad-stat">
+                                <span class="stat-number" id="squad-count">18</span>
+                                <span class="stat-label">Spelers</span>
+                            </div>
+                            <div class="squad-stat">
+                                <span class="stat-number" id="squad-avg">32</span>
+                                <span class="stat-label">Gem. Algemeen</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="squad-container" id="player-cards">
+                    <!-- Player cards grouped by position, filled by JS -->
+                </div>
+            </section>
+
+            <!-- Tactics Page -->
+            <section id="tactics" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Tactiek</h2>
+                        <p class="page-subtitle handwritten">Opstelling en speelstijl</p>
+                    </div>
+                </header>
+
+                <!-- Tactics Tabs -->
+                <div class="tactics-tabs">
+                    <button class="tactics-tab active" data-tab="opstelling">Opstelling</button>
+                    <button class="tactics-tab" data-tab="tactiek">Tactiek</button>
+                    <button class="tactics-tab" data-tab="specialisten">Specialisten</button>
+                    <button class="tactics-tab" data-tab="activiteiten">Activiteiten</button>
+                </div>
+
+                <!-- Opstelling Tab -->
+                <div class="tactics-panel active" id="opstelling-panel">
+                    <div class="lineup-container">
+                        <!-- Left: Available Players -->
+                        <div class="lineup-players-panel">
+                            <h4>Beschikbare Spelers</h4>
+                            <div class="lineup-player-groups" id="lineup-available-players">
+                                <!-- Players grouped by position, filled by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Center: Pitch with formation -->
+                        <div class="lineup-pitch-panel">
+                            <div class="formation-selector">
+                                <span class="formation-label">Formatie:</span>
+                                <select id="formation-select" class="formation-dropdown">
+                                    <!-- Options filled by JS -->
+                                </select>
+                            </div>
+                            <div class="lineup-pitch" id="lineup-pitch">
+                                <!-- Pitch with slots filled by JS -->
+                            </div>
+                            <div class="lineup-fit-display">
+                                <span>Team Fit:</span>
+                                <div class="fit-bar"><div class="fit-bar-fill" id="lineup-fit-fill"></div></div>
+                                <span id="lineup-fit-score">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tactiek Tab -->
+                <div class="tactics-panel" id="tactiek-panel">
+                    <div class="tactics-grid">
+                        <!-- Speelstijl -->
+                        <div class="tactics-section">
+                            <h4>Speelstijl</h4>
+                            <div class="playstyle-options" id="playstyle-options">
+                                <button class="playstyle-btn active" data-style="balanced" title="Gebalanceerd spel met mix van aanval en verdediging">
+                                    <span class="ps-icon">⚖️</span>
+                                    <span class="ps-name">Gebalanceerd</span>
+                                </button>
+                                <button class="playstyle-btn" data-style="counter" title="Snel omschakelen na balverovering">
+                                    <span class="ps-icon">⚡</span>
+                                    <span class="ps-name">Counter</span>
+                                </button>
+                                <button class="playstyle-btn" data-style="possession" title="Balbezit en controle">
+                                    <span class="ps-icon">🎯</span>
+                                    <span class="ps-name">Balbezit</span>
+                                </button>
+                                <button class="playstyle-btn" data-style="wings" title="Aanvallen via de vleugels">
+                                    <span class="ps-icon">🦅</span>
+                                    <span class="ps-name">Vleugelspel</span>
+                                </button>
+                                <button class="playstyle-btn" data-style="park" title="Verdedigend met 10 man achter de bal">
+                                    <span class="ps-icon">🚌</span>
+                                    <span class="ps-name">Parkeer de Bus</span>
+                                </button>
+                                <button class="playstyle-btn" data-style="leeroy" title="All-in aanvallen, risicovol!">
+                                    <span class="ps-icon">🔥</span>
+                                    <span class="ps-name">Leeroy Jenkins</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Veldbreedte -->
+                        <div class="tactics-section">
+                            <h4>Veldbreedte</h4>
+                            <div class="width-slider-container">
+                                <span class="width-label">Smal</span>
+                                <input type="range" id="tactic-width" min="0" max="100" value="50" class="width-slider">
+                                <span class="width-label">Breed</span>
+                            </div>
+                            <p class="tactic-info" id="width-info">Normaal: Standaard veldbreedte</p>
+                        </div>
+
+                        <!-- Pressing & Defensie -->
+                        <div class="tactics-section">
+                            <h4>Pressing & Verdediging</h4>
+                            <div class="tactic-row">
+                                <span class="tactic-name">Pressing Hoogte</span>
+                                <div class="tactic-slider-wrap">
+                                    <span>Laag</span>
+                                    <input type="range" id="tactic-pressing" min="0" max="100" value="50">
+                                    <span>Hoog</span>
+                                </div>
+                            </div>
+                            <div class="tactic-row">
+                                <span class="tactic-name">Dekking</span>
+                                <div class="tactic-choice-btns">
+                                    <button class="tactic-choice active" data-choice="zone">Zone</button>
+                                    <button class="tactic-choice" data-choice="man">Man-dekking</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aanval Opties -->
+                        <div class="tactics-section">
+                            <h4>Aanval</h4>
+                            <div class="tactic-row">
+                                <span class="tactic-name">Tempo</span>
+                                <div class="tactic-slider-wrap">
+                                    <span>Rustig</span>
+                                    <input type="range" id="tactic-tempo" min="0" max="100" value="50">
+                                    <span>Snel</span>
+                                </div>
+                            </div>
+                            <div class="tactic-row">
+                                <span class="tactic-name">Backs</span>
+                                <div class="tactic-choice-btns">
+                                    <button class="tactic-choice active" data-choice="stay">Blijven</button>
+                                    <button class="tactic-choice" data-choice="overlap">Overlap</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Specialisten Tab -->
+                <div class="tactics-panel" id="specialisten-panel">
+                    <div class="specialists-2x2">
+                        <div class="specialist-card-large">
+                            <div class="specialist-header-large">
+                                <span class="specialist-icon-large">🎯</span>
+                                <span class="specialist-title-large">Cornernemers</span>
+                            </div>
+                            <select class="specialist-select-large" id="corner-taker">
+                                <option value="">-- Selecteer speler --</option>
+                            </select>
+                        </div>
+                        <div class="specialist-card-large">
+                            <div class="specialist-header-large">
+                                <span class="specialist-icon-large">⚽</span>
+                                <span class="specialist-title-large">Strafschopnemer</span>
+                            </div>
+                            <select class="specialist-select-large" id="penalty-taker">
+                                <option value="">-- Selecteer speler --</option>
+                            </select>
+                        </div>
+                        <div class="specialist-card-large">
+                            <div class="specialist-header-large">
+                                <span class="specialist-icon-large">🦶</span>
+                                <span class="specialist-title-large">Vrije Trap Nemer</span>
+                            </div>
+                            <select class="specialist-select-large" id="freekick-taker">
+                                <option value="">-- Selecteer speler --</option>
+                            </select>
+                        </div>
+                        <div class="specialist-card-large">
+                            <div class="specialist-header-large">
+                                <span class="specialist-icon-large">©️</span>
+                                <span class="specialist-title-large">Aanvoerder</span>
+                            </div>
+                            <select class="specialist-select-large" id="captain-select">
+                                <option value="">-- Selecteer speler --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activiteiten Panel -->
+                <div class="tactics-panel" id="activiteiten-panel">
+                    <div class="activity-cards-grid">
+                        <div class="activity-card-compact" onclick="startActivity('trainingcamp')">
+                            <div class="acc-icon">🏕️</div>
+                            <div class="acc-info">
+                                <h4>Trainingskamp</h4>
+                                <span class="acc-effect">+2 Fitness hele team</span>
+                            </div>
+                            <div class="acc-cost">€2.500</div>
+                        </div>
+                        <div class="activity-card-compact" onclick="startActivity('teamparty')">
+                            <div class="acc-icon">🎉</div>
+                            <div class="acc-info">
+                                <h4>Teamuitje</h4>
+                                <span class="acc-effect">+10% Teamchemie</span>
+                            </div>
+                            <div class="acc-cost">€1.000</div>
+                        </div>
+                        <div class="activity-card-compact" onclick="startActivity('tactical')">
+                            <div class="acc-icon">📋</div>
+                            <div class="acc-info">
+                                <h4>Tactische Sessie</h4>
+                                <span class="acc-effect">+5% Tactiek volgende wed</span>
+                            </div>
+                            <div class="acc-cost">€500</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Training Page -->
+            <section id="training" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Training</h2>
+                        <p class="page-subtitle handwritten">Train je spelers per positie</p>
+                    </div>
+                </header>
+
+                <!-- Training Tabs -->
+                <div class="training-tabs">
+                    <button class="training-tab active" data-training-tab="positie">Positietraining</button>
+                    <button class="training-tab" data-training-tab="wedstrijd">Wedstrijdvoorbereiding</button>
+                </div>
+
+                <!-- Positietraining Panel -->
+                <div class="training-panel active" id="positie-training-panel">
+                    <div class="position-training-grid" id="position-training-grid">
+                        <!-- Filled by JS -->
+                    </div>
+                    <p class="training-hint">💡 Neem eerst een trainer aan bij Staf om te kunnen trainen</p>
+                </div>
+
+                <!-- Wedstrijdvoorbereiding Panel -->
+                <div class="training-panel" id="wedstrijd-training-panel">
+
+                    <!-- Team Training - Match Preparation -->
+                    <div class="team-training-panel">
+                        <h3>Wedstrijdvoorbereiding</h3>
+                        <p class="training-rules">Kies een focus voor het hele team</p>
+
+                        <div class="team-training-options" id="team-training-options">
+                            <div class="team-training-option" data-type="defense" onclick="selectTeamTraining('defense')">
+                                <div class="tto-icon defense">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2" width="28" height="28">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                    </svg>
+                                </div>
+                                <div class="tto-info">
+                                    <h4>Verdedigende Impulsen</h4>
+                                    <p>+10% verdediging voor volgende wedstrijd</p>
+                                </div>
+                                <div class="tto-status">
+                                    <button class="btn btn-secondary btn-small">Selecteer</button>
+                                </div>
+                            </div>
+
+                            <div class="team-training-option" data-type="setpiece" onclick="selectTeamTraining('setpiece')">
+                                <div class="tto-icon setpiece">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#ef6c00" stroke-width="2" width="28" height="28">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M12 6v6l4 2"/>
+                                    </svg>
+                                </div>
+                                <div class="tto-info">
+                                    <h4>Standaardsituaties</h4>
+                                    <p>+15% corners en vrije trappen</p>
+                                </div>
+                                <div class="tto-status">
+                                    <button class="btn btn-secondary btn-small">Selecteer</button>
+                                </div>
+                            </div>
+
+                            <div class="team-training-option" data-type="attack" onclick="selectTeamTraining('attack')">
+                                <div class="tto-icon attack">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#c62828" stroke-width="2" width="28" height="28">
+                                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                                    </svg>
+                                </div>
+                                <div class="tto-info">
+                                    <h4>Aanvallende Bewegingen</h4>
+                                    <p>+10% aanval voor volgende wedstrijd</p>
+                                </div>
+                                <div class="tto-status">
+                                    <button class="btn btn-secondary btn-small">Selecteer</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="team-training-timer" id="team-training-timer" style="display: none;">
+                            <div class="ttt-progress">
+                                <div class="ttt-progress-bar"></div>
+                            </div>
+                            <span class="ttt-time">Nog 04:32:15</span>
+                        </div>
+                    </div>
+
+                    <!-- Group Training Intensity -->
+                    <div class="group-intensity-panel">
+                        <h3>Groepstraining Intensiteit</h3>
+                        <p class="training-info-text">Intenser trainen verhoogt spelersconditie, maar verlaagt energie</p>
+
+                        <div class="intensity-slider-container">
+                            <div class="intensity-labels">
+                                <span>Rustig</span>
+                                <span>Normaal</span>
+                                <span>Intens</span>
+                            </div>
+                            <input type="range" id="training-intensity" class="intensity-slider"
+                                   min="1" max="5" value="3" step="1">
+                            <div class="intensity-steps">
+                                <span class="intensity-step" data-level="1">1</span>
+                                <span class="intensity-step" data-level="2">2</span>
+                                <span class="intensity-step" data-level="3">3</span>
+                                <span class="intensity-step" data-level="4">4</span>
+                                <span class="intensity-step" data-level="5">5</span>
+                            </div>
+                        </div>
+
+                        <div class="intensity-effect" id="intensity-effect">
+                            <div class="intensity-effect-item positive">
+                                <span class="effect-label">Conditie</span>
+                                <span class="effect-value" id="intensity-condition">+5%</span>
+                            </div>
+                            <div class="intensity-effect-item negative">
+                                <span class="effect-label">Energie</span>
+                                <span class="effect-value" id="intensity-energy">-3%</span>
+                            </div>
+                        </div>
+
+                        <div class="intensity-description" id="intensity-description">
+                            <strong>Normaal</strong> - Gebalanceerde training voor stabiele ontwikkeling.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stadium Page -->
+            <section id="stadium" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Stadion</h2>
+                        <p class="page-subtitle handwritten">"Het Dorpsveld"</p>
+                    </div>
+                    <div class="header-right">
+                        <div class="stadium-capacity">
+                            <span class="capacity-number" id="stadium-capacity">200</span>
+                            <span class="capacity-label">Capaciteit</span>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="stadium-layout-v2">
+                    <!-- Left: Category List with Headers -->
+                    <div class="stadium-categories-v2">
+                        <div class="stadium-cat-group">
+                            <div class="cat-group-header">🏟️ Faciliteiten</div>
+                            <div class="stadium-cat active" data-category="tribune" onclick="selectStadiumCategory('tribune')">
+                                <span class="cat-icon">🏟️</span>
+                                <span class="cat-name">Stadion</span>
+                                <span class="cat-level" id="cat-tribune-level">Nv.1</span>
+                            </div>
+                            <div class="stadium-cat" data-category="grass" onclick="selectStadiumCategory('grass')">
+                                <span class="cat-icon">🌱</span>
+                                <span class="cat-name">Wedstrijdveld</span>
+                                <span class="cat-level" id="cat-grass-level">Nv.1</span>
+                            </div>
+                            <div class="stadium-cat" data-category="medical" onclick="selectStadiumCategory('medical')">
+                                <span class="cat-icon">🏥</span>
+                                <span class="cat-name">Medisch</span>
+                                <span class="cat-level" id="cat-medical-level">Nv.1</span>
+                            </div>
+                        </div>
+
+                        <div class="stadium-cat-group">
+                            <div class="cat-group-header">📈 Ontwikkeling</div>
+                            <div class="stadium-cat" data-category="training" onclick="selectStadiumCategory('training')">
+                                <span class="cat-icon">💪</span>
+                                <span class="cat-name">Trainingsveld</span>
+                                <span class="cat-level" id="cat-training-level">Nv.1</span>
+                            </div>
+                            <div class="stadium-cat" data-category="academy" onclick="selectStadiumCategory('academy')">
+                                <span class="cat-icon">🎓</span>
+                                <span class="cat-name">Jeugdopleiding</span>
+                                <span class="cat-level" id="cat-academy-level">Nv.1</span>
+                            </div>
+                        </div>
+
+                        <div class="stadium-cat-group">
+                            <div class="cat-group-header">🔍 Scouting</div>
+                            <div class="stadium-cat" data-category="scouting" onclick="selectStadiumCategory('scouting')">
+                                <span class="cat-icon">🔍</span>
+                                <span class="cat-name">Scouting</span>
+                                <span class="cat-level" id="cat-scouting-level">Nv.1</span>
+                            </div>
+                            <div class="stadium-cat" data-category="youthscouting" onclick="selectStadiumCategory('youthscouting')">
+                                <span class="cat-icon">👶</span>
+                                <span class="cat-name">Jeugdscouting</span>
+                                <span class="cat-level" id="cat-youthscouting-level">Nv.1</span>
+                            </div>
+                        </div>
+
+                        <div class="stadium-cat-group">
+                            <div class="cat-group-header">🍺 Horeca</div>
+                            <div class="stadium-cat" data-category="kantine" onclick="selectStadiumCategory('kantine')">
+                                <span class="cat-icon">🍺</span>
+                                <span class="cat-name">Kantine</span>
+                                <span class="cat-level" id="cat-kantine-level">Nv.1</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Detail Panel -->
+                    <div class="stadium-detail-v2" id="stadium-detail">
+                        <div class="detail-header-v2">
+                            <div class="detail-title-row">
+                                <span class="detail-icon" id="detail-icon">🏟️</span>
+                                <h3 class="detail-title" id="detail-title">Stadion</h3>
+                                <span class="detail-level" id="detail-level">Niveau 1</span>
+                            </div>
+                            <p class="detail-description" id="detail-description">
+                                Vergroot de capaciteit van je stadion om meer supporters te ontvangen en meer inkomsten te genereren.
+                            </p>
+                        </div>
+
+                        <div class="detail-effects-compare">
+                            <div class="effect-box current">
+                                <div class="effect-label">Huidig</div>
+                                <div class="effect-image" id="detail-current-image">🏟️</div>
+                                <div class="effect-value" id="detail-current-effect">200 toeschouwers</div>
+                            </div>
+                            <div class="effect-arrow">→</div>
+                            <div class="effect-box upgrade">
+                                <div class="effect-label">Na upgrade</div>
+                                <div class="effect-image" id="detail-next-image">🏟️</div>
+                                <div class="effect-value" id="detail-next-effect">500 toeschouwers</div>
+                            </div>
+                        </div>
+
+                        <!-- Large illustration -->
+                        <div class="detail-illustration" id="detail-illustration">
+                            <!-- SVG will be inserted by JavaScript -->
+                        </div>
+
+                        <div class="detail-requirement" id="detail-requirement" style="display: none;">
+                            <span class="req-icon">⚠️</span>
+                            <span class="req-text" id="detail-req-text">Vereist: Stadion niveau 2</span>
+                        </div>
+
+                        <div class="detail-upgrade-row">
+                            <div class="upgrade-cost">
+                                <span class="cost-label">Kosten:</span>
+                                <span class="cost-value" id="detail-cost">€2.000</span>
+                            </div>
+                            <button class="btn btn-primary btn-upgrade-stadium" id="btn-upgrade-stadium" onclick="upgradeStadiumCategory()">
+                                Upgraden
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scout Page -->
+            <section id="scout" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Scout</h2>
+                        <p class="page-subtitle handwritten">Vind verborgen talent</p>
+                    </div>
+                    <div class="header-right">
+                        <div class="transfer-budget">
+                            <span class="budget-label">Budget:</span>
+                            <span class="budget-value" id="scout-budget">€5.000</span>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Scout Hire Card (shown when no scout) -->
+                <div class="scout-hire-card" id="scout-hire-card">
+                    <div class="shc-icon">🔍</div>
+                    <h3>Scout Aannemen</h3>
+                    <p>Om spelers te kunnen vinden heb je een scout nodig. Je scout vindt elke dag 3 nieuwe spelers die je kunt bekijken.</p>
+                    <ul class="shc-features">
+                        <li>📋 Dagelijks 3 nieuwe spelers</li>
+                        <li>🔍 Scout vaker voor meer zekerheid</li>
+                        <li>✕ Niet interessant? Morgen nieuwe kans</li>
+                    </ul>
+                    <button class="btn btn-primary btn-lg" onclick="hireScoutDirect()">
+                        Scout Aannemen — €1
+                    </button>
+                </div>
+
+                <!-- Scouting Interface (hidden until scout hired) -->
+                <div class="scout-grid" id="scout-interface">
+                    <!-- Left Panel: Scout & Filters -->
+                    <div class="scout-panel card">
+                        <!-- Scout Avatar -->
+                        <div class="scout-avatar-section">
+                            <div class="scout-avatar">
+                                <svg viewBox="0 0 100 120" class="scout-svg">
+                                    <circle cx="50" cy="50" r="45" fill="#f5f5f5"/>
+                                    <ellipse cx="50" cy="48" rx="28" ry="30" fill="#d4a574"/>
+                                    <ellipse cx="50" cy="25" rx="26" ry="14" fill="#4a4a4a"/>
+                                    <ellipse cx="30" cy="35" rx="8" ry="12" fill="#4a4a4a"/>
+                                    <ellipse cx="70" cy="35" rx="8" ry="12" fill="#4a4a4a"/>
+                                    <ellipse cx="40" cy="45" rx="6" ry="7" fill="white"/>
+                                    <ellipse cx="60" cy="45" rx="6" ry="7" fill="white"/>
+                                    <circle cx="41" cy="46" r="3" fill="#2c3e50"/>
+                                    <circle cx="61" cy="46" r="3" fill="#2c3e50"/>
+                                    <circle cx="42" cy="45" r="1" fill="white"/>
+                                    <circle cx="62" cy="45" r="1" fill="white"/>
+                                    <path d="M34 38 Q40 35 46 38" fill="none" stroke="#3d3d3d" stroke-width="2"/>
+                                    <path d="M54 38 Q60 35 66 38" fill="none" stroke="#3d3d3d" stroke-width="2"/>
+                                    <ellipse cx="50" cy="55" rx="4" ry="5" fill="#c68642"/>
+                                    <path d="M42 65 Q50 72 58 65" fill="none" stroke="#8b5a3c" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M22 95 Q22 80 35 78 L50 85 L65 78 Q78 80 78 95 L78 120 L22 120 Z" fill="#1565c0"/>
+                                    <path d="M40 78 L50 88 L60 78" fill="white"/>
+                                    <g transform="translate(68, 55)">
+                                        <circle cx="12" cy="12" r="14" fill="none" stroke="#ff9800" stroke-width="4"/>
+                                        <circle cx="12" cy="12" r="10" fill="#fff9c4" fill-opacity="0.4"/>
+                                        <line x1="0" y1="24" x2="-10" y2="38" stroke="#795548" stroke-width="5" stroke-linecap="round"/>
+                                    </g>
+                                    <circle cx="30" cy="95" r="8" fill="#ffc107"/>
+                                    <text x="30" y="99" text-anchor="middle" fill="#5d4e37" font-size="10" font-weight="bold">S</text>
+                                </svg>
+                            </div>
+                            <div class="scout-info">
+                                <h3>Jan de Vries</h3>
+                                <span class="scout-title">Hoofdscout</span>
+                            </div>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="scout-filters">
+                            <div class="filter-group">
+                                <label>Positie</label>
+                                <select id="scout-position" class="scout-select">
+                                    <option value="all">Alle posities</option>
+                                    <option value="keeper">Keeper</option>
+                                    <option value="linksback">Linksback</option>
+                                    <option value="centraleVerdediger">Centrale Verdediger</option>
+                                    <option value="rechtsback">Rechtsback</option>
+                                    <option value="linksMid">Links Middenvelder</option>
+                                    <option value="centraleMid">Centrale Middenvelder</option>
+                                    <option value="rechtsMid">Rechts Middenvelder</option>
+                                    <option value="linksbuiten">Linksbuiten</option>
+                                    <option value="rechtsbuiten">Rechtsbuiten</option>
+                                    <option value="spits">Spits</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-group">
+                                <label>Leeftijd: <span id="age-range-display">16 - 35</span></label>
+                                <div class="age-inputs">
+                                    <input type="number" id="scout-min-age" min="16" max="35" value="16" class="age-input">
+                                    <span class="age-separator">—</span>
+                                    <input type="number" id="scout-max-age" min="16" max="35" value="35" class="age-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scout Button -->
+                        <button class="btn btn-primary btn-scout" id="scout-search-btn">
+                            <span class="btn-scout-icon">🔍</span>
+                            <span class="btn-scout-text">Scout Versturen</span>
+                        </button>
+
+                        <!-- Scout Status -->
+                        <div class="scout-status" id="scout-status">
+                            <p class="scout-status-text">Klaar om te scouten</p>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Results -->
+                    <div class="scout-results-panel">
+                        <div class="results-header">
+                            <h3>Scout Rapporten</h3>
+                            <span class="results-count" id="results-count">0 spelers gevonden</span>
+                        </div>
+
+                        <div class="scout-results-grid" id="scout-results">
+                            <!-- Empty state -->
+                            <div class="scout-empty-state" id="scout-empty">
+                                <div class="empty-icon">🔍</div>
+                                <h4>Geen rapporten</h4>
+                                <p>Stuur je scout op pad om talent te vinden</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transfers Page -->
+            <section id="transfers" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Transfermarkt</h2>
+                        <p class="page-subtitle handwritten">Versterk je selectie</p>
+                    </div>
+                    <div class="header-right">
+                        <div class="transfer-budget">
+                            <span class="budget-label">Beschikbaar:</span>
+                            <span class="budget-value">€5.000</span>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" id="refresh-market-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <polyline points="23 4 23 10 17 10"/>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                            </svg>
+                            Vernieuwen
+                        </button>
+                    </div>
+                </header>
+
+                <div class="transfer-filters-panel">
+                    <!-- Position Filter -->
+                    <div class="transfer-filter-group">
+                        <span class="filter-group-label">Positie:</span>
+                        <div class="filter-buttons">
+                            <button class="filter-btn transfer-filter active" data-filter="all">Allemaal</button>
+                            <button class="filter-btn transfer-filter" data-filter="goalkeeper">Keepers</button>
+                            <button class="filter-btn transfer-filter" data-filter="defender">Verdedigers</button>
+                            <button class="filter-btn transfer-filter" data-filter="midfielder">Middenvelders</button>
+                            <button class="filter-btn transfer-filter" data-filter="attacker">Aanvallers</button>
+                        </div>
+                    </div>
+
+                    <!-- Price Range Filter -->
+                    <div class="transfer-filter-group">
+                        <span class="filter-group-label">Marktwaarde:</span>
+                        <div class="price-range-container">
+                            <div class="price-range-inputs">
+                                <div class="price-input-group">
+                                    <span class="price-prefix">€</span>
+                                    <input type="number" id="transfer-min-price" min="0" max="50000" value="0" step="100" class="price-input">
+                                </div>
+                                <span class="price-separator">-</span>
+                                <div class="price-input-group">
+                                    <span class="price-prefix">€</span>
+                                    <input type="number" id="transfer-max-price" min="0" max="50000" value="50000" step="100" class="price-input">
+                                </div>
+                            </div>
+                            <label class="free-transfer-toggle">
+                                <input type="checkbox" id="transfer-free-only">
+                                <span>Alleen transfervrij</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Sorting -->
+                    <div class="transfer-filter-group">
+                        <span class="filter-group-label">Sorteren:</span>
+                        <select id="transfer-sort" class="transfer-sort-select">
+                            <option value="overall-desc">Algemeen (hoog-laag)</option>
+                            <option value="overall-asc">Algemeen (laag-hoog)</option>
+                            <option value="potential-desc">Potentieel (hoog-laag)</option>
+                            <option value="potential-asc">Potentieel (laag-hoog)</option>
+                            <option value="price-asc">Prijs (laag-hoog)</option>
+                            <option value="price-desc">Prijs (hoog-laag)</option>
+                            <option value="age-asc">Leeftijd (jong-oud)</option>
+                            <option value="age-desc">Leeftijd (oud-jong)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="transfer-list" id="transfer-list">
+                    <!-- Transfer cards filled by JS -->
+                </div>
+            </section>
+
+            <!-- Sponsors Page -->
+            <section id="sponsors" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Sponsors</h2>
+                        <p class="page-subtitle handwritten">Kies je shirtsponsor</p>
+                    </div>
+                </header>
+
+                <div class="sponsors-layout-v2">
+                    <!-- Sponsor grid -->
+                    <div class="sponsor-grid" id="sponsor-cards">
+                        <div class="sponsor-block" data-sponsor="stable" onclick="selectSponsor('stable')">
+                            <div class="sb-icon">🥖</div>
+                            <div class="sb-name">Bakkerij De Ouderwetse</div>
+                            <div class="sb-stats">
+                                <span class="sb-pay">€500/wed</span>
+                                <span class="sb-bonus">+€0 win</span>
+                            </div>
+                        </div>
+
+                        <div class="sponsor-block" data-sponsor="balanced" onclick="selectSponsor('balanced')">
+                            <div class="sb-icon">🍺</div>
+                            <div class="sb-name">Café Het Gouden Paard</div>
+                            <div class="sb-stats">
+                                <span class="sb-pay">€300/wed</span>
+                                <span class="sb-bonus">+€250 win</span>
+                            </div>
+                        </div>
+
+                        <div class="sponsor-block" data-sponsor="risky" onclick="selectSponsor('risky')">
+                            <div class="sb-icon">🎰</div>
+                            <div class="sb-name">Casino Jackpot Jansen</div>
+                            <div class="sb-stats">
+                                <span class="sb-pay">€100/wed</span>
+                                <span class="sb-bonus">+€600 win</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kit Display (shirt + shorts) -->
+                    <div class="kit-display-panel">
+                        <h3>Huidig Tenue</h3>
+                        <div class="kit-display" id="kit-display">
+                            <div class="kit-wrapper">
+                                <!-- Shirt -->
+                                <svg viewBox="0 0 100 100" class="kit-shirt-svg" id="sponsor-shirt-svg">
+                                    <path d="M20 20 L32 12 L32 5 L68 5 L68 12 L80 20 L85 38 L75 42 L75 95 L25 95 L25 42 L15 38 Z"
+                                          fill="var(--shirt-primary, #1b5e20)" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2"/>
+                                    <path d="M32 5 Q50 12 68 5" fill="none" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2.5"/>
+                                    <rect x="26" y="36" width="48" height="26" rx="2" fill="var(--shirt-secondary, #f5f0e1)" opacity="0.9"/>
+                                    <text x="50" y="47" text-anchor="middle" fill="var(--shirt-primary, #1b5e20)"
+                                          font-family="var(--font-display)" font-size="5.5" font-weight="bold" id="shirt-sponsor-line1"></text>
+                                    <text x="50" y="56" text-anchor="middle" fill="var(--shirt-primary, #1b5e20)"
+                                          font-family="var(--font-display)" font-size="5.5" font-weight="bold" id="shirt-sponsor-line2"></text>
+                                </svg>
+                                <!-- Shorts -->
+                                <svg viewBox="0 0 100 55" class="kit-shorts-svg" id="sponsor-shorts-svg">
+                                    <path d="M25 5 L75 5 L75 10 L78 50 L55 50 L50 35 L45 50 L22 50 L25 10 Z"
+                                          fill="var(--shirt-primary, #1b5e20)" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2"/>
+                                    <line x1="50" y1="5" x2="50" y2="35" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="1.5" opacity="0.6"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="current-sponsor-info" id="current-sponsor-details">
+                            <p class="sponsor-name" id="current-sponsor-name">Geen sponsor</p>
+                            <p class="sponsor-earnings" id="current-sponsor-earnings">€0 per wedstrijd</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Activities Page -->
+            <section id="activities" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Extra Activiteiten</h2>
+                        <p class="page-subtitle handwritten">Versterk het team</p>
+                    </div>
+                </header>
+
+                <div class="activities-container">
+                    <p class="activities-intro">Organiseer speciale activiteiten om je team te versterken. Elke activiteit heeft unieke voordelen.</p>
+
+                    <div class="activity-cards" id="activity-cards">
+                        <div class="activity-card" data-activity="trainingcamp" onclick="startActivity('trainingcamp')">
+                            <div class="activity-icon trainingcamp">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M12 6v6l4 2"/>
+                                </svg>
+                            </div>
+                            <h3>Trainingskamp</h3>
+                            <p class="activity-desc">3 dagen intensief trainen in het buitenland</p>
+                            <div class="activity-effect">
+                                <span>+2 Fitness voor hele team</span>
+                            </div>
+                            <div class="activity-cost">
+                                <span>Kosten: €2.500</span>
+                            </div>
+                            <button class="btn btn-primary activity-start-btn">Organiseren</button>
+                        </div>
+
+                        <div class="activity-card" data-activity="teamparty" onclick="startActivity('teamparty')">
+                            <div class="activity-icon teamparty">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            </div>
+                            <h3>Teamuitje</h3>
+                            <p class="activity-desc">Een avond met het hele team</p>
+                            <div class="activity-effect">
+                                <span>+10% Teamchemie</span>
+                            </div>
+                            <div class="activity-cost">
+                                <span>Kosten: €1.000</span>
+                            </div>
+                            <button class="btn btn-primary activity-start-btn">Organiseren</button>
+                        </div>
+
+                        <div class="activity-card" data-activity="tactical" onclick="startActivity('tactical')">
+                            <div class="activity-icon tactical">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    <path d="M3 9h18M9 21V9"/>
+                                </svg>
+                            </div>
+                            <h3>Tactische Sessie</h3>
+                            <p class="activity-desc">Video-analyse en tactiekbespreking</p>
+                            <div class="activity-effect">
+                                <span>+5% Tactisch begrip volgende wedstrijd</span>
+                            </div>
+                            <div class="activity-cost">
+                                <span>Kosten: €500</span>
+                            </div>
+                            <button class="btn btn-primary activity-start-btn">Organiseren</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Finances Page -->
+            <section id="finances" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Financiën</h2>
+                        <p class="page-subtitle handwritten">Beheer je clubkas</p>
+                    </div>
+                </header>
+
+                <div class="finances-container">
+                    <!-- Three Column Split View -->
+                    <div class="finances-split-view">
+                        <!-- Income Column -->
+                        <div class="finance-column income-col">
+                            <h4>Inkomsten</h4>
+                            <div class="finance-total income" id="total-income">+€252</div>
+                            <ul class="finance-breakdown" id="income-breakdown">
+                                <li><span>Wedstrijden</span><span>+€82</span></li>
+                                <li><span>Sponsoring</span><span>+€17</span></li>
+                                <li><span>Merchandise</span><span>+€19</span></li>
+                                <li><span>Horeca</span><span>+€0</span></li>
+                                <li><span>Fanshop</span><span>+€0</span></li>
+                                <li><span>VIP</span><span>+€0</span></li>
+                                <li><span>Parking</span><span>+€0</span></li>
+                            </ul>
+                        </div>
+
+                        <!-- Expenses Column -->
+                        <div class="finance-column expense-col">
+                            <h4>Uitgaven</h4>
+                            <div class="finance-total expense" id="total-expense">-€89</div>
+                            <ul class="finance-breakdown" id="expense-breakdown">
+                                <li><span>Salarissen</span><span>-€79</span></li>
+                                <li><span>Onderhoud</span><span>-€10</span></li>
+                                <li><span>Training</span><span>-€0</span></li>
+                                <li><span>Medisch</span><span>-€0</span></li>
+                                <li><span>Transfers</span><span>-€0</span></li>
+                            </ul>
+                        </div>
+
+                        <!-- Profit Column -->
+                        <div class="finance-column profit-col">
+                            <h4>Winst/Verlies</h4>
+                            <div class="finance-total profit" id="total-profit">+€163</div>
+                            <div class="profit-details">
+                                <div class="profit-period">
+                                    <span class="period-label">Dagelijks</span>
+                                    <span class="period-value" id="daily-profit">+€163</span>
+                                </div>
+                                <div class="profit-period">
+                                    <span class="period-label">Wekelijks</span>
+                                    <span class="period-value" id="weekly-profit">+€1.141</span>
+                                </div>
+                                <div class="profit-period">
+                                    <span class="period-label">Maandelijks</span>
+                                    <span class="period-value" id="monthly-profit">+€4.890</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Balance & Season Prediction (Bottom) -->
+                    <div class="finance-summary-bottom">
+                        <div class="current-balance-card">
+                            <h4>Huidige Balans</h4>
+                            <div class="balance-big" id="current-balance-bottom">€5.000</div>
+                            <div class="balance-change positive" id="balance-change">+€163 vandaag</div>
+                        </div>
+
+                        <div class="season-prediction-card">
+                            <h4>Seizoenseinde Voorspelling</h4>
+                            <p class="prediction-subtitle">Over 34 weken</p>
+                            <div class="prediction-estimate" id="season-end-estimate">€55.542</div>
+                            <div class="prediction-details">
+                                <div class="pred-detail">
+                                    <span class="pred-label">Verwachte inkomsten</span>
+                                    <span class="pred-value income" id="season-income">+€68.000</span>
+                                </div>
+                                <div class="pred-detail">
+                                    <span class="pred-label">Verwachte uitgaven</span>
+                                    <span class="pred-value expense" id="season-expense">-€17.458</span>
+                                </div>
+                            </div>
+                            <p class="prediction-note">* Gebaseerd op huidige cashflow</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Staff Page -->
+            <section id="staff" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Stafcentrum</h2>
+                        <p class="page-subtitle handwritten">Bouw je technische staf</p>
+                    </div>
+                </header>
+
+                <!-- Unified Staff View -->
+                <div class="staff-unified-view">
+                    <!-- Trainers Section -->
+                    <div class="staff-section">
+                        <h3 class="staff-section-title">
+                            <span class="section-icon">🏃</span>
+                            Trainers
+                        </h3>
+                        <div class="staff-grid" id="trainers-staff-grid">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Medische Staf Section -->
+                    <div class="staff-section">
+                        <h3 class="staff-section-title">
+                            <span class="section-icon">🏥</span>
+                            Medische & Overige Staf
+                        </h3>
+                        <div class="staff-grid" id="medisch-staff-grid">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Player Detail Modal -->
+    <div id="player-modal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content player-detail-modal">
+            <button class="modal-close">&times;</button>
+            <div class="player-detail-content" id="player-detail-content">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Match Modal -->
+    <div id="match-modal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content match-modal">
+            <div class="match-simulation" id="match-simulation">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Club Settings Modal -->
+    <!-- Training Player Select Modal -->
+    <div id="training-select-modal" class="modal">
+        <div class="modal-backdrop" onclick="closeTrainingModal()"></div>
+        <div class="modal-content training-select-modal">
+            <button class="modal-close" onclick="closeTrainingModal()">&times;</button>
+            <h3 id="training-modal-title">Selecteer Speler</h3>
+            <p class="training-modal-subtitle" id="training-modal-subtitle">Kies een speler om te trainen</p>
+            <div class="training-player-list" id="training-player-list">
+                <!-- Player cards will be rendered by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/js/main.js"></script>
+</body>
+</html>
