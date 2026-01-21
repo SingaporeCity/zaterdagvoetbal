@@ -14553,49 +14553,19 @@ body {
     font-style: italic;
 }
 
-/* Match card body - mini grass pitch */
+/* Match card body - clean grass field */
 .match-card .match-body {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 10px 16px;
-    /* Grass stripes like a real pitch */
-    background:
-        repeating-linear-gradient(
-            90deg,
-            #4a8c2a 0px,
-            #4a8c2a 30px,
-            #3d7a23 30px,
-            #3d7a23 60px
-        );
+    /* Simple grass green */
+    background: #3d7a23;
     min-height: 0;
     position: relative;
-    border-top: 3px solid #5d4e37;
-    border-bottom: 3px solid #5d4e37;
-}
-
-/* Muddy corner patches */
-.match-card .match-body::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 40px;
-    height: 25px;
-    background: radial-gradient(ellipse at bottom left, rgba(101, 67, 33, 0.4) 0%, transparent 70%);
-    pointer-events: none;
-}
-
-.match-card .match-body::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 35px;
-    height: 20px;
-    background: radial-gradient(ellipse at bottom right, rgba(101, 67, 33, 0.35) 0%, transparent 70%);
-    pointer-events: none;
+    border-top: 2px solid #2d5a1a;
+    border-bottom: 2px solid #2d5a1a;
 }
 
 .match-league {
@@ -14677,11 +14647,11 @@ body {
     gap: 6px;
     margin: 8px 12px;
     padding: 10px 18px;
-    /* Beer-colored button */
-    background: linear-gradient(180deg, #d4920a 0%, #b8750a 100%);
-    border: 2px solid #8b5a00;
+    /* Simple green button */
+    background: #2d5a1a;
+    border: 2px solid #1a3d0f;
     border-radius: 4px;
-    color: #1a1a1a;
+    color: white;
     font-family: var(--font-display);
     font-size: 0.85rem;
     font-weight: 700;
@@ -14690,22 +14660,22 @@ body {
     cursor: pointer;
     transition: all 0.15s ease;
     flex-shrink: 0;
-    box-shadow: 0 2px 0 #8b5a00, 0 3px 6px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .match-play-btn:hover {
-    background: linear-gradient(180deg, #e5a30b 0%, #c9860b 100%);
+    background: #3d7a23;
     transform: translateY(-1px);
-    box-shadow: 0 3px 0 #8b5a00, 0 5px 10px rgba(0,0,0,0.25);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.25);
 }
 
 .match-play-btn:active {
     transform: translateY(1px);
-    box-shadow: 0 1px 0 #8b5a00;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .match-play-btn svg {
-    fill: #1a1a1a;
+    fill: white;
 }
 
 /* ================================================
@@ -15058,6 +15028,15 @@ body {
     font-size: 0.7rem;
     color: #666;
     font-style: italic;
+}
+
+.tt-pos {
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
 }
 
 .tt-stars {

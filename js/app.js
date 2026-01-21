@@ -5400,8 +5400,16 @@ function getChairmanTip() {
     // Always include some general tips
     tips.push(...CHAIRMAN_TIPS.general);
 
-    // Return a random tip
-    return tips[Math.floor(Math.random() * tips.length)];
+    // Return 2 random tips combined
+    const tip1 = tips[Math.floor(Math.random() * tips.length)];
+    let tip2 = tips[Math.floor(Math.random() * tips.length)];
+    // Make sure tip2 is different from tip1
+    let attempts = 0;
+    while (tip2 === tip1 && attempts < 10) {
+        tip2 = tips[Math.floor(Math.random() * tips.length)];
+        attempts++;
+    }
+    return tip1 + ' ' + tip2;
 }
 
 function updateChairmanTip() {
@@ -5678,6 +5686,8 @@ function renderDashboardToptalents() {
         if (hasHalf) starsHtml += '½';
         for (let i = 0; i < 5 - fullStars - (hasHalf ? 1 : 0); i++) starsHtml += '☆';
 
+        const posData = POSITIONS[player.position] || { color: '#1a5f2a', abbr: '?' };
+
         return `
             <div class="tt-item">
                 <span class="tt-flag">${player.nationality?.flag || '🇳🇱'}</span>
@@ -5685,6 +5695,7 @@ function renderDashboardToptalents() {
                     <span class="tt-name">${player.name}</span>
                     <span class="tt-age">${player.age} jaar</span>
                 </div>
+                <span class="tt-pos" style="background: ${posData.color}">${posData.abbr}</span>
                 <span class="tt-stars">${starsHtml}</span>
             </div>
         `;
