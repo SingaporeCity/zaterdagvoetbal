@@ -12183,67 +12183,77 @@ body {
 .next-upgrade-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 1px dashed #f9a825;
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
 .next-label {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     text-transform: uppercase;
     color: #f57f17;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
+    background: rgba(249, 168, 37, 0.3);
+    padding: 2px 8px;
+    border-radius: 3px;
+    flex-shrink: 0;
 }
 
 .next-name {
     font-family: var(--font-display);
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     color: #e65100;
+    flex: 1;
 }
 
 .next-upgrade-content {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .next-benefit {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 6px;
+    border: 1px solid rgba(249, 168, 37, 0.3);
 }
 
 .next-benefit-icon {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
+    flex-shrink: 0;
 }
 
 .next-benefit-text {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--text-primary);
+    line-height: 1.4;
     font-weight: 500;
 }
 
 .next-improvement {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 10px;
-    background: rgba(76, 175, 80, 0.15);
-    border-radius: 20px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.25) 100%);
+    border-radius: 6px;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    align-self: flex-start;
 }
 
 .improvement-badge {
     font-family: var(--font-display);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--primary-green);
     font-weight: bold;
 }
 
 .improvement-text {
-    font-size: 0.65rem;
-    color: var(--text-muted);
+    font-size: 0.7rem;
+    color: #2e7d32;
 }
 
 /* Requirement Warning */
