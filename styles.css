@@ -2605,7 +2605,11 @@ body {
 .transfer-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 2px;
+    background: var(--paper);
+    border-radius: var(--card-radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
 }
 
 .transfer-card {
@@ -4137,7 +4141,11 @@ body {
 .transfer-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 2px;
+    background: var(--paper);
+    border-radius: var(--card-radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
 }
 
 .transfer-card {
@@ -4959,18 +4967,36 @@ body {
 .squad-group-players {
     display: flex;
     flex-direction: column;
+    gap: 0;
 }
 
-/* Compact Player Card */
+/* ================================================
+   PLAYER CARD - Horizontal Full-Width Bar Design
+   Kelderklasse aesthetic: worn paper, handwritten feel
+   ================================================ */
 .player-card {
-    display: grid;
-    grid-template-columns: 70px 1fr 100px 120px 100px;
-    gap: 12px;
+    display: flex;
     align-items: center;
-    padding: 8px 12px;
+    gap: 16px;
+    padding: 6px 16px;
+    background: linear-gradient(90deg, #faf8f0 0%, #f5f0e1 100%);
     border-bottom: 1px solid var(--border);
     cursor: pointer;
-    transition: background var(--transition-fast);
+    transition: all 0.15s ease;
+    min-height: 44px;
+    position: relative;
+}
+
+.player-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--primary-green);
+    opacity: 0;
+    transition: opacity 0.15s ease;
 }
 
 .player-card:last-child {
@@ -4978,29 +5004,33 @@ body {
 }
 
 .player-card:hover {
-    background: var(--cream);
+    background: linear-gradient(90deg, #f0ead6 0%, #e8e0c8 100%);
 }
 
-/* Left section: Age box + Flag */
+.player-card:hover::before {
+    opacity: 1;
+}
+
+/* Left section: Flag + Age inline */
 .pc-left {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 70px;
 }
 
 .pc-age-box {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: var(--cream-dark);
-    padding: 4px 8px;
-    border-radius: 6px;
-    min-width: 36px;
+    align-items: baseline;
+    gap: 2px;
+    background: rgba(0,0,0,0.06);
+    padding: 3px 8px;
+    border-radius: 4px;
 }
 
 .pc-age-value {
     font-family: var(--font-display);
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
@@ -5009,30 +5039,83 @@ body {
 .pc-age-label {
     font-size: 0.6rem;
     color: var(--text-muted);
+    font-weight: 500;
+}
+
+.pc-flag-large {
+    font-size: 1.2rem;
+}
+
+/* Info section - Name + Position inline */
+.pc-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.pc-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.pc-flag {
+    font-size: 0.9rem;
+}
+
+.pc-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+}
+
+.pc-pos {
+    padding: 2px 8px;
+    border-radius: 3px;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    flex-shrink: 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.pc-flag-large {
-    font-size: 1.4rem;
+.pc-finance {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
 }
 
-/* Ratings section (right side) */
+.pc-salary::before {
+    content: '💰 ';
+}
+
+/* Ratings section - compact horizontal badges */
 .pc-ratings {
     display: flex;
-    align-items: stretch;
+    align-items: center;
     gap: 4px;
+    flex-shrink: 0;
 }
 
 .pc-overall {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 4px 6px;
-    border-radius: 6px;
+    gap: 3px;
+    padding: 3px 8px;
+    border-radius: 4px;
     color: white;
-    min-width: 42px;
 }
 
 .pc-overall-value {
@@ -5044,21 +5127,19 @@ body {
 }
 
 .pc-overall-label {
-    font-size: 0.45rem;
-    font-weight: 500;
-    opacity: 0.8;
+    font-size: 0.5rem;
+    font-weight: 600;
+    opacity: 0.85;
     text-transform: uppercase;
 }
 
 .pc-potential {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    padding: 3px 6px;
-    border-radius: 6px;
-    min-width: 42px;
+    gap: 3px;
+    padding: 3px 8px;
+    border-radius: 4px;
     color: white;
-    opacity: 0.85;
 }
 
 .pc-potential-value {
@@ -5070,79 +5151,32 @@ body {
 }
 
 .pc-potential-label {
-    font-size: 0.45rem;
-    font-weight: 500;
-    opacity: 0.9;
+    font-size: 0.5rem;
+    font-weight: 600;
+    opacity: 0.85;
     text-transform: uppercase;
-}
-
-/* Info section */
-.pc-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.pc-name-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.pc-flag {
-    font-size: 0.9rem;
-}
-
-.pc-name {
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.pc-pos {
-    padding: 1px 5px;
-    border-radius: 3px;
-    color: white;
-    font-size: 0.6rem;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-
-.pc-finance {
-    display: flex;
-    gap: 16px;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    margin-left: 24px;
-}
-
-.pc-salary::before {
-    content: '💰 ';
 }
 
 /* Transfer card specific styles */
 .player-card.transfer-card {
-    grid-template-columns: 70px 1fr 90px 110px 95px 70px;
+    gap: 12px;
 }
 
 .player-card.transfer-card .btn-transfer-buy {
-    justify-self: center;
-    padding: 6px 10px;
+    padding: 5px 12px;
     font-size: 0.7rem;
+    flex-shrink: 0;
 }
 
 .pc-finance.transfer-finance {
-    margin-left: 0;
+    gap: 12px;
 }
 
 .pc-price {
     font-family: var(--font-display);
     font-size: 0.85rem;
     color: var(--text-primary);
+    white-space: nowrap;
 }
 
 .pc-price.free {
@@ -5152,17 +5186,19 @@ body {
 .pc-bonus {
     font-size: 0.7rem;
     color: var(--orange);
+    white-space: nowrap;
 }
 
 .pc-value::before {
     content: '📊 ';
 }
 
-/* Condition/Energy bars */
+/* Condition/Energy bars - compact horizontal */
 .pc-condition-bars {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
 }
 
 .pc-bar-item {
@@ -5172,9 +5208,9 @@ body {
 }
 
 .pc-bar-track {
-    width: 50px;
-    height: 6px;
-    background: var(--cream-dark);
+    width: 40px;
+    height: 5px;
+    background: rgba(0,0,0,0.08);
     border-radius: 3px;
     overflow: hidden;
 }
@@ -5186,52 +5222,47 @@ body {
 }
 
 .pc-bar-label {
-    font-size: 0.55rem;
+    font-size: 0.6rem;
     color: var(--text-muted);
-    min-width: 40px;
+    white-space: nowrap;
 }
 
-/* Stats section */
+/* Stats section - horizontal inline */
 .pc-stats {
     display: flex;
-    gap: 4px;
-    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .pc-stat {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    width: 22px;
+    gap: 3px;
+    padding: 2px 6px;
+    background: rgba(0,0,0,0.04);
+    border-radius: 3px;
 }
 
 .pc-stat-bar-bg {
-    width: 6px;
-    height: 28px;
-    background: var(--cream-dark);
-    border-radius: 3px;
-    position: relative;
-    overflow: hidden;
+    display: none; /* Hide vertical bars, use inline display */
 }
 
 .pc-stat-bar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    border-radius: 3px;
-    transition: height 0.3s ease;
+    display: none;
 }
 
 .pc-stat-val {
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-top: 1px;
+    white-space: nowrap;
+    min-width: 28px;
+    text-align: center;
 }
 
 .pc-stat-lbl {
-    font-size: 0.45rem;
+    font-size: 0.55rem;
     font-weight: 600;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -10235,106 +10266,7 @@ body {
     gap: 12px;
 }
 
-/* Player Card - Enhanced Readability */
-.player-card {
-    display: flex;
-    align-items: stretch;
-    background: var(--paper);
-    border-radius: var(--card-radius);
-    border: 2px solid var(--border);
-    overflow: hidden;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    min-height: 80px;
-}
-
-.player-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px var(--shadow);
-    border-color: var(--primary-green);
-}
-
-.player-card-left {
-    width: 70px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 8px;
-    background: linear-gradient(135deg, var(--primary-green) 0%, var(--grass-dark) 100%);
-    color: white;
-    gap: 4px;
-}
-
-.player-overall {
-    font-family: var(--font-display);
-    font-size: 1.75rem;
-    line-height: 1;
-}
-
-.player-position-badge {
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    text-transform: uppercase;
-}
-
-.player-card-main {
-    flex: 1;
-    padding: 10px 14px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 6px;
-}
-
-.player-name-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.player-name {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.player-nationality {
-    font-size: 1.1rem;
-}
-
-.player-tag {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    font-style: italic;
-}
-
-.player-stats-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.player-stat {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.8rem;
-}
-
-.player-stat-label {
-    color: var(--text-muted);
-    font-weight: 500;
-}
-
-.player-stat-value {
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
+/* Player Card Right Section - legacy support */
 .player-card-right {
     width: 80px;
     display: flex;
@@ -11798,10 +11730,13 @@ body {
 .youth-players-grid {
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px;
+    gap: 2px;
     flex: 1;
     overflow-y: auto;
     padding: 4px;
+    background: var(--paper);
+    border-radius: var(--card-radius);
+    border: 1px solid var(--border);
 }
 
 .youth-players-grid .player-card {
@@ -11810,32 +11745,36 @@ body {
 
 /* Youth card extras - uses same .player-card base */
 .player-card.youth-card {
-    padding-right: 8px;
+    padding-right: 12px;
 }
 
 .player-card.youth-card.supertalent {
-    border-color: var(--warning);
-    background: linear-gradient(90deg, rgba(255, 152, 0, 0.08) 0%, var(--paper) 40%);
+    background: linear-gradient(90deg, rgba(255, 152, 0, 0.12) 0%, #faf8f0 30%);
+}
+
+.player-card.youth-card.supertalent::before {
+    background: var(--warning);
 }
 
 .player-card .pc-talent {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .player-card .pc-growth {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--primary-green);
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .player-card .pc-action {
     flex-shrink: 0;
-    padding-left: 8px;
+    margin-left: auto;
 }
 
 .player-card .pc-action .btn-sm {
-    padding: 6px 10px;
-    font-size: 0.75rem;
+    padding: 5px 10px;
+    font-size: 0.7rem;
 }
 
 /* Empty state */
