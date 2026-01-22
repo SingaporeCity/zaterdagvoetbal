@@ -1121,50 +1121,81 @@
                         </div>
                     </div>
 
-                    <!-- Right: Detail Panel -->
+                    <!-- Right: Detail Panel - Bouwplaat Style -->
                     <div class="stadium-detail-v2" id="stadium-detail">
-                        <div class="detail-header-v2">
+                        <!-- Header with illustration -->
+                        <div class="detail-hero">
+                            <div class="detail-illustration" id="detail-illustration">
+                                <!-- SVG will be inserted by JavaScript -->
+                            </div>
+                            <div class="detail-hero-overlay">
+                                <span class="detail-level-name" id="detail-level-name">Houten Tribune</span>
+                            </div>
+                        </div>
+
+                        <!-- Info Section -->
+                        <div class="detail-info-section">
                             <div class="detail-title-row">
                                 <span class="detail-icon" id="detail-icon">🏟️</span>
-                                <h3 class="detail-title" id="detail-title">Stadion</h3>
-                                <span class="detail-level" id="detail-level">Niveau 1</span>
+                                <div class="detail-title-wrap">
+                                    <h3 class="detail-title" id="detail-title">Stadion</h3>
+                                    <span class="detail-level" id="detail-level">Niveau 1 van 5</span>
+                                </div>
                             </div>
                             <p class="detail-description" id="detail-description">
                                 Vergroot de capaciteit van je stadion om meer supporters te ontvangen en meer inkomsten te genereren.
                             </p>
                         </div>
 
-                        <div class="detail-effects-compare">
-                            <div class="effect-box current">
-                                <div class="effect-label">Huidig</div>
-                                <div class="effect-image" id="detail-current-image">🏟️</div>
-                                <div class="effect-value" id="detail-current-effect">200 toeschouwers</div>
+                        <!-- Current Benefits Card -->
+                        <div class="detail-current-benefits">
+                            <div class="benefits-header">
+                                <span class="benefits-icon">✓</span>
+                                <span class="benefits-title">Huidige voordelen</span>
                             </div>
-                            <div class="effect-arrow">→</div>
-                            <div class="effect-box upgrade">
-                                <div class="effect-label">Na upgrade</div>
-                                <div class="effect-image" id="detail-next-image">🏟️</div>
-                                <div class="effect-value" id="detail-next-effect">500 toeschouwers</div>
+                            <div class="benefits-content" id="detail-current-effect">
+                                <span class="benefit-main">200 toeschouwers</span>
                             </div>
                         </div>
 
-                        <!-- Large illustration -->
-                        <div class="detail-illustration" id="detail-illustration">
-                            <!-- SVG will be inserted by JavaScript -->
+                        <!-- Upgrade Levels Progress -->
+                        <div class="detail-levels-track" id="detail-levels-track">
+                            <!-- Filled by JavaScript -->
                         </div>
 
+                        <!-- Next Upgrade Preview -->
+                        <div class="detail-next-upgrade" id="detail-next-upgrade">
+                            <div class="next-upgrade-header">
+                                <span class="next-label">Volgende upgrade</span>
+                                <span class="next-name" id="detail-next-name">Stenen Tribune</span>
+                            </div>
+                            <div class="next-upgrade-content">
+                                <div class="next-benefit">
+                                    <span class="next-benefit-icon">📈</span>
+                                    <span class="next-benefit-text" id="detail-next-effect">500 toeschouwers</span>
+                                </div>
+                                <div class="next-improvement" id="detail-improvement">
+                                    <span class="improvement-badge">+150%</span>
+                                    <span class="improvement-text">meer capaciteit</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Requirement Warning -->
                         <div class="detail-requirement" id="detail-requirement" style="display: none;">
                             <span class="req-icon">⚠️</span>
                             <span class="req-text" id="detail-req-text">Vereist: Stadion niveau 2</span>
                         </div>
 
-                        <div class="detail-upgrade-row">
-                            <div class="upgrade-cost">
-                                <span class="cost-label">Kosten:</span>
-                                <span class="cost-value" id="detail-cost">€2.000</span>
+                        <!-- Upgrade Action -->
+                        <div class="detail-upgrade-action">
+                            <div class="upgrade-cost-box">
+                                <span class="cost-label">Investering</span>
+                                <span class="cost-value" id="detail-cost">€5.000</span>
                             </div>
                             <button class="btn btn-primary btn-upgrade-stadium" id="btn-upgrade-stadium" onclick="upgradeStadiumCategory()">
-                                Upgraden
+                                <span class="btn-icon">🔨</span>
+                                <span class="btn-text">Bouwen</span>
                             </button>
                         </div>
                     </div>

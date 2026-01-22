@@ -7833,20 +7833,6 @@ function updateStadiumDetailPanel(category) {
         youthscouting: 'Jeugdscouting', kantine: 'Kantine', sponsoring: 'Sponsoring', perszaal: 'Perszaal'
     };
 
-    // Images per level for each category
-    const categoryImages = {
-        tribune: ['🪵', '🧱', '🏗️', '🏟️', '🏟️'],
-        grass: ['🌾', '🌿', '🌱', '✨'],
-        training: ['⚽', '🥅', '🏋️', '🎯'],
-        medical: ['🩹', '💊', '🏥', '🏨'],
-        academy: ['👦', '⚽', '🎓', '🏆'],
-        scouting: ['👀', '🔭', '🌍', '🛰️'],
-        youthscouting: ['👶', '🔍', '📋', '⭐'],
-        kantine: ['☕', '🍺', '🍽️', '🏪'],
-        sponsoring: ['📄', '🤝', '💼', '💎'],
-        perszaal: ['📝', '🎤', '📺', '🎬']
-    };
-
     // Initialize youthscouting in state if needed
     if (!gameState.stadium.youthscouting) {
         gameState.stadium.youthscouting = 'ysct_1';
@@ -7857,6 +7843,7 @@ function updateStadiumDetailPanel(category) {
     const currentLevel = config.levels[currentIndex] || config.levels[0];
     const nextLevel = config.levels[currentIndex + 1];
     const isMaxed = !nextLevel;
+    const totalLevels = config.levels.length;
 
     // Get current stadium capacity for requirements
     const currentCapacity = STADIUM_TILE_CONFIG.tribune.levels.find(
@@ -7866,31 +7853,30 @@ function updateStadiumDetailPanel(category) {
     // Check if next level has requirement
     const hasRequirement = nextLevel?.reqCapacity && currentCapacity < nextLevel.reqCapacity;
 
-    // Update detail elements (v2)
+    // Get DOM elements
     const iconEl = document.getElementById('detail-icon');
     const titleEl = document.getElementById('detail-title');
     const levelEl = document.getElementById('detail-level');
+    const levelNameEl = document.getElementById('detail-level-name');
     const descEl = document.getElementById('detail-description');
     const currentEffectEl = document.getElementById('detail-current-effect');
     const nextEffectEl = document.getElementById('detail-next-effect');
-    const currentImageEl = document.getElementById('detail-current-image');
-    const nextImageEl = document.getElementById('detail-next-image');
+    const nextNameEl = document.getElementById('detail-next-name');
+    const improvementEl = document.getElementById('detail-improvement');
+    const levelsTrackEl = document.getElementById('detail-levels-track');
+    const nextUpgradeEl = document.getElementById('detail-next-upgrade');
     const costEl = document.getElementById('detail-cost');
     const reqEl = document.getElementById('detail-requirement');
     const reqTextEl = document.getElementById('detail-req-text');
     const upgradeBtn = document.getElementById('btn-upgrade-stadium');
 
-    // Get images for this category
-    const images = categoryImages[category] || ['❓', '❓', '❓', '❓'];
-    const currentImage = images[currentIndex] || images[0];
-    const nextImage = images[currentIndex + 1] || images[images.length - 1];
-
+    // Update basic info
     if (iconEl) iconEl.textContent = categoryIcons[category] || '🏟️';
     if (titleEl) titleEl.textContent = categoryNames[category] || category;
-    if (levelEl) levelEl.textContent = `Niveau ${currentIndex + 1}`;
+    if (levelEl) levelEl.textContent = `Niveau ${currentIndex + 1} van ${totalLevels}`;
+    if (levelNameEl) levelNameEl.textContent = currentLevel.name || '';
     if (descEl) descEl.textContent = config.description || '';
-    if (currentEffectEl) currentEffectEl.textContent = currentLevel.effect;
-    if (currentImageEl) currentImageEl.textContent = currentImage;
+    if (currentEffectEl) currentEffectEl.innerHTML = `<span class="benefit-main">${currentLevel.effect}</span>`;
 
     // Update large illustration
     const illustrationEl = document.getElementById('detail-illustration');
@@ -7898,20 +7884,75 @@ function updateStadiumDetailPanel(category) {
         illustrationEl.innerHTML = getStadiumIllustration(category, currentIndex);
     }
 
+    // Build levels progress track
+    if (levelsTrackEl) {
+        let trackHTML = '';
+        config.levels.forEach((level, idx) => {
+            let stepClass = 'level-step';
+            if (idx < currentIndex) stepClass += ' completed';
+            else if (idx === currentIndex) stepClass += ' current';
+            else stepClass += ' locked';
+
+            // Short name for display
+            const shortName = level.name.split(' ')[0];
+
+            trackHTML += `
+                <div class="${stepClass}">
+                    <div class="level-dot">${idx + 1}</div>
+                    <span class="level-name-short">${shortName}</span>
+                </div>
+            `;
+        });
+        levelsTrackEl.innerHTML = trackHTML;
+    }
+
+    // Update next upgrade section
     if (isMaxed) {
-        if (costEl) costEl.textContent = 'MAX';
-        if (nextEffectEl) nextEffectEl.textContent = 'Maximaal bereikt';
-        if (nextImageEl) nextImageEl.textContent = '✅';
+        if (nextUpgradeEl) {
+            nextUpgradeEl.classList.add('maxed');
+            nextUpgradeEl.innerHTML = `
+                <div class="next-upgrade-header">
+                    <span class="next-label">Status</span>
+                    <span class="next-name">✅ Maximaal niveau</span>
+                </div>
+                <div class="next-upgrade-content">
+                    <div class="next-benefit">
+                        <span class="next-benefit-icon">🏆</span>
+                        <span class="next-benefit-text">Alle upgrades voltooid!</span>
+                    </div>
+                </div>
+            `;
+        }
+        if (costEl) costEl.textContent = '—';
         if (reqEl) reqEl.style.display = 'none';
         if (upgradeBtn) {
             upgradeBtn.disabled = true;
-            upgradeBtn.textContent = 'Maximaal';
+            upgradeBtn.innerHTML = '<span class="btn-icon">✅</span><span class="btn-text">Maximaal</span>';
         }
     } else {
         const canAfford = gameState.club.budget >= nextLevel.cost;
-        if (costEl) costEl.textContent = formatCurrency(nextLevel.cost);
+
+        if (nextUpgradeEl) {
+            nextUpgradeEl.classList.remove('maxed');
+        }
+        if (nextNameEl) nextNameEl.textContent = nextLevel.name;
         if (nextEffectEl) nextEffectEl.textContent = nextLevel.effect;
-        if (nextImageEl) nextImageEl.textContent = nextImage;
+
+        // Calculate improvement percentage if possible
+        if (improvementEl) {
+            const improvementText = getImprovementText(category, currentLevel, nextLevel);
+            if (improvementText) {
+                improvementEl.style.display = 'flex';
+                improvementEl.innerHTML = `
+                    <span class="improvement-badge">${improvementText.badge}</span>
+                    <span class="improvement-text">${improvementText.text}</span>
+                `;
+            } else {
+                improvementEl.style.display = 'none';
+            }
+        }
+
+        if (costEl) costEl.textContent = formatCurrency(nextLevel.cost);
 
         // Show requirement if needed
         if (reqEl) {
@@ -7926,16 +7967,50 @@ function updateStadiumDetailPanel(category) {
         if (upgradeBtn) {
             if (hasRequirement) {
                 upgradeBtn.disabled = true;
-                upgradeBtn.textContent = 'Stadion te klein';
+                upgradeBtn.innerHTML = '<span class="btn-icon">🔒</span><span class="btn-text">Stadion te klein</span>';
             } else if (!canAfford) {
                 upgradeBtn.disabled = true;
-                upgradeBtn.textContent = 'Te duur';
+                upgradeBtn.innerHTML = '<span class="btn-icon">💸</span><span class="btn-text">Te duur</span>';
             } else {
                 upgradeBtn.disabled = false;
-                upgradeBtn.textContent = 'Upgraden';
+                upgradeBtn.innerHTML = '<span class="btn-icon">🔨</span><span class="btn-text">Bouwen</span>';
             }
         }
     }
+}
+
+// Helper function to calculate improvement text
+function getImprovementText(category, currentLevel, nextLevel) {
+    // Try to extract numbers from effects
+    const currentMatch = currentLevel.effect.match(/(\d+)/);
+    const nextMatch = nextLevel.effect.match(/(\d+)/);
+
+    if (currentMatch && nextMatch) {
+        const currentVal = parseInt(currentMatch[1]);
+        const nextVal = parseInt(nextMatch[1]);
+        if (currentVal > 0) {
+            const increase = Math.round(((nextVal - currentVal) / currentVal) * 100);
+            if (increase > 0) {
+                return { badge: `+${increase}%`, text: 'verbetering' };
+            }
+        } else if (nextVal > 0) {
+            return { badge: `+${nextVal}`, text: 'nieuw' };
+        }
+    }
+
+    // Category-specific improvements
+    const improvements = {
+        tribune: { badge: '⬆️', text: 'meer capaciteit' },
+        grass: { badge: '⬆️', text: 'beter thuisvoordeel' },
+        training: { badge: '⬆️', text: 'snellere groei' },
+        medical: { badge: '⬆️', text: 'sneller herstel' },
+        academy: { badge: '⬆️', text: 'beter talent' },
+        scouting: { badge: '⬆️', text: 'groter bereik' },
+        youthscouting: { badge: '⬆️', text: 'beter jeugdtalent' },
+        kantine: { badge: '⬆️', text: 'meer inkomsten' }
+    };
+
+    return improvements[category] || null;
 }
 
 function upgradeStadiumCategory() {
