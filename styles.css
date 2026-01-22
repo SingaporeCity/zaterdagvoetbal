@@ -11242,7 +11242,7 @@ body {
     flex: 1;
     min-height: 0;
     max-height: calc(100vh - 130px);
-    overflow: visible;
+    overflow: hidden;
 }
 
 .scout-panel {
@@ -11349,6 +11349,8 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    overflow: hidden;
+    max-height: 100%;
 }
 
 .results-header {
@@ -11378,6 +11380,7 @@ body {
     flex: 1;
     overflow-y: auto;
     padding: 16px;
+    padding-bottom: 24px;
     background: var(--paper);
     border: 2px solid var(--border);
     border-top: none;
@@ -13519,6 +13522,7 @@ body {
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     align-content: start;
+    padding-bottom: 24px;
 }
 
 /* ================================================
