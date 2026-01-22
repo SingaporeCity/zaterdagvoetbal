@@ -14613,22 +14613,22 @@ body {
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    /* Chalkboard green with chalk dust texture */
+    /* Aged cardboard/dugout wood - warm and subtle */
     background:
-        linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 40%),
-        linear-gradient(90deg, #2d5016 0%, #3d6b1e 50%, #2d5016 100%);
-    border-bottom: 3px solid #1a3009;
+        linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%),
+        linear-gradient(90deg, #8b7355 0%, #9c8465 50%, #8b7355 100%);
+    border-bottom: 2px solid #6b5344;
     font-family: var(--font-display);
     font-size: 0.85rem;
     font-weight: 600;
-    color: #f5f5dc;
+    color: #faf6e9;
     letter-spacing: 0.5px;
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.25);
     flex-shrink: 0;
     position: relative;
 }
 
-/* Chalk dust effect on headers */
+/* Subtle wood grain texture on headers */
 .dash-grid .card-header::before {
     content: '';
     position: absolute;
@@ -14636,22 +14636,23 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 Q25 8 50 10 T100 10' fill='none' stroke='%23000' stroke-width='0.3' opacity='0.08'/%3E%3Cpath d='M0 15 Q25 13 50 15 T100 15' fill='none' stroke='%23000' stroke-width='0.2' opacity='0.05'/%3E%3C/svg%3E");
+    background-size: 80px 20px;
     pointer-events: none;
 }
 
 .dash-grid .card-header svg {
-    opacity: 0.9;
+    opacity: 0.95;
     width: 14px;
     height: 14px;
-    stroke: #f5f5dc;
-    filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.2));
+    stroke: #faf6e9;
+    filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.15));
 }
 
 .dash-grid .card-header svg[fill="#ffd700"] {
     fill: #ffd54f;
     stroke: none;
-    filter: drop-shadow(0 0 3px rgba(255,213,79,0.5));
+    filter: drop-shadow(0 0 2px rgba(255,213,79,0.4));
 }
 
 /* ================================================
