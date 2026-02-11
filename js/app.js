@@ -115,7 +115,7 @@ function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `game-notification notification-${type}`;
     notification.innerHTML = `
-        <span class="notification-icon">${getNotificationIcon(type)}</span>
+        <span class="notification-icon">${getNotificationIconSimple(type)}</span>
         <span class="notification-message">${message}</span>
         <button class="notification-close" onclick="this.parentElement.remove()">×</button>
     `;
@@ -131,7 +131,7 @@ function showNotification(message, type = 'info') {
     }, 4000);
 }
 
-function getNotificationIcon(type) {
+function getNotificationIconSimple(type) {
     switch (type) {
         case 'success': return '✓';
         case 'error': return '✕';
@@ -2625,7 +2625,7 @@ window.openPositionTrainingModal = function(positionId) {
             <div class="tpo-pos">${p.position.toUpperCase()}</div>
             <div class="tpo-name">${p.name}</div>
             <div class="tpo-overall">${p.overall}</div>
-            <div class="tpo-condition" style="color: ${p.condition >= 70 ? 'var(--primary-green)' : '#c62828'}">
+            <div class="tpo-condition" style="color: ${p.condition >= 70 ? 'var(--accent-green)' : 'var(--error)'}">
                 ${p.condition}%
             </div>
         </div>
@@ -3563,6 +3563,7 @@ function navigateToPage(page) {
     if (page === 'staff') renderStaffCenterPage();
     if (page === 'mijnteam') renderMijnTeamPage();
     if (page === 'jeugdteam') renderJeugdteamPage();
+    if (page === 'kantine') renderKantineDashboard();
 }
 
 function initNavigation() {
@@ -3571,6 +3572,11 @@ function initNavigation() {
             // Don't navigate if clicking on submenu
             if (e.target.closest('.nav-submenu')) return;
             navigateToPage(item.dataset.page);
+
+            // Close mobile sidebar after navigation
+            document.querySelector('.sidebar')?.classList.remove('sidebar-open');
+            document.getElementById('sidebar-overlay')?.classList.remove('active');
+            document.getElementById('hamburger-btn')?.classList.remove('active');
         });
     });
 
@@ -3591,6 +3597,27 @@ function initNavigation() {
             }, 50);
         });
     });
+
+    // Mobile hamburger menu
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    if (hamburgerBtn) {
+        hamburgerBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-open');
+            sidebarOverlay.classList.toggle('active');
+            hamburgerBtn.classList.toggle('active');
+        });
+    }
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('sidebar-open');
+            sidebarOverlay.classList.remove('active');
+            if (hamburgerBtn) hamburgerBtn.classList.remove('active');
+        });
+    }
 }
 
 function activateTabOnPage(page, tab) {
@@ -4813,12 +4840,12 @@ function updateMainBadgeSVG() {
     if (makenText) makenText.setAttribute('fill', secondary);
 
     // Update all elements that use secondary color for fill
-    badgeSvg.querySelectorAll('[fill="var(--cream)"]').forEach(el => {
+    badgeSvg.querySelectorAll('[fill="var(--text-primary)"]').forEach(el => {
         el.setAttribute('fill', secondary);
     });
 
     // Update all strokes
-    badgeSvg.querySelectorAll('[stroke="var(--cream)"]').forEach(el => {
+    badgeSvg.querySelectorAll('[stroke="var(--text-primary)"]').forEach(el => {
         el.setAttribute('stroke', secondary);
     });
 }
@@ -5342,30 +5369,136 @@ function renderDailyFinances() {
 // ================================================
 
 const CHAIRMAN_TIPS = {
+    // Opstelling & Tactiek
     lineup: [
-        "Heb je je opstelling al bekeken? Zorg dat spelers op hun beste positie staan!",
-        "Een goede opstelling is het halve werk. Check of iedereen op z'n plek staat.",
-        "Sommige spelers presteren beter op bepaalde posities. Experimenteer gerust!"
+        "Heb je de opstelling al bekeken? Zorg dat iedereen op z'n plek staat!",
+        "Een goede opstelling is het halve werk, zeggen ze altijd.",
+        "Sommige jongens presteren beter op bepaalde posities. Experimenteer gerust!",
+        "Die linksback van ons kan ook prima op het middenveld uit de voeten.",
+        "Vergeet niet: een sterk middenveld wint wedstrijden!"
     ],
+    // Training
     training: [
-        "Jonge spelers hebben veel potentieel. Laat ze regelmatig trainen!",
-        "Training is de sleutel tot groei. Vergeet niet je talenten te ontwikkelen.",
-        "Een getraind team is een winnend team. Stuur je spelers naar de training!"
+        "Jonge spelers hebben potentieel. Laat ze regelmatig trainen!",
+        "Training is de sleutel tot groei. Vergeet de talenten niet!",
+        "Een getraind team is een winnend team, dat zei mijn vader ook altijd.",
+        "Die jonge gasten moeten meer trainen, anders worden ze niks.",
+        "Conditietraining is niet sexy, maar wel belangrijk!"
     ],
+    // Scouting
     scout: [
-        "Op zoek naar nieuw talent? De scout kan helpen, maar jonge toptalenten zijn schaars.",
-        "Scouten op jonge spelers is moeilijker, maar de beloning kan groot zijn!",
-        "Ervaren spelers zijn makkelijker te vinden dan jong talent. Kies verstandig!"
+        "Op zoek naar nieuw talent? De scout kan helpen!",
+        "Scouten op jonge spelers is lastig, maar de beloning kan groot zijn.",
+        "Ervaren spelers zijn makkelijker te vinden dan jong talent.",
+        "Ik hoorde dat er een talentje rondloopt bij de buren...",
+        "Een goede scout is goud waard voor een club als de onze."
     ],
+    // Stadion
     stadium: [
-        "Upgrade je stadion voor meer inkomsten en thuisvoordeel!",
-        "Een groter stadion betekent meer fans en meer geld. Investeer slim!",
-        "Vergeet de faciliteiten niet - horeca en fanshop leveren extra inkomsten op."
+        "Upgrade het stadion voor meer inkomsten en thuisvoordeel!",
+        "Een groter stadion betekent meer fans en meer geld.",
+        "De faciliteiten niet vergeten - horeca levert extra inkomsten op.",
+        "Die kleedkamers kunnen wel een likje verf gebruiken.",
+        "Met beter veldonderhoud spelen we ook beter voetbal!"
     ],
+    // Kantine & Derde helft
+    kantine: [
+        "Na de wedstrijd is de derde helft net zo belangrijk, hè?",
+        "De kantine draait goed dit seizoen. Mooi voor de clubkas!",
+        "Vergeet niet even langs de bar te komen na afloop.",
+        "Een goed gesprek in de kantine lost veel problemen op.",
+        "De bitterballen zijn vers, zegt de kantinebeheerder.",
+        "Zonder vrijwilligers in de kantine zijn we nergens.",
+        "Het clubgevoel ontstaat in de kantine, niet op het veld.",
+        "Zaterdag is er stamppot in de kantine. Niet te missen!"
+    ],
+    // Weer & Veld
+    weer: [
+        "Het wordt wisselvallig dit weekend. Misschien moddervoetbal!",
+        "Bij dit weer moet je korte passes spelen, lange ballen werken niet.",
+        "Hopelijk blijft het droog, anders wordt het een modderbad.",
+        "Met deze wind moet je slim spelen. Gebruik hem in je voordeel!",
+        "Het veld ligt er goed bij ondanks het weer van vorige week."
+    ],
+    // Scheidsrechter
+    scheids: [
+        "Respect voor de scheidsrechter, ook als hij fout zit!",
+        "Die scheids van vorige week... ach, laat ik maar niks zeggen.",
+        "Zonder scheidsrechters geen wedstrijden. Behandel ze netjes!",
+        "Ik hoop dat we dit keer een ervaren scheids krijgen.",
+        "Discussiëren met de scheids heeft nog nooit geholpen."
+    ],
+    // Motivatie
+    motivatie: [
+        "Ik geloof in dit team. Jullie kunnen het!",
+        "Elke wedstrijd is een nieuwe kans om te laten zien wat we kunnen.",
+        "Verlies hoort erbij, maar opgeven nooit!",
+        "Discipline en inzet, daar win je mee.",
+        "Samen staan we sterk. Dat is de kracht van deze club!",
+        "Laat je niet gek maken door de tegenstander.",
+        "Focus op jezelf, niet op de ander.",
+        "Dit seizoen gaan we het doen, ik voel het!"
+    ],
+    // Financiën & Sponsors
+    financien: [
+        "De begroting is krap, maar we redden het wel weer.",
+        "Elke euro telt bij een club als de onze.",
+        "De sponsors zijn tevreden, dat is goed nieuws!",
+        "Misschien moeten we een loterij organiseren voor extra geld.",
+        "De contributie komt binnen, dus we draaien quitte.",
+        "Investeer slim, want het geld groeit niet aan de bomen."
+    ],
+    // Jeugd
+    jeugd: [
+        "De jeugd is de toekomst van deze club!",
+        "Ik zag een paar talenten bij de F-jes. Veelbelovend!",
+        "Laat de jeugd meekijken bij het eerste. Dat motiveert!",
+        "Een sterke jeugdopleiding is de basis van succes.",
+        "Die jongen uit de A1 kan zo door naar het eerste, let op mijn woorden."
+    ],
+    // Blessures
+    blessures: [
+        "Hopelijk blijven we dit seizoen van blessures gespaard.",
+        "Goed warmlopen voorkomt veel ellende!",
+        "Die hamstringblessures komen vaak door te weinig rekken.",
+        "Luister naar je lichaam, forceer niks.",
+        "De fysio is z'n gewicht in goud waard voor ons."
+    ],
+    // Wedstrijdvoorbereiding
+    wedstrijd: [
+        "Vandaag moeten we vanaf de eerste minuut scherp zijn!",
+        "Onderschat de tegenstander niet, dat is al vaker fout gegaan.",
+        "Een goede voorbereiding is het halve werk.",
+        "Concentratie en discipline, daar gaan we het mee winnen.",
+        "De tegenstander heeft ook zwakke punten. Benut ze!"
+    ],
+    // Clubliefde & Tradities
+    club: [
+        "Deze club is meer dan voetbal. Het is familie!",
+        "Al generaties lang komen mensen hier samen voor de liefde van het spel.",
+        "De clubkleuren dragen is een eer, vergeet dat nooit.",
+        "Wat er ook gebeurt, we blijven trots op onze club.",
+        "De sfeer hier is uniek. Dat vind je nergens anders!"
+    ],
+    // Humor & Grappen
+    humor: [
+        "Weet je wat het verschil is tussen voetbal en politiek? Bij voetbal mag je nog eerlijk zijn!",
+        "Onze keeper vangt alles... behalve de bus van half negen.",
+        "Die spits van ons schiet vaker naast dan raak, maar hij is wel gezellig!",
+        "Ik zei tegen de trainer: meer balbezit! Nu houden ze de bal vast in de kantine.",
+        "Vroeger was alles beter, behalve ons voetbal. Dat was altijd al matig.",
+        "Een goede verdediger is als een goede schoonmoeder: altijd in de weg!"
+    ],
+    // Algemeen
     general: [
-        "Welkom! Als voorzitter help ik je met tips om de club te verbeteren.",
-        "Elke beslissing telt. Bouw je club stap voor stap op naar de top!",
-        "Succes komt niet vanzelf - train, scout en bouw je stadion uit!"
+        "Welkom! Als voorzitter help ik je met tips.",
+        "Elke beslissing telt. Bouw de club stap voor stap op!",
+        "Succes komt niet vanzelf - train, scout en investeer!",
+        "Ik sta altijd klaar voor de club. Dag en nacht!",
+        "Samen maken we er een mooi seizoen van.",
+        "Vertrouw op het proces. Rome is ook niet in één dag gebouwd.",
+        "Communicatie is alles in een team. Praat met elkaar!",
+        "Een club bouwen kost tijd, maar het is het waard."
     ]
 };
 
@@ -5373,43 +5506,83 @@ let chairmanTipIndex = 0;
 let chairmanTipInterval = null;
 
 function getChairmanTip() {
-    // Prioritize tips based on game state
+    // Collect tips from various categories based on context and randomness
     const tips = [];
 
-    // Check if lineup might have issues (simplified check)
+    // Game-state based tips
     if (Math.random() < 0.3) {
         tips.push(...CHAIRMAN_TIPS.lineup);
     }
 
-    // Check for young players that could train
     const youngPlayers = gameState.players?.filter(p => p.age <= 23) || [];
     if (youngPlayers.length > 0 && Math.random() < 0.3) {
         tips.push(...CHAIRMAN_TIPS.training);
     }
 
-    // Scout tips
     if (Math.random() < 0.25) {
         tips.push(...CHAIRMAN_TIPS.scout);
     }
 
-    // Stadium tips
     if (Math.random() < 0.25) {
         tips.push(...CHAIRMAN_TIPS.stadium);
     }
 
-    // Always include some general tips
+    // Kantine tips - always a favorite topic!
+    if (Math.random() < 0.4) {
+        tips.push(...CHAIRMAN_TIPS.kantine);
+    }
+
+    // Weather tips
+    if (Math.random() < 0.2) {
+        tips.push(...CHAIRMAN_TIPS.weer);
+    }
+
+    // Referee tips
+    if (Math.random() < 0.15) {
+        tips.push(...CHAIRMAN_TIPS.scheids);
+    }
+
+    // Motivation tips
+    if (Math.random() < 0.35) {
+        tips.push(...CHAIRMAN_TIPS.motivatie);
+    }
+
+    // Finance tips
+    if (Math.random() < 0.2) {
+        tips.push(...CHAIRMAN_TIPS.financien);
+    }
+
+    // Youth tips
+    if (Math.random() < 0.25) {
+        tips.push(...CHAIRMAN_TIPS.jeugd);
+    }
+
+    // Injury tips
+    if (Math.random() < 0.15) {
+        tips.push(...CHAIRMAN_TIPS.blessures);
+    }
+
+    // Match preparation tips
+    if (Math.random() < 0.3) {
+        tips.push(...CHAIRMAN_TIPS.wedstrijd);
+    }
+
+    // Club love tips
+    if (Math.random() < 0.25) {
+        tips.push(...CHAIRMAN_TIPS.club);
+    }
+
+    // Humor - occasional jokes!
+    if (Math.random() < 0.2) {
+        tips.push(...CHAIRMAN_TIPS.humor);
+    }
+
+    // Always include general tips as fallback
     tips.push(...CHAIRMAN_TIPS.general);
 
-    // Return 2 random tips combined
-    const tip1 = tips[Math.floor(Math.random() * tips.length)];
-    let tip2 = tips[Math.floor(Math.random() * tips.length)];
-    // Make sure tip2 is different from tip1
-    let attempts = 0;
-    while (tip2 === tip1 && attempts < 10) {
-        tip2 = tips[Math.floor(Math.random() * tips.length)];
-        attempts++;
-    }
-    return tip1 + ' ' + tip2;
+    // Return a single random tip (not two combined, for better readability)
+    const tip = tips[Math.floor(Math.random() * tips.length)];
+    return tip;
 }
 
 function updateChairmanTip() {
@@ -5466,9 +5639,6 @@ function initGame() {
         gameState.standings = generateNewStandings(gameState.club.name, gameState.club.division);
         gameState.achievements = initAchievements();
     }
-
-    // DEBUG: Set match time to now for testing (remove this line for production)
-    gameState.nextMatch.time = Date.now() - 1000;
 
     // Check and apply daily reward
     const dailyRewardResult = checkDailyReward(gameState);
@@ -5623,9 +5793,10 @@ function renderDashboardExtras() {
     // Update top scorer polaroid
     updateTopScorerPolaroid();
 
-    // Render dashboard starplayers and toptalents
+    // Render dashboard starplayers, toptalents and notifications
     renderDashboardStarplayers();
     renderDashboardToptalents();
+    renderDashboardNotifications();
 
     // Initialize sticky note quick actions
     initStickyNotes();
@@ -5701,6 +5872,226 @@ function renderDashboardToptalents() {
         `;
     }).join('');
 }
+
+// ================================================
+// DASHBOARD NOTIFICATIONS SYSTEM
+// ================================================
+
+function generateNotifications() {
+    const notifications = [];
+
+    // 1. Training notification - check if players can train
+    const trainablePlayers = gameState.players?.filter(p => {
+        const lastTrained = p.lastTraining || 0;
+        const cooldown = 24 * 60 * 60 * 1000; // 24 hours
+        return Date.now() - lastTrained > cooldown;
+    }) || [];
+
+    if (trainablePlayers.length > 0) {
+        notifications.push({
+            type: 'training',
+            title: 'Training beschikbaar',
+            desc: `${trainablePlayers.length} speler${trainablePlayers.length > 1 ? 's' : ''} ${trainablePlayers.length > 1 ? 'kunnen' : 'kan'} trainen`,
+            icon: 'training',
+            action: 'training',
+            priority: 2
+        });
+    }
+
+    // 2. Injury notification - check for injured players
+    const injuredPlayers = gameState.players?.filter(p => p.injured && p.injuryWeeks > 0) || [];
+    if (injuredPlayers.length > 0) {
+        const player = injuredPlayers[0];
+        notifications.push({
+            type: 'injury',
+            title: 'Speler geblesseerd',
+            desc: `${player.name} (nog ${player.injuryWeeks} ${player.injuryWeeks === 1 ? 'week' : 'weken'})`,
+            icon: 'injury',
+            action: 'squad',
+            priority: 3
+        });
+    }
+
+    // 3. Match notification - upcoming match info
+    if (gameState.nextMatch) {
+        const matchTime = gameState.nextMatch.time;
+        const now = Date.now();
+        const canPlay = now >= matchTime;
+
+        if (canPlay) {
+            notifications.push({
+                type: 'match',
+                title: 'Wedstrijd speelbaar!',
+                desc: `Tegen ${gameState.nextMatch.opponent}`,
+                icon: 'match',
+                action: 'dashboard',
+                priority: 5
+            });
+        }
+    }
+
+    // 4. Scout notification - check if scout found someone
+    if (gameState.scoutResult && !gameState.scoutResult.viewed) {
+        notifications.push({
+            type: 'scout',
+            title: 'Talent gevonden!',
+            desc: 'Je scout heeft een speler gevonden',
+            icon: 'scout',
+            action: 'scout',
+            priority: 4
+        });
+    }
+
+    // 5. Finance notification - low budget warning
+    const budget = gameState.club?.budget || 0;
+    const weeklyCosts = (gameState.players?.reduce((sum, p) => sum + (p.wage || 0), 0) || 0);
+    if (budget < weeklyCosts * 4 && budget > 0) {
+        notifications.push({
+            type: 'finance',
+            title: 'Lage clubkas',
+            desc: `Nog ${Math.floor(budget / weeklyCosts)} weken budget`,
+            icon: 'finance',
+            action: 'finances',
+            priority: 2
+        });
+    }
+
+    // 6. Youth notification - youth player ready for first team
+    const readyYouth = (gameState.youthPlayers || []).filter(p => p.age >= 17 && (p.potential || 0) >= 60);
+    if (readyYouth.length > 0) {
+        notifications.push({
+            type: 'youth',
+            title: 'Talent klaar',
+            desc: `${readyYouth[0].name} kan doorstromen`,
+            icon: 'youth',
+            action: 'youth',
+            priority: 2
+        });
+    }
+
+    // 7. Standings notification - promotion/relegation zone
+    const playerTeam = gameState.standings?.find(t => t.isPlayer);
+    const playerPosition = playerTeam ? gameState.standings.indexOf(playerTeam) + 1 : 0;
+    if (playerPosition <= 2 && gameState.week > 5) {
+        notifications.push({
+            type: 'sponsor',
+            title: 'Promotiekoers!',
+            desc: `Je staat ${playerPosition}e in de competitie`,
+            icon: 'trophy',
+            action: 'dashboard',
+            priority: 1
+        });
+    } else if (playerPosition >= 7 && gameState.week > 5) {
+        notifications.push({
+            type: 'injury',
+            title: 'Degradatiegevaar',
+            desc: `Je staat ${playerPosition}e in de competitie`,
+            icon: 'warning',
+            action: 'dashboard',
+            priority: 3
+        });
+    }
+
+    // 8. Contract expiring notification
+    const expiringContracts = gameState.players?.filter(p => p.contractYears === 1) || [];
+    if (expiringContracts.length > 0) {
+        notifications.push({
+            type: 'contract',
+            title: 'Contract loopt af',
+            desc: `${expiringContracts[0].name} - nog 1 jaar`,
+            icon: 'contract',
+            action: 'squad',
+            priority: 1
+        });
+    }
+
+    // 9. New sponsor available (random chance)
+    if (Math.random() < 0.3 && !gameState.pendingSponsor) {
+        gameState.pendingSponsor = true;
+        notifications.push({
+            type: 'sponsor',
+            title: 'Sponsor interesse',
+            desc: 'Een lokale ondernemer wil sponsoren',
+            icon: 'sponsor',
+            action: 'sponsors',
+            priority: 2
+        });
+    }
+
+    // Sort by priority (higher = more important)
+    notifications.sort((a, b) => b.priority - a.priority);
+
+    // Return max 6 notifications
+    return notifications.slice(0, 6);
+}
+
+function getNotificationIcon(iconType) {
+    const icons = {
+        training: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11v11h-11z"/><path d="M6.5 1v5.5M17.5 1v5.5M1 6.5h5.5M17.5 6.5H23M6.5 17.5v5.5M17.5 17.5v5.5M1 17.5h5.5M17.5 17.5H23"/></svg>',
+        injury: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>',
+        match: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20M2 12h20"/></svg>',
+        scout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>',
+        finance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>',
+        youth: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+        trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M10 22V10M14 22V10M8 6h8l-1 8H9L8 6z"/></svg>',
+        warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01"/></svg>',
+        contract: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>',
+        sponsor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4M2 11h20"/></svg>'
+    };
+    return icons[iconType] || icons.match;
+}
+
+function renderDashboardNotifications() {
+    const container = document.getElementById('dashboard-notifications');
+    if (!container) return;
+
+    const notifications = generateNotifications();
+
+    if (notifications.length === 0) {
+        container.innerHTML = `
+            <div class="notifications-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                    <path d="M22 4L12 14.01l-3-3"/>
+                </svg>
+                <span>Alles onder controle!</span>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = notifications.map(notif => `
+        <div class="notification-item type-${notif.type}" onclick="handleNotificationClick('${notif.action}')">
+            <div class="notification-icon">
+                ${getNotificationIcon(notif.icon)}
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">${notif.title}</div>
+                <div class="notification-desc">${notif.desc}</div>
+            </div>
+            <span class="notification-arrow">→</span>
+        </div>
+    `).join('');
+}
+
+function handleNotificationClick(action) {
+    const pageMap = {
+        'training': 'training',
+        'squad': 'squad',
+        'scout': 'scout',
+        'finances': 'finances',
+        'sponsors': 'sponsors',
+        'youth': 'youth',
+        'dashboard': 'dashboard',
+        'tactics': 'tactics'
+    };
+
+    const page = pageMap[action] || 'dashboard';
+    navigateTo(page);
+}
+
+// Make function globally accessible
+window.handleNotificationClick = handleNotificationClick;
 
 function updateTopScorerPolaroid() {
     const photoEl = document.getElementById('top-scorer-photo');
@@ -5977,51 +6368,119 @@ function showMatchResultModal(result, isHome, opponentName) {
     const resultText = resultType === 'win' ? 'Gewonnen!' : resultType === 'loss' ? 'Verloren' : 'Gelijkspel';
 
     const content = modal.querySelector('.modal-content') || modal;
+
+    const eventIcons = {
+        'goal': '⚽',
+        'own_goal': '⚽',
+        'yellow_card': '🟨',
+        'red_card': '🟥',
+        'substitution': '🔄',
+        'injury': '🤕',
+        'shot': '💨',
+        'shot_saved': '🧤',
+        'save': '🧤',
+        'foul': '⚠️',
+        'corner': '📐',
+        'free_kick': '🎯',
+        'penalty': '⚽',
+        'penalty_miss': '❌',
+        'chance': '💥'
+    };
+
+    // Get important events (goals, cards, injuries, substitutions)
+    const importantEvents = result.events.filter(e =>
+        ['goal', 'own_goal', 'yellow_card', 'red_card', 'substitution', 'injury', 'penalty', 'penalty_miss'].includes(e.type)
+    );
+
+    // Stats bars
+    const possHome = isHome ? result.possession.home : result.possession.away;
+    const possAway = isHome ? result.possession.away : result.possession.home;
+    const shotsHome = isHome ? result.shots.home : result.shots.away;
+    const shotsAway = isHome ? result.shots.away : result.shots.home;
+    const sotHome = isHome ? result.shotsOnTarget.home : result.shotsOnTarget.away;
+    const sotAway = isHome ? result.shotsOnTarget.away : result.shotsOnTarget.home;
+
     content.innerHTML = `
-        <div class="match-result-header ${resultClass}">
-            <h2>${resultText}</h2>
-            <div class="match-score">
-                <span class="team-name">${gameState.club.name}</span>
-                <span class="score">${playerScore} - ${opponentScore}</span>
-                <span class="team-name">${opponentName}</span>
+        <div class="match-result-container">
+            <div class="match-result-scoreboard ${resultClass}">
+                <div class="match-result-team home">
+                    <span class="match-result-team-name">${gameState.club.name}</span>
+                </div>
+                <div class="match-result-score-display">
+                    <span class="match-result-score-num">${playerScore}</span>
+                    <span class="match-result-score-sep">-</span>
+                    <span class="match-result-score-num">${opponentScore}</span>
+                </div>
+                <div class="match-result-team away">
+                    <span class="match-result-team-name">${opponentName}</span>
+                </div>
             </div>
-        </div>
-        <div class="match-events">
-            <h3>Wedstrijdverloop</h3>
-            <div class="events-list">
-                ${result.events.slice(0, 15).map(event => `
-                    <div class="match-event ${event.type}">
-                        <span class="event-minute">${event.minute}'</span>
-                        <span class="event-text">${event.commentary || event.type}</span>
+            <div class="match-result-verdict">${resultText}</div>
+
+            <div class="match-result-timeline">
+                <h3>Wedstrijdverloop</h3>
+                <div class="match-result-timeline-track">
+                    ${importantEvents.map(event => `
+                        <div class="match-result-event ${event.type}">
+                            <span class="match-result-event-icon">${eventIcons[event.type] || '📋'}</span>
+                            <span class="match-result-event-minute">${event.minute}'</span>
+                            <span class="match-result-event-text">${event.commentary || event.description || event.type}</span>
+                        </div>
+                    `).join('')}
+                    ${importantEvents.length === 0 ? '<div class="match-result-event"><span class="match-result-event-text">Geen bijzondere gebeurtenissen</span></div>' : ''}
+                </div>
+            </div>
+
+            <div class="match-result-stats">
+                <h3>Statistieken</h3>
+                <div class="match-result-stat-row">
+                    <span class="match-result-stat-value">${possHome}%</span>
+                    <div class="match-result-stat-bar-container">
+                        <span class="match-result-stat-label">Balbezit</span>
+                        <div class="match-result-stat-bar">
+                            <div class="match-result-stat-fill home" style="width: ${possHome}%"></div>
+                            <div class="match-result-stat-fill away" style="width: ${possAway}%"></div>
+                        </div>
                     </div>
-                `).join('')}
+                    <span class="match-result-stat-value">${possAway}%</span>
+                </div>
+                <div class="match-result-stat-row">
+                    <span class="match-result-stat-value">${shotsHome}</span>
+                    <div class="match-result-stat-bar-container">
+                        <span class="match-result-stat-label">Schoten</span>
+                        <div class="match-result-stat-bar">
+                            <div class="match-result-stat-fill home" style="width: ${shotsHome + shotsAway > 0 ? (shotsHome / (shotsHome + shotsAway) * 100) : 50}%"></div>
+                            <div class="match-result-stat-fill away" style="width: ${shotsHome + shotsAway > 0 ? (shotsAway / (shotsHome + shotsAway) * 100) : 50}%"></div>
+                        </div>
+                    </div>
+                    <span class="match-result-stat-value">${shotsAway}</span>
+                </div>
+                <div class="match-result-stat-row">
+                    <span class="match-result-stat-value">${sotHome}</span>
+                    <div class="match-result-stat-bar-container">
+                        <span class="match-result-stat-label">Op doel</span>
+                        <div class="match-result-stat-bar">
+                            <div class="match-result-stat-fill home" style="width: ${sotHome + sotAway > 0 ? (sotHome / (sotHome + sotAway) * 100) : 50}%"></div>
+                            <div class="match-result-stat-fill away" style="width: ${sotHome + sotAway > 0 ? (sotAway / (sotHome + sotAway) * 100) : 50}%"></div>
+                        </div>
+                    </div>
+                    <span class="match-result-stat-value">${sotAway}</span>
+                </div>
             </div>
+
+            ${result.manOfTheMatch ? `
+                <div class="match-result-motm">
+                    <div class="match-result-motm-star">&#11088;</div>
+                    <div class="match-result-motm-info">
+                        <span class="match-result-motm-label">Man of the Match</span>
+                        <span class="match-result-motm-name">${result.manOfTheMatch.name}</span>
+                        ${result.manOfTheMatch.rating ? `<span class="match-result-motm-rating">${result.manOfTheMatch.rating.toFixed(1)}</span>` : ''}
+                    </div>
+                </div>
+            ` : ''}
+
+            <button class="btn btn-primary match-result-close-btn" onclick="closeMatchResultModal()">Sluiten</button>
         </div>
-        <div class="match-stats">
-            <h3>Statistieken</h3>
-            <div class="stats-row">
-                <span>${result.possession.home}%</span>
-                <span>Balbezit</span>
-                <span>${result.possession.away}%</span>
-            </div>
-            <div class="stats-row">
-                <span>${result.shots.home}</span>
-                <span>Schoten</span>
-                <span>${result.shots.away}</span>
-            </div>
-            <div class="stats-row">
-                <span>${result.shotsOnTarget.home}</span>
-                <span>Op doel</span>
-                <span>${result.shotsOnTarget.away}</span>
-            </div>
-        </div>
-        ${result.manOfTheMatch ? `
-            <div class="man-of-match">
-                <h3>Man of the Match</h3>
-                <span class="motm-name">⭐ ${result.manOfTheMatch.name}</span>
-            </div>
-        ` : ''}
-        <button class="btn btn-primary" onclick="closeMatchResultModal()">Sluiten</button>
     `;
 
     modal.style.display = 'flex';
@@ -8085,5 +8544,205 @@ function initStadiumCategories() {
 window.selectStadiumCategory = selectStadiumCategory;
 window.upgradeStadiumCategory = upgradeStadiumCategory;
 
+// ================================================
+// DASHBOARD 2: DE KANTINE
+// ================================================
+
+function initDashboardTabs() {
+    const tabs = document.querySelectorAll('.dash-tab');
+    const dashGrid = document.querySelector('.dash-grid');
+    const kantineDashboard = document.getElementById('kantine-dashboard');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Update active tab
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            const dashboard = tab.dataset.dashboard;
+
+            if (dashboard === '1') {
+                // Show classic dashboard
+                if (dashGrid) dashGrid.style.display = 'grid';
+                if (kantineDashboard) kantineDashboard.style.display = 'none';
+            } else if (dashboard === '2') {
+                // Show kantine dashboard
+                if (dashGrid) dashGrid.style.display = 'none';
+                if (kantineDashboard) kantineDashboard.style.display = 'block';
+                renderKantineDashboard();
+            }
+        });
+    });
+}
+
+function renderKantineDashboard() {
+    renderKantineHeader();
+    renderKantineMatch();
+    renderKantineStats();
+    renderKantineStandings();
+    renderKantineCircleStats();
+    renderKantineStarplayers();
+}
+
+function renderKantineHeader() {
+    const managerEl = document.getElementById('km-manager-name');
+    const clubNameEl = document.getElementById('km-club-name');
+
+    if (managerEl) managerEl.textContent = gameState.managerName || 'Trainer';
+    if (clubNameEl) clubNameEl.textContent = gameState.clubName || 'FC Goals Maken';
+}
+
+function renderKantineMatch() {
+    const homeEl = document.getElementById('km-home');
+    const awayEl = document.getElementById('km-away');
+    const leagueEl = document.getElementById('km-league');
+    const dateEl = document.getElementById('km-match-date');
+
+    if (homeEl) homeEl.textContent = gameState.clubName || 'FC Goals Maken';
+
+    // Get next opponent
+    const schedule = gameState.schedule || [];
+    const nextMatch = schedule.find(m => !m.played);
+    if (nextMatch && awayEl) {
+        const isHome = nextMatch.homeTeam === gameState.clubName;
+        awayEl.textContent = isHome ? nextMatch.awayTeam : nextMatch.homeTeam;
+    }
+
+    // Set league name
+    if (leagueEl) {
+        const division = gameState.division || 8;
+        leagueEl.textContent = `${division}e Klasse`;
+    }
+
+    // Set match date/time from countdown
+    if (dateEl) {
+        const hours = document.getElementById('timer-hours')?.textContent || '00';
+        const minutes = document.getElementById('timer-minutes')?.textContent || '00';
+        dateEl.textContent = `Over ${hours}u ${minutes}m`;
+
+        // Update periodically
+        setInterval(() => {
+            const h = document.getElementById('timer-hours')?.textContent || '00';
+            const m = document.getElementById('timer-minutes')?.textContent || '00';
+            dateEl.textContent = `Over ${h}u ${m}m`;
+        }, 60000);
+    }
+}
+
+function renderKantineStats() {
+    const playedEl = document.getElementById('km-played');
+    const winsEl = document.getElementById('km-wins');
+    const drawsEl = document.getElementById('km-draws');
+    const lossesEl = document.getElementById('km-losses');
+
+    // Get season stats from gameState
+    const stats = gameState.seasonStats || { wins: 0, draws: 0, losses: 0 };
+    const played = (stats.wins || 0) + (stats.draws || 0) + (stats.losses || 0);
+
+    if (playedEl) playedEl.textContent = played;
+    if (winsEl) winsEl.textContent = stats.wins || 0;
+    if (drawsEl) drawsEl.textContent = stats.draws || 0;
+    if (lossesEl) lossesEl.textContent = stats.losses || 0;
+}
+
+function renderKantineStandings() {
+    const container = document.getElementById('km-standings-body');
+    if (!container) return;
+
+    const standings = gameState.standings || [];
+    const playerTeam = gameState.clubName || 'FC Goals Maken';
+
+    let html = '';
+    standings.forEach((team, index) => {
+        const isPlayer = team.name === playerTeam;
+        const isPromo = index < 2;
+        const isRelegation = index >= standings.length - 2;
+
+        html += `<tr class="${isPlayer ? 'is-player' : ''} ${isPromo ? 'promo' : ''} ${isRelegation ? 'relegation' : ''}">
+            <td>${index + 1}</td>
+            <td>${team.name}</td>
+            <td>${team.wins || 0}</td>
+            <td>${team.draws || 0}</td>
+            <td>${team.losses || 0}</td>
+            <td>${team.points}</td>
+        </tr>`;
+    });
+
+    container.innerHTML = html;
+}
+
+function renderKantineCircleStats() {
+    const possessionEl = document.getElementById('km-possession');
+    const budgetEl = document.getElementById('km-budget');
+    const ratingEl = document.getElementById('km-rating');
+    const goalsEl = document.getElementById('km-goals');
+
+    // Calculate average possession (default 50%)
+    const possession = gameState.avgPossession || 50;
+    if (possessionEl) {
+        possessionEl.textContent = `${Math.round(possession)}%`;
+        // Update circle progress
+        const circle = possessionEl.closest('.km-circle');
+        if (circle) circle.style.setProperty('--progress', possession);
+    }
+
+    // Budget
+    if (budgetEl) {
+        const budget = gameState.budget || 5000;
+        budgetEl.textContent = `€${budget.toLocaleString('nl-NL')}`;
+    }
+
+    // Team rating (average overall)
+    if (ratingEl) {
+        const players = gameState.players || [];
+        const avgRating = players.length > 0
+            ? Math.round(players.reduce((sum, p) => sum + (p.overall || 40), 0) / players.length)
+            : 40;
+        ratingEl.textContent = avgRating;
+    }
+
+    // Total goals
+    if (goalsEl) {
+        const totalGoals = (gameState.players || []).reduce((sum, p) => sum + (p.seasonGoals || 0), 0);
+        goalsEl.textContent = totalGoals;
+    }
+}
+
+function renderKantineStarplayers() {
+    const container = document.getElementById('km-starplayers');
+    if (!container) return;
+
+    const starPlayers = (gameState.players || [])
+        .filter(p => !p.isYouth)
+        .sort((a, b) => b.overall - a.overall)
+        .slice(0, 3);
+
+    if (starPlayers.length === 0) {
+        container.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 20px;">Geen spelers in selectie</p>';
+        return;
+    }
+
+    container.innerHTML = starPlayers.map((player) => {
+        const posData = POSITIONS[player.position] || { name: 'Speler', abbr: '?' };
+        return `
+            <div class="km-star-player">
+                <div class="km-star-avatar">${player.nationality?.flag || '🇳🇱'}</div>
+                <div class="km-star-info">
+                    <p class="km-star-name">${player.name}</p>
+                    <span class="km-star-pos">${posData.name} · ${player.age} jaar</span>
+                </div>
+                <span class="km-star-rating">${player.overall}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// Legacy function stubs for backwards compatibility
+function renderKantineToptalents() {}
+function renderKantineChairman() {}
+function renderKantineTopscorers() {}
+
 // Start when DOM is ready
-document.addEventListener('DOMContentLoaded', initGame);
+document.addEventListener('DOMContentLoaded', () => {
+    initGame();
+});
