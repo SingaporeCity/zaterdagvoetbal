@@ -3,57 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zaterdagvoetbal Kelderklasse - Begin Onderaan, Eindig Bovenaan</title>
+    <title>Zaterdagvoetbal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/zaterdagvoetbal/assets/index-BzeZ_Au4.js"></script>
-  <link rel="stylesheet" crossorigin href="/zaterdagvoetbal/assets/index-Dat_l3tu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="./assets/index-v_Om3B5f.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-YfJIwJFx.css">
 </head>
 <body>
-    <!-- Grass texture overlay -->
-    <div class="grass-overlay"></div>
-
     <!-- Main App Container -->
     <div id="app">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <span class="mobile-title">Zaterdagvoetbal</span>
+        </div>
+
         <!-- Sidebar Navigation -->
         <nav class="sidebar">
             <div class="sidebar-header">
                 <div class="club-badge">
                     <svg viewBox="0 0 100 120" class="badge-svg" id="club-badge-svg">
                         <!-- Shield background -->
-                        <path d="M50 5 L95 25 L95 70 Q95 100 50 115 Q5 100 5 70 L5 25 Z" fill="var(--primary-green)" stroke="var(--cream)" stroke-width="3" id="badge-path"/>
+                        <path d="M50 5 L95 25 L95 70 Q95 100 50 115 Q5 100 5 70 L5 25 Z" fill="var(--accent-green-dim)" stroke="var(--text-primary)" stroke-width="3" id="badge-path"/>
 
                         <!-- Inner shield decoration -->
-                        <path d="M50 12 L88 28 L88 68 Q88 93 50 107 Q12 93 12 68 L12 28 Z" fill="none" stroke="var(--cream)" stroke-width="1" opacity="0.3"/>
+                        <path d="M50 12 L88 28 L88 68 Q88 93 50 107 Q12 93 12 68 L12 28 Z" fill="none" stroke="var(--text-primary)" stroke-width="1" opacity="0.3"/>
 
                         <!-- Goal net symbol -->
                         <g transform="translate(35, 25)">
                             <!-- Goal posts -->
-                            <rect x="0" y="8" width="3" height="22" fill="var(--cream)"/>
-                            <rect x="27" y="8" width="3" height="22" fill="var(--cream)"/>
-                            <rect x="0" y="5" width="30" height="4" fill="var(--cream)"/>
+                            <rect x="0" y="8" width="3" height="22" fill="var(--text-primary)"/>
+                            <rect x="27" y="8" width="3" height="22" fill="var(--text-primary)"/>
+                            <rect x="0" y="5" width="30" height="4" fill="var(--text-primary)"/>
                             <!-- Net lines -->
-                            <line x1="4" y1="9" x2="4" y2="30" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
-                            <line x1="10" y1="9" x2="10" y2="30" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
-                            <line x1="15" y1="9" x2="15" y2="30" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
-                            <line x1="20" y1="9" x2="20" y2="30" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
-                            <line x1="26" y1="9" x2="26" y2="30" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
-                            <line x1="3" y1="15" x2="27" y2="15" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
-                            <line x1="3" y1="22" x2="27" y2="22" stroke="var(--cream)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="4" y1="9" x2="4" y2="30" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="10" y1="9" x2="10" y2="30" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="15" y1="9" x2="15" y2="30" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="20" y1="9" x2="20" y2="30" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="26" y1="9" x2="26" y2="30" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="3" y1="15" x2="27" y2="15" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="3" y1="22" x2="27" y2="22" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
                             <!-- Ball going in -->
-                            <circle cx="15" cy="20" r="6" fill="var(--orange)" stroke="var(--cream)" stroke-width="1"/>
-                            <path d="M12 17 L18 23 M18 17 L12 23" stroke="var(--cream)" stroke-width="0.8" opacity="0.7"/>
+                            <circle cx="15" cy="20" r="6" fill="var(--accent-orange)" stroke="var(--text-primary)" stroke-width="1"/>
+                            <path d="M12 17 L18 23 M18 17 L12 23" stroke="var(--text-primary)" stroke-width="0.8" opacity="0.7"/>
                         </g>
 
                         <!-- FC text -->
-                        <text x="50" y="70" text-anchor="middle" fill="var(--cream)" font-family="Bebas Neue, sans-serif" font-size="11" letter-spacing="2" id="badge-text-fc">FC</text>
+                        <text x="50" y="70" text-anchor="middle" fill="var(--text-primary)" font-family="Bebas Neue, sans-serif" font-size="11" letter-spacing="2" id="badge-text-fc">FC</text>
 
                         <!-- GOALS text -->
-                        <text x="50" y="85" text-anchor="middle" fill="var(--orange)" font-family="Bebas Neue, sans-serif" font-size="16" font-weight="bold" letter-spacing="1" id="badge-text-1">GOALS</text>
+                        <text x="50" y="85" text-anchor="middle" fill="var(--accent-orange)" font-family="Bebas Neue, sans-serif" font-size="16" font-weight="bold" letter-spacing="1" id="badge-text-1">GOALS</text>
 
                         <!-- MAKEN text -->
-                        <text x="50" y="100" text-anchor="middle" fill="var(--cream)" font-family="Bebas Neue, sans-serif" font-size="12" letter-spacing="2" id="badge-text-2">MAKEN</text>
+                        <text x="50" y="100" text-anchor="middle" fill="var(--text-primary)" font-family="Bebas Neue, sans-serif" font-size="12" letter-spacing="2" id="badge-text-2">MAKEN</text>
                     </svg>
                 </div>
                 <div class="club-info">
@@ -251,6 +258,9 @@
             </div>
         </nav>
 
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
         <!-- Main Content Area -->
         <main class="main-content">
             <!-- Global Top Bar - Budget & Manager -->
@@ -297,7 +307,7 @@
                                 <div class="match-team home">
                                     <div class="team-badge home-badge">
                                         <svg viewBox="0 0 60 72">
-                                            <path d="M30 3 L57 15 L57 42 Q57 60 30 69 Q3 60 3 42 L3 15 Z" fill="var(--primary-green)" stroke="var(--cream)" stroke-width="2"/>
+                                            <path d="M30 3 L57 15 L57 42 Q57 60 30 69 Q3 60 3 42 L3 15 Z" fill="var(--accent-green-dim)" stroke="var(--text-primary)" stroke-width="2"/>
                                         </svg>
                                     </div>
                                     <span class="team-name" id="home-team-name">FC Goals Maken</span>
@@ -359,58 +369,17 @@
                         </div>
                     </div>
 
-                    <!-- TO DO - Row 2-3, Col 2 (1 wide, 2 high) -->
+                    <!-- MELDINGEN - Row 2-3, Col 2 (1 wide, 2 high) -->
                     <div class="dash-cell dash-todo">
-                        <div class="todo-card">
+                        <div class="notifications-card">
                             <div class="card-header">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-                                    <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                                 </svg>
-                                <span>Taken</span>
+                                <span>Meldingen</span>
                             </div>
-                            <div class="todo-list">
-                                <a class="todo-item" onclick="navigateTo('tactics')">
-                                    <div class="todo-icon">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                                    </div>
-                                    <span class="todo-label">Opstelling</span>
-                                    <span class="todo-arrow">→</span>
-                                </a>
-                                <a class="todo-item" onclick="navigateTo('tactics', 'tactiek')">
-                                    <div class="todo-icon">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                                    </div>
-                                    <span class="todo-label">Tactiek</span>
-                                    <span class="todo-arrow">→</span>
-                                </a>
-                                <a class="todo-item" onclick="navigateTo('training')">
-                                    <div class="todo-icon">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11v11h-11z"/><path d="M6.5 1v5.5M17.5 1v5.5M1 6.5h5.5M17.5 6.5H23M6.5 17.5v5.5M17.5 17.5v5.5M1 17.5h5.5M17.5 17.5H23"/></svg>
-                                    </div>
-                                    <span class="todo-label">Training</span>
-                                    <span class="todo-arrow">→</span>
-                                </a>
-                                <a class="todo-item" onclick="navigateTo('scout')">
-                                    <div class="todo-icon">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                                    </div>
-                                    <span class="todo-label">Scouten</span>
-                                    <span class="todo-arrow">→</span>
-                                </a>
-                                <a class="todo-item" onclick="navigateTo('stadium')">
-                                    <div class="todo-icon">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
-                                    </div>
-                                    <span class="todo-label">Stadion</span>
-                                    <span class="todo-arrow">→</span>
-                                </a>
-                                <a class="todo-item" onclick="navigateTo('sponsors')">
-                                    <div class="todo-icon">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4M2 11h20"/></svg>
-                                    </div>
-                                    <span class="todo-label">Sponsors</span>
-                                    <span class="todo-arrow">→</span>
-                                </a>
+                            <div class="notifications-list" id="dashboard-notifications">
+                                <!-- Filled by JS -->
                             </div>
                         </div>
                     </div>
@@ -440,7 +409,7 @@
                                 <span>Voorzitter</span>
                             </div>
                             <div class="chairman-body">
-                                <div class="chairman-avatar">
+                                <div class="chairman-avatar" id="chairman-avatar">
                                     <svg viewBox="0 0 50 55">
                                         <ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/>
                                         <ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/>
@@ -1122,50 +1091,81 @@
                         </div>
                     </div>
 
-                    <!-- Right: Detail Panel -->
+                    <!-- Right: Detail Panel - Bouwplaat Style -->
                     <div class="stadium-detail-v2" id="stadium-detail">
-                        <div class="detail-header-v2">
+                        <!-- Header with illustration -->
+                        <div class="detail-hero">
+                            <div class="detail-illustration" id="detail-illustration">
+                                <!-- SVG will be inserted by JavaScript -->
+                            </div>
+                            <div class="detail-hero-overlay">
+                                <span class="detail-level-name" id="detail-level-name">Houten Tribune</span>
+                            </div>
+                        </div>
+
+                        <!-- Info Section -->
+                        <div class="detail-info-section">
                             <div class="detail-title-row">
                                 <span class="detail-icon" id="detail-icon">🏟️</span>
-                                <h3 class="detail-title" id="detail-title">Stadion</h3>
-                                <span class="detail-level" id="detail-level">Niveau 1</span>
+                                <div class="detail-title-wrap">
+                                    <h3 class="detail-title" id="detail-title">Stadion</h3>
+                                    <span class="detail-level" id="detail-level">Niveau 1 van 5</span>
+                                </div>
                             </div>
                             <p class="detail-description" id="detail-description">
                                 Vergroot de capaciteit van je stadion om meer supporters te ontvangen en meer inkomsten te genereren.
                             </p>
                         </div>
 
-                        <div class="detail-effects-compare">
-                            <div class="effect-box current">
-                                <div class="effect-label">Huidig</div>
-                                <div class="effect-image" id="detail-current-image">🏟️</div>
-                                <div class="effect-value" id="detail-current-effect">200 toeschouwers</div>
+                        <!-- Current Benefits Card -->
+                        <div class="detail-current-benefits">
+                            <div class="benefits-header">
+                                <span class="benefits-icon">✓</span>
+                                <span class="benefits-title">Huidige voordelen</span>
                             </div>
-                            <div class="effect-arrow">→</div>
-                            <div class="effect-box upgrade">
-                                <div class="effect-label">Na upgrade</div>
-                                <div class="effect-image" id="detail-next-image">🏟️</div>
-                                <div class="effect-value" id="detail-next-effect">500 toeschouwers</div>
+                            <div class="benefits-content" id="detail-current-effect">
+                                <span class="benefit-main">200 toeschouwers</span>
                             </div>
                         </div>
 
-                        <!-- Large illustration -->
-                        <div class="detail-illustration" id="detail-illustration">
-                            <!-- SVG will be inserted by JavaScript -->
+                        <!-- Upgrade Levels Progress -->
+                        <div class="detail-levels-track" id="detail-levels-track">
+                            <!-- Filled by JavaScript -->
                         </div>
 
+                        <!-- Next Upgrade Preview -->
+                        <div class="detail-next-upgrade" id="detail-next-upgrade">
+                            <div class="next-upgrade-header">
+                                <span class="next-label">Volgende upgrade</span>
+                                <span class="next-name" id="detail-next-name">Stenen Tribune</span>
+                            </div>
+                            <div class="next-upgrade-content">
+                                <div class="next-benefit">
+                                    <span class="next-benefit-icon">📈</span>
+                                    <span class="next-benefit-text" id="detail-next-effect">500 toeschouwers</span>
+                                </div>
+                                <div class="next-improvement" id="detail-improvement">
+                                    <span class="improvement-badge">+150%</span>
+                                    <span class="improvement-text">meer capaciteit</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Requirement Warning -->
                         <div class="detail-requirement" id="detail-requirement" style="display: none;">
                             <span class="req-icon">⚠️</span>
                             <span class="req-text" id="detail-req-text">Vereist: Stadion niveau 2</span>
                         </div>
 
-                        <div class="detail-upgrade-row">
-                            <div class="upgrade-cost">
-                                <span class="cost-label">Kosten:</span>
-                                <span class="cost-value" id="detail-cost">€2.000</span>
+                        <!-- Upgrade Action -->
+                        <div class="detail-upgrade-action">
+                            <div class="upgrade-cost-box">
+                                <span class="cost-label">Investering</span>
+                                <span class="cost-value" id="detail-cost">€5.000</span>
                             </div>
                             <button class="btn btn-primary btn-upgrade-stadium" id="btn-upgrade-stadium" onclick="upgradeStadiumCategory()">
-                                Upgraden
+                                <span class="btn-icon">🔨</span>
+                                <span class="btn-text">Bouwen</span>
                             </button>
                         </div>
                     </div>
