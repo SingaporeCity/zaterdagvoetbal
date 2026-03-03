@@ -884,20 +884,26 @@ function initMyPlayer() {
             number: 10,
             attributes: {
                 SNE: 52,
-                FYS: 61,
                 TEC: 45,
-                VER: 48
+                PAS: 58,
+                SCH: 41,
+                VER: 48,
+                FYS: 61
             }
         };
     }
+    // Migrate old saves missing new attributes
+    const a = gameState.myPlayer.attributes;
+    if (a.PAS === undefined) a.PAS = 50;
+    if (a.SCH === undefined) a.SCH = 45;
     return gameState.myPlayer;
 }
 
 function getMyPlayerDerived(mp) {
-    const attrs = mp.attributes;
-    const aanval = Math.round((attrs.TEC * 0.5 + attrs.SNE * 0.3 + attrs.FYS * 0.2));
-    const verdediging = Math.round((attrs.VER * 0.5 + attrs.FYS * 0.3 + attrs.SNE * 0.2));
-    const gemiddeld = Math.round((attrs.SNE + attrs.FYS + attrs.TEC + attrs.VER) / 4);
+    const a = mp.attributes;
+    const aanval = Math.round((a.SCH * 0.35 + a.TEC * 0.25 + a.PAS * 0.2 + a.SNE * 0.2));
+    const verdediging = Math.round((a.VER * 0.4 + a.FYS * 0.3 + a.PAS * 0.15 + a.SNE * 0.15));
+    const gemiddeld = Math.round((a.SNE + a.TEC + a.PAS + a.SCH + a.VER + a.FYS) / 6);
     return { aanval, verdediging, gemiddeld };
 }
 
@@ -907,7 +913,7 @@ function renderMijnSpelerPage() {
 
     const mp = initMyPlayer();
     const derived = getMyPlayerDerived(mp);
-    const attrs = mp.attributes;
+    const a = mp.attributes;
 
     function statBar(label, value, color) {
         return `<div class="mp-stat-row">
@@ -919,34 +925,33 @@ function renderMijnSpelerPage() {
         </div>`;
     }
 
+    function derivedBlock(label, value, color) {
+        return `<div class="mp-derived-stat">
+            <span class="mp-derived-value" style="color: ${color}">${value}</span>
+            <span class="mp-derived-label">${label}</span>
+        </div>`;
+    }
+
     container.innerHTML = `
-        <div class="mp-card">
-            <div class="mp-avatar-section">
-                <div class="mp-avatar">
-                    <svg viewBox="0 0 80 100">
-                        <!-- Head -->
-                        <ellipse cx="40" cy="28" rx="18" ry="19" fill="#f5d0c5"/>
-                        <!-- Hair -->
-                        <ellipse cx="40" cy="15" rx="16" ry="9" fill="#4a3728"/>
-                        <!-- Eyes -->
-                        <circle cx="33" cy="26" r="2.5" fill="white"/>
-                        <circle cx="47" cy="26" r="2.5" fill="white"/>
-                        <circle cx="33.5" cy="26.5" r="1.2" fill="#333"/>
-                        <circle cx="47.5" cy="26.5" r="1.2" fill="#333"/>
-                        <!-- Mouth -->
-                        <path d="M36 35 Q40 38 44 35" fill="none" stroke="#a0522d" stroke-width="1.2"/>
-                        <!-- Jersey -->
-                        <path d="M15 95 Q15 65 25 58 L40 62 L55 58 Q65 65 65 95 L65 100 L15 100 Z" fill="var(--accent-green-dim)"/>
-                        <!-- Number -->
-                        <text x="40" y="85" text-anchor="middle" fill="white" font-family="var(--font-display)" font-size="16" font-weight="bold">${mp.number}</text>
-                        <!-- Collar -->
-                        <path d="M32 58 L40 62 L48 58" fill="none" stroke="white" stroke-width="1.5"/>
-                        <!-- Shorts -->
-                        <rect x="22" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
-                        <rect x="42" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
-                    </svg>
-                </div>
-                <div class="mp-identity">
+        <div class="mp-layout">
+            <div class="mp-left">
+                <div class="mp-avatar-card">
+                    <div class="mp-avatar">
+                        <svg viewBox="0 0 80 100">
+                            <ellipse cx="40" cy="28" rx="18" ry="19" fill="#f5d0c5"/>
+                            <ellipse cx="40" cy="15" rx="16" ry="9" fill="#4a3728"/>
+                            <circle cx="33" cy="26" r="2.5" fill="white"/>
+                            <circle cx="47" cy="26" r="2.5" fill="white"/>
+                            <circle cx="33.5" cy="26.5" r="1.2" fill="#333"/>
+                            <circle cx="47.5" cy="26.5" r="1.2" fill="#333"/>
+                            <path d="M36 35 Q40 38 44 35" fill="none" stroke="#a0522d" stroke-width="1.2"/>
+                            <path d="M15 95 Q15 65 25 58 L40 62 L55 58 Q65 65 65 95 L65 100 L15 100 Z" fill="var(--accent-green-dim)"/>
+                            <text x="40" y="85" text-anchor="middle" fill="white" font-family="var(--font-display)" font-size="16" font-weight="bold">${mp.number}</text>
+                            <path d="M32 58 L40 62 L48 58" fill="none" stroke="white" stroke-width="1.5"/>
+                            <rect x="22" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                            <rect x="42" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                        </svg>
+                    </div>
                     <h3 class="mp-name">${mp.name}</h3>
                     <div class="mp-meta">
                         <span class="mp-position">${mp.position}</span>
@@ -954,28 +959,23 @@ function renderMijnSpelerPage() {
                         <span class="mp-number">#${mp.number}</span>
                     </div>
                 </div>
+
+                <div class="mp-derived-section">
+                    ${derivedBlock('Aanval', derived.aanval, '#ef5350')}
+                    ${derivedBlock('Verdediging', derived.verdediging, '#42a5f5')}
+                    ${derivedBlock('Gemiddeld', derived.gemiddeld, 'var(--accent-amber)')}
+                </div>
             </div>
 
-            <div class="mp-stats-section">
-                <h4 class="mp-section-title">Eigenschappen</h4>
-                ${statBar('Snelheid', attrs.SNE, '#ff9800')}
-                ${statBar('Fysiek', attrs.FYS, '#9c27b0')}
-                ${statBar('Techniek', attrs.TEC, '#4caf50')}
-                ${statBar('Verdedigen', attrs.VER, '#2196f3')}
-            </div>
-
-            <div class="mp-derived-section">
-                <div class="mp-derived-stat">
-                    <span class="mp-derived-value" style="color: #c62828">${derived.aanval}</span>
-                    <span class="mp-derived-label">Aanval</span>
-                </div>
-                <div class="mp-derived-stat">
-                    <span class="mp-derived-value" style="color: #1565c0">${derived.verdediging}</span>
-                    <span class="mp-derived-label">Verdediging</span>
-                </div>
-                <div class="mp-derived-stat mp-derived-avg">
-                    <span class="mp-derived-value">${derived.gemiddeld}</span>
-                    <span class="mp-derived-label">Gemiddeld</span>
+            <div class="mp-right">
+                <div class="mp-stats-section">
+                    <h4 class="mp-section-title">Kwaliteiten</h4>
+                    ${statBar('Snelheid', a.SNE, '#ff9800')}
+                    ${statBar('Techniek', a.TEC, '#4caf50')}
+                    ${statBar('Passen', a.PAS, '#29b6f6')}
+                    ${statBar('Schieten', a.SCH, '#ef5350')}
+                    ${statBar('Verdedigen', a.VER, '#7e57c2')}
+                    ${statBar('Fysiek', a.FYS, '#8d6e63')}
                 </div>
             </div>
         </div>
