@@ -4,12 +4,12 @@
 
 /* CSS Custom Properties */
 :root {
-    /* VOETBALKANTINE - Warm Dark Green Palette */
-    --bg-primary: #0c1a0a;
-    --bg-secondary: #142211;
-    --bg-card: #182a14;
-    --bg-card-hover: #1e3319;
-    --bg-sidebar: #10180c;
+    /* VOETBALKANTINE - Lighter Green Palette */
+    --bg-primary: #162b12;
+    --bg-secondary: #1e3518;
+    --bg-card: #243d1e;
+    --bg-card-hover: #2c4a26;
+    --bg-sidebar: #1a2814;
 
     /* Accent Colors - Kantine */
     --accent-green: #4caf50;
@@ -20,15 +20,15 @@
     --accent-cream: #fff8e1;
 
     /* Text */
-    --text-primary: #e8e4d8;
-    --text-secondary: #a09882;
-    --text-muted: #6d6450;
+    --text-primary: #f0ece0;
+    --text-secondary: #b0a890;
+    --text-muted: #7d7560;
 
     /* Borders & Surfaces */
-    --border: rgba(255, 248, 225, 0.08);
-    --border-accent: rgba(76, 175, 80, 0.25);
-    --glass: rgba(255, 248, 225, 0.03);
-    --shadow: rgba(0, 0, 0, 0.5);
+    --border: rgba(255, 248, 225, 0.10);
+    --border-accent: rgba(76, 175, 80, 0.30);
+    --glass: rgba(255, 248, 225, 0.04);
+    --shadow: rgba(0, 0, 0, 0.4);
 
     /* Status */
     --success: #4caf50;
@@ -97,7 +97,7 @@ body {
    ================================================ */
 .sidebar {
     width: var(--sidebar-width);
-    background: linear-gradient(180deg, #1a1408 0%, #12180c 40%, #0e1508 100%);
+    background: linear-gradient(180deg, #2a2010 0%, #1a2814 40%, #182510 100%);
     color: var(--text-primary);
     display: flex;
     flex-direction: column;
@@ -18714,7 +18714,7 @@ body {
 }
 
 .mp-avatar-card {
-    background: linear-gradient(160deg, #1a3a1a 0%, #0d2a0d 100%);
+    background: linear-gradient(160deg, #264a24 0%, #1a3a1a 100%);
     border-radius: var(--card-radius);
     border: 1px solid rgba(76, 175, 80, 0.15);
     box-shadow: 0 4px 16px var(--shadow);
