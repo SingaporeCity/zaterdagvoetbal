@@ -7663,14 +7663,15 @@ function renderStadiumMap() {
 
     // Building size
     const bw = 82;
-    const bh = 52;
+    const bh = 50;
 
     // Fixed positions — columns far enough from max stadium size (stadW max ~214)
-    const leftCol = 95;   // center x of left column buildings
-    const rightCol = 525; // center x of right column buildings
-    const row1 = 120;     // top row y
-    const row2 = 190;     // middle row y
-    const row3 = 260;     // bottom row y
+    const leftCol = 90;   // center x of left column buildings
+    const rightCol = 530; // center x of right column buildings
+    const row1 = 95;      // row 1 y
+    const row2 = 158;     // row 2 y
+    const row3 = 221;     // row 3 y
+    const row4 = 284;     // row 4 y
 
     // Color per level
     const levelColors = [
@@ -7699,35 +7700,9 @@ function renderStadiumMap() {
     }
 
     // Walkways
-    // Horizontal connecting left and right columns through stadium
     svg += `<rect x="${leftCol + bw/2}" y="${cy - 2}" width="${cx - stadW/2 - leftCol - bw/2}" height="4" fill="rgba(180,160,120,0.2)" rx="2"/>`;
     svg += `<rect x="${cx + stadW/2}" y="${cy - 2}" width="${rightCol - bw/2 - cx - stadW/2}" height="4" fill="rgba(180,160,120,0.2)" rx="2"/>`;
-    // Vertical from stadium down to training
     svg += `<rect x="${cx - 2}" y="${cy + stadH/2}" width="4" height="${340 - cy - stadH/2}" fill="rgba(180,160,120,0.2)" rx="2"/>`;
-    // Vertical from stadium up to kantine
-    svg += `<rect x="${cx - 2}" y="${50}" width="4" height="${cy - stadH/2 - 50}" fill="rgba(180,160,120,0.2)" rx="2"/>`;
-
-    // ===== KANTINE (attached to top of stadium) =====
-    const kantineLevel = getLevel('kantine');
-    const kColors = levelColors[Math.min(kantineLevel, levelColors.length - 1)];
-    const isKantineActive = currentStadiumCategory === 'kantine';
-    const kantW = 70 + kantineLevel * 8;
-    const kantH = 28 + kantineLevel * 4;
-    const kantX = cx - kantW / 2;
-    const kantTop = cy - stadH / 2 - 6 - kantH; // sits just above stadium
-
-    svg += `<g class="stadium-building${isKantineActive ? ' active' : ''}" data-category="kantine" onclick="selectStadiumCategory('kantine')">`;
-    svg += `<rect x="${kantX + 2}" y="${kantTop + 2}" width="${kantW}" height="${kantH}" fill="rgba(0,0,0,0.12)" rx="3"/>`;
-    svg += `<rect x="${kantX}" y="${kantTop}" width="${kantW}" height="${kantH}" fill="${kColors[0]}" stroke="${kColors[1]}" stroke-width="1.5" rx="3"/>`;
-    svg += `<rect x="${kantX}" y="${kantTop}" width="${kantW}" height="7" fill="${kColors[1]}" rx="3"/>`;
-    svg += `<rect x="${kantX}" y="${kantTop + 4}" width="${kantW}" height="3" fill="${kColors[1]}"/>`;
-    // Connector down to stadium
-    svg += `<rect x="${cx - 4}" y="${kantTop + kantH}" width="8" height="6" fill="${kColors[0]}" stroke="${kColors[1]}" stroke-width="0.5"/>`;
-    svg += `<text x="${cx}" y="${kantTop + kantH/2 + 2}" text-anchor="middle" font-size="12">🍺</text>`;
-    svg += `<text x="${cx}" y="${kantTop + kantH/2 + 13}" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="7" font-weight="600">Kantine</text>`;
-    svg += `<rect x="${kantX + kantW - 24}" y="${kantTop - 3}" width="24" height="13" fill="${kColors[1]}" rx="3"/>`;
-    svg += `<text x="${kantX + kantW - 12}" y="${kantTop + 6}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${kantineLevel + 1}</text>`;
-    svg += `</g>`;
 
     // ===== STADIUM (tribune) =====
     const tribuneColors = ['#6a4a2a', '#5a5a5a', '#4a4a6a', '#3a3a7a', '#8a6a0a'];
@@ -7810,7 +7785,7 @@ function renderStadiumMap() {
     const trainW = 100;
     const trainH = 58;
     const trainX = cx - trainW / 2;
-    const trainY = 310;
+    const trainY = 315;
 
     svg += `<g class="stadium-building${isTrainActive ? ' active' : ''}" data-category="training" onclick="selectStadiumCategory('training')">`;
     svg += `<rect x="${trainX}" y="${trainY}" width="${trainW}" height="${trainH}" fill="${tg}" stroke="${trainColors[1]}" stroke-width="1.5" rx="3"/>`;
@@ -7825,41 +7800,151 @@ function renderStadiumMap() {
     svg += `<text x="${trainX + trainW - 13}" y="${trainY + 11}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${trainLevel + 1}</text>`;
     svg += `</g>`;
 
-    // ===== REGULAR BUILDINGS (left & right columns) =====
+    // ===== UNIQUE BUILDINGS (left & right columns) =====
+    // Each building has its own color scheme and visual details
+    const buildingStyles = {
+        medical: {
+            base: '#3a1a1a', accent: '#e05050', roof: '#c03030', name: 'Medisch',
+            detail: (bx, by, bw, bh, level) => {
+                let d = '';
+                // Red cross
+                d += `<rect x="${bx + bw/2 - 2}" y="${by + 14}" width="4" height="16" fill="#ff4444" rx="1"/>`;
+                d += `<rect x="${bx + bw/2 - 8}" y="${by + 20}" width="16" height="4" fill="#ff4444" rx="1"/>`;
+                // Ambulance at level 2+
+                if (level >= 1) d += `<rect x="${bx + 6}" y="${by + bh - 12}" width="14" height="8" fill="white" rx="2" opacity="0.5"/>`;
+                return d;
+            }
+        },
+        academy: {
+            base: '#1a3a1a', accent: '#4ade80', roof: '#2d8a2e', name: 'Jeugd',
+            detail: (bx, by, bw, bh, level) => {
+                let d = '';
+                // Mini football goal
+                d += `<rect x="${bx + bw/2 - 10}" y="${by + 15}" width="20" height="12" fill="none" stroke="white" stroke-width="1" rx="1" opacity="0.5"/>`;
+                // Ball
+                d += `<circle cx="${bx + bw/2}" cy="${by + 32}" r="4" fill="white" opacity="0.4"/>`;
+                // Extra goals at higher levels
+                if (level >= 2) d += `<rect x="${bx + 8}" y="${by + 18}" width="12" height="8" fill="none" stroke="white" stroke-width="0.7" rx="1" opacity="0.3"/>`;
+                return d;
+            }
+        },
+        sponsoring: {
+            base: '#2a2a1a', accent: '#f5c542', roof: '#b8941f', name: 'Sponsoring',
+            detail: (bx, by, bw, bh, level) => {
+                let d = '';
+                // Billboard/banner
+                d += `<rect x="${bx + 8}" y="${by + 12}" width="${bw - 16}" height="14" fill="rgba(245,197,66,0.2)" stroke="#f5c542" stroke-width="0.8" rx="2"/>`;
+                d += `<text x="${bx + bw/2}" y="${by + 22}" text-anchor="middle" fill="#f5c542" font-size="6" font-weight="bold">SPONSOR</text>`;
+                // Extra banners at higher levels
+                if (level >= 1) d += `<rect x="${bx + 12}" y="${by + 30}" width="${bw - 24}" height="3" fill="#f5c542" opacity="0.3" rx="1"/>`;
+                if (level >= 2) d += `<rect x="${bx + 12}" y="${by + 35}" width="${bw - 24}" height="3" fill="#f5c542" opacity="0.3" rx="1"/>`;
+                return d;
+            }
+        },
+        scouting: {
+            base: '#1a2a3a', accent: '#60a5fa', roof: '#2a5a9a', name: 'Scouting',
+            detail: (bx, by, bw, bh, level) => {
+                let d = '';
+                // Radar/satellite dish
+                d += `<circle cx="${bx + bw/2}" cy="${by + 22}" r="10" fill="none" stroke="#60a5fa" stroke-width="1.2" opacity="0.5"/>`;
+                d += `<circle cx="${bx + bw/2}" cy="${by + 22}" r="5" fill="none" stroke="#60a5fa" stroke-width="0.8" opacity="0.4"/>`;
+                d += `<circle cx="${bx + bw/2}" cy="${by + 22}" r="2" fill="#60a5fa" opacity="0.6"/>`;
+                // Expanding rings at higher levels
+                if (level >= 2) d += `<circle cx="${bx + bw/2}" cy="${by + 22}" r="16" fill="none" stroke="#60a5fa" stroke-width="0.6" opacity="0.25"/>`;
+                return d;
+            }
+        },
+        youthscouting: {
+            base: '#2a1a3a', accent: '#c084fc', roof: '#6a2a9a', name: 'Scoutingcentrum',
+            detail: (bx, by, bw, bh, level) => {
+                let d = '';
+                // Binoculars icon
+                d += `<circle cx="${bx + bw/2 - 6}" cy="${by + 20}" r="5" fill="none" stroke="#c084fc" stroke-width="1" opacity="0.5"/>`;
+                d += `<circle cx="${bx + bw/2 + 6}" cy="${by + 20}" r="5" fill="none" stroke="#c084fc" stroke-width="1" opacity="0.5"/>`;
+                d += `<rect x="${bx + bw/2 - 2}" y="${by + 17}" width="4" height="6" fill="#c084fc" opacity="0.3" rx="1"/>`;
+                // Small person silhouettes
+                if (level >= 1) {
+                    for (let p = 0; p < Math.min(level + 1, 3); p++) {
+                        d += `<circle cx="${bx + 14 + p * 10}" cy="${by + 34}" r="2.5" fill="#c084fc" opacity="0.3"/>`;
+                        d += `<rect x="${bx + 12 + p * 10}" y="${by + 37}" width="5" height="6" fill="#c084fc" opacity="0.2" rx="1"/>`;
+                    }
+                }
+                return d;
+            }
+        },
+        kantine: {
+            base: '#3a2a1a', accent: '#d4a044', roof: '#a07820', name: 'Kantine',
+            detail: (bx, by, bw, bh, level) => {
+                let d = '';
+                // Beer tap / bar counter
+                d += `<rect x="${bx + 10}" y="${by + 22}" width="${bw - 20}" height="6" fill="#d4a044" opacity="0.4" rx="2"/>`;
+                // Beer glasses
+                d += `<rect x="${bx + bw/2 - 8}" y="${by + 13}" width="5" height="8" fill="rgba(255,200,50,0.4)" rx="1"/>`;
+                d += `<rect x="${bx + bw/2 + 3}" y="${by + 13}" width="5" height="8" fill="rgba(255,200,50,0.4)" rx="1"/>`;
+                // Foam tops
+                d += `<rect x="${bx + bw/2 - 8}" y="${by + 12}" width="5" height="3" fill="rgba(255,255,255,0.3)" rx="1"/>`;
+                d += `<rect x="${bx + bw/2 + 3}" y="${by + 12}" width="5" height="3" fill="rgba(255,255,255,0.3)" rx="1"/>`;
+                // Tables at higher levels
+                if (level >= 1) {
+                    d += `<circle cx="${bx + 14}" cy="${by + 36}" r="4" fill="#d4a044" opacity="0.25"/>`;
+                    d += `<circle cx="${bx + bw - 14}" cy="${by + 36}" r="4" fill="#d4a044" opacity="0.25"/>`;
+                }
+                return d;
+            }
+        },
+        perszaal: {
+            base: '#1a1a2a', accent: '#94a3b8', roof: '#475569', name: 'Media',
+            detail: (bx, by, bw, bh, level) => {
+                let d = '';
+                // Satellite dish on roof
+                d += `<line x1="${bx + bw - 16}" y1="${by + 2}" x2="${bx + bw - 12}" y2="${by - 6}" stroke="#94a3b8" stroke-width="1.5"/>`;
+                d += `<path d="M${bx + bw - 18} ${by - 4} Q${bx + bw - 12} ${by - 10} ${bx + bw - 6} ${by - 4}" fill="none" stroke="#94a3b8" stroke-width="1"/>`;
+                // Camera/screen
+                d += `<rect x="${bx + 10}" y="${by + 14}" width="18" height="12" fill="rgba(148,163,184,0.2)" stroke="#94a3b8" stroke-width="0.8" rx="2"/>`;
+                d += `<rect x="${bx + 12}" y="${by + 16}" width="14" height="8" fill="rgba(100,180,255,0.15)" rx="1"/>`;
+                // Microphone at higher levels
+                if (level >= 1) {
+                    d += `<line x1="${bx + bw - 18}" y1="${by + 18}" x2="${bx + bw - 18}" y2="${by + 30}" stroke="#94a3b8" stroke-width="1.2"/>`;
+                    d += `<circle cx="${bx + bw - 18}" cy="${by + 16}" r="3" fill="#94a3b8" opacity="0.4"/>`;
+                }
+                return d;
+            }
+        }
+    };
+
     const regularBuildings = [
-        { key: 'medical',       x: leftCol,  y: row1, icon: '🏥', name: 'Medisch' },
-        { key: 'academy',       x: leftCol,  y: row2, icon: '🎓', name: 'Jeugd' },
-        { key: 'sponsoring',    x: leftCol,  y: row3, icon: '💼', name: 'Sponsoring' },
-        { key: 'scouting',      x: rightCol, y: row1, icon: '🔍', name: 'Scouting' },
-        { key: 'youthscouting', x: rightCol, y: row2, icon: '👶', name: 'Scoutingcentrum' },
-        { key: 'perszaal',      x: rightCol, y: row3, icon: '📰', name: 'Media' },
+        { key: 'medical',       x: leftCol,  y: row1 },
+        { key: 'academy',       x: leftCol,  y: row2 },
+        { key: 'kantine',       x: leftCol,  y: row3 },
+        { key: 'sponsoring',    x: leftCol,  y: row4 },
+        { key: 'scouting',      x: rightCol, y: row1 },
+        { key: 'youthscouting', x: rightCol, y: row2 },
+        { key: 'perszaal',      x: rightCol, y: row3 },
     ];
 
     regularBuildings.forEach(b => {
+        const style = buildingStyles[b.key];
         const level = getLevel(b.key);
-        const colors = levelColors[Math.min(level, levelColors.length - 1)];
         const isActive = currentStadiumCategory === b.key;
         const bx = b.x - bw / 2;
         const by = b.y - bh / 2;
+        // Brighter at higher levels
+        const brightness = 1 + level * 0.08;
 
         svg += `<g class="stadium-building${isActive ? ' active' : ''}" data-category="${b.key}" onclick="selectStadiumCategory('${b.key}')">`;
+        // Shadow
         svg += `<rect x="${bx + 2}" y="${by + 2}" width="${bw}" height="${bh}" fill="rgba(0,0,0,0.12)" rx="4"/>`;
-        svg += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="${colors[0]}" stroke="${colors[1]}" stroke-width="1.5" rx="4"/>`;
-        svg += `<rect x="${bx}" y="${by}" width="${bw}" height="7" fill="${colors[1]}" rx="4"/>`;
-        svg += `<rect x="${bx}" y="${by + 5}" width="${bw}" height="2" fill="${colors[1]}"/>`;
-        if (level >= 1) {
-            const winY = by + 13;
-            const numWin = Math.min(level + 2, 4);
-            const winW = 9;
-            const totalW = numWin * (winW + 3) - 3;
-            const sx = bx + (bw - totalW) / 2;
-            for (let wi = 0; wi < numWin; wi++) {
-                svg += `<rect x="${sx + wi * (winW + 3)}" y="${winY}" width="${winW}" height="6" fill="rgba(255,220,100,0.35)" rx="1"/>`;
-            }
-        }
-        svg += `<text x="${b.x}" y="${b.y + 4}" text-anchor="middle" font-size="14">${b.icon}</text>`;
-        svg += `<text x="${b.x}" y="${b.y + 16}" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="7" font-weight="600">${b.name}</text>`;
-        svg += `<rect x="${bx + bw - 24}" y="${by - 2}" width="24" height="12" fill="${colors[1]}" rx="3"/>`;
+        // Body with unique color
+        svg += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="${style.base}" stroke="${style.accent}" stroke-width="1.5" rx="4"/>`;
+        // Colored roof
+        svg += `<rect x="${bx}" y="${by}" width="${bw}" height="7" fill="${style.roof}" rx="4"/>`;
+        svg += `<rect x="${bx}" y="${by + 5}" width="${bw}" height="2" fill="${style.roof}"/>`;
+        // Unique detail per building
+        svg += style.detail(bx, by, bw, bh, level);
+        // Name label
+        svg += `<text x="${b.x}" y="${by + bh - 4}" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="7" font-weight="600">${style.name}</text>`;
+        // Level badge
+        svg += `<rect x="${bx + bw - 24}" y="${by - 2}" width="24" height="12" fill="${style.accent}" rx="3"/>`;
         svg += `<text x="${bx + bw - 12}" y="${by + 7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level + 1}</text>`;
         svg += `</g>`;
     });
