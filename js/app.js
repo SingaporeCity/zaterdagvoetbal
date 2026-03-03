@@ -7755,7 +7755,7 @@ function renderStadiumMap() {
     }
     // Label
     const labelY = cy - stadH / 2 - (tribuneLevel === 0 ? 16 : 8);
-    svg += `<text x="${cx}" y="${Math.min(labelY, kantTop - 4)}" text-anchor="middle" fill="${tColors[1]}" font-size="9" font-weight="bold">${tribuneConfig.levels[tribuneLevel]?.name || 'Stadion'}</text>`;
+    svg += `<text x="${cx}" y="${labelY}" text-anchor="middle" fill="${tColors[1]}" font-size="9" font-weight="bold">${tribuneConfig.levels[tribuneLevel]?.name || 'Stadion'}</text>`;
     svg += `<rect x="${cx - 13}" y="${cy + stadH/2 + (tribuneLevel === 0 ? 14 : 5)}" width="26" height="13" fill="${tColors[1]}" rx="3"/>`;
     svg += `<text x="${cx}" y="${cy + stadH/2 + (tribuneLevel === 0 ? 23 : 14)}" text-anchor="middle" fill="white" font-size="8" font-weight="bold">Nv${tribuneLevel + 1}</text>`;
     svg += `</g>`;
