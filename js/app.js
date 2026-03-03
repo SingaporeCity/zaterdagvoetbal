@@ -850,16 +850,11 @@ function createPlayerCardHTML(player, mini = false) {
             </div>
             <div class="pc-condition-bars">
                 <div class="pc-bar-item">
-                    <div class="pc-bar-track">
-                        <div class="pc-bar-fill" style="width: ${condition}%; background: ${getBarColor(condition)}"></div>
-                    </div>
-                    <span class="pc-bar-label">Conditie</span>
-                </div>
-                <div class="pc-bar-item">
+                    <span class="pc-bar-label">Energie</span>
                     <div class="pc-bar-track">
                         <div class="pc-bar-fill" style="width: ${energy}%; background: ${getBarColor(energy)}"></div>
                     </div>
-                    <span class="pc-bar-label">Energie</span>
+                    <span class="pc-bar-value">${energy}%</span>
                 </div>
             </div>
             <div class="pc-ratings">
@@ -877,6 +872,117 @@ function createPlayerCardHTML(player, mini = false) {
 }
 
 // ================================================
+// MIJN SPELER PAGE
+// ================================================
+
+function initMyPlayer() {
+    if (!gameState.myPlayer) {
+        gameState.myPlayer = {
+            name: 'Patrick',
+            age: 28,
+            position: 'CM',
+            number: 10,
+            attributes: {
+                SNE: 52,
+                FYS: 61,
+                TEC: 45,
+                VER: 48
+            }
+        };
+    }
+    return gameState.myPlayer;
+}
+
+function getMyPlayerDerived(mp) {
+    const attrs = mp.attributes;
+    const aanval = Math.round((attrs.TEC * 0.5 + attrs.SNE * 0.3 + attrs.FYS * 0.2));
+    const verdediging = Math.round((attrs.VER * 0.5 + attrs.FYS * 0.3 + attrs.SNE * 0.2));
+    const gemiddeld = Math.round((attrs.SNE + attrs.FYS + attrs.TEC + attrs.VER) / 4);
+    return { aanval, verdediging, gemiddeld };
+}
+
+function renderMijnSpelerPage() {
+    const container = document.getElementById('mijnspeler-dashboard');
+    if (!container) return;
+
+    const mp = initMyPlayer();
+    const derived = getMyPlayerDerived(mp);
+    const attrs = mp.attributes;
+
+    function statBar(label, value, color) {
+        return `<div class="mp-stat-row">
+            <span class="mp-stat-label">${label}</span>
+            <div class="mp-stat-bar-track">
+                <div class="mp-stat-bar-fill" style="width: ${value}%; background: ${color}"></div>
+            </div>
+            <span class="mp-stat-value">${value}</span>
+        </div>`;
+    }
+
+    container.innerHTML = `
+        <div class="mp-card">
+            <div class="mp-avatar-section">
+                <div class="mp-avatar">
+                    <svg viewBox="0 0 80 100">
+                        <!-- Head -->
+                        <ellipse cx="40" cy="28" rx="18" ry="19" fill="#f5d0c5"/>
+                        <!-- Hair -->
+                        <ellipse cx="40" cy="15" rx="16" ry="9" fill="#4a3728"/>
+                        <!-- Eyes -->
+                        <circle cx="33" cy="26" r="2.5" fill="white"/>
+                        <circle cx="47" cy="26" r="2.5" fill="white"/>
+                        <circle cx="33.5" cy="26.5" r="1.2" fill="#333"/>
+                        <circle cx="47.5" cy="26.5" r="1.2" fill="#333"/>
+                        <!-- Mouth -->
+                        <path d="M36 35 Q40 38 44 35" fill="none" stroke="#a0522d" stroke-width="1.2"/>
+                        <!-- Jersey -->
+                        <path d="M15 95 Q15 65 25 58 L40 62 L55 58 Q65 65 65 95 L65 100 L15 100 Z" fill="var(--accent-green-dim)"/>
+                        <!-- Number -->
+                        <text x="40" y="85" text-anchor="middle" fill="white" font-family="var(--font-display)" font-size="16" font-weight="bold">${mp.number}</text>
+                        <!-- Collar -->
+                        <path d="M32 58 L40 62 L48 58" fill="none" stroke="white" stroke-width="1.5"/>
+                        <!-- Shorts -->
+                        <rect x="22" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                        <rect x="42" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                    </svg>
+                </div>
+                <div class="mp-identity">
+                    <h3 class="mp-name">${mp.name}</h3>
+                    <div class="mp-meta">
+                        <span class="mp-position">${mp.position}</span>
+                        <span class="mp-age">${mp.age} jaar</span>
+                        <span class="mp-number">#${mp.number}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mp-stats-section">
+                <h4 class="mp-section-title">Eigenschappen</h4>
+                ${statBar('Snelheid', attrs.SNE, '#ff9800')}
+                ${statBar('Fysiek', attrs.FYS, '#9c27b0')}
+                ${statBar('Techniek', attrs.TEC, '#4caf50')}
+                ${statBar('Verdedigen', attrs.VER, '#2196f3')}
+            </div>
+
+            <div class="mp-derived-section">
+                <div class="mp-derived-stat">
+                    <span class="mp-derived-value" style="color: #c62828">${derived.aanval}</span>
+                    <span class="mp-derived-label">Aanval</span>
+                </div>
+                <div class="mp-derived-stat">
+                    <span class="mp-derived-value" style="color: #1565c0">${derived.verdediging}</span>
+                    <span class="mp-derived-label">Verdediging</span>
+                </div>
+                <div class="mp-derived-stat mp-derived-avg">
+                    <span class="mp-derived-value">${derived.gemiddeld}</span>
+                    <span class="mp-derived-label">Gemiddeld</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ================================================
 // TACTICS PAGE RENDERING
 // ================================================
 
@@ -887,6 +993,7 @@ function renderTacticsPage() {
     updateLineupFit();
     initTacticsControls();
     populateSpecialistSelects();
+    renderTeamTraining();
 }
 
 function renderFormationDropdown() {
@@ -3561,6 +3668,7 @@ function navigateToPage(page) {
     if (page === 'sponsors') renderSponsorsPage();
     if (page === 'activities') renderActivitiesPage();
     if (page === 'staff') renderStaffCenterPage();
+    if (page === 'mijnspeler') renderMijnSpelerPage();
     if (page === 'mijnteam') renderMijnTeamPage();
     if (page === 'jeugdteam') renderJeugdteamPage();
     if (page === 'kantine') renderKantineDashboard();
@@ -5627,11 +5735,10 @@ function initGame() {
         replaceGameState(savedState);
         console.log('📂 Save file loaded!');
 
-        // Calculate and apply offline progress
+        // Calculate and apply offline progress (silently)
         const offlineProgress = calculateOfflineProgress(gameState);
         if (offlineProgress && offlineProgress.hoursAway >= 1) {
             applyOfflineProgress(gameState, offlineProgress);
-            showOfflineProgressModal(offlineProgress);
         }
     } else {
         // New game - generate initial data
@@ -5640,13 +5747,9 @@ function initGame() {
         gameState.achievements = initAchievements();
     }
 
-    // Check and apply daily reward
+    // Check and apply daily reward (silently)
     const dailyRewardResult = checkDailyReward(gameState);
-    if (dailyRewardResult.claimed) {
-        setTimeout(() => {
-            showDailyRewardModal(dailyRewardResult);
-        }, 1000);
-    }
+    // Reward is claimed but no modal shown
 
     // Render initial content
     renderStandings();
@@ -5678,10 +5781,7 @@ function initGame() {
     // Start auto-save
     startAutoSave(gameState);
 
-    // Check for random events
-    if (canTriggerEvent(gameState)) {
-        setTimeout(checkForRandomEvent, 5000);
-    }
+    // Random events disabled - no popups on dashboard load
 
     // Check achievements
     const newAchievements = checkAchievements(gameState);

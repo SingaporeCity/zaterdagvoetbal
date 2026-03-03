@@ -78,6 +78,15 @@
                     </span>
                     <span>Dashboard</span>
                 </li>
+                <li class="nav-item" data-page="mijnspeler">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </span>
+                    <span>Mijn Speler</span>
+                </li>
                 <li class="nav-item" data-page="mijnteam">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -112,10 +121,11 @@
                         <li data-tab="opstelling">Opstelling</li>
                         <li data-tab="tactiek">Tactiek</li>
                         <li data-tab="specialisten">Specialisten</li>
+                        <li data-tab="wedstrijd">Wedstrijdvoorbereiding</li>
                         <li data-tab="activiteiten">Activiteiten</li>
                     </ul>
                 </li>
-                <li class="nav-item has-submenu" data-page="training">
+                <li class="nav-item" data-page="training">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"/>
@@ -124,10 +134,6 @@
                     </span>
                     <span>Training</span>
                     <span class="nav-badge training-badge">!</span>
-                    <ul class="nav-submenu">
-                        <li data-tab="positie">Positietraining</li>
-                        <li data-tab="wedstrijd">Wedstrijdvoorbereiding</li>
-                    </ul>
                 </li>
                 <li class="nav-item" data-page="scout">
                     <span class="nav-icon">
@@ -215,46 +221,7 @@
                 </li>
             </ul>
 
-            <div class="sidebar-footer">
-                <div class="quick-stats">
-                    <div class="stat">
-                        <span class="stat-label">Budget</span>
-                        <span class="stat-value budget-display">€5.000</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">Positie</span>
-                        <span class="stat-value position-display">3e</span>
-                    </div>
-                    <div class="stat stat-streak" id="sidebar-streak" onclick="claimDailyBonus()">
-                        <span class="stat-label">🔥 Streak</span>
-                        <span class="stat-value streak-display">0 dagen</span>
-                    </div>
-                </div>
-                <div class="save-load-buttons">
-                    <button id="save-game-btn" class="btn btn-small" title="Spel opslaan">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                            <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
-                            <polyline points="17,21 17,13 7,13 7,21"/>
-                            <polyline points="7,3 7,8 15,8"/>
-                        </svg>
-                        <span>Opslaan</span>
-                    </button>
-                    <button id="export-save-btn" class="btn btn-small btn-secondary" title="Exporteer save">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                            <polyline points="7,10 12,15 17,10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                    </button>
-                    <button id="import-save-btn" class="btn btn-small btn-secondary" title="Importeer save">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                            <polyline points="17,8 12,3 7,8"/>
-                            <line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
+            <!-- Sidebar footer removed - budget/positie shown in global top bar -->
         </nav>
 
         <!-- Sidebar Overlay for Mobile -->
@@ -437,6 +404,20 @@
                 <span id="xp-target" style="display:none;">100</span>
                 <span id="newspaper-week" style="display:none;">4</span>
                 <div id="daily-streak" style="display:none;"></div>
+            </section>
+
+            <!-- Mijn Speler Page -->
+            <section id="mijnspeler" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Mijn Speler</h2>
+                        <p class="page-subtitle handwritten">Jouw voetballer</p>
+                    </div>
+                </header>
+
+                <div class="mijnspeler-dashboard" id="mijnspeler-dashboard">
+                    <!-- Filled by JS -->
+                </div>
             </section>
 
             <!-- Mijn Team Page -->
@@ -693,6 +674,7 @@
                     <button class="tactics-tab active" data-tab="opstelling">Opstelling</button>
                     <button class="tactics-tab" data-tab="tactiek">Tactiek</button>
                     <button class="tactics-tab" data-tab="specialisten">Specialisten</button>
+                    <button class="tactics-tab" data-tab="wedstrijd">Wedstrijdvoorbereiding</button>
                     <button class="tactics-tab" data-tab="activiteiten">Activiteiten</button>
                 </div>
 
@@ -857,64 +839,8 @@
                     </div>
                 </div>
 
-                <!-- Activiteiten Panel -->
-                <div class="tactics-panel" id="activiteiten-panel">
-                    <div class="activity-cards-grid">
-                        <div class="activity-card-compact" onclick="startActivity('trainingcamp')">
-                            <div class="acc-icon">🏕️</div>
-                            <div class="acc-info">
-                                <h4>Trainingskamp</h4>
-                                <span class="acc-effect">+2 Fitness hele team</span>
-                            </div>
-                            <div class="acc-cost">€2.500</div>
-                        </div>
-                        <div class="activity-card-compact" onclick="startActivity('teamparty')">
-                            <div class="acc-icon">🎉</div>
-                            <div class="acc-info">
-                                <h4>Teamuitje</h4>
-                                <span class="acc-effect">+10% Teamchemie</span>
-                            </div>
-                            <div class="acc-cost">€1.000</div>
-                        </div>
-                        <div class="activity-card-compact" onclick="startActivity('tactical')">
-                            <div class="acc-icon">📋</div>
-                            <div class="acc-info">
-                                <h4>Tactische Sessie</h4>
-                                <span class="acc-effect">+5% Tactiek volgende wed</span>
-                            </div>
-                            <div class="acc-cost">€500</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Training Page -->
-            <section id="training" class="page">
-                <header class="page-header">
-                    <div class="header-left">
-                        <h2 class="page-title">Training</h2>
-                        <p class="page-subtitle handwritten">Train je spelers per positie</p>
-                    </div>
-                </header>
-
-                <!-- Training Tabs -->
-                <div class="training-tabs">
-                    <button class="training-tab active" data-training-tab="positie">Positietraining</button>
-                    <button class="training-tab" data-training-tab="wedstrijd">Wedstrijdvoorbereiding</button>
-                </div>
-
-                <!-- Positietraining Panel -->
-                <div class="training-panel active" id="positie-training-panel">
-                    <div class="position-training-grid" id="position-training-grid">
-                        <!-- Filled by JS -->
-                    </div>
-                    <p class="training-hint">💡 Neem eerst een trainer aan bij Staf om te kunnen trainen</p>
-                </div>
-
-                <!-- Wedstrijdvoorbereiding Panel -->
-                <div class="training-panel" id="wedstrijd-training-panel">
-
-                    <!-- Team Training - Match Preparation -->
+                <!-- Wedstrijdvoorbereiding Panel (moved from Training) -->
+                <div class="tactics-panel" id="wedstrijd-panel">
                     <div class="team-training-panel">
                         <h3>Wedstrijdvoorbereiding</h3>
                         <p class="training-rules">Kies een focus voor het hele team</p>
@@ -974,45 +900,52 @@
                             <span class="ttt-time">Nog 04:32:15</span>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Group Training Intensity -->
-                    <div class="group-intensity-panel">
-                        <h3>Groepstraining Intensiteit</h3>
-                        <p class="training-info-text">Intenser trainen verhoogt spelersconditie, maar verlaagt energie</p>
-
-                        <div class="intensity-slider-container">
-                            <div class="intensity-labels">
-                                <span>Rustig</span>
-                                <span>Normaal</span>
-                                <span>Intens</span>
+                <!-- Activiteiten Panel -->
+                <div class="tactics-panel" id="activiteiten-panel">
+                    <div class="activity-cards-grid">
+                        <div class="activity-card-compact" onclick="startActivity('trainingcamp')">
+                            <div class="acc-icon">🏕️</div>
+                            <div class="acc-info">
+                                <h4>Trainingskamp</h4>
+                                <span class="acc-effect">+2 Fitness hele team</span>
                             </div>
-                            <input type="range" id="training-intensity" class="intensity-slider"
-                                   min="1" max="5" value="3" step="1">
-                            <div class="intensity-steps">
-                                <span class="intensity-step" data-level="1">1</span>
-                                <span class="intensity-step" data-level="2">2</span>
-                                <span class="intensity-step" data-level="3">3</span>
-                                <span class="intensity-step" data-level="4">4</span>
-                                <span class="intensity-step" data-level="5">5</span>
-                            </div>
+                            <div class="acc-cost">€2.500</div>
                         </div>
-
-                        <div class="intensity-effect" id="intensity-effect">
-                            <div class="intensity-effect-item positive">
-                                <span class="effect-label">Conditie</span>
-                                <span class="effect-value" id="intensity-condition">+5%</span>
+                        <div class="activity-card-compact" onclick="startActivity('teamparty')">
+                            <div class="acc-icon">🎉</div>
+                            <div class="acc-info">
+                                <h4>Teamuitje</h4>
+                                <span class="acc-effect">+10% Teamchemie</span>
                             </div>
-                            <div class="intensity-effect-item negative">
-                                <span class="effect-label">Energie</span>
-                                <span class="effect-value" id="intensity-energy">-3%</span>
-                            </div>
+                            <div class="acc-cost">€1.000</div>
                         </div>
-
-                        <div class="intensity-description" id="intensity-description">
-                            <strong>Normaal</strong> - Gebalanceerde training voor stabiele ontwikkeling.
+                        <div class="activity-card-compact" onclick="startActivity('tactical')">
+                            <div class="acc-icon">📋</div>
+                            <div class="acc-info">
+                                <h4>Tactische Sessie</h4>
+                                <span class="acc-effect">+5% Tactiek volgende wed</span>
+                            </div>
+                            <div class="acc-cost">€500</div>
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <!-- Training Page -->
+            <section id="training" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Training</h2>
+                        <p class="page-subtitle handwritten">Train je spelers per positie</p>
+                    </div>
+                </header>
+
+                <div class="position-training-grid" id="position-training-grid">
+                    <!-- Filled by JS -->
+                </div>
+                <p class="training-hint">💡 Neem eerst een trainer aan bij Staf om te kunnen trainen</p>
             </section>
 
             <!-- Stadium Page -->

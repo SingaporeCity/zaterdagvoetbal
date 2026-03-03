@@ -8,18 +8,20 @@ Nederlands amateurvoetbal-managerspel. Begin in de 6e Klasse en werk je omhoog n
 
 Je beheert een amateurvoetbalclub. Elke dag kun je een wedstrijd spelen (timer telt af naar middernacht). Een seizoen duurt 14 wedstrijden. Na afloop promoveer of degradeer je op basis van je eindstand.
 
-### Wat kun je doen
+### Pagina's
 - **Dashboard** - Overzicht: volgende wedstrijd, stand, topscorers, meldingen
-- **Selectie** - Spelers bekijken, verkopen, contracten verlengen
-- **Tactiek** - Opstelling kiezen, formatie instellen, speelstijl aanpassen
-- **Training** - Spelers trainen om hun stats te verbeteren
+- **Mijn Speler** - Je eigen voetballer-avatar met stats (SNE/FYS/TEC/VER) en afgeleide waarden (Aanval/Verdediging/Gemiddeld)
+- **Mijn Club** - Clubnaam en kleuren aanpassen
+- **Selectie** - Spelers bekijken (alleen energie-bar, geen conditie)
+- **Tactiek** - 5 tabs: Opstelling, Tactiek, Specialisten, Wedstrijdvoorbereiding, Activiteiten
+- **Training** - Positietraining per groep (keeper/verdediging/middenveld/aanval)
 - **Scout** - Nieuwe spelers zoeken en aantrekken
-- **Transfers** - Spelers kopen en verkopen op de markt
 - **Jeugd** - Jeugdspelers ontwikkelen en doorschuiven
 - **Stadion** - Upgrades kopen (veld, tribunes, faciliteiten)
+- **Transfers** - Spelers kopen en verkopen op de markt
 - **Sponsors** - Sponsordeals sluiten voor extra inkomsten
 - **Financien** - Budget en inkomsten/uitgaven beheren
-- **Kantine** - Extra activiteiten en evenementen
+- **Stafcentrum** - Trainers en medisch personeel
 
 ### Seizoenscyclus
 1. Speel 14 wedstrijden (1 per dag)
@@ -41,7 +43,7 @@ Je beheert een amateurvoetbalclub. Elke dag kun je een wedstrijd spelen (timer t
 ```
 zaterdagvoetbal/
   index.html          - Volledige HTML structuur (alle pagina's)
-  styles.css          - Dark sporty theme (CSS custom properties)
+  styles.css          - Voetbalkantine theme (CSS custom properties)
   vite.config.js      - Vite configuratie
   package.json        - Project config
   dist/               - Production build (GitHub Pages)
@@ -77,22 +79,24 @@ git push origin gh-pages
 De `dist/` folder heeft een eigen git repo op de `gh-pages` branch.
 
 ### Design
-Dark sporty thema (ESPN/FIFA-stijl):
-- Achtergrond: donkerblauw-zwart (`#0a0e17`)
-- Accenten: neon groen (`#00e676`) + oranje (`#ff6d00`)
-- Cards: donkere panelen met subtiele borders
+Voetbalkantine thema — professioneel met karakter:
+- Achtergrond: donker bosgroen (`#0c1a0a`)
+- Accenten: warm amber (`#ffb300`) + klassiek grasgroen (`#4caf50`)
+- Cards: warm groen (`#182a14`) met amber hover-glow
+- Persoonlijkheidstouches: tape-hoekjes, licht gekantelde kaarten, krijtlijnen op wedstrijdveld
 - Fonts: Bebas Neue (headers) + DM Sans (body)
 - Responsive: hamburger menu op mobiel (<=768px)
+- Geen popups bij laden (welkom-terug/dagelijkse beloning/random events uitgeschakeld)
 
 ### Belangrijke functies in app.js
-| Functie | Regel | Wat het doet |
-|---------|-------|-------------|
-| `initGame()` | ~5621 | Start het spel, laadt save, rendert UI |
-| `navigateToPage()` | ~3537 | Wisselt tussen pagina's |
-| `initNavigation()` | ~3569 | Click handlers voor menu + hamburger |
-| `playMatch()` | ~6158 | Speelt een wedstrijd, update stand |
-| `showMatchResultModal()` | ~6337 | Toont wedstrijdresultaat met timeline |
-| `setNextMatch()` | ~6294 | Plant volgende wedstrijd (middernacht) |
-| `updateMatchTimer()` | ~3381 | Countdown timer op dashboard |
-| `renderStandings()` | - | Rendert competitietabel |
-| `renderPlayerCards()` | - | Rendert spelersoverzicht |
+| Functie | Wat het doet |
+|---------|-------------|
+| `initGame()` | Start het spel, laadt save, rendert UI |
+| `navigateToPage()` | Wisselt tussen pagina's |
+| `initNavigation()` | Click handlers voor menu + hamburger |
+| `renderMijnSpelerPage()` | Rendert Mijn Speler dashboard |
+| `renderPlayerCards()` | Rendert selectie-overzicht |
+| `renderTacticsPage()` | Rendert tactiek (incl. wedstrijdvoorbereiding) |
+| `playMatch()` | Speelt een wedstrijd, update stand |
+| `showMatchResultModal()` | Toont wedstrijdresultaat met timeline |
+| `renderStandings()` | Rendert competitietabel |
