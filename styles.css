@@ -11862,477 +11862,159 @@ body {
     display: none !important;
 }
 
-/* New Stadium Layout V2 */
-.stadium-layout-v2 {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 16px;
+/* ================================================
+   STADIUM MAP - Bovenaanzicht
+   ================================================ */
+.stadium-map-container {
     flex: 1;
     min-height: 0;
-}
-
-/* Category list with groups */
-.stadium-categories-v2 {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    overflow-y: auto;
 }
 
-.stadium-cat-group {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.cat-group-header {
-    font-family: var(--font-display);
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 2px 8px;
-}
-
-/* Category list - compact */
-.stadium-categories {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    overflow-y: auto;
-}
-
-.stadium-cat {
+.stadium-map {
+    flex: 1;
+    min-height: 0;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 14px;
-    background: var(--bg-card);
-    border: 2px solid var(--border);
-    border-radius: var(--card-radius);
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.stadium-cat:hover {
-    border-color: var(--accent-green-dim);
-    background: var(--bg-primary);
-}
-
-.stadium-cat.active {
-    border-color: var(--accent-green-dim);
-    background: rgba(27, 94, 32, 0.1);
-}
-
-/* Compact stadium cat */
-.stadium-categories-v2 .stadium-cat {
-    padding: 6px 10px;
-    gap: 6px;
-}
-
-.cat-icon {
-    font-size: 1.1rem;
-}
-
-.cat-name {
-    flex: 1;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.cat-level {
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    background: var(--bg-primary);
-    padding: 2px 5px;
-    border-radius: 4px;
-}
-
-/* ================================================
-   STADIUM DETAIL PANEL V2 - Bouwplaat Style
-   Dutch construction sheet aesthetic
-   ================================================ */
-.stadium-detail-v2 {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--card-radius);
-    display: flex;
-    flex-direction: column;
-    gap: 0;
+    justify-content: center;
     overflow: hidden;
-    box-shadow: 0 4px 16px var(--shadow);
 }
 
-/* Hero Section with Illustration */
-.detail-hero {
-    position: relative;
-    height: 160px;
-    overflow: hidden;
-    border-bottom: 1px solid var(--border);
-}
-
-.detail-hero .detail-illustration {
+.stadium-map svg {
     width: 100%;
     height: 100%;
-    border: none;
-    border-radius: 0;
-    min-height: unset;
-    max-height: unset;
+    max-height: 100%;
 }
 
-.detail-hero-overlay {
+/* Building hover/click */
+.stadium-building {
+    cursor: pointer;
+    transition: filter 0.15s ease;
+}
+
+.stadium-building:hover {
+    filter: brightness(1.3) drop-shadow(0 0 8px rgba(76, 175, 80, 0.6));
+}
+
+.stadium-building.active {
+    filter: brightness(1.2) drop-shadow(0 0 12px rgba(76, 175, 80, 0.8));
+}
+
+.stadium-building.unbuilt {
+    opacity: 0.5;
+}
+
+.stadium-building.unbuilt:hover {
+    opacity: 0.8;
+    filter: brightness(1.2) drop-shadow(0 0 6px rgba(255, 179, 0, 0.5));
+}
+
+/* Upgrade Panel overlay */
+.stadium-upgrade-panel {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 12px 16px;
-    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
-}
-
-.detail-level-name {
-    font-family: var(--font-display);
-    font-size: 1.4rem;
-    color: white;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    letter-spacing: 1px;
-}
-
-/* Info Section */
-.detail-info-section {
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(0, 0, 0, 0.15);
-}
-
-.detail-title-row {
+    background: var(--bg-card);
+    border-top: 2px solid var(--accent-green-dim);
+    border-radius: 12px 12px 0 0;
+    padding: 16px 20px;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
+    z-index: 10;
     display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    align-items: center;
+    animation: slideUpPanel 0.2s ease-out;
 }
 
-.detail-icon {
-    font-size: 2rem;
+@keyframes slideUpPanel {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.sup-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+}
+
+.sup-close:hover {
+    color: var(--text-primary);
+}
+
+.sup-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 160px;
+}
+
+.sup-icon {
+    font-size: 1.8rem;
     line-height: 1;
 }
 
-.detail-title-wrap {
-    flex: 1;
+.sup-title-wrap {
+    display: flex;
+    flex-direction: column;
 }
 
-.detail-title {
+.sup-title {
     font-size: 1rem;
     font-weight: 600;
     color: var(--accent-green);
-    margin: 0 0 2px 0;
+    margin: 0;
 }
 
-.detail-level {
+.sup-level {
     font-size: 0.7rem;
     color: var(--text-muted);
     font-style: italic;
 }
 
-.detail-description {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin: 0;
-    line-height: 1.5;
-    padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 6px;
-    border-left: 2px solid var(--accent-green-dim);
-}
-
-/* Current Benefits Card */
-.detail-current-benefits {
-    margin: 12px 16px;
-    padding: 12px;
-    background: rgba(76, 175, 80, 0.08);
+.sup-current {
+    padding: 6px 12px;
+    background: rgba(76, 175, 80, 0.1);
     border: 1px solid rgba(76, 175, 80, 0.25);
-    border-radius: 8px;
-    position: relative;
-}
-
-.detail-current-benefits::before {
-    content: '';
-    position: absolute;
-    top: -6px;
-    left: 20px;
-    width: 10px;
-    height: 10px;
-    background: var(--accent-green);
-    border-radius: 50%;
-}
-
-.benefits-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.benefits-icon {
-    width: 20px;
-    height: 20px;
-    background: var(--accent-green-dim);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    font-weight: bold;
-}
-
-.benefits-title {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--accent-green);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.benefits-content {
-    padding-left: 28px;
-}
-
-.benefit-main {
-    font-size: 0.9rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
     color: var(--text-primary);
 }
 
-/* Upgrade Levels Progress Track */
-.detail-levels-track {
-    padding: 14px 16px;
-    display: flex;
-    gap: 4px;
-    background: rgba(0, 0, 0, 0.1);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-}
-
-.level-step {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    position: relative;
-}
-
-.level-step::after {
-    content: '';
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    width: 100%;
-    height: 3px;
-    background: var(--border);
-    z-index: 0;
-}
-
-.level-step:last-child::after {
-    display: none;
-}
-
-.level-step.completed::after {
-    background: var(--accent-green-dim);
-}
-
-.level-dot {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--bg-secondary);
-    border: 2px solid var(--text-muted);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6rem;
+.sup-next {
+    padding: 6px 12px;
+    background: rgba(255, 179, 0, 0.08);
+    border: 1px solid rgba(255, 179, 0, 0.2);
+    border-radius: 6px;
+    font-size: 0.85rem;
     color: var(--text-secondary);
-    font-weight: bold;
-    z-index: 1;
-    transition: all 0.2s ease;
 }
 
-.level-step.completed .level-dot {
-    background: var(--accent-green-dim);
-    border-color: var(--accent-green);
-    color: white;
-}
-
-.level-step.current .level-dot {
-    background: var(--accent-orange);
-    border-color: var(--accent-amber);
-    color: white;
-    transform: scale(1.15);
-    box-shadow: 0 0 0 3px rgba(255, 143, 0, 0.25);
-}
-
-.level-step.locked .level-dot {
-    background: var(--bg-primary);
-    border-color: var(--border);
-}
-
-.level-name-short {
-    font-size: 0.55rem;
-    color: var(--text-muted);
-    text-align: center;
-    max-width: 60px;
-    line-height: 1.2;
-}
-
-.level-step.current .level-name-short {
+.sup-next .sup-next-name {
     color: var(--accent-orange);
     font-weight: 600;
 }
 
-.level-step.completed .level-name-short {
-    color: var(--accent-green-dim);
-}
-
-/* Next Upgrade Preview */
-.detail-next-upgrade {
-    margin: 12px 16px;
-    padding: 14px;
-    background: rgba(255, 179, 0, 0.06);
-    border: 1px solid rgba(255, 179, 0, 0.2);
-    border-radius: 8px;
-    position: relative;
-    overflow: hidden;
-}
-
-.detail-next-upgrade::before {
-    display: none;
-}
-
-.next-upgrade-header {
+.sup-action {
+    margin-left: auto;
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 12px;
 }
 
-.next-label {
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    color: var(--accent-amber);
-    letter-spacing: 0.5px;
-    background: rgba(255, 179, 0, 0.15);
-    padding: 2px 8px;
-    border-radius: 3px;
-    flex-shrink: 0;
-}
-
-.next-name {
+.sup-cost {
     font-family: var(--font-display);
-    font-size: 1.1rem;
-    color: var(--accent-orange);
-    flex: 1;
-}
-
-.next-upgrade-content {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.next-benefit {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px 12px;
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 6px;
-    border: 1px solid var(--border);
-}
-
-.next-benefit-icon {
-    font-size: 1.4rem;
-    flex-shrink: 0;
-}
-
-.next-benefit-text {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    line-height: 1.4;
-}
-
-.next-improvement {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.25) 100%);
-    border-radius: 6px;
-    border: 1px solid rgba(76, 175, 80, 0.3);
-    align-self: flex-start;
-}
-
-.improvement-badge {
-    font-family: var(--font-display);
-    font-size: 0.9rem;
-    color: var(--accent-green-dim);
-    font-weight: bold;
-}
-
-.improvement-text {
-    font-size: 0.7rem;
-    color: var(--accent-green-dim);
-}
-
-/* Requirement Warning */
-.detail-requirement {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0 16px 12px;
-    padding: 10px 14px;
-    background: rgba(255, 143, 0, 0.08);
-    border: 1px solid rgba(255, 143, 0, 0.25);
-    border-radius: 8px;
-}
-
-.req-icon {
     font-size: 1.2rem;
-}
-
-.req-text {
-    font-size: 0.8rem;
-    color: var(--accent-orange);
-    font-weight: 500;
-}
-
-/* Upgrade Action */
-.detail-upgrade-action {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
-    background: rgba(0, 0, 0, 0.15);
-    border-top: 1px solid var(--border);
-    margin-top: auto;
-}
-
-.upgrade-cost-box {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.upgrade-cost-box .cost-label {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    letter-spacing: 0.5px;
-}
-
-.upgrade-cost-box .cost-value {
-    font-family: var(--font-display);
-    font-size: 1.3rem;
     color: var(--accent-green-dim);
 }
 
@@ -12353,46 +12035,18 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* Maxed state */
-.detail-next-upgrade.maxed {
-    background: rgba(76, 175, 80, 0.08);
-    border-color: rgba(76, 175, 80, 0.25);
-}
-
-.detail-next-upgrade.maxed .next-label {
-    color: var(--accent-green-dim);
-}
-
-.detail-next-upgrade.maxed .next-name {
-    color: var(--accent-green-dim);
-}
-
-/* Illustration in hero */
-.detail-illustration {
-    background: var(--bg-primary);
-}
-
-.detail-illustration svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-.upgrade-cost {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-}
-
-.cost-label {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-.cost-value {
-    font-family: var(--font-display);
-    font-size: 1.3rem;
-    color: var(--accent-green-dim);
+/* Mobile: stack panel vertically */
+@media (max-width: 600px) {
+    .stadium-upgrade-panel {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 12px 16px;
+    }
+    .sup-action {
+        margin-left: 0;
+        justify-content: space-between;
+    }
 }
 
 /* Old detail panel - hidden */

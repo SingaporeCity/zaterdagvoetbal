@@ -963,143 +963,22 @@
                     </div>
                 </header>
 
-                <div class="stadium-layout-v2">
-                    <!-- Left: Category List with Headers -->
-                    <div class="stadium-categories-v2">
-                        <div class="stadium-cat-group">
-                            <div class="cat-group-header">🏟️ Faciliteiten</div>
-                            <div class="stadium-cat active" data-category="tribune" onclick="selectStadiumCategory('tribune')">
-                                <span class="cat-icon">🏟️</span>
-                                <span class="cat-name">Stadion</span>
-                                <span class="cat-level" id="cat-tribune-level">Nv.1</span>
-                            </div>
-                            <div class="stadium-cat" data-category="grass" onclick="selectStadiumCategory('grass')">
-                                <span class="cat-icon">🌱</span>
-                                <span class="cat-name">Wedstrijdveld</span>
-                                <span class="cat-level" id="cat-grass-level">Nv.1</span>
-                            </div>
-                            <div class="stadium-cat" data-category="medical" onclick="selectStadiumCategory('medical')">
-                                <span class="cat-icon">🏥</span>
-                                <span class="cat-name">Medisch</span>
-                                <span class="cat-level" id="cat-medical-level">Nv.1</span>
-                            </div>
-                        </div>
-
-                        <div class="stadium-cat-group">
-                            <div class="cat-group-header">📈 Ontwikkeling</div>
-                            <div class="stadium-cat" data-category="training" onclick="selectStadiumCategory('training')">
-                                <span class="cat-icon">💪</span>
-                                <span class="cat-name">Trainingsveld</span>
-                                <span class="cat-level" id="cat-training-level">Nv.1</span>
-                            </div>
-                            <div class="stadium-cat" data-category="academy" onclick="selectStadiumCategory('academy')">
-                                <span class="cat-icon">🎓</span>
-                                <span class="cat-name">Jeugdopleiding</span>
-                                <span class="cat-level" id="cat-academy-level">Nv.1</span>
-                            </div>
-                        </div>
-
-                        <div class="stadium-cat-group">
-                            <div class="cat-group-header">🔍 Scouting</div>
-                            <div class="stadium-cat" data-category="scouting" onclick="selectStadiumCategory('scouting')">
-                                <span class="cat-icon">🔍</span>
-                                <span class="cat-name">Scouting</span>
-                                <span class="cat-level" id="cat-scouting-level">Nv.1</span>
-                            </div>
-                            <div class="stadium-cat" data-category="youthscouting" onclick="selectStadiumCategory('youthscouting')">
-                                <span class="cat-icon">👶</span>
-                                <span class="cat-name">Jeugdscouting</span>
-                                <span class="cat-level" id="cat-youthscouting-level">Nv.1</span>
-                            </div>
-                        </div>
-
-                        <div class="stadium-cat-group">
-                            <div class="cat-group-header">🍺 Horeca</div>
-                            <div class="stadium-cat" data-category="kantine" onclick="selectStadiumCategory('kantine')">
-                                <span class="cat-icon">🍺</span>
-                                <span class="cat-name">Kantine</span>
-                                <span class="cat-level" id="cat-kantine-level">Nv.1</span>
-                            </div>
-                        </div>
+                <div class="stadium-map-container">
+                    <div class="stadium-map" id="stadium-map">
+                        <!-- SVG map rendered by JavaScript -->
                     </div>
-
-                    <!-- Right: Detail Panel - Bouwplaat Style -->
-                    <div class="stadium-detail-v2" id="stadium-detail">
-                        <!-- Header with illustration -->
-                        <div class="detail-hero">
-                            <div class="detail-illustration" id="detail-illustration">
-                                <!-- SVG will be inserted by JavaScript -->
-                            </div>
-                            <div class="detail-hero-overlay">
-                                <span class="detail-level-name" id="detail-level-name">Houten Tribune</span>
+                    <div class="stadium-upgrade-panel" id="stadium-upgrade-panel" style="display: none;">
+                        <button class="sup-close" onclick="closeStadiumPanel()">&times;</button>
+                        <div class="sup-header">
+                            <span class="sup-icon" id="sup-icon"></span>
+                            <div class="sup-title-wrap">
+                                <h3 class="sup-title" id="sup-title"></h3>
+                                <span class="sup-level" id="sup-level"></span>
                             </div>
                         </div>
-
-                        <!-- Info Section -->
-                        <div class="detail-info-section">
-                            <div class="detail-title-row">
-                                <span class="detail-icon" id="detail-icon">🏟️</span>
-                                <div class="detail-title-wrap">
-                                    <h3 class="detail-title" id="detail-title">Stadion</h3>
-                                    <span class="detail-level" id="detail-level">Niveau 1 van 5</span>
-                                </div>
-                            </div>
-                            <p class="detail-description" id="detail-description">
-                                Vergroot de capaciteit van je stadion om meer supporters te ontvangen en meer inkomsten te genereren.
-                            </p>
-                        </div>
-
-                        <!-- Current Benefits Card -->
-                        <div class="detail-current-benefits">
-                            <div class="benefits-header">
-                                <span class="benefits-icon">✓</span>
-                                <span class="benefits-title">Huidige voordelen</span>
-                            </div>
-                            <div class="benefits-content" id="detail-current-effect">
-                                <span class="benefit-main">200 toeschouwers</span>
-                            </div>
-                        </div>
-
-                        <!-- Upgrade Levels Progress -->
-                        <div class="detail-levels-track" id="detail-levels-track">
-                            <!-- Filled by JavaScript -->
-                        </div>
-
-                        <!-- Next Upgrade Preview -->
-                        <div class="detail-next-upgrade" id="detail-next-upgrade">
-                            <div class="next-upgrade-header">
-                                <span class="next-label">Volgende upgrade</span>
-                                <span class="next-name" id="detail-next-name">Stenen Tribune</span>
-                            </div>
-                            <div class="next-upgrade-content">
-                                <div class="next-benefit">
-                                    <span class="next-benefit-icon">📈</span>
-                                    <span class="next-benefit-text" id="detail-next-effect">500 toeschouwers</span>
-                                </div>
-                                <div class="next-improvement" id="detail-improvement">
-                                    <span class="improvement-badge">+150%</span>
-                                    <span class="improvement-text">meer capaciteit</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Requirement Warning -->
-                        <div class="detail-requirement" id="detail-requirement" style="display: none;">
-                            <span class="req-icon">⚠️</span>
-                            <span class="req-text" id="detail-req-text">Vereist: Stadion niveau 2</span>
-                        </div>
-
-                        <!-- Upgrade Action -->
-                        <div class="detail-upgrade-action">
-                            <div class="upgrade-cost-box">
-                                <span class="cost-label">Investering</span>
-                                <span class="cost-value" id="detail-cost">€5.000</span>
-                            </div>
-                            <button class="btn btn-primary btn-upgrade-stadium" id="btn-upgrade-stadium" onclick="upgradeStadiumCategory()">
-                                <span class="btn-icon">🔨</span>
-                                <span class="btn-text">Bouwen</span>
-                            </button>
-                        </div>
+                        <div class="sup-current" id="sup-current"></div>
+                        <div class="sup-next" id="sup-next"></div>
+                        <div class="sup-action" id="sup-action"></div>
                     </div>
                 </div>
             </section>
