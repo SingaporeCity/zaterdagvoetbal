@@ -6087,11 +6087,12 @@ function handleNotificationClick(action) {
     };
 
     const page = pageMap[action] || 'dashboard';
-    navigateTo(page);
+    navigateToPage(page);
 }
 
-// Make function globally accessible
+// Make functions globally accessible
 window.handleNotificationClick = handleNotificationClick;
+window.navigateTo = navigateToPage;
 
 function updateTopScorerPolaroid() {
     const photoEl = document.getElementById('top-scorer-photo');
