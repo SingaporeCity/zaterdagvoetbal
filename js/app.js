@@ -710,7 +710,25 @@ function renderPlayerCards() {
         goalkeeper: { name: 'Keepers', icon: '🧤', players: [] }
     };
 
-    gameState.players.forEach(player => {
+    // Add "Mijn Speler" to the squad list
+    const mp = initMyPlayer();
+    const mpOverall = Math.round((mp.attributes.SNE + mp.attributes.TEC + mp.attributes.PAS + mp.attributes.SCH + mp.attributes.VER + mp.attributes.FYS) / 6);
+    const myPlayerEntry = {
+        id: 'myplayer',
+        name: mp.name,
+        age: mp.age,
+        position: mp.position,
+        overall: mpOverall,
+        potential: 99,
+        isMyPlayer: true,
+        nationality: { flag: '🇳🇱', name: 'Nederlands' },
+        salary: 0,
+        energy: 100,
+        attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
+    };
+
+    const allPlayers = [myPlayerEntry, ...gameState.players];
+    allPlayers.forEach(player => {
         const group = getPositionGroup(player.position);
         if (groups[group]) {
             groups[group].players.push(player);
@@ -824,14 +842,15 @@ function createPlayerCardHTML(player, mini = false) {
         { key: 'FYS', label: 'FYS', value: player.attributes.FYS, color: '#9c27b0' }
     ];
 
-    const marketValue = getPlayerMarketValue(player);
+    const marketValue = player.isMyPlayer ? 0 : getPlayerMarketValue(player);
     const condition = player.condition || 85;
     const energy = player.energy || 75;
-    const potentialDisplay = getPotentialDisplay(player.potential, player.age);
+    const potentialDisplay = player.isMyPlayer ? '99-??' : getPotentialDisplay(player.potential, player.age);
+    const myPlayerClass = player.isMyPlayer ? ' my-player-card' : '';
 
     // Compact horizontal card - redesigned layout
     return `
-        <div class="player-card" data-player-id="${player.id}">
+        <div class="player-card${myPlayerClass}" data-player-id="${player.id}">
             <div class="pc-left">
                 <div class="pc-age-box">
                     <span class="pc-age-value">${player.age}</span>

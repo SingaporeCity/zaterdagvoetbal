@@ -5015,6 +5015,21 @@ body {
     opacity: 1;
 }
 
+/* Highlight "Mijn Speler" in selectie */
+.player-card.my-player-card {
+    background: linear-gradient(90deg, rgba(255, 179, 0, 0.08) 0%, rgba(255, 179, 0, 0.03) 100%);
+    border-left: 3px solid var(--accent-amber);
+}
+
+.player-card.my-player-card::before {
+    opacity: 1;
+    background: var(--accent-amber);
+}
+
+.player-card.my-player-card .pc-name {
+    color: var(--accent-amber);
+}
+
 /* Left section: Flag + Age inline */
 .pc-left {
     display: flex;
