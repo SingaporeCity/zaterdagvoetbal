@@ -5080,8 +5080,8 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-width: 120px;
-    max-width: 160px;
+    width: 140px;
+    flex-shrink: 0;
 }
 
 .pc-pos {
@@ -5102,6 +5102,7 @@ body {
     font-size: 0.75rem;
     color: var(--text-secondary);
     white-space: nowrap;
+    min-width: 140px;
 }
 
 .pc-salary::before {
@@ -5147,6 +5148,8 @@ body {
     padding: 3px 8px;
     border-radius: 4px;
     color: white;
+    min-width: 62px;
+    justify-content: center;
 }
 
 .pc-potential-value {

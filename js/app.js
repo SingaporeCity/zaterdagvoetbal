@@ -758,19 +758,20 @@ function renderPlayerCards() {
     });
 }
 
-// Get potential display based on age (range for young, exact for old)
+// Get potential display - always as range (xx-xx)
 function getPotentialDisplay(potential, age) {
     if (age >= 29) {
-        // 29+: exact value
-        return potential.toString();
+        // 29+: minimal range (1 verschil)
+        const max = Math.min(99, potential + 1);
+        return `${potential}-${max}`;
     } else if (age >= 26) {
         // 26-28: small range (+/- 2)
-        const min = Math.max(potential - 2, potential);
+        const min = Math.max(1, potential - 2);
         const max = Math.min(99, potential + 2);
         return `${min}-${max}`;
     } else if (age >= 23) {
         // 23-25: medium range (+/- 4)
-        const min = Math.max(potential - 4, potential - 2);
+        const min = Math.max(1, potential - 4);
         const max = Math.min(99, potential + 4);
         return `${min}-${max}`;
     } else if (age >= 20) {
