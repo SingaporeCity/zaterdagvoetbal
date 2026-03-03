@@ -11954,17 +11954,14 @@ body {
    Dutch construction sheet aesthetic
    ================================================ */
 .stadium-detail-v2 {
-    background:
-        linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
-    border: 3px solid var(--bg-sidebar);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--card-radius);
     display: flex;
     flex-direction: column;
     gap: 0;
     overflow: hidden;
-    box-shadow:
-        4px 4px 0 rgba(93, 78, 55, 0.3),
-        inset 0 0 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px var(--shadow);
 }
 
 /* Hero Section with Illustration */
@@ -11972,7 +11969,7 @@ body {
     position: relative;
     height: 160px;
     overflow: hidden;
-    border-bottom: 3px solid var(--bg-sidebar);
+    border-bottom: 1px solid var(--border);
 }
 
 .detail-hero .detail-illustration {
@@ -12004,8 +12001,8 @@ body {
 /* Info Section */
 .detail-info-section {
     padding: 16px;
-    border-bottom: 2px dashed var(--border);
-    background: rgba(255,255,255,0.4);
+    border-bottom: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.15);
 }
 
 .detail-title-row {
@@ -12025,11 +12022,10 @@ body {
 }
 
 .detail-title {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    color: var(--accent-green-dim);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-green);
     margin: 0 0 2px 0;
-    letter-spacing: 0.5px;
 }
 
 .detail-level {
@@ -12040,21 +12036,21 @@ body {
 
 .detail-description {
     font-size: 0.8rem;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     margin: 0;
     line-height: 1.5;
-    padding: 10px 12px;
-    background: rgba(93, 78, 55, 0.06);
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.1);
     border-radius: 6px;
-    border-left: 3px solid var(--accent-green-dim);
+    border-left: 2px solid var(--accent-green-dim);
 }
 
 /* Current Benefits Card */
 .detail-current-benefits {
     margin: 12px 16px;
     padding: 12px;
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-    border: 2px solid var(--accent-green-dim);
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
     border-radius: 8px;
     position: relative;
 }
@@ -12064,9 +12060,9 @@ body {
     position: absolute;
     top: -6px;
     left: 20px;
-    width: 12px;
-    height: 12px;
-    background: var(--accent-green-dim);
+    width: 10px;
+    height: 10px;
+    background: var(--accent-green);
     border-radius: 50%;
 }
 
@@ -12091,11 +12087,11 @@ body {
 }
 
 .benefits-title {
-    font-family: var(--font-display);
-    font-size: 0.75rem;
-    color: var(--accent-green-dim);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent-green);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .benefits-content {
@@ -12103,17 +12099,16 @@ body {
 }
 
 .benefit-main {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    color: var(--accent-green-dim);
+    font-size: 0.9rem;
+    color: var(--text-primary);
 }
 
 /* Upgrade Levels Progress Track */
 .detail-levels-track {
-    padding: 12px 16px;
+    padding: 14px 16px;
     display: flex;
     gap: 4px;
-    background: rgba(255,255,255,0.02);
+    background: rgba(0, 0, 0, 0.1);
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
 }
@@ -12150,14 +12145,14 @@ body {
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: var(--border);
-    border: 3px solid #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    background: var(--bg-secondary);
+    border: 2px solid var(--text-muted);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.6rem;
-    color: white;
+    color: var(--text-secondary);
     font-weight: bold;
     z-index: 1;
     transition: all 0.2s ease;
@@ -12165,16 +12160,21 @@ body {
 
 .level-step.completed .level-dot {
     background: var(--accent-green-dim);
+    border-color: var(--accent-green);
+    color: white;
 }
 
 .level-step.current .level-dot {
     background: var(--accent-orange);
-    transform: scale(1.2);
-    box-shadow: 0 0 0 4px var(--accent-orange-glow);
+    border-color: var(--accent-amber);
+    color: white;
+    transform: scale(1.15);
+    box-shadow: 0 0 0 3px rgba(255, 143, 0, 0.25);
 }
 
 .level-step.locked .level-dot {
-    background: var(--bg-secondary);
+    background: var(--bg-primary);
+    border-color: var(--border);
 }
 
 .level-name-short {
@@ -12198,22 +12198,15 @@ body {
 .detail-next-upgrade {
     margin: 12px 16px;
     padding: 14px;
-    background:
-        linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
-    border: 2px solid #f9a825;
+    background: rgba(255, 179, 0, 0.06);
+    border: 1px solid rgba(255, 179, 0, 0.2);
     border-radius: 8px;
     position: relative;
     overflow: hidden;
 }
 
 .detail-next-upgrade::before {
-    content: '🔨';
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    font-size: 3rem;
-    opacity: 0.15;
-    transform: rotate(15deg);
+    display: none;
 }
 
 .next-upgrade-header {
@@ -12226,9 +12219,9 @@ body {
 .next-label {
     font-size: 0.6rem;
     text-transform: uppercase;
-    color: #f57f17;
+    color: var(--accent-amber);
     letter-spacing: 0.5px;
-    background: rgba(249, 168, 37, 0.3);
+    background: rgba(255, 179, 0, 0.15);
     padding: 2px 8px;
     border-radius: 3px;
     flex-shrink: 0;
@@ -12252,9 +12245,9 @@ body {
     align-items: flex-start;
     gap: 10px;
     padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(0, 0, 0, 0.15);
     border-radius: 6px;
-    border: 1px solid rgba(249, 168, 37, 0.3);
+    border: 1px solid var(--border);
 }
 
 .next-benefit-icon {
@@ -12263,10 +12256,9 @@ body {
 }
 
 .next-benefit-text {
-    font-size: 0.9rem;
-    color: var(--text-primary);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
     line-height: 1.4;
-    font-weight: 500;
 }
 
 .next-improvement {
@@ -12299,8 +12291,8 @@ body {
     gap: 10px;
     margin: 0 16px 12px;
     padding: 10px 14px;
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-    border: 2px solid var(--accent-orange);
+    background: rgba(255, 143, 0, 0.08);
+    border: 1px solid rgba(255, 143, 0, 0.25);
     border-radius: 8px;
 }
 
@@ -12320,8 +12312,8 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 14px 16px;
-    background: linear-gradient(to top, var(--bg-secondary) 0%, var(--bg-secondary) 100%);
-    border-top: 2px solid var(--bg-sidebar);
+    background: rgba(0, 0, 0, 0.15);
+    border-top: 1px solid var(--border);
     margin-top: auto;
 }
 
@@ -12363,8 +12355,8 @@ body {
 
 /* Maxed state */
 .detail-next-upgrade.maxed {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-    border-color: var(--accent-green-dim);
+    background: rgba(76, 175, 80, 0.08);
+    border-color: rgba(76, 175, 80, 0.25);
 }
 
 .detail-next-upgrade.maxed .next-label {
