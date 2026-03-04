@@ -5182,6 +5182,40 @@ body {
     text-transform: uppercase;
 }
 
+.pc-potential-stars {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+}
+
+.pc-potential-stars .pc-stars {
+    display: flex;
+    gap: 1px;
+    font-size: 0.7rem;
+    line-height: 1;
+}
+
+.pc-potential-stars .pc-stars .star.full {
+    color: #ffd600;
+}
+
+.pc-potential-stars .pc-stars .star.half {
+    color: #ffd600;
+}
+
+.pc-potential-stars .pc-stars .star.empty {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.pc-potential-stars .pc-potential-label {
+    font-size: 0.45rem;
+    font-weight: 600;
+    opacity: 0.7;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
 /* Transfer card specific styles */
 .player-card.transfer-card {
     gap: 12px;

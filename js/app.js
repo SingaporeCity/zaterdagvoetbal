@@ -813,6 +813,30 @@ function getBarColor(percentage) {
     return '#2e7d32'; // Dark green
 }
 
+// Convert potential (1-99) to 1-5 stars
+function potentialToStarsGlobal(potential) {
+    const stars = Math.round((potential / 20) * 2) / 2;
+    return Math.min(5, Math.max(0.5, stars));
+}
+
+// Render stars as HTML
+function renderStarsHTML(starCount) {
+    let html = '';
+    const fullStars = Math.floor(starCount);
+    const hasHalf = starCount % 1 !== 0;
+    const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+    for (let i = 0; i < fullStars; i++) {
+        html += '<span class="star full">★</span>';
+    }
+    if (hasHalf) {
+        html += '<span class="star half">⯪</span>';
+    }
+    for (let i = 0; i < emptyStars; i++) {
+        html += '<span class="star empty">☆</span>';
+    }
+    return html;
+}
+
 function createPlayerCardHTML(player, mini = false) {
     const posData = POSITIONS[player.position] || { abbr: '??', color: '#666' };
     const photo = player.photo || generatePlayerPhoto(player.name, player.position);
@@ -829,26 +853,15 @@ function createPlayerCardHTML(player, mini = false) {
         `;
     }
 
-    // Stats configuration - keepers have different attributes
-    const stats = isKeeper ? [
-        { key: 'REF', label: 'REF', value: player.attributes.REF || player.attributes.VER, color: '#f9a825' },
-        { key: 'BAL', label: 'BAL', value: player.attributes.BAL || player.attributes.AAN, color: '#7cb342' },
-        { key: 'SNE', label: 'SNE', value: player.attributes.SNE, color: '#ff9800' },
-        { key: 'FYS', label: 'FYS', value: player.attributes.FYS, color: '#9c27b0' }
-    ] : [
-        { key: 'AAN', label: 'AAN', value: player.attributes.AAN, color: '#9c27b0' },
-        { key: 'VER', label: 'VER', value: player.attributes.VER, color: '#2196f3' },
-        { key: 'SNE', label: 'SNE', value: player.attributes.SNE, color: '#ff9800' },
-        { key: 'FYS', label: 'FYS', value: player.attributes.FYS, color: '#9c27b0' }
-    ];
-
     const marketValue = player.isMyPlayer ? 0 : getPlayerMarketValue(player);
-    const condition = player.condition || 85;
     const energy = player.energy || 75;
-    const potentialDisplay = player.isMyPlayer ? '99-??' : getPotentialDisplay(player.potential, player.age);
     const myPlayerClass = player.isMyPlayer ? ' my-player-card' : '';
 
-    // Compact horizontal card - redesigned layout
+    // Potential as 1-5 stars
+    const potentialValue = player.isMyPlayer ? 99 : (player.potential || player.overall);
+    const potentialStars = potentialToStarsGlobal(potentialValue);
+
+    // Compact horizontal card
     return `
         <div class="player-card${myPlayerClass}" data-player-id="${player.id}">
             <div class="pc-left">
@@ -882,8 +895,8 @@ function createPlayerCardHTML(player, mini = false) {
                     <span class="pc-overall-value">${player.overall}</span>
                     <span class="pc-overall-label">ALG</span>
                 </div>
-                <div class="pc-potential" style="background: ${posData.color}; opacity: 0.85;">
-                    <span class="pc-potential-value">${potentialDisplay}</span>
+                <div class="pc-potential-stars">
+                    <span class="pc-stars">${renderStarsHTML(potentialStars)}</span>
                     <span class="pc-potential-label">POT</span>
                 </div>
             </div>
@@ -3966,19 +3979,10 @@ function renderTransferMarket() {
         const priceText = player.price === 0 ? 'Transfervrij' : formatCurrency(player.price);
         const bonusText = player.signingBonus > 0 ? `+${formatCurrency(player.signingBonus)}` : '';
 
-        // Get ranges instead of exact values
+        // Get range for overall (still show as range for transfer market uncertainty)
         const overallRange = getValueRange(player.overall, 3);
-        const potentialRange = getPotentialRange(player.potential || player.overall, player.overall);
-
-        // Stats configuration - keepers have different attributes (show as ranges)
-        const stats = [
-            { key: 'AAN', label: 'AAN', value: isKeeper ? 0 : player.attributes.AAN, color: '#9c27b0' },
-            { key: 'VER', label: 'VER', value: player.attributes.VER, color: '#2196f3' }
-        ];
-
-        // Use same card style as selection screen
-        const condition = player.condition || 85;
-        const energy = player.energy || 75;
+        // Potential as 1-5 stars
+        const transferPotentialStars = potentialToStarsGlobal(player.potential || player.overall);
 
         html += `
             <div class="player-card transfer-card" data-player-id="${player.id}">
@@ -3999,24 +4003,13 @@ function renderTransferMarket() {
                         ${bonusText ? `<span class="pc-bonus">${bonusText}</span>` : ''}
                     </div>
                 </div>
-                <div class="pc-stats">
-                    ${stats.map(stat => `
-                        <div class="pc-stat">
-                            <div class="pc-stat-bar-bg">
-                                <div class="pc-stat-bar" style="height: ${stat.value}%; background: ${stat.color}"></div>
-                            </div>
-                            <span class="pc-stat-val">${getValueRange(stat.value, 5)}</span>
-                            <span class="pc-stat-lbl">${stat.label}</span>
-                        </div>
-                    `).join('')}
-                </div>
                 <div class="pc-ratings">
                     <div class="pc-overall" style="background: ${posData.color}">
                         <span class="pc-overall-value">${overallRange}</span>
                         <span class="pc-overall-label">ALG</span>
                     </div>
-                    <div class="pc-potential" style="background: ${posData.color}; opacity: 0.85;">
-                        <span class="pc-potential-value">${potentialRange}</span>
+                    <div class="pc-potential-stars">
+                        <span class="pc-stars">${renderStarsHTML(transferPotentialStars)}</span>
                         <span class="pc-potential-label">POT</span>
                     </div>
                 </div>
