@@ -3973,14 +3973,10 @@ function renderTransferMarket() {
         // Stats configuration - keepers have different attributes (show as ranges)
         const stats = isKeeper ? [
             { key: 'REF', label: 'REF', value: player.attributes.REF || player.attributes.VER, color: '#f9a825' },
-            { key: 'BAL', label: 'BAL', value: player.attributes.BAL || player.attributes.AAN, color: '#7cb342' },
-            { key: 'SNE', label: 'SNE', value: player.attributes.SNE, color: '#ff9800' },
-            { key: 'FYS', label: 'FYS', value: player.attributes.FYS, color: '#9c27b0' }
+            { key: 'BAL', label: 'BAL', value: player.attributes.BAL || player.attributes.AAN, color: '#7cb342' }
         ] : [
             { key: 'AAN', label: 'AAN', value: player.attributes.AAN, color: '#9c27b0' },
-            { key: 'VER', label: 'VER', value: player.attributes.VER, color: '#2196f3' },
-            { key: 'SNE', label: 'SNE', value: player.attributes.SNE, color: '#ff9800' },
-            { key: 'FYS', label: 'FYS', value: player.attributes.FYS, color: '#9c27b0' }
+            { key: 'VER', label: 'VER', value: player.attributes.VER, color: '#2196f3' }
         ];
 
         // Use same card style as selection screen
@@ -4004,20 +4000,6 @@ function renderTransferMarket() {
                     <div class="pc-finance transfer-finance">
                         <span class="pc-price ${player.price === 0 ? 'free' : ''}">${priceText}</span>
                         ${bonusText ? `<span class="pc-bonus">${bonusText}</span>` : ''}
-                    </div>
-                </div>
-                <div class="pc-condition-bars">
-                    <div class="pc-bar-item">
-                        <div class="pc-bar-track">
-                            <div class="pc-bar-fill" style="width: ${condition}%; background: ${getBarColor(condition)}"></div>
-                        </div>
-                        <span class="pc-bar-label">Conditie</span>
-                    </div>
-                    <div class="pc-bar-item">
-                        <div class="pc-bar-track">
-                            <div class="pc-bar-fill" style="width: ${energy}%; background: ${getBarColor(energy)}"></div>
-                        </div>
-                        <span class="pc-bar-label">Energie</span>
                     </div>
                 </div>
                 <div class="pc-stats">
