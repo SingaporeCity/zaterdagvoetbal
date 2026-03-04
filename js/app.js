@@ -813,25 +813,20 @@ function getBarColor(percentage) {
     return '#2e7d32'; // Dark green
 }
 
-// Convert potential (1-99) to 1-5 stars
+// Convert potential (1-99) to 1-5 whole stars
 function potentialToStarsGlobal(potential) {
-    const stars = Math.round((potential / 20) * 2) / 2;
-    return Math.min(5, Math.max(0.5, stars));
+    const stars = Math.round(potential / 20);
+    return Math.min(5, Math.max(1, stars));
 }
 
-// Render stars as HTML
+// Render stars as HTML (whole stars only)
 function renderStarsHTML(starCount) {
     let html = '';
-    const fullStars = Math.floor(starCount);
-    const hasHalf = starCount % 1 !== 0;
-    const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
-    for (let i = 0; i < fullStars; i++) {
+    const count = Math.round(Math.min(5, Math.max(1, starCount)));
+    for (let i = 0; i < count; i++) {
         html += '<span class="star full">★</span>';
     }
-    if (hasHalf) {
-        html += '<span class="star half">⯪</span>';
-    }
-    for (let i = 0; i < emptyStars; i++) {
+    for (let i = count; i < 5; i++) {
         html += '<span class="star empty">☆</span>';
     }
     return html;
@@ -857,9 +852,10 @@ function createPlayerCardHTML(player, mini = false) {
     const energy = player.energy || 75;
     const myPlayerClass = player.isMyPlayer ? ' my-player-card' : '';
 
-    // Potential as 1-5 stars
-    const potentialValue = player.isMyPlayer ? 99 : (player.potential || player.overall);
-    const potentialStars = potentialToStarsGlobal(potentialValue);
+    // Potential as stars: own player = real rating, others = 1 or 2
+    const potentialStars = player.isMyPlayer
+        ? potentialToStarsGlobal(99)
+        : (player.overall >= 25 ? 2 : 1);
 
     // Compact horizontal card
     return `
@@ -2392,28 +2388,14 @@ function renderScoutPage() {
             const min = Math.max(1, range.min);
             const max = Math.min(99, range.max);
             const midpoint = (min + max) / 2;
-            // Map 0-100 to 0-5 stars, round to nearest 0.5
-            const stars = Math.round((midpoint / 20) * 2) / 2;
-            return Math.min(5, Math.max(0, stars));
+            // Map 0-100 to 1-5 whole stars
+            const stars = Math.round(midpoint / 20);
+            return Math.min(5, Math.max(1, stars));
         };
 
-        // Render stars as HTML
+        // Render stars as HTML (whole stars only)
         const renderStars = (starCount) => {
-            let html = '';
-            const fullStars = Math.floor(starCount);
-            const hasHalf = starCount % 1 !== 0;
-            const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
-
-            for (let i = 0; i < fullStars; i++) {
-                html += '<span class="star full">★</span>';
-            }
-            if (hasHalf) {
-                html += '<span class="star half">★</span>';
-            }
-            for (let i = 0; i < emptyStars; i++) {
-                html += '<span class="star empty">☆</span>';
-            }
-            return html;
+            return renderStarsHTML(starCount);
         };
 
         const renderRangeBar = (label, range) => {
@@ -3981,8 +3963,8 @@ function renderTransferMarket() {
 
         // Get range for overall (still show as range for transfer market uncertainty)
         const overallRange = getValueRange(player.overall, 3);
-        // Potential as 1-5 stars
-        const transferPotentialStars = potentialToStarsGlobal(player.potential || player.overall);
+        // Transfer market: all players get 1 or 2 stars
+        const transferPotentialStars = player.overall >= 25 ? 2 : 1;
 
         html += `
             <div class="player-card transfer-card" data-player-id="${player.id}">
@@ -5934,15 +5916,11 @@ function renderDashboardToptalents() {
     }
 
     container.innerHTML = topTalents.map((player) => {
-        const potential = player.potential || 50;
-        // Convert potential to stars (0-5)
-        const stars = Math.round((potential / 20) * 2) / 2;
-        const fullStars = Math.floor(stars);
-        const hasHalf = stars % 1 !== 0;
-        let starsHtml = '';
-        for (let i = 0; i < fullStars; i++) starsHtml += '★';
-        if (hasHalf) starsHtml += '½';
-        for (let i = 0; i < 5 - fullStars - (hasHalf ? 1 : 0); i++) starsHtml += '☆';
+        // Non-own players: 1 or 2 stars
+        const starCount = player.isMyPlayer
+            ? potentialToStarsGlobal(99)
+            : (player.overall >= 25 ? 2 : 1);
+        const starsHtml = renderStarsHTML(starCount);
 
         const posData = POSITIONS[player.position] || { color: '#1a5f2a', abbr: '?' };
 
