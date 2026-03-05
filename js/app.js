@@ -202,10 +202,10 @@ function generatePlayerAttributes(division, position) {
         attrs[attr] = random(div.minAttr, div.maxAttr);
     });
 
-    // Boost primary attribute based on position
+    // Boost primary attribute based on position (capped to division max)
     const posData = POSITIONS[position];
     const primaryAttr = Object.entries(posData.weights).sort((a, b) => b[1] - a[1])[0][0];
-    attrs[primaryAttr] = Math.min(99, attrs[primaryAttr] + random(5, 15));
+    attrs[primaryAttr] = Math.min(div.maxAttr, attrs[primaryAttr] + random(2, 5));
 
     return attrs;
 }
@@ -3169,7 +3169,7 @@ function renderStaffPanel() {
     const isUnlocked = division <= 5; // Division 5 is 3e Klasse
 
     if (!isUnlocked) {
-        unlockInfo.textContent = `🔒 Beschikbaar vanaf 3e Klasse (nog ${5 - division} divisie${5 - division > 1 ? 's' : ''} te gaan)`;
+        unlockInfo.textContent = `🔒 Nog te bouwen vanaf 3e Klasse (nog ${5 - division} divisie${5 - division > 1 ? 's' : ''} te gaan)`;
         unlockInfo.classList.add('locked');
         grid.innerHTML = '';
 
@@ -3510,7 +3510,7 @@ function renderTrainerSlots() {
             `;
         } else {
             statusEl.innerHTML = `
-                <span class="trainer-available">Beschikbaar</span>
+                <span class="trainer-available">Nog te bouwen</span>
                 <button class="btn btn-primary btn-small btn-assign-trainer" data-trainer="${trainerId}">Toewijzen</button>
             `;
         }
@@ -4201,15 +4201,28 @@ function generateTransferMarket() {
 
         const player = generatePlayer(playerDiv);
 
-        // 20% chance of being free agent
-        if (Math.random() < 0.20) {
+        // Cap overall to division max
+        const divInfo = getDivision(playerDiv);
+        if (player.overall > divInfo.maxAttr) {
+            player.overall = random(Math.max(divInfo.minAttr, divInfo.maxAttr - 3), divInfo.maxAttr);
+        }
+
+        // 6e Klasse (id 8): klein salaris, geen transferwaarde
+        if (playerDiv === 8) {
             player.price = 0;
-            player.signingBonus = Math.round(player.salary * 52 * 0.3);
+            player.signingBonus = 0;
             player.isFreeAgent = true;
         } else {
-            player.price = calculatePlayerValue(player, playerDiv);
-            player.signingBonus = 0;
-            player.isFreeAgent = false;
+            // 5e Klasse en hoger: salaris + transferwaarde
+            if (Math.random() < 0.20) {
+                player.price = 0;
+                player.signingBonus = Math.round(player.salary * 52 * 0.3);
+                player.isFreeAgent = true;
+            } else {
+                player.price = calculatePlayerValue(player, playerDiv);
+                player.signingBonus = 0;
+                player.isFreeAgent = false;
+            }
         }
 
         // Minimaal gewenst niveau (lager getal = betere divisie)
@@ -4352,7 +4365,7 @@ function renderTransferMarket() {
                     </div>
                     <span class="pc-name">${player.name}</span>
                     <span class="pc-finance">
-                        <span class="pc-salary">${formatCurrency(player.salary ?? 50)}/w</span>
+                        <span class="pc-salary">${formatCurrency(player.salary ?? 0)}/w</span>
                         <span class="pc-value">${priceText}</span>
                     </span>
                     <div class="pc-condition-bars">
@@ -5675,7 +5688,11 @@ function calculateDailyFinances() {
     // === INCOME ===
     // Shirt sponsor income (weekly divided by 7)
     const shirtSponsor = gameState.sponsor;
-    const sponsorWeeklyIncome = shirtSponsor?.weeklyPay || 0;
+    const shirtWeekly = shirtSponsor?.weeklyPay || 0;
+    const bordWeekly = gameState.sponsorSlots?.bord?.weeklyIncome || 0;
+    const mouwWeekly = gameState.sponsorSlots?.mouw?.weeklyIncome || 0;
+    const broekWeekly = gameState.sponsorSlots?.broek?.weeklyIncome || 0;
+    const sponsorWeeklyIncome = shirtWeekly + bordWeekly + mouwWeekly + broekWeekly;
     const sponsorDailyIncome = Math.round(sponsorWeeklyIncome / 7);
 
     // Sponsoring level bonus
@@ -6370,9 +6387,9 @@ function renderDashboardExtras() {
     // Update top scorer polaroid
     updateTopScorerPolaroid();
 
-    // Render dashboard starplayers, toptalents and checklist
-    renderDashboardStarplayers();
-    renderDashboardToptalents();
+    // Render dashboard finances, top players and checklist
+    renderDashboardFinances();
+    renderDashboardTopPlayers();
     resetDailyChecklist();
     renderDashboardChecklist();
 
@@ -6380,42 +6397,46 @@ function renderDashboardExtras() {
     initStickyNotes();
 }
 
-function renderDashboardStarplayers() {
-    const container = document.getElementById('dashboard-starplayers');
+function renderDashboardFinances() {
+    const container = document.getElementById('dashboard-finances');
     if (!container) return;
 
-    // Get top 3 players by overall rating
-    const starPlayers = gameState.players
-        .sort((a, b) => b.overall - a.overall)
-        .slice(0, 3);
+    const budget = gameState.club.budget || 0;
+    const finances = calculateDailyFinances();
+    const daily = finances.dailyBalance;
+    const dailySign = daily >= 0 ? '+' : '';
+    const dailyColor = daily >= 0 ? 'var(--accent-green)' : '#c62828';
+    const trendArrow = daily >= 0 ? '↑' : '↓';
 
-    if (starPlayers.length === 0) {
-        container.innerHTML = '<p style="font-size: 0.65rem; color: var(--text-muted); text-align: center; padding: 8px;">Geen spelers</p>';
-        return;
-    }
+    // Weekly totals
+    const weeklyIn = finances.totalIncome * 7;
+    const weeklyOut = finances.totalExpense * 7;
 
-    container.innerHTML = starPlayers.map((player) => {
-        const posData = POSITIONS[player.position] || { color: '#1a5f2a', abbr: '?' };
-        return `
-            <div class="sp-item">
-                <span class="sp-flag">${player.nationality?.flag || '🇳🇱'}</span>
-                <div class="sp-info">
-                    <span class="sp-name">${player.name}</span>
-                    <span class="sp-age">${player.age} jaar</span>
-                </div>
-                <span class="sp-pos" style="background: ${posData.color}">${posData.abbr}</span>
-                <span class="sp-overall" style="color: ${posData.color}">${player.overall}</span>
+    container.innerHTML = `
+        <div class="fin-budget">
+            <span class="fin-label">Saldo</span>
+            <span class="fin-amount">${formatCurrency(budget)}</span>
+            <span class="fin-daily" style="color: ${dailyColor}">${trendArrow} ${dailySign}${formatCurrency(daily)}/dag</span>
+        </div>
+        <div class="fin-breakdown">
+            <div class="fin-row fin-income">
+                <span class="fin-row-label">Inkomsten /wk</span>
+                <span class="fin-row-val" style="color: var(--accent-green)">+${formatCurrency(weeklyIn)}</span>
             </div>
-        `;
-    }).join('');
+            <div class="fin-row fin-expense">
+                <span class="fin-row-label">Uitgaven /wk</span>
+                <span class="fin-row-val" style="color: #c62828">-${formatCurrency(weeklyOut)}</span>
+            </div>
+        </div>
+    `;
 }
 
-function renderDashboardToptalents() {
+function renderDashboardTopPlayers() {
     const container = document.getElementById('dashboard-toptalents');
     if (!container) return;
 
     // Get youth players sorted by potential
-    const topTalents = (gameState.youthPlayers || [])
+    const topTalents = [...(gameState.youthPlayers || [])]
         .sort((a, b) => (b.potential || 0) - (a.potential || 0))
         .slice(0, 3);
 
@@ -6425,14 +6446,11 @@ function renderDashboardToptalents() {
     }
 
     container.innerHTML = topTalents.map((player) => {
-        // Non-own players: 1 or 2 stars
         const starCount = player.isMyPlayer
             ? potentialToStarsGlobal(99)
             : (player.overall >= 25 ? 2 : 1);
         const starsHtml = renderStarsHTML(starCount);
-
         const posData = POSITIONS[player.position] || { color: '#1a5f2a', abbr: '?' };
-
         return `
             <div class="tt-item">
                 <span class="tt-flag">${player.nationality?.flag || '🇳🇱'}</span>
@@ -6815,6 +6833,9 @@ function playMatch() {
 
     // Advance week
     gameState.week++;
+
+    // Refresh sponsor market for new week
+    generateSponsorMarket();
 
     // Check if season is complete
     if (isSeasonComplete(gameState.standings)) {
@@ -7637,6 +7658,33 @@ const STADIUM_SPONSORS = {
     }
 };
 
+const SPONSOR_POOL = [
+    // Bordsponsors (€200-750/week)
+    { id: 'bord_supermarkt', slot: 'bord', name: 'Supermarkt Van Dalen', icon: '🛒', weeklyIncome: 250, minReputation: 5 },
+    { id: 'bord_garage', slot: 'bord', name: 'Garage De Versnelling', icon: '🔧', weeklyIncome: 300, minReputation: 10 },
+    { id: 'bord_brouwerij', slot: 'bord', name: 'Brouwerij De Gouden Tap', icon: '🍻', weeklyIncome: 400, minReputation: 20 },
+    { id: 'bord_bouwmarkt', slot: 'bord', name: 'Bouwmarkt Henk & Zonen', icon: '🏗️', weeklyIncome: 350, minReputation: 15 },
+    { id: 'bord_autohandel', slot: 'bord', name: 'Autohandel Kansen', icon: '🚗', weeklyIncome: 500, minReputation: 30 },
+    { id: 'bord_verzekering', slot: 'bord', name: 'Verzekeringen Direct', icon: '🛡️', weeklyIncome: 600, minReputation: 40 },
+    { id: 'bord_makelaardij', slot: 'bord', name: 'Makelaardij Van Houten', icon: '🏠', weeklyIncome: 750, minReputation: 55 },
+    // Mouwsponsors (€75-300/week)
+    { id: 'mouw_bloemen', slot: 'mouw', name: 'Bloemen Bij Bep', icon: '💐', weeklyIncome: 75, minReputation: 5 },
+    { id: 'mouw_kapper', slot: 'mouw', name: 'Kapsalon Kort & Krachtig', icon: '💇', weeklyIncome: 100, minReputation: 10 },
+    { id: 'mouw_pizzeria', slot: 'mouw', name: 'Pizzeria Napoli', icon: '🍕', weeklyIncome: 125, minReputation: 15 },
+    { id: 'mouw_fietsen', slot: 'mouw', name: 'Fietsenmaker Trappers', icon: '🚲', weeklyIncome: 150, minReputation: 20 },
+    { id: 'mouw_slager', slot: 'mouw', name: 'Slagerij Het Varkentje', icon: '🥩', weeklyIncome: 200, minReputation: 30 },
+    { id: 'mouw_drogist', slot: 'mouw', name: 'Drogisterij Fris & Gezond', icon: '🧴', weeklyIncome: 250, minReputation: 40 },
+    { id: 'mouw_tandarts', slot: 'mouw', name: 'Tandarts Van der Molen', icon: '🦷', weeklyIncome: 300, minReputation: 50 },
+    // Broeksponsors (€25-100/week)
+    { id: 'broek_snackbar', slot: 'broek', name: 'Snackbar De Vetbol', icon: '🍟', weeklyIncome: 25, minReputation: 5 },
+    { id: 'broek_ijskar', slot: 'broek', name: 'IJskar Ome Henk', icon: '🍦', weeklyIncome: 40, minReputation: 10 },
+    { id: 'broek_escape', slot: 'broek', name: 'Escape Room De Kleedkamer', icon: '🔑', weeklyIncome: 50, minReputation: 15 },
+    { id: 'broek_wasserette', slot: 'broek', name: 'Wasserette Schoon & Snel', icon: '🧺', weeklyIncome: 60, minReputation: 20 },
+    { id: 'broek_dierenwinkel', slot: 'broek', name: 'Dierenwinkel Woef & Miauw', icon: '🐾', weeklyIncome: 75, minReputation: 30 },
+    { id: 'broek_tattooshop', slot: 'broek', name: 'Tattoo Studio Inkt', icon: '🎨', weeklyIncome: 90, minReputation: 40 },
+    { id: 'broek_zonnebank', slot: 'broek', name: 'Zonnebank Paradise', icon: '☀️', weeklyIncome: 100, minReputation: 50 },
+];
+
 const SCOUTING_NETWORKS = {
     none: {
         name: 'Geen netwerk',
@@ -7716,6 +7764,7 @@ function selectSponsor(sponsorId) {
     }
 
     showNotification(`${sponsor.name} is nu je shirtsponsor!`, 'success');
+    renderSponsorOverview();
     saveGame();
 }
 
@@ -7791,24 +7840,161 @@ function selectStadiumSponsor(sponsorId) {
 }
 
 function renderSponsorsPage() {
-    // Update shirt display with club colors and current sponsor
-    updateSponsorShirtDisplay();
+    // Ensure defaults for old saves
+    if (!gameState.sponsorSlots) gameState.sponsorSlots = { bord: null, mouw: null, broek: null };
+    if (!gameState.sponsorMarket) gameState.sponsorMarket = { offers: [], generatedForWeek: 0 };
 
-    // Mark selected shirt sponsor card
-    document.querySelectorAll('.sponsor-card-compact').forEach(card => {
-        card.classList.remove('active');
-    });
+    renderShirtSponsorGrid();
+    renderSponsorMarket();
+    renderSponsorOverview();
+}
 
-    if (gameState.sponsor?.id) {
-        const selectedCard = document.querySelector(`.sponsor-card-compact[data-sponsor="${gameState.sponsor.id}"]`);
-        if (selectedCard) {
-            selectedCard.classList.add('active');
+function renderShirtSponsorGrid() {
+    const container = document.getElementById('shirt-sponsor-grid');
+    if (!container) return;
+
+    container.innerHTML = Object.entries(SPONSORS).map(([id, s]) => `
+        <div class="sponsor-block ${gameState.sponsor?.id === id ? 'active' : ''}" data-sponsor="${id}" onclick="selectSponsor('${id}')">
+            <div class="sb-icon">${s.icon}</div>
+            <div class="sb-name">${s.name}</div>
+            <div class="sb-stats">
+                <span class="sb-pay">€${s.matchIncome}/wed</span>
+                <span class="sb-bonus">+€${s.winBonus} win</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function generateSponsorMarket() {
+    const rep = gameState.reputation || 10;
+    const activeIds = Object.values(gameState.sponsorSlots || {}).filter(s => s).map(s => s.id);
+    const available = SPONSOR_POOL.filter(s => s.minReputation <= rep && !activeIds.includes(s.id));
+
+    // Shuffle and pick 4-6
+    const shuffled = available.sort(() => Math.random() - 0.5);
+    const count = Math.min(shuffled.length, 4 + Math.floor(Math.random() * 3));
+    const offers = shuffled.slice(0, count);
+
+    gameState.sponsorMarket = {
+        offers,
+        generatedForWeek: gameState.week
+    };
+}
+
+function renderSponsorMarket() {
+    const container = document.getElementById('sponsor-market-grid');
+    if (!container) return;
+
+    // Safety check: regenerate if stale
+    if (gameState.sponsorMarket.generatedForWeek !== gameState.week || gameState.sponsorMarket.offers.length === 0) {
+        generateSponsorMarket();
+    }
+
+    const weekBadge = document.getElementById('sponsor-market-week');
+    if (weekBadge) weekBadge.textContent = `Week ${gameState.week}`;
+
+    const offers = gameState.sponsorMarket.offers;
+    if (offers.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1; text-align: center;">Geen aanbiedingen beschikbaar. Verhoog je reputatie!</p>';
+        return;
+    }
+
+    const slotLabels = { bord: '📋 Bord', mouw: '💪 Mouw', broek: '🩳 Broek' };
+
+    container.innerHTML = offers.map(offer => `
+        <div class="sponsor-market-offer" onclick="selectMarketSponsor('${offer.id}')">
+            <span class="smo-slot-badge smo-slot-${offer.slot}">${slotLabels[offer.slot]}</span>
+            <div class="smo-icon">${offer.icon}</div>
+            <div class="smo-name">${offer.name}</div>
+            <div class="smo-income">€${offer.weeklyIncome}/week</div>
+        </div>
+    `).join('');
+}
+
+function selectMarketSponsor(id) {
+    const offer = gameState.sponsorMarket.offers.find(o => o.id === id);
+    if (!offer) return;
+
+    // Place in correct slot
+    gameState.sponsorSlots[offer.slot] = {
+        id: offer.id,
+        name: offer.name,
+        icon: offer.icon,
+        weeklyIncome: offer.weeklyIncome,
+        slot: offer.slot
+    };
+
+    // Remove from market
+    gameState.sponsorMarket.offers = gameState.sponsorMarket.offers.filter(o => o.id !== id);
+
+    showNotification(`${offer.name} is nu je ${offer.slot}sponsor!`, 'success');
+    renderSponsorMarket();
+    renderSponsorOverview();
+    saveGame();
+}
+
+function clearSponsorSlot(slotType) {
+    if (!gameState.sponsorSlots[slotType]) return;
+    const name = gameState.sponsorSlots[slotType].name;
+    gameState.sponsorSlots[slotType] = null;
+    showNotification(`${name} verwijderd als ${slotType}sponsor`, 'info');
+    renderSponsorOverview();
+    saveGame();
+}
+
+function renderSponsorOverview() {
+    const panel = document.getElementById('sponsor-overview-panel');
+    if (!panel) return;
+
+    // Update kit display
+    updateSponsorKitDisplay();
+
+    const slots = [
+        { key: 'shirt', label: '👕 Shirt', data: gameState.sponsor ? { name: gameState.sponsor.name, weeklyIncome: gameState.sponsor.weeklyPay } : null },
+        { key: 'bord', label: '📋 Bord', data: gameState.sponsorSlots.bord },
+        { key: 'mouw', label: '💪 Mouw', data: gameState.sponsorSlots.mouw },
+        { key: 'broek', label: '🩳 Broek', data: gameState.sponsorSlots.broek }
+    ];
+
+    const slotsHtml = slots.map(s => {
+        if (s.data) {
+            const clearBtn = s.key !== 'shirt' ? `<button class="spo-clear" onclick="clearSponsorSlot('${s.key}')" title="Verwijderen">✕</button>` : '';
+            return `<div class="spo-slot filled">
+                <span class="spo-label">${s.label}</span>
+                <span class="spo-name">${s.data.name}</span>
+                <span class="spo-income">€${s.data.weeklyIncome}/w</span>
+                ${clearBtn}
+            </div>`;
         }
+        return `<div class="spo-slot empty">
+            <span class="spo-label">${s.label}</span>
+            <span class="spo-name">Geen sponsor</span>
+            <span class="spo-income">-</span>
+        </div>`;
+    }).join('');
+
+    const shirtWeekly = gameState.sponsor?.weeklyPay || 0;
+    const bordWeekly = gameState.sponsorSlots.bord?.weeklyIncome || 0;
+    const mouwWeekly = gameState.sponsorSlots.mouw?.weeklyIncome || 0;
+    const broekWeekly = gameState.sponsorSlots.broek?.weeklyIncome || 0;
+    const totalWeekly = shirtWeekly + bordWeekly + mouwWeekly + broekWeekly;
+
+    const overviewContent = document.getElementById('sponsor-overview-content');
+    if (overviewContent) {
+        overviewContent.innerHTML = `
+            <div class="spo-slots">${slotsHtml}</div>
+            <div class="spo-total">
+                <span>Totaal per week</span>
+                <span>€${totalWeekly}</span>
+            </div>
+        `;
     }
 }
 
 window.selectSponsor = selectSponsor;
 window.updateSponsorShirtDisplay = updateSponsorShirtDisplay;
+window.selectMarketSponsor = selectMarketSponsor;
+window.clearSponsorSlot = clearSponsorSlot;
 
 // ================================================
 // SCOUTING NETWORK SYSTEM
@@ -8281,19 +8467,28 @@ function renderStadiumMap() {
         return Math.max(0, config.levels.findIndex(l => l.id === id));
     }
 
-    // Building positions
+    // Road ring around stadium (scales with tribune size)
+    const roadMargin = 22;
+    const roadAreaW = Math.max(200, stadW + roadMargin * 2);
+    const roadAreaH = Math.max(120, stadH + roadMargin * 2);
+    const roadLeft = cx - roadAreaW / 2;
+    const roadRight = cx + roadAreaW / 2;
+    const roadTop = cy - roadAreaH / 2;
+    const roadBottom = cy + roadAreaH / 2;
+
+    // Building positions — kantine+scouting small & near stadium
     const positions = {
-        medical:       { x: 80,  y: 100 },
-        kantine:       { x: 80,  y: 175 },
-        scouting:      { x: 540, y: 100 },
-        perszaal:      { x: 540, y: 175 },
+        kantine:  { x: roadLeft + 30, y: roadTop - 30, w: 74, h: 46 },
+        scouting: { x: roadRight - 30, y: roadTop - 30, w: 74, h: 46 },
+        medical:  { x: roadLeft - 45, y: cy },
+        perszaal: { x: roadRight + 45, y: cy },
     };
 
     // Training & Academy field positions (below stadium)
-    const trainW = 90, trainH = 50;
+    const trainW = 110, trainH = 62;
     const acadW = 90, acadH = 50;
-    const trainX = cx - trainW - 8, trainY = 300;
-    const acadX = cx + 8, acadY = 300;
+    const trainX = cx - trainW - 8, trainY = 290;
+    const acadX = cx + 8, acadY = 290;
 
     let svg = `<svg viewBox="0 0 620 400" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Inter', system-ui, sans-serif;">`;
 
@@ -8320,45 +8515,28 @@ function renderStadiumMap() {
         svg += `<line x1="${x}" y1="0" x2="${x}" y2="400" stroke="rgba(255,255,255,0.015)" stroke-width="1"/>`;
     }
 
-    // ===== ROADS =====
+    // ===== ROADS (ring around stadium + spur to training) =====
     const roadW = 10;
     const roadColor = 'url(#road-grad)';
     const lineColor = 'rgba(255,255,200,0.25)';
 
-    // Main horizontal road
-    const roadY = cy;
-    svg += `<rect x="30" y="${roadY - roadW/2}" width="560" height="${roadW}" fill="${roadColor}" rx="5"/>`;
-    // Dashed center line
-    for (let dx = 35; dx < 585; dx += 18) {
-        svg += `<rect x="${dx}" y="${roadY - 0.5}" width="10" height="1" fill="${lineColor}" rx="0.5"/>`;
-    }
-
-    // Vertical road from stadium down to training fields
-    svg += `<rect x="${cx - roadW/2}" y="${roadY}" width="${roadW}" height="${trainY + trainH/2 - roadY + 10}" fill="${roadColor}" rx="5"/>`;
-    for (let dy = roadY + 8; dy < trainY + trainH/2; dy += 18) {
-        svg += `<rect x="${cx - 0.5}" y="${dy}" width="1" height="10" fill="${lineColor}" rx="0.5"/>`;
-    }
-
-    // Left vertical road (connecting left buildings)
-    const leftRoadX = 80;
-    svg += `<rect x="${leftRoadX - roadW/2}" y="68" width="${roadW}" height="145" fill="${roadColor}" rx="5"/>`;
-    for (let dy = 73; dy < 208; dy += 18) {
-        svg += `<rect x="${leftRoadX - 0.5}" y="${dy}" width="1" height="10" fill="${lineColor}" rx="0.5"/>`;
-    }
-
-    // Right vertical road (connecting right buildings)
-    const rightRoadX = 540;
-    svg += `<rect x="${rightRoadX - roadW/2}" y="68" width="${roadW}" height="145" fill="${roadColor}" rx="5"/>`;
-    for (let dy = 73; dy < 208; dy += 18) {
-        svg += `<rect x="${rightRoadX - 0.5}" y="${dy}" width="1" height="10" fill="${lineColor}" rx="0.5"/>`;
-    }
-
-    // Small connecting roads from vertical to horizontal
-    svg += `<rect x="${leftRoadX}" y="${roadY - roadW/2}" width="${cx - stadW/2 - leftRoadX - 5}" height="${roadW}" fill="${roadColor}" rx="3"/>`;
-    svg += `<rect x="${cx + stadW/2 + 5}" y="${roadY - roadW/2}" width="${rightRoadX - cx - stadW/2 - 5}" height="${roadW}" fill="${roadColor}" rx="3"/>`;
-
-    // Small road circles at intersections
-    [[leftRoadX, roadY], [rightRoadX, roadY], [cx, roadY], [cx, trainY - 15]].forEach(([ix, iy]) => {
+    // Top road (extends to edges as main approach)
+    svg += `<rect x="30" y="${roadTop - roadW/2}" width="560" height="${roadW}" fill="${roadColor}" rx="5"/>`;
+    for (let dx = 35; dx < 585; dx += 18) svg += `<rect x="${dx}" y="${roadTop - 0.5}" width="10" height="1" fill="${lineColor}" rx="0.5"/>`;
+    // Bottom road
+    svg += `<rect x="${roadLeft}" y="${roadBottom - roadW/2}" width="${roadAreaW}" height="${roadW}" fill="${roadColor}" rx="5"/>`;
+    for (let dx = roadLeft + 5; dx < roadRight - 5; dx += 18) svg += `<rect x="${dx}" y="${roadBottom - 0.5}" width="10" height="1" fill="${lineColor}" rx="0.5"/>`;
+    // Left road
+    svg += `<rect x="${roadLeft - roadW/2}" y="${roadTop}" width="${roadW}" height="${roadAreaH}" fill="${roadColor}" rx="5"/>`;
+    for (let dy = roadTop + 8; dy < roadBottom - 5; dy += 18) svg += `<rect x="${roadLeft - 0.5}" y="${dy}" width="1" height="10" fill="${lineColor}" rx="0.5"/>`;
+    // Right road
+    svg += `<rect x="${roadRight - roadW/2}" y="${roadTop}" width="${roadW}" height="${roadAreaH}" fill="${roadColor}" rx="5"/>`;
+    for (let dy = roadTop + 8; dy < roadBottom - 5; dy += 18) svg += `<rect x="${roadRight - 0.5}" y="${dy}" width="1" height="10" fill="${lineColor}" rx="0.5"/>`;
+    // Spur to training fields
+    svg += `<rect x="${cx - roadW/2}" y="${roadBottom}" width="${roadW}" height="${trainY - roadBottom + trainH/2 + 10}" fill="${roadColor}" rx="5"/>`;
+    for (let dy = roadBottom + 8; dy < trainY + trainH/2; dy += 18) svg += `<rect x="${cx - 0.5}" y="${dy}" width="1" height="10" fill="${lineColor}" rx="0.5"/>`;
+    // Road circles at corners and junctions
+    [[roadLeft, roadTop], [roadRight, roadTop], [roadLeft, roadBottom], [roadRight, roadBottom], [cx, roadBottom]].forEach(([ix, iy]) => {
         svg += `<circle cx="${ix}" cy="${iy}" r="7" fill="#555" stroke="#666" stroke-width="0.5"/>`;
     });
 
@@ -8371,12 +8549,8 @@ function renderStadiumMap() {
 
     svg += `<g class="stadium-building${isStadActive ? ' active' : ''}" data-category="tribune" onclick="selectStadiumCategory('tribune')" filter="url(#shadow-md)">`;
     if (tribuneLevel === 0) {
-        const benchW = fieldW + 10;
-        const benchY1 = cy - fieldH/2 - 10, benchY2 = cy + fieldH/2 + 2;
-        svg += `<rect x="${cx - benchW/2}" y="${benchY1}" width="${benchW}" height="8" fill="#8B6914" stroke="#a07820" stroke-width="1" rx="2"/>`;
-        for (let p = 0; p < 7; p++) svg += `<line x1="${cx - benchW/2 + 6 + p * (benchW - 12)/6}" y1="${benchY1}" x2="${cx - benchW/2 + 6 + p * (benchW - 12)/6}" y2="${benchY1 + 8}" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>`;
-        svg += `<rect x="${cx - benchW/2}" y="${benchY2}" width="${benchW}" height="8" fill="#8B6914" stroke="#a07820" stroke-width="1" rx="2"/>`;
-        for (let p = 0; p < 7; p++) svg += `<line x1="${cx - benchW/2 + 6 + p * (benchW - 12)/6}" y1="${benchY2}" x2="${cx - benchW/2 + 6 + p * (benchW - 12)/6}" y2="${benchY2 + 8}" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>`;
+        // Empty — no tribune, just clickable area
+        svg += `<rect x="${cx - fieldW/2 - 20}" y="${cy - fieldH/2 - 20}" width="${fieldW + 40}" height="${fieldH + 40}" fill="transparent"/>`;
     } else {
         const ox = cx - stadW/2, oy = cy - stadH/2;
         svg += `<rect x="${ox}" y="${oy}" width="${stadW}" height="${stadH}" fill="${tc}" stroke="${tColors[1]}" stroke-width="2" rx="${Math.min(6, ringThickness)}"/>`;
@@ -8391,10 +8565,10 @@ function renderStadiumMap() {
         if (tribuneLevel >= 2) [[ox+3,oy+3],[ox+stadW-3,oy+3],[ox+3,oy+stadH-3],[ox+stadW-3,oy+stadH-3]].forEach(([px,py]) => { svg += `<circle cx="${px}" cy="${py}" r="3" fill="${tColors[1]}" opacity="0.4"/>`; });
         if (tribuneLevel >= 3) [[ox,oy],[ox+stadW,oy],[ox,oy+stadH],[ox+stadW,oy+stadH]].forEach(([lx,ly]) => { const dir = lx < cx ? -1 : 1; svg += `<line x1="${lx}" y1="${ly}" x2="${lx+dir*10}" y2="${ly-16}" stroke="#bbb" stroke-width="1.5"/><circle cx="${lx+dir*10}" cy="${ly-18}" r="3" fill="#ffe066"/>`; });
     }
-    const labelY = cy - stadH/2 - (tribuneLevel === 0 ? 16 : 8);
-    svg += `<text x="${cx}" y="${labelY}" text-anchor="middle" fill="${tColors[1]}" font-size="9" font-weight="bold">Stadion</text>`;
-    svg += `<rect x="${cx-13}" y="${cy+stadH/2+(tribuneLevel===0?14:5)}" width="26" height="13" fill="${tColors[1]}" rx="6"/>`;
-    svg += `<text x="${cx}" y="${cy+stadH/2+(tribuneLevel===0?23:14)}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${tribuneLevel+1}</text>`;
+    const labelY = cy - stadH/2 - (tribuneLevel === 0 ? 6 : 8);
+    svg += `<text x="${cx - 16}" y="${labelY}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Stadion</text>`;
+    svg += `<rect x="${cx + 8}" y="${labelY - 10}" width="26" height="13" fill="${tColors[1]}" rx="6"/>`;
+    svg += `<text x="${cx + 21}" y="${labelY - 1}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${tribuneLevel}</text>`;
     svg += `</g>`;
 
     // ===== GRASS (field) =====
@@ -8404,14 +8578,14 @@ function renderStadiumMap() {
     const gColors = levelColors[Math.min(grassLevel, levelColors.length-1)];
     const isGrassActive = currentStadiumCategory === 'grass';
 
-    svg += `<g class="stadium-building${isGrassActive ? ' active' : ''}" data-category="grass" onclick="selectStadiumCategory('grass')">`;
+    svg += `<g class="stadium-building${isGrassActive ? ' active' : ''}" data-category="grass" onclick="selectStadiumCategory('tribune')">`;
     svg += `<rect x="${cx-fieldW/2}" y="${cy-fieldH/2}" width="${fieldW}" height="${fieldH}" fill="${gc}" stroke="white" stroke-width="1.5" rx="2"/>`;
     svg += `<rect x="${cx-fieldW/2+3}" y="${cy-fieldH/2+3}" width="${fieldW-6}" height="${fieldH-6}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
     svg += `<line x1="${cx}" y1="${cy-fieldH/2+3}" x2="${cx}" y2="${cy+fieldH/2-3}" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
     svg += `<circle cx="${cx}" cy="${cy}" r="10" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
-    svg += `<text x="${cx}" y="${cy+fieldH/2-5}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7" font-weight="600" letter-spacing="1">Wedstrijdveld</text>`;
-    svg += `<rect x="${cx+fieldW/2-24}" y="${cy-fieldH/2+2}" width="22" height="12" fill="${gColors[1]}" rx="6"/>`;
-    svg += `<text x="${cx+fieldW/2-13}" y="${cy-fieldH/2+11}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${grassLevel+1}</text>`;
+    svg += `<text x="${cx - 16}" y="${cy+fieldH/2-5}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7" font-weight="600" letter-spacing="1">Wedstrijdveld</text>`;
+    svg += `<rect x="${cx + 22}" y="${cy+fieldH/2-13}" width="22" height="12" fill="${gColors[1]}" rx="6"/>`;
+    svg += `<text x="${cx + 33}" y="${cy+fieldH/2-4}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${grassLevel+1}</text>`;
     svg += `</g>`;
 
     // ===== TRAINING FIELD =====
@@ -8431,20 +8605,47 @@ function renderStadiumMap() {
         if (level >= 1) {
             for (let c = 0; c < 3; c++) svg += `<circle cx="${x+14+c*12}" cy="${y+h-7}" r="2" fill="orange" opacity="0.4"/>`;
         }
-        svg += `<text x="${x+w/2}" y="${y-6}" text-anchor="middle" fill="${lc[1]}" font-size="8" font-weight="bold">${icon} ${label}</text>`;
-        svg += `<rect x="${x+w-24}" y="${y+2}" width="22" height="12" fill="${lc[1]}" rx="6"/>`;
-        svg += `<text x="${x+w-13}" y="${y+11}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level+1}</text>`;
+        svg += `<text x="${x+w/2 - 14}" y="${y-6}" text-anchor="middle" fill="${lc[1]}" font-size="8" font-weight="bold">${icon} ${label}</text>`;
+        svg += `<rect x="${x+w/2 + 6}" y="${y-16}" width="22" height="12" fill="${lc[1]}" rx="6"/>`;
+        svg += `<text x="${x+w/2 + 17}" y="${y-7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level+1}</text>`;
         svg += `</g>`;
     }
 
     const trainLevel = getLevel('training');
     const acadLevel = getLevel('academy');
     renderField(trainX, trainY, trainW, trainH, trainLevel, 'training', 'Training', '', levelColors[Math.min(trainLevel, 4)]);
-    renderField(acadX, acadY, acadW, acadH, acadLevel, 'academy', 'Jeugd', '', levelColors[Math.min(acadLevel, 4)]);
+
+    // Academy: 2 small fields side by side
+    const acadSmallW = 52, acadSmallH = 62, acadGap = 8;
+    const isAcadActive = currentStadiumCategory === 'academy';
+    const acadGreens = ['#3a6a3a','#3a7a3a','#2a8a2a','#1a9a1a'];
+    const acFg = acadGreens[Math.min(acadLevel, acadGreens.length-1)];
+    const acColors = levelColors[Math.min(acadLevel, 4)];
+    svg += `<g class="stadium-building${isAcadActive ? ' active' : ''}" data-category="academy" onclick="selectStadiumCategory('academy')" filter="url(#shadow-sm)">`;
+    // Field 1 (goals on short sides = top/bottom, midline horizontal)
+    const f1x = acadX, f1y = acadY;
+    svg += `<rect x="${f1x}" y="${f1y}" width="${acadSmallW}" height="${acadSmallH}" fill="${acFg}" stroke="${acColors[1]}" stroke-width="1.5" rx="4"/>`;
+    svg += `<line x1="${f1x+2}" y1="${f1y+acadSmallH/2}" x2="${f1x+acadSmallW-2}" y2="${f1y+acadSmallH/2}" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+    svg += `<circle cx="${f1x+acadSmallW/2}" cy="${f1y+acadSmallH/2}" r="5" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+    svg += `<rect x="${f1x+acadSmallW/2-4}" y="${f1y+1}" width="8" height="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.5" rx="0.5"/>`;
+    svg += `<rect x="${f1x+acadSmallW/2-4}" y="${f1y+acadSmallH-4}" width="8" height="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.5" rx="0.5"/>`;
+    // Field 2 (goals on short sides = top/bottom, midline horizontal)
+    const f2x = acadX + acadSmallW + acadGap;
+    svg += `<rect x="${f2x}" y="${f1y}" width="${acadSmallW}" height="${acadSmallH}" fill="${acFg}" stroke="${acColors[1]}" stroke-width="1.5" rx="4"/>`;
+    svg += `<line x1="${f2x+2}" y1="${f1y+acadSmallH/2}" x2="${f2x+acadSmallW-2}" y2="${f1y+acadSmallH/2}" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+    svg += `<circle cx="${f2x+acadSmallW/2}" cy="${f1y+acadSmallH/2}" r="5" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+    svg += `<rect x="${f2x+acadSmallW/2-4}" y="${f1y+1}" width="8" height="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.5" rx="0.5"/>`;
+    svg += `<rect x="${f2x+acadSmallW/2-4}" y="${f1y+acadSmallH-4}" width="8" height="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.5" rx="0.5"/>`;
+    // Label + level badge
+    const acadCenterX = acadX + acadSmallW + acadGap/2;
+    svg += `<text x="${acadCenterX - 14}" y="${f1y-6}" text-anchor="middle" fill="${acColors[1]}" font-size="8" font-weight="bold">Jeugd</text>`;
+    svg += `<rect x="${acadCenterX + 6}" y="${f1y-16}" width="22" height="12" fill="${acColors[1]}" rx="6"/>`;
+    svg += `<text x="${acadCenterX + 17}" y="${f1y-7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${acadLevel+1}</text>`;
+    svg += `</g>`;
 
     // ===== BUILDINGS (left & right columns) =====
     const buildingMeta = {
-        medical:       { icon: '', accent: '#e05050', name: 'Medisch' },
+        medical:       { icon: '', accent: '#e05050', name: 'Fysio' },
         kantine:       { icon: '', accent: '#d4a044', name: 'Kantine' },
         scouting:      { icon: '', accent: '#60a5fa', name: 'Scouting' },
         perszaal:      { icon: '', accent: '#94a3b8', name: 'Media' },
@@ -8488,58 +8689,48 @@ function renderStadiumMap() {
         const isUnbuilt = level === 0;
         const isActive = currentStadiumCategory === key;
         const meta = buildingMeta[key];
-        const bx = pos.x - bw/2, by = pos.y - bh/2;
+        const cbw = pos.w || bw, cbh = pos.h || bh;
+        const bx = pos.x - cbw/2, by = pos.y - cbh/2;
         const config = STADIUM_TILE_CONFIG[key];
-        const nextBuildName = config.levels[1]?.name || '';
 
         svg += `<g class="stadium-building${isActive ? ' active' : ''}${isUnbuilt ? ' unbuilt' : ''}" data-category="${key}" onclick="selectStadiumCategory('${key}')" filter="url(#shadow-sm)">`;
 
         if (isUnbuilt) {
-            // Empty plot — bare dirt ground
-            svg += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="#4a3d28" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="5 3" rx="8"/>`;
-            // Dirt texture patches
-            svg += `<rect x="${bx+6}" y="${by+6}" width="${bw-12}" height="${bh-12}" fill="#3e3420" rx="5"/>`;
+            svg += `<rect x="${bx}" y="${by}" width="${cbw}" height="${cbh}" fill="#4a3d28" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="5 3" rx="8"/>`;
+            svg += `<rect x="${bx+6}" y="${by+6}" width="${cbw-12}" height="${cbh-12}" fill="#3e3420" rx="5"/>`;
             svg += `<circle cx="${bx+15}" cy="${by+15}" r="4" fill="#56472e" opacity="0.5"/>`;
-            svg += `<circle cx="${bx+bw-20}" cy="${by+bh-18}" r="5" fill="#56472e" opacity="0.4"/>`;
-            svg += `<circle cx="${bx+bw/2+8}" cy="${by+12}" r="3" fill="#56472e" opacity="0.3"/>`;
-            // Build icon
+            svg += `<circle cx="${bx+cbw-20}" cy="${by+cbh-18}" r="5" fill="#56472e" opacity="0.4"/>`;
+            svg += `<circle cx="${bx+cbw/2+8}" cy="${by+12}" r="3" fill="#56472e" opacity="0.3"/>`;
             svg += `<circle cx="${pos.x}" cy="${pos.y-2}" r="12" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>`;
             svg += `<text x="${pos.x}" y="${pos.y+3}" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="13" font-weight="300">+</text>`;
-            // Label
-            svg += `<text x="${pos.x}" y="${by+bh-5}" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="7" font-weight="600">${meta.name}</text>`;
-            // "Bouw" hint badge
-            svg += `<rect x="${bx+bw/2-20}" y="${by-3}" width="40" height="13" fill="rgba(255,179,0,0.15)" stroke="rgba(255,179,0,0.4)" stroke-width="0.7" rx="6"/>`;
-            svg += `<text x="${pos.x}" y="${by+7}" text-anchor="middle" fill="rgba(255,200,50,0.8)" font-size="6" font-weight="600">Beschikbaar</text>`;
+            svg += `<text x="${pos.x}" y="${by+cbh-5}" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="7" font-weight="600">${meta.name}</text>`;
+            svg += `<rect x="${bx+cbw-24}" y="${by+2}" width="24" height="12" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" rx="6"/>`;
+            svg += `<text x="${bx+cbw-12}" y="${by+11}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="7" font-weight="bold">Nv0</text>`;
         } else {
-            // Built building
             const darkBase = { medical:'#3a1a1a', kantine:'#3a2a1a', scouting:'#1a2a3a', perszaal:'#1a1a2a' };
             const roofColor = { medical:'#c03030', kantine:'#a07820', scouting:'#2a5a9a', perszaal:'#475569' };
-            svg += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="${darkBase[key]}" stroke="${meta.accent}" stroke-width="1.5" rx="8"/>`;
-            // Roof
-            svg += `<rect x="${bx}" y="${by}" width="${bw}" height="7" fill="${roofColor[key]}" rx="8"/>`;
-            svg += `<rect x="${bx}" y="${by+5}" width="${bw}" height="2" fill="${roofColor[key]}"/>`;
-            // Details
-            svg += buildingDetails[key](bx, by, bw, bh, level);
-            // Name
-            svg += `<text x="${pos.x}" y="${by+bh-5}" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="7" font-weight="600">${meta.name}</text>`;
-            // Level badge
-            svg += `<rect x="${bx+bw-24}" y="${by-2}" width="24" height="12" fill="${meta.accent}" rx="6"/>`;
-            svg += `<text x="${bx+bw-12}" y="${by+7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level}</text>`;
+            svg += `<rect x="${bx}" y="${by}" width="${cbw}" height="${cbh}" fill="${darkBase[key]}" stroke="${meta.accent}" stroke-width="1.5" rx="8"/>`;
+            svg += `<rect x="${bx}" y="${by}" width="${cbw}" height="7" fill="${roofColor[key]}" rx="8"/>`;
+            svg += `<rect x="${bx}" y="${by+5}" width="${cbw}" height="2" fill="${roofColor[key]}"/>`;
+            svg += buildingDetails[key](bx, by, cbw, cbh, level);
+            svg += `<text x="${pos.x}" y="${by+cbh-5}" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="7" font-weight="600">${meta.name}</text>`;
+            svg += `<rect x="${bx+cbw-24}" y="${by-2}" width="24" height="12" fill="${meta.accent}" rx="6"/>`;
+            svg += `<text x="${bx+cbw-12}" y="${by+7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level}</text>`;
         }
         svg += `</g>`;
     });
 
     // ===== TREES (decoration) =====
-    [[22,50],[598,50],[22,360],[598,360],[170,355],[450,355],[25,140],[595,140]].forEach(([tx,ty]) => {
+    [[22,40],[598,40],[22,370],[598,370],[170,365],[450,365],[25,200],[595,200]].forEach(([tx,ty]) => {
         svg += `<circle cx="${tx}" cy="${ty}" r="8" fill="#1a4a1a" opacity="0.5"/>`;
         svg += `<circle cx="${tx}" cy="${ty-3}" r="6" fill="#2a6a2a" opacity="0.5"/>`;
         svg += `<circle cx="${tx}" cy="${ty-5}" r="4" fill="#3a8a3a" opacity="0.4"/>`;
     });
 
-    // ===== PARKING LINES (near road) =====
+    // ===== PARKING LINES (near top road) =====
     for (let p = 0; p < 4; p++) {
-        svg += `<rect x="${170+p*14}" y="${roadY+12}" width="10" height="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" rx="1"/>`;
-        svg += `<rect x="${410+p*14}" y="${roadY+12}" width="10" height="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" rx="1"/>`;
+        svg += `<rect x="${40+p*14}" y="${roadTop+8}" width="10" height="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" rx="1"/>`;
+        svg += `<rect x="${540+p*14}" y="${roadTop+8}" width="10" height="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" rx="1"/>`;
     }
 
     // Subtitle
@@ -8809,7 +9000,9 @@ function selectStadiumCategory(category) {
 
 function closeStadiumPanel() {
     const panel = document.getElementById('stadium-upgrade-panel');
+    const backdrop = document.getElementById('stadium-panel-backdrop');
     if (panel) panel.style.display = 'none';
+    if (backdrop) backdrop.style.display = 'none';
     document.querySelectorAll('.stadium-building').forEach(b => b.classList.remove('active'));
     currentStadiumCategory = null;
 }
@@ -8892,6 +9085,8 @@ function updateStadiumUpgradePanel(category) {
     }
 
     panel.style.display = 'flex';
+    const backdrop = document.getElementById('stadium-panel-backdrop');
+    if (backdrop) backdrop.style.display = 'block';
 }
 
 window.closeStadiumPanel = closeStadiumPanel;

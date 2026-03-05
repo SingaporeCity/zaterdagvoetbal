@@ -183,6 +183,8 @@ export let gameState = {
     },
     sponsor: null,
     stadiumSponsor: null,
+    sponsorSlots: { bord: null, mouw: null, broek: null },
+    sponsorMarket: { offers: [], generatedForWeek: 0 },
     scoutingNetwork: 'none',
     dailyChecklist: {
         lastResetDate: null,

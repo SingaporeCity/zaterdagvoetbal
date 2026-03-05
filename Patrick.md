@@ -19,7 +19,7 @@ Je beheert een amateurvoetbalclub. Elke dag kun je een wedstrijd spelen (timer t
 - **Jeugd** - Jeugdspelers ontwikkelen en doorschuiven
 - **Stadion** - Upgrades kopen (veld, tribunes, faciliteiten)
 - **Transfers** - Spelers kopen en verkopen op de markt
-- **Sponsors** - Sponsordeals sluiten voor extra inkomsten
+- **Sponsors** - Shirtsponsor kiezen + sponsormarkt met bord-/mouw-/broeksponsors
 - **Financien** - Budget en inkomsten/uitgaven beheren
 - **Stafcentrum** - Trainers en medisch personeel
 
@@ -87,6 +87,8 @@ Voetbalkantine thema — professioneel met karakter:
 - Fonts: Bebas Neue (headers) + DM Sans (body)
 - Responsive: hamburger menu op mobiel (<=768px)
 - Geen popups bij laden (welkom-terug/dagelijkse beloning/random events uitgeschakeld)
+- Dashboard: zwarte card-headers, voetbalkantine prikbord-feel
+- Sponsors: shirtsponsor (3 opties) bovenaan, wekelijkse sponsormarkt daaronder met bord/mouw/broek-slots
 
 ### Belangrijke functies in app.js
 | Functie | Wat het doet |
@@ -100,3 +102,9 @@ Voetbalkantine thema — professioneel met karakter:
 | `playMatch()` | Speelt een wedstrijd, update stand |
 | `showMatchResultModal()` | Toont wedstrijdresultaat met timeline |
 | `renderStandings()` | Rendert competitietabel |
+| `renderSponsorsPage()` | Rendert sponsorpagina (shirt + markt + overzicht) |
+| `generateSponsorMarket()` | Genereert wekelijkse sponsoraanbiedingen |
+| `selectMarketSponsor()` | Plaatst markt-sponsor in slot |
+| `clearSponsorSlot()` | Verwijdert sponsor uit slot |
+| `renderDashboardFinances()` | Financieel overzicht op dashboard |
+| `calculateDailyFinances()` | Berekent dagelijkse inkomsten/uitgaven |
