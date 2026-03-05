@@ -2674,11 +2674,7 @@ body {
 .transfer-list {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    background: var(--bg-card);
-    border-radius: var(--card-radius);
-    border: 1px solid var(--border);
-    overflow: hidden;
+    gap: 12px;
 }
 
 .transfer-card {
@@ -4213,11 +4209,7 @@ body {
 .transfer-list {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    background: var(--bg-card);
-    border-radius: var(--card-radius);
-    border: 1px solid var(--border);
-    overflow: hidden;
+    gap: 12px;
 }
 
 .transfer-card {
@@ -5280,6 +5272,10 @@ body {
     color: rgba(255, 255, 255, 0.3);
 }
 
+.pc-potential-stars .pc-stars .star.uncertain {
+    color: rgba(255, 255, 255, 0.5);
+}
+
 .pc-potential-stars .pc-potential-label {
     font-size: 0.45rem;
     font-weight: 600;
@@ -5288,15 +5284,33 @@ body {
     color: var(--text-secondary);
 }
 
-/* Transfer card specific styles */
+/* Transfer card specific styles - same grid as squad cards + buy/min-div column */
 .player-card.transfer-card {
-    gap: 12px;
+    grid-template-columns: 7fr 10fr 9fr 8fr 7fr auto;
 }
 
 .player-card.transfer-card .btn-transfer-buy {
-    padding: 5px 12px;
+    padding: 5px 14px;
     font-size: 0.7rem;
     flex-shrink: 0;
+    min-width: 70px;
+    text-align: center;
+}
+
+.pc-min-division {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--accent-orange);
+    background: rgba(255, 144, 32, 0.1);
+    border: 1px solid rgba(255, 144, 32, 0.25);
+    border-radius: 4px;
+    white-space: nowrap;
+    text-align: center;
+    min-width: 70px;
+    font-family: var(--font-display);
+    letter-spacing: 0.3px;
 }
 
 .pc-finance.transfer-finance {

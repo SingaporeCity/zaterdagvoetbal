@@ -860,6 +860,21 @@ function renderStarsHTML(starCount) {
     return html;
 }
 
+// Render transfer stars: known (yellow) + uncertain (dark) + empty
+function renderTransferStarsHTML(known, uncertain) {
+    let html = '';
+    for (let i = 0; i < known; i++) {
+        html += '<span class="star full">★</span>';
+    }
+    for (let i = 0; i < uncertain; i++) {
+        html += '<span class="star uncertain">★</span>';
+    }
+    for (let i = known + uncertain; i < 5; i++) {
+        html += '<span class="star empty">☆</span>';
+    }
+    return html;
+}
+
 function createPlayerCardHTML(player, mini = false) {
     const posData = POSITIONS[player.position] || { abbr: '??', color: '#666' };
     const photo = player.photo || generatePlayerPhoto(player.name, player.position);
@@ -4171,17 +4186,42 @@ function generateTransferMarket() {
     const count = random(10, 20);
 
     for (let i = 0; i < count; i++) {
-        const player = generatePlayer(division);
+        // Mix of players: most from current division, some from better divisions
+        const roll = Math.random();
+        let playerDiv;
+        if (roll < 0.50) {
+            playerDiv = division; // 50% from own division
+        } else if (roll < 0.75) {
+            playerDiv = Math.max(1, division - 1); // 25% one division higher
+        } else if (roll < 0.90) {
+            playerDiv = Math.max(1, division - 2); // 15% two divisions higher
+        } else {
+            playerDiv = Math.max(1, division - 3); // 10% three divisions higher
+        }
+
+        const player = generatePlayer(playerDiv);
 
         // 20% chance of being free agent
         if (Math.random() < 0.20) {
             player.price = 0;
-            player.signingBonus = Math.round(player.salary * 52 * 0.3); // 30% of yearly salary
+            player.signingBonus = Math.round(player.salary * 52 * 0.3);
             player.isFreeAgent = true;
         } else {
-            player.price = calculatePlayerValue(player, division);
+            player.price = calculatePlayerValue(player, playerDiv);
             player.signingBonus = 0;
             player.isFreeAgent = false;
+        }
+
+        // Minimaal gewenst niveau: spelers uit hogere divisies willen niet zakken
+        // Spelers uit eigen divisie of lager: altijd geinteresseerd
+        if (playerDiv < division) {
+            // Speler uit een betere divisie — wil meestal niet zo laag spelen
+            // Kleine kans dat ze toch geinteresseerd zijn (afdankertje / avontuurlijk)
+            player.minDivision = Math.random() < 0.25
+                ? division   // 25%: toch bereid om te zakken
+                : playerDiv + random(0, 1); // Wil dicht bij eigen niveau blijven
+        } else {
+            player.minDivision = division; // Uit eigen divisie: altijd geinteresseerd
         }
 
         players.push(player);
@@ -4215,7 +4255,7 @@ function renderTransferMarket() {
     const minPrice = parseInt(document.getElementById('transfer-min-price')?.value) || 0;
     const maxPrice = parseInt(document.getElementById('transfer-max-price')?.value) || 50000;
     const freeOnly = document.getElementById('transfer-free-only')?.checked || false;
-    const sortOption = document.getElementById('transfer-sort')?.value || 'overall-desc';
+    const interestedOnly = document.getElementById('transfer-interested-only')?.checked || false;
 
     let players = [...gameState.transferMarket.players];
 
@@ -4231,87 +4271,99 @@ function renderTransferMarket() {
         players = players.filter(p => p.price >= minPrice && p.price <= maxPrice);
     }
 
-    // Apply sorting
-    const [sortField, sortDir] = sortOption.split('-');
-    players.sort((a, b) => {
-        let valA, valB;
-        switch(sortField) {
-            case 'overall':
-                valA = a.overall;
-                valB = b.overall;
-                break;
-            case 'potential':
-                valA = a.potential || a.overall;
-                valB = b.potential || b.overall;
-                break;
-            case 'price':
-                valA = a.price;
-                valB = b.price;
-                break;
-            case 'age':
-                valA = a.age;
-                valB = b.age;
-                break;
-            default:
-                valA = a.overall;
-                valB = b.overall;
-        }
-        return sortDir === 'asc' ? valA - valB : valB - valA;
-    });
+    // Apply interested filter
+    const clubDiv = gameState.club.division;
+    if (interestedOnly) {
+        players = players.filter(p => (p.minDivision || clubDiv) >= clubDiv);
+    }
 
     if (players.length === 0) {
         container.innerHTML = '<p class="no-results">Geen spelers gevonden met deze filters.</p>';
         return;
     }
 
-    let html = '';
+    // Group by position (like squad page)
+    const groups = {
+        attacker: { name: 'Aanvallers', icon: '⚽', players: [] },
+        midfielder: { name: 'Middenvelders', icon: '⚙️', players: [] },
+        defender: { name: 'Verdedigers', icon: '🛡️', players: [] },
+        goalkeeper: { name: 'Keepers', icon: '🧤', players: [] }
+    };
+
     players.forEach(player => {
-        const posData = POSITIONS[player.position] || { abbr: '??', color: '#666' };
-        const photo = player.photo || generatePlayerPhoto(player.name, player.position);
-        const isKeeper = player.position === 'keeper';
-        const priceText = player.price === 0 ? 'Transfervrij' : formatCurrency(player.price);
-        const bonusText = player.signingBonus > 0 ? `+${formatCurrency(player.signingBonus)}` : '';
-
-        // Get range for overall (still show as range for transfer market uncertainty)
-        const overallRange = getValueRange(player.overall, 3);
-        // Transfer market: all players get 1 or 2 stars
-        const transferPotentialStars = player.overall >= 25 ? 2 : 1;
-
-        html += `
-            <div class="player-card transfer-card" data-player-id="${player.id}">
-                <div class="pc-left">
-                    <div class="pc-age-box">
-                        <span class="pc-age-value">${player.age}</span>
-                        <span class="pc-age-label">jr</span>
-                    </div>
-                    <img class="pc-flag-img" src="https://flagcdn.com/w40/${(player.nationality.code || 'nl').toLowerCase()}.png" alt="${player.nationality.code || 'NL'}" />
-                </div>
-                <div class="pc-info">
-                    <div class="pc-name-row">
-                        <span class="pc-name">${player.name}</span>
-                        <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
-                    </div>
-                    <div class="pc-finance transfer-finance">
-                        <span class="pc-price ${player.price === 0 ? 'free' : ''}">${priceText}</span>
-                        ${bonusText ? `<span class="pc-bonus">${bonusText}</span>` : ''}
-                    </div>
-                </div>
-                <div class="pc-ratings">
-                    <div class="pc-overall" style="background: ${posData.color}">
-                        <span class="pc-overall-value">${overallRange}</span>
-                        <span class="pc-overall-label">ALG</span>
-                    </div>
-                    <div class="pc-potential-stars">
-                        <span class="pc-stars">${renderStarsHTML(transferPotentialStars)}</span>
-                        <span class="pc-potential-label">POT</span>
-                    </div>
-                </div>
-                <button class="btn btn-primary btn-sm btn-transfer-buy" data-player-id="${player.id}">
-                    Kopen
-                </button>
-            </div>
-        `;
+        const group = getPositionGroup(player.position);
+        if (groups[group]) groups[group].players.push(player);
     });
+
+    let html = '';
+    for (const [key, group] of Object.entries(groups)) {
+        if (group.players.length === 0) continue;
+
+        html += `<div class="squad-group">
+            <div class="squad-group-header">
+                <span class="squad-group-icon">${group.icon}</span>
+                <span class="squad-group-name">${group.name}</span>
+                <span class="squad-group-count">${group.players.length}</span>
+            </div>
+            <div class="squad-group-players">`;
+
+        group.players.forEach(player => {
+            const posData = POSITIONS[player.position] || { abbr: '??', color: '#666' };
+            const overallRange = getValueRange(player.overall, 3);
+            const priceText = player.price === 0 ? 'Transfervrij' : formatCurrency(player.price);
+            const energy = player.energy || 75;
+            const minDiv = player.minDivision || clubDiv;
+            const canBuy = minDiv >= clubDiv;
+
+            // Potential stars with uncertainty: known (yellow) + uncertain (dark)
+            const realStars = potentialToStarsGlobal(player.potential || player.overall);
+            const knownStars = Math.max(1, realStars - 1); // 1 star uncertainty
+            const uncertainStars = realStars - knownStars; // the uncertain part
+
+            html += `
+                <div class="player-card transfer-card" data-player-id="${player.id}">
+                    <div class="pc-left">
+                        <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
+                        <div class="pc-age-box">
+                            <span class="pc-age-value">${player.age}</span>
+                            <span class="pc-age-label">jr</span>
+                        </div>
+                        <img class="pc-flag-img" src="https://flagcdn.com/w40/${(player.nationality.code || 'nl').toLowerCase()}.png" alt="${player.nationality.code || 'NL'}" />
+                    </div>
+                    <span class="pc-name">${player.name}</span>
+                    <span class="pc-finance">
+                        <span class="pc-salary">${formatCurrency(player.salary ?? 50)}/w</span>
+                        <span class="pc-value">${priceText}</span>
+                    </span>
+                    <div class="pc-condition-bars">
+                        <div class="pc-bar-item">
+                            <span class="pc-bar-label">Energie</span>
+                            <div class="pc-bar-track">
+                                <div class="pc-bar-fill" style="width: ${energy}%; background: ${getBarColor(energy)}"></div>
+                            </div>
+                            <span class="pc-bar-value">${energy}%</span>
+                        </div>
+                    </div>
+                    <div class="pc-ratings">
+                        <div class="pc-overall" style="background: ${posData.color}">
+                            <span class="pc-overall-value">${overallRange}</span>
+                            <span class="pc-overall-label">ALG</span>
+                        </div>
+                        <div class="pc-potential-stars">
+                            <span class="pc-stars">${renderTransferStarsHTML(knownStars, uncertainStars)}</span>
+                            <span class="pc-potential-label">POT</span>
+                        </div>
+                    </div>
+                    ${canBuy
+                        ? `<button class="btn btn-primary btn-sm btn-transfer-buy" data-player-id="${player.id}">Kopen</button>`
+                        : `<span class="pc-min-division" title="Wil minimaal in divisie ${minDiv} spelen">Min. div. ${minDiv}</span>`
+                    }
+                </div>
+            `;
+        });
+
+        html += `</div></div>`;
+    }
 
     container.innerHTML = html;
 
@@ -4402,10 +4454,10 @@ function initTransferMarket() {
         });
     }
 
-    // Sorting dropdown
-    const sortSelect = document.getElementById('transfer-sort');
-    if (sortSelect) {
-        sortSelect.addEventListener('change', renderTransferMarket);
+    // Interested only checkbox
+    const interestedCheckbox = document.getElementById('transfer-interested-only');
+    if (interestedCheckbox) {
+        interestedCheckbox.addEventListener('change', renderTransferMarket);
     }
 
     // Refresh button
