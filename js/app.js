@@ -3979,6 +3979,20 @@ function navigateToPage(page) {
     if (page === 'jeugdteam') renderJeugdteamPage();
     if (page === 'kantine') renderKantineDashboard();
     if (page === 'wedstrijden') renderMatchesPage();
+
+    // Track daily checklist visits
+    const checklistMap = {
+        'tactics': 'tacticsVisited',
+        'sponsors': 'sponsorsVisited',
+        'scout': 'scoutStarted',
+        'jeugdteam': 'youthVisited',
+        'transfers': 'transfersVisited',
+        'stadium': 'stadiumVisited',
+        'staff': 'staffVisited'
+    };
+    if (checklistMap[page]) {
+        markChecklistItem(checklistMap[page]);
+    }
 }
 
 function initNavigation() {
@@ -6261,10 +6275,11 @@ function renderDashboardExtras() {
     // Update top scorer polaroid
     updateTopScorerPolaroid();
 
-    // Render dashboard starplayers, toptalents and notifications
+    // Render dashboard starplayers, toptalents and checklist
     renderDashboardStarplayers();
     renderDashboardToptalents();
-    renderDashboardNotifications();
+    resetDailyChecklist();
+    renderDashboardChecklist();
 
     // Initialize sticky note quick actions
     initStickyNotes();
@@ -6338,224 +6353,167 @@ function renderDashboardToptalents() {
 }
 
 // ================================================
-// DASHBOARD NOTIFICATIONS SYSTEM
+// DAILY CHECKLIST SYSTEM
 // ================================================
 
-function generateNotifications() {
-    const notifications = [];
-
-    // 1. Training notification - check if players can train
-    const trainablePlayers = gameState.players?.filter(p => {
-        const lastTrained = p.lastTraining || 0;
-        const cooldown = 24 * 60 * 60 * 1000; // 24 hours
-        return Date.now() - lastTrained > cooldown;
-    }) || [];
-
-    if (trainablePlayers.length > 0) {
-        notifications.push({
-            type: 'training',
-            title: 'Training beschikbaar',
-            desc: `${trainablePlayers.length} speler${trainablePlayers.length > 1 ? 's' : ''} ${trainablePlayers.length > 1 ? 'kunnen' : 'kan'} trainen`,
-            icon: 'training',
-            action: 'training',
-            priority: 2
-        });
+function resetDailyChecklist() {
+    const today = new Date().toDateString();
+    if (!gameState.dailyChecklist) {
+        gameState.dailyChecklist = {};
     }
-
-    // 2. Injury notification - check for injured players
-    const injuredPlayers = gameState.players?.filter(p => p.injured && p.injuryWeeks > 0) || [];
-    if (injuredPlayers.length > 0) {
-        const player = injuredPlayers[0];
-        notifications.push({
-            type: 'injury',
-            title: 'Speler geblesseerd',
-            desc: `${player.name} (nog ${player.injuryWeeks} ${player.injuryWeeks === 1 ? 'week' : 'weken'})`,
-            icon: 'injury',
-            action: 'squad',
-            priority: 3
-        });
+    if (gameState.dailyChecklist.lastResetDate !== today) {
+        gameState.dailyChecklist = {
+            lastResetDate: today,
+            tacticsVisited: false,
+            sponsorsVisited: false,
+            scoutStarted: false,
+            youthVisited: false,
+            transfersVisited: false,
+            stadiumVisited: false,
+            staffVisited: false
+        };
     }
+}
 
-    // 3. Match notification - upcoming match info
-    if (gameState.nextMatch) {
-        const matchTime = gameState.nextMatch.time;
-        const now = Date.now();
-        const canPlay = now >= matchTime;
-
-        if (canPlay) {
-            notifications.push({
-                type: 'match',
-                title: 'Wedstrijd speelbaar!',
-                desc: `Tegen ${gameState.nextMatch.opponent}`,
-                icon: 'match',
-                action: 'dashboard',
-                priority: 5
-            });
-        }
+function markChecklistItem(key) {
+    resetDailyChecklist();
+    if (gameState.dailyChecklist[key] !== undefined) {
+        gameState.dailyChecklist[key] = true;
+        renderDashboardChecklist();
     }
+}
 
-    // 4. Scout notification - check if scout found someone
-    if (gameState.scoutResult && !gameState.scoutResult.viewed) {
-        notifications.push({
-            type: 'scout',
-            title: 'Talent gevonden!',
-            desc: 'Je scout heeft een speler gevonden',
-            icon: 'scout',
-            action: 'scout',
-            priority: 4
-        });
-    }
+function getChecklistItems() {
+    resetDailyChecklist();
+    const cl = gameState.dailyChecklist;
 
-    // 5. Finance notification - low budget warning
-    const budget = gameState.club?.budget || 0;
-    const weeklyCosts = (gameState.players?.reduce((sum, p) => sum + (p.wage || 0), 0) || 0);
-    if (budget < weeklyCosts * 4 && budget > 0) {
-        notifications.push({
-            type: 'finance',
-            title: 'Lage clubkas',
-            desc: `Nog ${Math.floor(budget / weeklyCosts)} weken budget`,
-            icon: 'finance',
-            action: 'finances',
-            priority: 2
-        });
-    }
+    // Auto-detect lineup: 11 non-null slots
+    const hasLineup = (gameState.lineup || []).filter(x => x !== null).length >= 11;
 
-    // 6. Youth notification - youth player ready for first team
-    const readyYouth = (gameState.youthPlayers || []).filter(p => p.age >= 17 && (p.potential || 0) >= 60);
-    if (readyYouth.length > 0) {
-        notifications.push({
-            type: 'youth',
-            title: 'Talent klaar',
-            desc: `${readyYouth[0].name} kan doorstromen`,
-            icon: 'youth',
-            action: 'youth',
-            priority: 2
-        });
-    }
+    // Auto-detect training: any slot has a player
+    const slots = gameState.training?.slots || {};
+    const hasTraining = Object.values(slots).some(s => s.playerId !== null);
 
-    // 7. Standings notification - promotion/relegation zone
-    const playerTeam = gameState.standings?.find(t => t.isPlayer);
-    const playerPosition = playerTeam ? gameState.standings.indexOf(playerTeam) + 1 : 0;
-    if (playerPosition <= 2 && gameState.week > 5) {
-        notifications.push({
-            type: 'sponsor',
-            title: 'Promotiekoers!',
-            desc: `Je staat ${playerPosition}e in de competitie`,
-            icon: 'trophy',
-            action: 'dashboard',
-            priority: 1
-        });
-    } else if (playerPosition >= 7 && gameState.week > 5) {
-        notifications.push({
-            type: 'injury',
-            title: 'Degradatiegevaar',
-            desc: `Je staat ${playerPosition}e in de competitie`,
-            icon: 'warning',
-            action: 'dashboard',
-            priority: 3
-        });
-    }
-
-    // 8. Contract expiring notification
-    const expiringContracts = gameState.players?.filter(p => p.contractYears === 1) || [];
-    if (expiringContracts.length > 0) {
-        notifications.push({
-            type: 'contract',
-            title: 'Contract loopt af',
-            desc: `${expiringContracts[0].name} - nog 1 jaar`,
-            icon: 'contract',
-            action: 'squad',
-            priority: 1
-        });
-    }
-
-    // 9. New sponsor available (random chance)
-    if (Math.random() < 0.3 && !gameState.pendingSponsor) {
-        gameState.pendingSponsor = true;
-        notifications.push({
-            type: 'sponsor',
-            title: 'Sponsor interesse',
-            desc: 'Een lokale ondernemer wil sponsoren',
-            icon: 'sponsor',
+    const mustDo = [
+        {
+            id: 'lineup',
+            label: 'Opstelling maken',
+            done: hasLineup,
+            action: 'tactics',
+            icon: '📋'
+        },
+        {
+            id: 'tactics',
+            label: 'Tactiek bedenken',
+            done: cl.tacticsVisited,
+            action: 'tactics',
+            icon: '🧠'
+        },
+        {
+            id: 'sponsors',
+            label: 'Sponsors werven',
+            done: cl.sponsorsVisited,
             action: 'sponsors',
-            priority: 2
-        });
-    }
+            icon: '🤝'
+        },
+        {
+            id: 'training',
+            label: 'Individuele training',
+            done: hasTraining,
+            action: 'training',
+            icon: '💪'
+        }
+    ];
 
-    // Sort by priority (higher = more important)
-    notifications.sort((a, b) => b.priority - a.priority);
+    const mayDo = [
+        {
+            id: 'scout',
+            label: 'Scouten',
+            done: cl.scoutStarted || gameState.scoutMission?.active,
+            action: 'scout',
+            icon: '🔍'
+        },
+        {
+            id: 'youth',
+            label: 'Jeugd rekruteren',
+            done: cl.youthVisited,
+            action: 'jeugdteam',
+            icon: '⭐'
+        },
+        {
+            id: 'transfers',
+            label: 'Transferlijst afgaan',
+            done: cl.transfersVisited,
+            action: 'transfers',
+            icon: '🔄'
+        },
+        {
+            id: 'stadium',
+            label: 'Stadionupgrades',
+            done: cl.stadiumVisited,
+            action: 'stadium',
+            icon: '🏟️'
+        },
+        {
+            id: 'staff',
+            label: 'Staf aannemen',
+            done: cl.staffVisited,
+            action: 'staff',
+            icon: '👔'
+        }
+    ];
 
-    // Return max 6 notifications
-    return notifications.slice(0, 6);
+    return { mustDo, mayDo };
 }
 
-function getNotificationIcon(iconType) {
-    const icons = {
-        training: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11v11h-11z"/><path d="M6.5 1v5.5M17.5 1v5.5M1 6.5h5.5M17.5 6.5H23M6.5 17.5v5.5M17.5 17.5v5.5M1 17.5h5.5M17.5 17.5H23"/></svg>',
-        injury: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>',
-        match: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20M2 12h20"/></svg>',
-        scout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>',
-        finance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>',
-        youth: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
-        trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M10 22V10M14 22V10M8 6h8l-1 8H9L8 6z"/></svg>',
-        warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01"/></svg>',
-        contract: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>',
-        sponsor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4M2 11h20"/></svg>'
-    };
-    return icons[iconType] || icons.match;
-}
-
-function renderDashboardNotifications() {
-    const container = document.getElementById('dashboard-notifications');
+function renderDashboardChecklist() {
+    const container = document.getElementById('dashboard-checklist');
     if (!container) return;
 
-    const notifications = generateNotifications();
+    const { mustDo, mayDo } = getChecklistItems();
+    const totalMust = mustDo.length;
+    const doneMust = mustDo.filter(i => i.done).length;
+    const totalMay = mayDo.length;
+    const doneMay = mayDo.filter(i => i.done).length;
+    const allDone = doneMust === totalMust;
 
-    if (notifications.length === 0) {
-        container.innerHTML = `
-            <div class="notifications-empty">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
-                    <path d="M22 4L12 14.01l-3-3"/>
-                </svg>
-                <span>Alles onder controle!</span>
+    function renderItem(item) {
+        return `
+            <div class="cl-item ${item.done ? 'cl-done' : ''}" onclick="handleChecklistClick('${item.action}')">
+                <div class="cl-checkbox ${item.done ? 'cl-checked' : ''}">
+                    ${item.done ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>' : ''}
+                </div>
+                <span class="cl-icon">${item.icon}</span>
+                <span class="cl-label">${item.label}</span>
             </div>
         `;
-        return;
     }
 
-    container.innerHTML = notifications.map(notif => `
-        <div class="notification-item type-${notif.type}" onclick="handleNotificationClick('${notif.action}')">
-            <div class="notification-icon">
-                ${getNotificationIcon(notif.icon)}
+    container.innerHTML = `
+        <div class="cl-progress">
+            <div class="cl-progress-bar">
+                <div class="cl-progress-fill" style="width: ${(doneMust / totalMust) * 100}%"></div>
             </div>
-            <div class="notification-content">
-                <div class="notification-title">${notif.title}</div>
-                <div class="notification-desc">${notif.desc}</div>
-            </div>
-            <span class="notification-arrow">→</span>
+            <span class="cl-progress-text">${doneMust}/${totalMust}</span>
         </div>
-    `).join('');
+        <div class="cl-section">
+            <div class="cl-section-label">To Do</div>
+            ${mustDo.map(renderItem).join('')}
+        </div>
+        <div class="cl-section">
+            <div class="cl-section-label">Ook niet vergeten <span class="cl-optional-count">${doneMay}/${totalMay}</span></div>
+            ${mayDo.map(renderItem).join('')}
+        </div>
+        ${allDone ? '<div class="cl-complete">Alles afgevinkt! Top, trainer! ⚽</div>' : ''}
+    `;
 }
 
-function handleNotificationClick(action) {
-    const pageMap = {
-        'training': 'training',
-        'squad': 'squad',
-        'scout': 'scout',
-        'finances': 'finances',
-        'sponsors': 'sponsors',
-        'youth': 'youth',
-        'dashboard': 'dashboard',
-        'tactics': 'tactics'
-    };
-
-    const page = pageMap[action] || 'dashboard';
-    navigateToPage(page);
+function handleChecklistClick(action) {
+    navigateToPage(action);
 }
 
 // Make functions globally accessible
-window.handleNotificationClick = handleNotificationClick;
+window.handleChecklistClick = handleChecklistClick;
 window.navigateTo = navigateToPage;
 
 function updateTopScorerPolaroid() {

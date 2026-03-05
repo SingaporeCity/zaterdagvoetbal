@@ -183,7 +183,17 @@ export let gameState = {
     },
     sponsor: null,
     stadiumSponsor: null,
-    scoutingNetwork: 'none'
+    scoutingNetwork: 'none',
+    dailyChecklist: {
+        lastResetDate: null,
+        tacticsVisited: false,
+        sponsorsVisited: false,
+        scoutStarted: false,
+        youthVisited: false,
+        transfersVisited: false,
+        stadiumVisited: false,
+        staffVisited: false
+    }
 };
 
 // Drag state for tactics

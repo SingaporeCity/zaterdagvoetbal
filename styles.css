@@ -15355,9 +15355,9 @@ body {
 }
 
 /* ================================================
-   NOTIFICATIONS CARD - Meldingen
+   DAILY CHECKLIST CARD
    ================================================ */
-.notifications-card {
+.checklist-card {
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -15369,144 +15369,145 @@ body {
     box-shadow: 0 4px 12px var(--shadow);
 }
 
-.notifications-list {
+.checklist-list {
     flex: 1;
-    padding: 8px;
+    padding: 8px 10px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     min-height: 0;
+    overflow-y: auto;
+}
+
+/* Progress bar */
+.cl-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    border-bottom: 1px dashed var(--border);
+}
+
+.cl-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 3px;
     overflow: hidden;
 }
 
-.notification-item {
+.cl-progress-fill {
+    height: 100%;
+    background: var(--accent-green);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+.cl-progress-text {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    font-family: var(--font-display);
+    min-width: 28px;
+    text-align: right;
+}
+
+/* Section labels */
+.cl-section {
+    margin-bottom: 2px;
+}
+
+.cl-section-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 0 2px;
+    font-family: var(--font-display);
+}
+
+.cl-optional-count {
+    color: var(--text-muted);
+    opacity: 0.6;
+    margin-left: 4px;
+}
+
+/* Checklist items */
+.cl-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    background: var(--bg-secondary);
+    gap: 8px;
+    padding: 5px 6px;
     border-radius: 6px;
-    border-left: 4px solid var(--accent-green-dim);
     cursor: pointer;
     transition: all 0.15s ease;
-    text-decoration: none;
 }
 
-.notification-item:hover {
-    background: var(--bg-card-hover);
-    transform: translateX(3px);
-    box-shadow: 2px 3px 8px rgba(0,0,0,0.12);
+.cl-item:hover {
+    background: var(--bg-secondary);
 }
 
-/* Different border colors for notification types */
-.notification-item.type-training {
-    border-left-color: #2196f3;
-}
-.notification-item.type-injury {
-    border-left-color: #f44336;
-}
-.notification-item.type-scout {
-    border-left-color: #9c27b0;
-}
-.notification-item.type-finance {
-    border-left-color: var(--accent-orange);
-}
-.notification-item.type-sponsor {
-    border-left-color: var(--accent-green);
-}
-.notification-item.type-match {
-    border-left-color: var(--accent-green-dim);
-}
-.notification-item.type-contract {
-    border-left-color: #795548;
-}
-.notification-item.type-youth {
-    border-left-color: #ffd700;
+.cl-item.cl-done {
+    opacity: 0.5;
 }
 
-.notification-icon {
-    width: 32px;
-    height: 32px;
+.cl-item.cl-done .cl-label {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+/* Checkbox */
+.cl-checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--accent-green-dim);
-    border-radius: 50%;
     flex-shrink: 0;
+    transition: all 0.2s ease;
 }
 
-.notification-item.type-training .notification-icon { background: #2196f3; }
-.notification-item.type-injury .notification-icon { background: var(--error); }
-.notification-item.type-scout .notification-icon { background: #9c27b0; }
-.notification-item.type-finance .notification-icon { background: var(--accent-orange); }
-.notification-item.type-sponsor .notification-icon { background: var(--accent-green); }
-.notification-item.type-match .notification-icon { background: var(--accent-green-dim); }
-.notification-item.type-contract .notification-icon { background: #795548; }
-.notification-item.type-youth .notification-icon { background: #ffd700; }
+.cl-checkbox.cl-checked {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+}
 
-.notification-icon svg {
-    width: 16px;
-    height: 16px;
-    stroke: white;
+.cl-checkbox svg {
+    width: 12px;
+    height: 12px;
+    stroke: var(--bg-primary);
     fill: none;
 }
 
-.notification-item.type-youth .notification-icon svg {
-    stroke: var(--bg-primary);
-}
-
-.notification-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.notification-title {
+/* Icon + label */
+.cl-icon {
     font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    font-family: var(--font-display);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.notification-desc {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-top: 1px;
-}
-
-.notification-arrow {
-    color: var(--text-muted);
-    font-size: 0.9rem;
     flex-shrink: 0;
-}
-
-.notification-item:hover .notification-arrow {
-    color: var(--accent-green-dim);
-}
-
-/* Empty state */
-.notifications-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--text-muted);
-    font-size: 0.8rem;
+    width: 20px;
     text-align: center;
-    padding: 20px;
 }
 
-.notifications-empty svg {
-    width: 40px;
-    height: 40px;
-    stroke: #ccc;
-    margin-bottom: 10px;
+.cl-label {
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* All done state */
+.cl-complete {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--accent-green);
+    font-weight: 700;
+    padding: 6px;
+    margin-top: 2px;
+    background: rgba(92, 224, 101, 0.08);
+    border-radius: 6px;
+    font-family: var(--font-display);
 }
 
 /* ================================================
