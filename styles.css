@@ -4980,9 +4980,9 @@ body {
    ================================================ */
 .player-card {
     display: grid;
-    grid-template-columns: 80px minmax(100px, 1fr) 36px 140px 130px auto;
+    grid-template-columns: 70px 150px 36px 140px 120px 110px;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     padding: 6px 16px;
     background: linear-gradient(90deg, var(--bg-card) 0%, var(--bg-primary) 100%);
     border-bottom: 1px solid var(--border);
@@ -5035,10 +5035,7 @@ body {
 .pc-left {
     display: flex;
     align-items: center;
-    gap: 8px;
-    min-width: 70px;
-    width: 70px;
-    flex-shrink: 0;
+    gap: 6px;
 }
 
 .pc-age-box {
@@ -5103,8 +5100,6 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 140px;
-    flex-shrink: 0;
 }
 
 .pc-pos {
@@ -5121,11 +5116,11 @@ body {
 .pc-finance {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     font-size: 0.75rem;
     color: var(--text-secondary);
     white-space: nowrap;
-    min-width: 140px;
+    overflow: hidden;
 }
 
 .pc-salary::before {
@@ -5264,8 +5259,6 @@ body {
 .pc-condition-bars {
     display: flex;
     align-items: center;
-    flex-shrink: 0;
-    min-width: 120px;
 }
 
 .pc-bar-item {
@@ -13906,34 +13899,6 @@ body {
     margin-right: 280px;
 }
 
-/* Squad player card - finance to the right of name */
-.pc-name-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-
-.pc-name-row .pc-finance {
-    margin-left: auto;
-    display: flex;
-    gap: 12px;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-}
-
-.pc-name-row .pc-salary,
-.pc-name-row .pc-value {
-    white-space: nowrap;
-}
-
-.pc-name-row .pc-salary::before {
-    content: '💰 ';
-}
-
-.pc-name-row .pc-value::before {
-    content: '📊 ';
-}
 
 .gtb-budget {
     display: flex;
