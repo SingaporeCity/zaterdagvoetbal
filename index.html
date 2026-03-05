@@ -595,21 +595,8 @@
                             </div>
                         </div>
 
-                        <div class="youth-scouting-card">
-                            <div class="scouting-header">
-                                <span class="scouting-icon">🔍</span>
-                                <span class="scouting-title">Scoutingsnetwerk</span>
-                            </div>
-                            <div class="scouting-level-display">
-                                <span class="scouting-level-name" id="current-network-name">Geen</span>
-                            </div>
-                            <button class="btn btn-secondary btn-scouting-upgrade" onclick="navigateTo('stadium'); setTimeout(() => document.getElementById('stadium-tab-scouting')?.click(), 100);">
-                                Upgraden →
-                            </button>
-                        </div>
-
-                        <div class="youth-tip">
-                            💡 Spelers 16+ kunnen contract tekenen. Elk seizoen worden spelers 1 jaar ouder.
+                        <div class="youth-info-box">
+                            <p>Spelers in het jeugdteam worden elk seizoen 1 jaar ouder. Wanneer ze 16+ zijn kun je ze een contract aanbieden om ze aan je selectie toe te voegen. Hoe beter je jeugdacademie, hoe meer talent er doorstroomt!</p>
                         </div>
                     </div>
 
@@ -938,14 +925,21 @@
                 <header class="page-header">
                     <div class="header-left">
                         <h2 class="page-title">Training</h2>
-                        <p class="page-subtitle handwritten">Train je spelers per positie</p>
+                        <p class="page-subtitle handwritten">Individuele training</p>
                     </div>
                 </header>
 
-                <div class="position-training-grid" id="position-training-grid">
+                <div class="training-intro">
+                    <p>Train je eigen speler om zijn kwaliteiten te verbeteren. Elke sessie kost energie. Gebruik Massage om weer op te laden!</p>
+                </div>
+
+                <div class="my-player-training-stats" id="my-player-training-stats">
                     <!-- Filled by JS -->
                 </div>
-                <p class="training-hint">💡 Neem eerst een trainer aan bij Staf om te kunnen trainen</p>
+
+                <div class="training-options-grid" id="training-options-grid">
+                    <!-- Filled by JS -->
+                </div>
             </section>
 
             <!-- Stadium Page -->

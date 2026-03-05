@@ -11755,6 +11755,25 @@ body {
     color: var(--text-secondary);
 }
 
+.youth-info-box {
+    background: rgba(76, 175, 80, 0.06);
+    border: 2px solid var(--accent-green-dim);
+    padding: 12px 14px;
+    border-radius: var(--card-radius);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.youth-info-box p { margin: 0; }
+
+.pc-growth-text {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent-green);
+    white-space: nowrap;
+}
+
 .youth-main {
     display: flex;
     flex-direction: column;
@@ -13703,79 +13722,162 @@ body {
     padding-bottom: 20px;
 }
 
-.position-training-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 16px;
-}
-
-.position-train-card {
+/* Training page - individual training */
+.training-intro {
     background: var(--bg-card);
     border: 2px solid var(--border);
     border-radius: var(--card-radius);
-    padding: 20px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.training-intro p { margin: 0; }
+
+.my-player-training-stats {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 16px 18px;
+    margin-bottom: 16px;
+}
+
+.training-player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.training-player-name {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.training-player-energy {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.training-attrs-display {
     display: flex;
     flex-direction: column;
+    gap: 6px;
+}
+
+.training-attr {
+    display: grid;
+    grid-template-columns: 36px 1fr 32px;
+    align-items: center;
+    gap: 8px;
+}
+
+.ta-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.ta-bar-track {
+    height: 8px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.ta-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.ta-value {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: right;
+}
+
+.training-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+}
+
+.training-option-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 16px;
+    display: flex;
     align-items: center;
     gap: 12px;
-    text-align: center;
+    cursor: pointer;
     transition: all 0.2s;
 }
 
-.position-train-card.has-trainer {
+.training-option-card:hover:not(.disabled) {
     border-color: var(--accent-green-dim);
+    transform: translateY(-1px);
 }
 
-.position-train-card.locked {
-    opacity: 0.6;
+.training-option-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-.ptc-icon {
-    font-size: 2.5rem;
-    width: 60px;
-    height: 60px;
+.toc-icon {
+    font-size: 1.8rem;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--bg-primary);
     border-radius: 50%;
+    flex-shrink: 0;
 }
 
-.ptc-name {
+.toc-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.toc-name {
     font-family: var(--font-display);
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: var(--text-primary);
 }
 
-.ptc-status {
-    font-size: 0.75rem;
-    padding: 4px 10px;
-    border-radius: var(--button-radius);
-}
-
-.ptc-status.has-trainer {
-    background: rgba(27, 94, 32, 0.15);
-    color: var(--accent-green-dim);
-}
-
-.ptc-status.no-trainer {
-    background: rgba(198, 40, 40, 0.1);
-    color: #c62828;
-}
-
-.training-hint {
-    font-size: 0.8rem;
+.toc-desc {
+    font-size: 0.72rem;
     color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.toc-value {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 36px;
     text-align: center;
-    padding: 12px;
-    background: var(--bg-primary);
-    border-radius: var(--card-radius);
 }
 
-.ptc-players {
-    font-size: 0.75rem;
+.toc-value.massage {
+    color: var(--accent-green);
+    font-size: 1rem;
+}
+
+.toc-cost {
+    font-size: 0.7rem;
     color: var(--text-muted);
+    white-space: nowrap;
 }
 
 /* Position Training Modal */

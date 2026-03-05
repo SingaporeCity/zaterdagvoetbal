@@ -750,7 +750,7 @@ function renderPlayerCards() {
         isMyPlayer: true,
         nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
         salary: 0,
-        energy: 100,
+        energy: mp.energy || 100,
         attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
     };
 
@@ -934,6 +934,7 @@ function initMyPlayer() {
             age: 45,
             position: 'CM',
             number: 10,
+            energy: 100,
             attributes: {
                 SNE: 12,
                 TEC: 12,
@@ -948,6 +949,7 @@ function initMyPlayer() {
     const a = gameState.myPlayer.attributes;
     if (a.PAS === undefined) a.PAS = 12;
     if (a.SCH === undefined) a.SCH = 12;
+    if (gameState.myPlayer.energy === undefined) gameState.myPlayer.energy = 100;
     // Migrate to ALG 12: clamp all attributes
     const attrKeys = ['SNE', 'TEC', 'PAS', 'SCH', 'VER', 'FYS'];
     attrKeys.forEach(k => { if (a[k] > 12) a[k] = 12; });
@@ -2662,10 +2664,68 @@ const POSITION_GROUP_LABELS = {
 let trainingTimerInterval = null;
 
 function renderTrainingPage() {
-    initTrainingTabs();
-    renderPositionTraining();
-    renderTeamTraining();
-    initTrainingIntensity();
+    const mp = initMyPlayer();
+    const a = mp.attributes;
+
+    // Show current player stats
+    const statsContainer = document.getElementById('my-player-training-stats');
+    if (statsContainer) {
+        const ATTR_COLORS = {
+            SNE: '#2196f3', TEC: '#9c27b0', PAS: '#4caf50',
+            SCH: '#f44336', VER: '#ff9800', FYS: '#795548'
+        };
+        statsContainer.innerHTML = `
+            <div class="training-player-header">
+                <span class="training-player-name">${mp.name}</span>
+                <span class="training-player-energy" style="color: ${getBarColor(mp.energy)}">Energie: ${mp.energy}%</span>
+            </div>
+            <div class="training-attrs-display">
+                ${Object.entries(a).map(([key, val]) => `
+                    <div class="training-attr">
+                        <span class="ta-label">${key}</span>
+                        <div class="ta-bar-track">
+                            <div class="ta-bar-fill" style="width: ${val}%; background: ${ATTR_COLORS[key] || '#666'}"></div>
+                        </div>
+                        <span class="ta-value">${val}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // Show training options
+    const grid = document.getElementById('training-options-grid');
+    if (grid) {
+        const options = [
+            { key: 'SNE', name: 'Snelheid', icon: '⚡', desc: 'Train je snelheid en explosiviteit' },
+            { key: 'TEC', name: 'Techniek', icon: '🎯', desc: 'Verbeter balcontrole en dribbelen' },
+            { key: 'PAS', name: 'Passing', icon: '👟', desc: 'Verbeter je passing en overzicht' },
+            { key: 'SCH', name: 'Schieten', icon: '⚽', desc: 'Train je schot en afronding' },
+            { key: 'VER', name: 'Verdediging', icon: '🛡️', desc: 'Verbeter tackles en positionering' },
+            { key: 'FYS', name: 'Fysiek', icon: '💪', desc: 'Verbeter kracht en uithoudingsvermogen' },
+            { key: 'massage', name: 'Massage', icon: '💆', desc: 'Herstel 50% energie', isMassage: true }
+        ];
+
+        grid.innerHTML = options.map(opt => {
+            const currentVal = opt.isMassage ? null : a[opt.key];
+            const canTrain = opt.isMassage ? mp.energy < 100 : mp.energy >= 20;
+
+            return `
+                <div class="training-option-card ${!canTrain ? 'disabled' : ''}" onclick="${canTrain ? `trainMyPlayer('${opt.key}')` : ''}">
+                    <div class="toc-icon">${opt.icon}</div>
+                    <div class="toc-info">
+                        <div class="toc-name">${opt.name}</div>
+                        <div class="toc-desc">${opt.desc}</div>
+                    </div>
+                    ${opt.isMassage
+                        ? '<div class="toc-value massage">+50%</div>'
+                        : `<div class="toc-value">${currentVal}</div>`
+                    }
+                    <div class="toc-cost">${opt.isMassage ? 'Gratis' : '-20 energie'}</div>
+                </div>
+            `;
+        }).join('');
+    }
 }
 
 // Training tabs switching
@@ -3507,6 +3567,28 @@ function selectTeamTraining(type) {
     gameState.training.teamTraining.bonus = bonuses[type];
     renderTeamTraining();
 }
+
+// Train my player (individual training)
+window.trainMyPlayer = function(key) {
+    const mp = initMyPlayer();
+
+    if (key === 'massage') {
+        mp.energy = Math.min(100, mp.energy + 50);
+        showNotification('Massage voltooid! +50% energie', 'success');
+    } else {
+        if (mp.energy < 20) {
+            showNotification('Niet genoeg energie! Neem eerst een massage.', 'warning');
+            return;
+        }
+        mp.energy -= 20;
+        mp.attributes[key] = Math.min(99, mp.attributes[key] + 1);
+        showNotification(`${key} getraind! Nu op ${mp.attributes[key]}`, 'success');
+    }
+
+    saveGame();
+    renderTrainingPage();
+    renderPlayerCards();
+};
 
 // Make functions globally available
 window.openPlayerSelectModal = openPlayerSelectModal;
@@ -5155,26 +5237,34 @@ function renderYouthPlayers(ageGroup) {
 function createYouthPlayerCard(player) {
     const posData = POSITIONS[player.position] || { abbr: '??', color: '#666', name: 'Onbekend' };
     const canSign = player.age >= 16;
-    const potentialDisplay = player.potential;
+    const supertalentClass = player.isSupertalent ? ' supertalent' : '';
 
-    // Use exact same format as selection screen player cards
+    // Same flat 5-column grid layout as selectie cards
     return `
-        <div class="player-card youth-card ${player.isSupertalent ? 'supertalent' : ''}" data-player-id="${player.id}">
+        <div class="player-card youth-card${supertalentClass}" data-player-id="${player.id}">
             <div class="pc-left">
+                <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
                 <div class="pc-age-box">
                     <span class="pc-age-value">${player.age}</span>
                     <span class="pc-age-label">jr</span>
                 </div>
                 <img class="pc-flag-img" src="https://flagcdn.com/w40/${(player.nationality.code || 'nl').toLowerCase()}.png" alt="${player.nationality.code || 'NL'}" />
             </div>
-            <div class="pc-info">
-                <div class="pc-name-row">
-                    <span class="pc-name">${player.name}</span>
-                    <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
-                    ${player.isSupertalent ? '<span class="pc-talent">⭐</span>' : ''}
-                </div>
-                <div class="pc-finance">
-                    <span class="pc-growth">Groei: +${player.growthRate}/sz</span>
+            <span class="pc-name">${player.name}${player.isSupertalent ? ' ⭐' : ''}</span>
+            <span class="pc-finance">
+                <button class="btn ${canSign ? 'btn-primary' : 'btn-secondary'} btn-sign-contract btn-sm"
+                        data-player-id="${player.id}"
+                        ${!canSign ? 'disabled' : ''}>
+                    ${canSign ? 'Contract' : '16+'}
+                </button>
+            </span>
+            <div class="pc-condition-bars">
+                <div class="pc-bar-item">
+                    <span class="pc-bar-label">POT</span>
+                    <div class="pc-bar-track">
+                        <div class="pc-bar-fill" style="width: ${player.potential}%; background: ${getBarColor(player.potential)}"></div>
+                    </div>
+                    <span class="pc-bar-value">${player.potential}</span>
                 </div>
             </div>
             <div class="pc-ratings">
@@ -5182,17 +5272,9 @@ function createYouthPlayerCard(player) {
                     <span class="pc-overall-value">${player.overall || '?'}</span>
                     <span class="pc-overall-label">ALG</span>
                 </div>
-                <div class="pc-potential" style="background: ${posData.color}; opacity: 0.85;">
-                    <span class="pc-potential-value">${potentialDisplay}</span>
-                    <span class="pc-potential-label">POT</span>
+                <div class="pc-potential-stars">
+                    <span class="pc-growth-text">Groei +${player.growthRate}/sz</span>
                 </div>
-            </div>
-            <div class="pc-action">
-                <button class="btn ${canSign ? 'btn-primary' : 'btn-secondary'} btn-sign-contract btn-sm"
-                        data-player-id="${player.id}"
-                        ${!canSign ? 'disabled' : ''}>
-                    ${canSign ? '✍️ Contract' : '🔒 16+'}
-                </button>
             </div>
         </div>
     `;
