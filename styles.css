@@ -11394,6 +11394,116 @@ body {
     padding: 20px;
 }
 
+/* Scouting page - two column layout (like jeugdteam) */
+.scouting-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+}
+
+.scouting-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.scouting-main {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+}
+
+.scouting-scout-card,
+.scouting-centrum-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 14px;
+}
+
+.scouting-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.scouting-card-icon {
+    font-size: 1.2rem;
+}
+
+.scouting-card-title {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+}
+
+.scouting-card-level {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+}
+
+.scouting-card-level.scouting-locked {
+    color: #f44336;
+}
+
+.scouting-card-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.scouting-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.scouting-card-req {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    background: rgba(244, 67, 54, 0.08);
+    border: 1px solid rgba(244, 67, 54, 0.2);
+    border-radius: var(--button-radius);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #f44336;
+}
+
+.scout-header-hint {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .scouting-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .scouting-sidebar {
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    .scouting-scout-card,
+    .scouting-centrum-card {
+        flex: 1;
+    }
+}
+
 #scout.page {
     position: relative;
 }

@@ -1014,25 +1014,32 @@
                 <header class="page-header">
                     <div class="header-left">
                         <h2 class="page-title">Scouting</h2>
-                        <p class="page-subtitle handwritten">Nieuwe spelers vinden</p>
+                        <p class="page-subtitle handwritten" id="scout-level-label">Scout: Lvl 0 · Aanbevelingen van de voorzitter</p>
+                    </div>
+                    <div class="header-right">
+                        <div class="scout-header-hint" id="scout-header-hint">
+                            Neem een scout aan voor betere suggesties
+                        </div>
                     </div>
                 </header>
 
-                <div class="scout-intro-box">
-                    <p>Bij het zaterdagvoetbal heb je geen professionele scout. Maar af en toe krijg je een tip van een vriend over iemand die wel wil meespelen.</p>
-                </div>
+                <div class="scouting-layout">
+                    <!-- Left sidebar: Scout + Scoutingscentrum -->
+                    <div class="scouting-sidebar">
+                        <div class="scouting-scout-card" id="scouting-scout-card">
+                            <!-- Filled by JS: current scout info -->
+                        </div>
 
-                <div class="scout-tip-section" id="scout-tip-section">
-                    <!-- Filled by JS: chairman tip player -->
-                </div>
+                        <div class="scouting-centrum-card" id="scouting-centrum-card">
+                            <!-- Filled by JS: scoutingscentrum -->
+                        </div>
+                    </div>
 
-                <div class="scout-locked-card">
-                    <div class="slc-icon">🏗️</div>
-                    <h3>Scoutingscentrum</h3>
-                    <p>Je hebt nog geen scoutingscentrum. Promoveer eerst naar <strong>Divisie 5</strong> om een scoutingscentrum te kunnen bouwen en gericht spelers te zoeken.</p>
-                    <div class="slc-requirement">
-                        <span class="slc-req-icon">🔒</span>
-                        <span class="slc-req-text">Vereist: Divisie 5</span>
+                    <!-- Main content: Tips -->
+                    <div class="scouting-main">
+                        <div class="scout-tip-section" id="scout-tip-section">
+                            <!-- Filled by JS: scout tip players -->
+                        </div>
                     </div>
                 </div>
             </section>

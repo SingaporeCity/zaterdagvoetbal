@@ -2338,7 +2338,73 @@ function renderScoutPage() {
     const section = document.getElementById('scout-tip-section');
     if (!section) return;
 
-    // Initialize the chairman tip player if not yet created
+    const hasScout = gameState.staff?.scout !== null && gameState.staff?.scout !== undefined;
+    const scoutLevel = hasScout ? 1 : 0;
+    const hasCentrum = gameState.club.division <= 5;
+
+    // Update header labels
+    const levelLabel = document.getElementById('scout-level-label');
+    if (levelLabel) {
+        levelLabel.textContent = scoutLevel === 0
+            ? 'Scout: Lvl 0 · Aanbevelingen van de voorzitter'
+            : 'Scout: Lvl 1 · Professionele scout';
+    }
+    const hintEl = document.getElementById('scout-header-hint');
+    if (hintEl) {
+        hintEl.textContent = scoutLevel === 0
+            ? 'Neem een scout aan voor betere suggesties'
+            : 'Je scout zoekt de beste spelers voor jou';
+    }
+
+    // Render sidebar: scout card
+    const scoutCard = document.getElementById('scouting-scout-card');
+    if (scoutCard) {
+        scoutCard.innerHTML = `
+            <div class="scouting-card-header">
+                <span class="scouting-card-icon">🔍</span>
+                <span class="scouting-card-title">Jouw Scout</span>
+            </div>
+            <div class="scouting-card-level">Niveau ${scoutLevel}</div>
+            <div class="scouting-card-desc">
+                ${scoutLevel === 0
+                    ? 'Geen scout — je krijgt af en toe een tip van de voorzitter.'
+                    : 'Je scout levert betere speler-suggesties.'}
+            </div>
+            <div class="scouting-card-info">
+                <span>👤 ${scoutLevel === 0 ? '1' : '1'} speler per tip</span>
+                ${hasCentrum ? '<span>🏟️ 2 spelers met scoutingscentrum</span>' : ''}
+            </div>
+        `;
+    }
+
+    // Render sidebar: scoutingscentrum card
+    const centrumCard = document.getElementById('scouting-centrum-card');
+    if (centrumCard) {
+        if (hasCentrum) {
+            centrumCard.innerHTML = `
+                <div class="scouting-card-header">
+                    <span class="scouting-card-icon">🏟️</span>
+                    <span class="scouting-card-title">Scoutingscentrum</span>
+                </div>
+                <div class="scouting-card-level">Actief</div>
+                <div class="scouting-card-desc">Je ontvangt 2 speler-suggesties per keer in plaats van 1.</div>
+            `;
+        } else {
+            centrumCard.innerHTML = `
+                <div class="scouting-card-header">
+                    <span class="scouting-card-icon">🏗️</span>
+                    <span class="scouting-card-title">Scoutingscentrum</span>
+                </div>
+                <div class="scouting-card-level scouting-locked">Vergrendeld</div>
+                <div class="scouting-card-desc">Promoveer naar <strong>Divisie 5</strong> om een scoutingscentrum te bouwen en 2 spelers per keer te zien.</div>
+                <div class="scouting-card-req">
+                    <span>🔒</span> Vereist: Divisie 5
+                </div>
+            `;
+        }
+    }
+
+    // Initialize scout tips
     if (!gameState.scoutTips) {
         gameState.scoutTips = [];
     }
@@ -2353,7 +2419,6 @@ function renderScoutPage() {
         chairmanSon.salary = 0;
         chairmanSon.fixedMarketValue = 0;
         chairmanSon.nationality = NATIONALITIES[0]; // NL
-        // Set low attributes to match overall 2
         const attrNames = ['AAN', 'VER', 'SNE', 'FYS'];
         attrNames.forEach(a => { chairmanSon.attributes[a] = random(1, 4); });
         chairmanSon.overall = calculateOverall(chairmanSon.attributes, chairmanSon.position);
@@ -2366,9 +2431,8 @@ function renderScoutPage() {
         return;
     }
 
-    const posData = POSITIONS[gameState.scoutTips[0].position] || { abbr: '??', color: '#666' };
-
     section.innerHTML = gameState.scoutTips.map(player => {
+        const posData = POSITIONS[player.position] || { abbr: '??', color: '#666' };
         const tipLabel = player.tipSource === 'voorzitter'
             ? '💬 <strong>Voorzitter:</strong> "Mijn zoontje kan wel redelijk voetballen, misschien is dat een idee?"'
             : '💬 Tip van een vriend';
