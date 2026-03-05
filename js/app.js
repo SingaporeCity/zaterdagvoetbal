@@ -75,7 +75,8 @@ import {
     getManagerLevel,
     awardXP,
     getNextOpponent,
-    getZoneInfo
+    getZoneInfo,
+    getSeasonSchedule
 } from './progression.js';
 
 import {
@@ -3774,6 +3775,7 @@ function navigateToPage(page) {
     if (page === 'mijnteam') renderMijnTeamPage();
     if (page === 'jeugdteam') renderJeugdteamPage();
     if (page === 'kantine') renderKantineDashboard();
+    if (page === 'wedstrijden') renderMatchesPage();
 }
 
 function initNavigation() {
@@ -6510,6 +6512,25 @@ function playMatch() {
         opponent: opponent.name
     };
 
+    // Push to match history
+    if (!gameState.matchHistory) gameState.matchHistory = [];
+    gameState.matchHistory.push({
+        week: gameState.week,
+        season: gameState.season,
+        opponent: opponent.name,
+        isHome,
+        playerScore,
+        opponentScore,
+        resultType,
+        events: result.events.filter(e =>
+            ['goal', 'own_goal', 'yellow_card', 'red_card', 'substitution', 'injury', 'penalty', 'penalty_miss'].includes(e.type)
+        ),
+        possession: result.possession,
+        shots: result.shots,
+        shotsOnTarget: result.shotsOnTarget,
+        manOfTheMatch: result.manOfTheMatch
+    });
+
     // Advance week
     gameState.week++;
 
@@ -6585,6 +6606,202 @@ function handleEndOfSeason() {
     startNewSeason(gameState);
 
     return result;
+}
+
+// ================================================
+// WEDSTRIJDEN PAGE
+// ================================================
+
+function renderMatchesPage() {
+    // Update season/week label
+    const label = document.getElementById('matches-season-label');
+    if (label) label.textContent = `Seizoen ${gameState.season} · Week ${gameState.week}`;
+
+    // Init tab switching
+    document.querySelectorAll('.matches-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.matches-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.matches-panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            const panelId = `matches-${tab.dataset.matchesTab}`;
+            document.getElementById(panelId)?.classList.add('active');
+        });
+    });
+
+    renderMatchReport();
+    renderMatchProgram();
+}
+
+function renderMatchReport() {
+    const container = document.getElementById('matches-verslag');
+    if (!container) return;
+
+    const match = gameState.lastMatch;
+    if (!match) {
+        container.innerHTML = `
+            <div class="match-report-empty">
+                <div class="match-report-empty-icon">⚽</div>
+                <p>Nog geen wedstrijd gespeeld</p>
+                <p class="match-report-empty-sub">Speel je eerste wedstrijd om hier het verslag te zien.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const { isHome, playerScore, opponentScore, resultType, opponent } = match;
+    const resultClass = resultType === 'win' ? 'result-win' : resultType === 'loss' ? 'result-loss' : 'result-draw';
+    const resultText = resultType === 'win' ? 'Gewonnen!' : resultType === 'loss' ? 'Verloren' : 'Gelijkspel';
+
+    const eventIcons = {
+        'goal': '⚽', 'own_goal': '⚽', 'yellow_card': '🟨', 'red_card': '🟥',
+        'substitution': '🔄', 'injury': '🤕', 'penalty': '⚽', 'penalty_miss': '❌'
+    };
+
+    const importantEvents = match.events.filter(e =>
+        ['goal', 'own_goal', 'yellow_card', 'red_card', 'substitution', 'injury', 'penalty', 'penalty_miss'].includes(e.type)
+    );
+
+    const possHome = isHome ? match.possession.home : match.possession.away;
+    const possAway = isHome ? match.possession.away : match.possession.home;
+    const shotsHome = isHome ? match.shots.home : match.shots.away;
+    const shotsAway = isHome ? match.shots.away : match.shots.home;
+    const sotHome = isHome ? match.shotsOnTarget.home : match.shotsOnTarget.away;
+    const sotAway = isHome ? match.shotsOnTarget.away : match.shotsOnTarget.home;
+
+    container.innerHTML = `
+        <div class="match-report-container">
+            <div class="match-result-scoreboard ${resultClass}">
+                <div class="match-result-team home">
+                    <span class="match-result-team-name">${gameState.club.name}</span>
+                </div>
+                <div class="match-result-score-display">
+                    <span class="match-result-score-num">${playerScore}</span>
+                    <span class="match-result-score-sep">-</span>
+                    <span class="match-result-score-num">${opponentScore}</span>
+                </div>
+                <div class="match-result-team away">
+                    <span class="match-result-team-name">${opponent}</span>
+                </div>
+            </div>
+            <div class="match-result-verdict">${resultText}</div>
+
+            <div class="match-result-timeline">
+                <h3>Wedstrijdverloop</h3>
+                <div class="match-result-timeline-track">
+                    ${importantEvents.map(event => `
+                        <div class="match-result-event ${event.type}">
+                            <span class="match-result-event-icon">${eventIcons[event.type] || '📋'}</span>
+                            <span class="match-result-event-minute">${event.minute}'</span>
+                            <span class="match-result-event-text">${event.commentary || event.description || event.type}</span>
+                        </div>
+                    `).join('')}
+                    ${importantEvents.length === 0 ? '<div class="match-result-event"><span class="match-result-event-text">Geen bijzondere gebeurtenissen</span></div>' : ''}
+                </div>
+            </div>
+
+            <div class="match-result-stats">
+                <h3>Statistieken</h3>
+                <div class="match-result-stat-row">
+                    <span class="match-result-stat-value">${possHome}%</span>
+                    <div class="match-result-stat-bar-container">
+                        <span class="match-result-stat-label">Balbezit</span>
+                        <div class="match-result-stat-bar">
+                            <div class="match-result-stat-fill home" style="width: ${possHome}%"></div>
+                            <div class="match-result-stat-fill away" style="width: ${possAway}%"></div>
+                        </div>
+                    </div>
+                    <span class="match-result-stat-value">${possAway}%</span>
+                </div>
+                <div class="match-result-stat-row">
+                    <span class="match-result-stat-value">${shotsHome}</span>
+                    <div class="match-result-stat-bar-container">
+                        <span class="match-result-stat-label">Schoten</span>
+                        <div class="match-result-stat-bar">
+                            <div class="match-result-stat-fill home" style="width: ${shotsHome + shotsAway > 0 ? (shotsHome / (shotsHome + shotsAway) * 100) : 50}%"></div>
+                            <div class="match-result-stat-fill away" style="width: ${shotsHome + shotsAway > 0 ? (shotsAway / (shotsHome + shotsAway) * 100) : 50}%"></div>
+                        </div>
+                    </div>
+                    <span class="match-result-stat-value">${shotsAway}</span>
+                </div>
+                <div class="match-result-stat-row">
+                    <span class="match-result-stat-value">${sotHome}</span>
+                    <div class="match-result-stat-bar-container">
+                        <span class="match-result-stat-label">Op doel</span>
+                        <div class="match-result-stat-bar">
+                            <div class="match-result-stat-fill home" style="width: ${sotHome + sotAway > 0 ? (sotHome / (sotHome + sotAway) * 100) : 50}%"></div>
+                            <div class="match-result-stat-fill away" style="width: ${sotHome + sotAway > 0 ? (sotAway / (sotHome + sotAway) * 100) : 50}%"></div>
+                        </div>
+                    </div>
+                    <span class="match-result-stat-value">${sotAway}</span>
+                </div>
+            </div>
+
+            ${match.manOfTheMatch ? `
+                <div class="match-result-motm">
+                    <div class="match-result-motm-star">&#11088;</div>
+                    <div class="match-result-motm-info">
+                        <span class="match-result-motm-label">Man of the Match</span>
+                        <span class="match-result-motm-name">${match.manOfTheMatch.name}</span>
+                        ${match.manOfTheMatch.rating ? `<span class="match-result-motm-rating">${match.manOfTheMatch.rating.toFixed(1)}</span>` : ''}
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function renderMatchProgram() {
+    const container = document.getElementById('matches-programma');
+    if (!container || !gameState.standings || gameState.standings.length === 0) {
+        if (container) container.innerHTML = '<p>Geen competitieschema beschikbaar.</p>';
+        return;
+    }
+
+    const schedule = getSeasonSchedule(gameState.standings, gameState.week);
+    const playerTeam = gameState.standings.find(t => t.isPlayer)?.name || gameState.club.name;
+    const currentWeek = gameState.week;
+    const history = gameState.matchHistory || [];
+    const currentSeasonHistory = history.filter(h => h.season === gameState.season);
+
+    let html = '';
+
+    schedule.forEach((roundMatches, roundIndex) => {
+        const weekNum = roundIndex + 1;
+        const isCurrentWeek = weekNum === currentWeek;
+        const isPast = weekNum < currentWeek;
+
+        html += `<div class="program-round ${isCurrentWeek ? 'current' : ''}">`;
+        html += `<div class="program-round-header">Week ${weekNum}${isCurrentWeek ? ' <span class="program-current-badge">Nu</span>' : ''}</div>`;
+
+        roundMatches.forEach(match => {
+            const isPlayerMatch = match.home === playerTeam || match.away === playerTeam;
+            const historyEntry = isPlayerMatch ? currentSeasonHistory.find(h => h.week === weekNum) : null;
+
+            let scoreHtml = '';
+            if (historyEntry) {
+                const homeScore = match.home === playerTeam ? historyEntry.playerScore : historyEntry.opponentScore;
+                const awayScore = match.away === playerTeam ? historyEntry.playerScore : historyEntry.opponentScore;
+                const resultClass = historyEntry.resultType === 'win' ? 'program-result-win' : historyEntry.resultType === 'loss' ? 'program-result-loss' : 'program-result-draw';
+                scoreHtml = `<span class="program-result ${resultClass}">${homeScore} - ${awayScore}</span>`;
+            } else if (isPast && !isPlayerMatch) {
+                scoreHtml = `<span class="program-result program-result-played">-</span>`;
+            } else {
+                scoreHtml = `<span class="program-result program-result-tbd">vs</span>`;
+            }
+
+            html += `
+                <div class="program-match ${isPlayerMatch ? 'player-match' : ''} ${isCurrentWeek ? 'current' : ''}">
+                    <span class="program-team home ${match.home === playerTeam ? 'is-player' : ''}">${match.home}</span>
+                    ${scoreHtml}
+                    <span class="program-team away ${match.away === playerTeam ? 'is-player' : ''}">${match.away}</span>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+    });
+
+    container.innerHTML = html;
 }
 
 // ================================================

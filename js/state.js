@@ -67,6 +67,8 @@ export let gameState = {
     activeEvent: null,
     // Last match result
     lastMatch: null,
+    // Match history for wedstrijden tab
+    matchHistory: [],
     stadium: {
         tribune: 'tribune_1',
         capacity: 200,

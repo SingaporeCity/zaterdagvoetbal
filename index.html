@@ -135,6 +135,17 @@
                     <span>Training</span>
                     <span class="nav-badge training-badge">!</span>
                 </li>
+                <li class="nav-item" data-page="wedstrijden">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </span>
+                    <span>Wedstrijden</span>
+                </li>
                 <li class="nav-item" data-page="scout">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -938,6 +949,28 @@
 
                 <div class="training-columns" id="training-columns">
                     <!-- Filled by JS: 7 vertical bar columns -->
+                </div>
+            </section>
+
+            <!-- Wedstrijden Page -->
+            <section id="wedstrijden" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Wedstrijden</h2>
+                        <p class="page-subtitle handwritten" id="matches-season-label">Seizoen 1 · Week 1</p>
+                    </div>
+                </header>
+
+                <div class="matches-tabs">
+                    <button class="matches-tab active" data-matches-tab="verslag">Verslag</button>
+                    <button class="matches-tab" data-matches-tab="programma">Programma</button>
+                </div>
+
+                <div class="matches-panel active" id="matches-verslag">
+                    <!-- Filled by JS -->
+                </div>
+                <div class="matches-panel" id="matches-programma">
+                    <!-- Filled by JS -->
                 </div>
             </section>
 
