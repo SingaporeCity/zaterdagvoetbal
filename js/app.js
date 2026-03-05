@@ -356,7 +356,7 @@ function createZaterdagPlayer(position) {
     const attributes = {};
 
     attrNames.forEach(attr => {
-        attributes[attr] = random(2, 10);
+        attributes[attr] = random(1, 10);
     });
 
     const overall = calculateOverall(attributes, position);
@@ -935,19 +935,22 @@ function initMyPlayer() {
             position: 'CM',
             number: 10,
             attributes: {
-                SNE: 15,
-                TEC: 15,
-                PAS: 15,
-                SCH: 15,
-                VER: 15,
-                FYS: 15
+                SNE: 12,
+                TEC: 12,
+                PAS: 12,
+                SCH: 12,
+                VER: 12,
+                FYS: 12
             }
         };
     }
     // Migrate old saves missing new attributes
     const a = gameState.myPlayer.attributes;
-    if (a.PAS === undefined) a.PAS = 50;
-    if (a.SCH === undefined) a.SCH = 45;
+    if (a.PAS === undefined) a.PAS = 12;
+    if (a.SCH === undefined) a.SCH = 12;
+    // Migrate to ALG 12: clamp all attributes
+    const attrKeys = ['SNE', 'TEC', 'PAS', 'SCH', 'VER', 'FYS'];
+    attrKeys.forEach(k => { if (a[k] > 12) a[k] = 12; });
     return gameState.myPlayer;
 }
 
@@ -5739,10 +5742,23 @@ function migratePlayersToZaterdag() {
             player.nationality = nlNat;
         }
 
-        // Zaterdagvoetbal stats: salary 0, age 40-55, low overall
+        // Zaterdagvoetbal stats: salary 0, age 40-55, overall 1-10
         player.salary = 0;
         if (player.age < 40) player.age = random(40, 55);
         if (player.fixedMarketValue === undefined) player.fixedMarketValue = 0;
+
+        // Clamp overall and attributes to 1-10
+        if (player.overall > 10) {
+            const isKeeper = player.position === 'keeper';
+            const attrNames = isKeeper ? ['REF', 'BAL', 'SNE', 'FYS'] : ['AAN', 'VER', 'SNE', 'FYS'];
+            attrNames.forEach(attr => {
+                if (player.attributes[attr] !== undefined) {
+                    player.attributes[attr] = random(1, 10);
+                }
+            });
+            player.overall = calculateOverall(player.attributes, player.position);
+            player.potential = player.overall + random(0, 2);
+        }
     });
 }
 
