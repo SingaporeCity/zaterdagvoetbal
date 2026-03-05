@@ -748,7 +748,7 @@ function renderPlayerCards() {
         overall: mpOverall,
         potential: 99,
         isMyPlayer: true,
-        nationality: { flag: '🇳🇱', name: 'Nederlands' },
+        nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
         salary: 0,
         energy: 100,
         attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
@@ -892,7 +892,7 @@ function createPlayerCardHTML(player, mini = false) {
                     <span class="pc-age-value">${player.age}</span>
                     <span class="pc-age-label">jr</span>
                 </div>
-                <span class="pc-flag-large">${player.nationality.flag}</span>
+                <img class="pc-flag-img" src="https://flagcdn.com/w40/${(player.nationality.code || 'nl').toLowerCase()}.png" alt="${player.nationality.code || 'NL'}" />
             </div>
             <div class="pc-info">
                 <div class="pc-name-row">
@@ -4000,7 +4000,7 @@ function renderTransferMarket() {
                         <span class="pc-age-value">${player.age}</span>
                         <span class="pc-age-label">jr</span>
                     </div>
-                    <span class="pc-flag-large">${player.nationality.flag}</span>
+                    <img class="pc-flag-img" src="https://flagcdn.com/w40/${(player.nationality.code || 'nl').toLowerCase()}.png" alt="${player.nationality.code || 'NL'}" />
                 </div>
                 <div class="pc-info">
                     <div class="pc-name-row">
@@ -5166,7 +5166,7 @@ function createYouthPlayerCard(player) {
                     <span class="pc-age-value">${player.age}</span>
                     <span class="pc-age-label">jr</span>
                 </div>
-                <span class="pc-flag-large">${player.nationality.flag}</span>
+                <img class="pc-flag-img" src="https://flagcdn.com/w40/${(player.nationality.code || 'nl').toLowerCase()}.png" alt="${player.nationality.code || 'NL'}" />
             </div>
             <div class="pc-info">
                 <div class="pc-name-row">

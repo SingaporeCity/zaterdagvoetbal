@@ -4979,9 +4979,10 @@ body {
    Kelderklasse aesthetic: worn paper, handwritten feel
    ================================================ */
 .player-card {
-    display: flex;
+    display: grid;
+    grid-template-columns: 80px 1fr 130px auto;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     padding: 6px 16px;
     background: linear-gradient(90deg, var(--bg-card) 0%, var(--bg-primary) 100%);
     border-bottom: 1px solid var(--border);
@@ -5065,6 +5066,13 @@ body {
 
 .pc-flag-large {
     font-size: 1.2rem;
+}
+
+.pc-flag-img {
+    width: 20px;
+    height: 15px;
+    border-radius: 2px;
+    object-fit: cover;
 }
 
 /* Info section - Name + Position inline */
@@ -13907,7 +13915,7 @@ body {
 }
 
 .pc-name-row .pc-finance {
-    margin-left: 16px;
+    margin-left: auto;
     display: flex;
     gap: 12px;
     font-size: 0.7rem;
