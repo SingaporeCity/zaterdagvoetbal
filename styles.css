@@ -12179,24 +12179,24 @@ body {
 /* Building hover/click */
 .stadium-building {
     cursor: pointer;
-    transition: filter 0.15s ease;
+    transition: filter 0.2s ease, opacity 0.2s ease;
 }
 
 .stadium-building:hover {
-    filter: brightness(1.3) drop-shadow(0 0 8px rgba(76, 175, 80, 0.6));
+    filter: brightness(1.25) drop-shadow(0 0 10px rgba(76, 175, 80, 0.5)) !important;
 }
 
 .stadium-building.active {
-    filter: brightness(1.2) drop-shadow(0 0 12px rgba(76, 175, 80, 0.8));
+    filter: brightness(1.2) drop-shadow(0 0 14px rgba(76, 175, 80, 0.7)) !important;
 }
 
 .stadium-building.unbuilt {
-    opacity: 0.5;
+    opacity: 0.85;
 }
 
 .stadium-building.unbuilt:hover {
-    opacity: 0.8;
-    filter: brightness(1.2) drop-shadow(0 0 6px rgba(255, 179, 0, 0.5));
+    opacity: 1;
+    filter: brightness(1.3) drop-shadow(0 0 10px rgba(255, 200, 50, 0.5)) !important;
 }
 
 /* Upgrade Panel overlay */

@@ -8180,18 +8180,13 @@ function renderStadiumMap() {
     const container = document.getElementById('stadium-map');
     if (!container) return;
 
-    // Update capacity header
     const capacityEl = document.getElementById('stadium-capacity');
     if (capacityEl) capacityEl.textContent = gameState.stadium.capacity || 200;
 
-    // ===== LAYOUT CONSTANTS =====
-    // All positions are absolute/fixed to prevent overlap
-    const cx = 310;  // center x of the complex
-    const cy = 185;  // center y of stadium
-    const fieldW = 130;
-    const fieldH = 74;
+    // ===== LAYOUT =====
+    const cx = 310, cy = 165;
+    const fieldW = 130, fieldH = 74;
 
-    // Tribune level determines stadium ring size
     const tribuneConfig = STADIUM_TILE_CONFIG.tribune;
     const tribuneId = gameState.stadium[tribuneConfig.stateKey];
     const tribuneLevel = Math.max(0, tribuneConfig.levels.findIndex(l => l.id === tribuneId));
@@ -8199,26 +8194,7 @@ function renderStadiumMap() {
     const stadW = fieldW + ringThickness * 2;
     const stadH = fieldH + ringThickness * 2;
 
-    // Building size
-    const bw = 82;
-    const bh = 50;
-
-    // Fixed positions — columns far enough from max stadium size (stadW max ~214)
-    const leftCol = 90;   // center x of left column buildings
-    const rightCol = 530; // center x of right column buildings
-    const row1 = 95;      // row 1 y
-    const row2 = 158;     // row 2 y
-    const row3 = 221;     // row 3 y
-    const row4 = 284;     // row 4 y
-
-    // Color per level
-    const levelColors = [
-        ['#5a3a1a', '#8B6914'], // level 1 — basic brown
-        ['#2d6a2e', '#4ade80'], // level 2 — green
-        ['#1a4a8a', '#60a5fa'], // level 3 — blue
-        ['#6a2a9a', '#a855f7'], // level 4 — purple
-        ['#8a5a0a', '#f59e0b']  // level 5 — gold
-    ];
+    const bw = 82, bh = 50;
 
     function getLevel(key) {
         const config = STADIUM_TILE_CONFIG[key];
@@ -8226,269 +8202,282 @@ function renderStadiumMap() {
         return Math.max(0, config.levels.findIndex(l => l.id === id));
     }
 
-    let svg = `<svg viewBox="0 0 620 400" xmlns="http://www.w3.org/2000/svg" style="font-family: system-ui, sans-serif;">`;
+    // Building positions
+    const positions = {
+        medical:       { x: 80,  y: 90 },
+        kantine:       { x: 80,  y: 155 },
+        sponsoring:    { x: 80,  y: 220 },
+        scouting:      { x: 540, y: 90 },
+        youthscouting: { x: 540, y: 155 },
+        perszaal:      { x: 540, y: 220 },
+    };
 
-    // Background — grass terrain
-    svg += `<rect width="620" height="400" fill="#2a5a2a" rx="8"/>`;
-    for (let gx = 0; gx < 620; gx += 40) {
-        svg += `<line x1="${gx}" y1="0" x2="${gx}" y2="400" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`;
-    }
-    for (let gy = 0; gy < 400; gy += 40) {
-        svg += `<line x1="0" y1="${gy}" x2="620" y2="${gy}" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`;
+    // Training & Academy field positions (below stadium)
+    const trainW = 90, trainH = 50;
+    const acadW = 90, acadH = 50;
+    const trainX = cx - trainW - 8, trainY = 300;
+    const acadX = cx + 8, acadY = 300;
+
+    let svg = `<svg viewBox="0 0 620 400" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Inter', system-ui, sans-serif;">`;
+
+    // ===== DEFS =====
+    svg += `<defs>
+        <pattern id="grass-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
+            <rect width="20" height="20" fill="#2d5e2d"/>
+            <rect x="0" y="0" width="10" height="20" fill="#2b5a2b"/>
+        </pattern>
+        <filter id="shadow-sm"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.25"/></filter>
+        <filter id="shadow-md"><feDropShadow dx="2" dy="3" stdDeviation="4" flood-opacity="0.3"/></filter>
+        <linearGradient id="road-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#6b6b6b"/>
+            <stop offset="50%" stop-color="#5a5a5a"/>
+            <stop offset="100%" stop-color="#4a4a4a"/>
+        </linearGradient>
+    </defs>`;
+
+    // ===== BACKGROUND =====
+    svg += `<rect width="620" height="400" fill="url(#grass-pattern)" rx="12"/>`;
+    // Subtle grass texture lines
+    for (let i = 0; i < 31; i++) {
+        const x = i * 20;
+        svg += `<line x1="${x}" y1="0" x2="${x}" y2="400" stroke="rgba(255,255,255,0.015)" stroke-width="1"/>`;
     }
 
-    // Walkways
-    svg += `<rect x="${leftCol + bw/2}" y="${cy - 2}" width="${cx - stadW/2 - leftCol - bw/2}" height="4" fill="rgba(180,160,120,0.2)" rx="2"/>`;
-    svg += `<rect x="${cx + stadW/2}" y="${cy - 2}" width="${rightCol - bw/2 - cx - stadW/2}" height="4" fill="rgba(180,160,120,0.2)" rx="2"/>`;
-    svg += `<rect x="${cx - 2}" y="${cy + stadH/2}" width="4" height="${340 - cy - stadH/2}" fill="rgba(180,160,120,0.2)" rx="2"/>`;
+    // ===== ROADS =====
+    const roadW = 10;
+    const roadColor = 'url(#road-grad)';
+    const lineColor = 'rgba(255,255,200,0.25)';
+
+    // Main horizontal road
+    const roadY = cy;
+    svg += `<rect x="30" y="${roadY - roadW/2}" width="560" height="${roadW}" fill="${roadColor}" rx="5"/>`;
+    // Dashed center line
+    for (let dx = 35; dx < 585; dx += 18) {
+        svg += `<rect x="${dx}" y="${roadY - 0.5}" width="10" height="1" fill="${lineColor}" rx="0.5"/>`;
+    }
+
+    // Vertical road from stadium down to training fields
+    svg += `<rect x="${cx - roadW/2}" y="${roadY}" width="${roadW}" height="${trainY + trainH/2 - roadY + 10}" fill="${roadColor}" rx="5"/>`;
+    for (let dy = roadY + 8; dy < trainY + trainH/2; dy += 18) {
+        svg += `<rect x="${cx - 0.5}" y="${dy}" width="1" height="10" fill="${lineColor}" rx="0.5"/>`;
+    }
+
+    // Left vertical road (connecting left buildings)
+    const leftRoadX = 80;
+    svg += `<rect x="${leftRoadX - roadW/2}" y="60" width="${roadW}" height="220" fill="${roadColor}" rx="5"/>`;
+    for (let dy = 65; dy < 270; dy += 18) {
+        svg += `<rect x="${leftRoadX - 0.5}" y="${dy}" width="1" height="10" fill="${lineColor}" rx="0.5"/>`;
+    }
+
+    // Right vertical road (connecting right buildings)
+    const rightRoadX = 540;
+    svg += `<rect x="${rightRoadX - roadW/2}" y="60" width="${roadW}" height="220" fill="${roadColor}" rx="5"/>`;
+    for (let dy = 65; dy < 270; dy += 18) {
+        svg += `<rect x="${rightRoadX - 0.5}" y="${dy}" width="1" height="10" fill="${lineColor}" rx="0.5"/>`;
+    }
+
+    // Small connecting roads from vertical to horizontal
+    svg += `<rect x="${leftRoadX}" y="${roadY - roadW/2}" width="${cx - stadW/2 - leftRoadX - 5}" height="${roadW}" fill="${roadColor}" rx="3"/>`;
+    svg += `<rect x="${cx + stadW/2 + 5}" y="${roadY - roadW/2}" width="${rightRoadX - cx - stadW/2 - 5}" height="${roadW}" fill="${roadColor}" rx="3"/>`;
+
+    // Small road circles at intersections
+    [[leftRoadX, roadY], [rightRoadX, roadY], [cx, roadY], [cx, trainY - 15]].forEach(([ix, iy]) => {
+        svg += `<circle cx="${ix}" cy="${iy}" r="7" fill="#555" stroke="#666" stroke-width="0.5"/>`;
+    });
 
     // ===== STADIUM (tribune) =====
     const tribuneColors = ['#6a4a2a', '#5a5a5a', '#4a4a6a', '#3a3a7a', '#8a6a0a'];
     const tc = tribuneColors[tribuneLevel];
+    const levelColors = [['#5a3a1a','#8B6914'],['#2d6a2e','#4ade80'],['#1a4a8a','#60a5fa'],['#6a2a9a','#a855f7'],['#8a5a0a','#f59e0b']];
     const tColors = levelColors[Math.min(tribuneLevel, levelColors.length - 1)];
     const isStadActive = currentStadiumCategory === 'tribune';
 
-    svg += `<g class="stadium-building${isStadActive ? ' active' : ''}" data-category="tribune" onclick="selectStadiumCategory('tribune')">`;
-
+    svg += `<g class="stadium-building${isStadActive ? ' active' : ''}" data-category="tribune" onclick="selectStadiumCategory('tribune')" filter="url(#shadow-md)">`;
     if (tribuneLevel === 0) {
-        // Level 1: wooden benches along long sides
         const benchW = fieldW + 10;
-        const benchY1 = cy - fieldH / 2 - 10;
-        const benchY2 = cy + fieldH / 2 + 2;
+        const benchY1 = cy - fieldH/2 - 10, benchY2 = cy + fieldH/2 + 2;
         svg += `<rect x="${cx - benchW/2}" y="${benchY1}" width="${benchW}" height="8" fill="#8B6914" stroke="#a07820" stroke-width="1" rx="2"/>`;
-        for (let p = 0; p < 7; p++) {
-            svg += `<line x1="${cx - benchW/2 + 6 + p * (benchW - 12) / 6}" y1="${benchY1}" x2="${cx - benchW/2 + 6 + p * (benchW - 12) / 6}" y2="${benchY1 + 8}" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>`;
-        }
+        for (let p = 0; p < 7; p++) svg += `<line x1="${cx - benchW/2 + 6 + p * (benchW - 12)/6}" y1="${benchY1}" x2="${cx - benchW/2 + 6 + p * (benchW - 12)/6}" y2="${benchY1 + 8}" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>`;
         svg += `<rect x="${cx - benchW/2}" y="${benchY2}" width="${benchW}" height="8" fill="#8B6914" stroke="#a07820" stroke-width="1" rx="2"/>`;
-        for (let p = 0; p < 7; p++) {
-            svg += `<line x1="${cx - benchW/2 + 6 + p * (benchW - 12) / 6}" y1="${benchY2}" x2="${cx - benchW/2 + 6 + p * (benchW - 12) / 6}" y2="${benchY2 + 8}" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>`;
-        }
+        for (let p = 0; p < 7; p++) svg += `<line x1="${cx - benchW/2 + 6 + p * (benchW - 12)/6}" y1="${benchY2}" x2="${cx - benchW/2 + 6 + p * (benchW - 12)/6}" y2="${benchY2 + 8}" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>`;
     } else {
-        // Level 2+: stadium ring
-        const ox = cx - stadW / 2;
-        const oy = cy - stadH / 2;
+        const ox = cx - stadW/2, oy = cy - stadH/2;
         svg += `<rect x="${ox}" y="${oy}" width="${stadW}" height="${stadH}" fill="${tc}" stroke="${tColors[1]}" stroke-width="2" rx="${Math.min(6, ringThickness)}"/>`;
-        svg += `<rect x="${cx - fieldW/2}" y="${cy - fieldH/2}" width="${fieldW}" height="${fieldH}" fill="#2a5a2a" rx="2"/>`;
-        // Tribune stands inside ring
-        const standInset = 3;
-        const standThick = ringThickness - 6;
+        svg += `<rect x="${cx - fieldW/2}" y="${cy - fieldH/2}" width="${fieldW}" height="${fieldH}" fill="#2d5e2d" rx="2"/>`;
+        const standInset = 3, standThick = ringThickness - 6;
         if (standThick > 4) {
             svg += `<rect x="${cx - fieldW/2}" y="${oy + standInset}" width="${fieldW}" height="${standThick}" fill="${tc}" stroke="rgba(255,255,255,0.12)" stroke-width="0.5" rx="2"/>`;
             svg += `<rect x="${cx - fieldW/2}" y="${cy + fieldH/2 + standInset}" width="${fieldW}" height="${standThick}" fill="${tc}" stroke="rgba(255,255,255,0.12)" stroke-width="0.5" rx="2"/>`;
             svg += `<rect x="${ox + standInset}" y="${cy - fieldH/2}" width="${standThick}" height="${fieldH}" fill="${tc}" stroke="rgba(255,255,255,0.12)" stroke-width="0.5" rx="2"/>`;
             svg += `<rect x="${cx + fieldW/2 + standInset}" y="${cy - fieldH/2}" width="${standThick}" height="${fieldH}" fill="${tc}" stroke="rgba(255,255,255,0.12)" stroke-width="0.5" rx="2"/>`;
         }
-        if (tribuneLevel >= 2) {
-            [[ox + 3, oy + 3], [ox + stadW - 3, oy + 3], [ox + 3, oy + stadH - 3], [ox + stadW - 3, oy + stadH - 3]].forEach(([px, py]) => {
-                svg += `<circle cx="${px}" cy="${py}" r="3" fill="${tColors[1]}" opacity="0.4"/>`;
-            });
-        }
-        if (tribuneLevel >= 3) {
-            [[ox, oy], [ox + stadW, oy], [ox, oy + stadH], [ox + stadW, oy + stadH]].forEach(([lx, ly]) => {
-                const dir = lx < cx ? -1 : 1;
-                svg += `<line x1="${lx}" y1="${ly}" x2="${lx + dir * 10}" y2="${ly - 16}" stroke="#bbb" stroke-width="1.5"/>`;
-                svg += `<circle cx="${lx + dir * 10}" cy="${ly - 18}" r="3" fill="#ffe066"/>`;
-            });
-        }
+        if (tribuneLevel >= 2) [[ox+3,oy+3],[ox+stadW-3,oy+3],[ox+3,oy+stadH-3],[ox+stadW-3,oy+stadH-3]].forEach(([px,py]) => { svg += `<circle cx="${px}" cy="${py}" r="3" fill="${tColors[1]}" opacity="0.4"/>`; });
+        if (tribuneLevel >= 3) [[ox,oy],[ox+stadW,oy],[ox,oy+stadH],[ox+stadW,oy+stadH]].forEach(([lx,ly]) => { const dir = lx < cx ? -1 : 1; svg += `<line x1="${lx}" y1="${ly}" x2="${lx+dir*10}" y2="${ly-16}" stroke="#bbb" stroke-width="1.5"/><circle cx="${lx+dir*10}" cy="${ly-18}" r="3" fill="#ffe066"/>`; });
     }
-    // Label
-    const labelY = cy - stadH / 2 - (tribuneLevel === 0 ? 16 : 8);
+    const labelY = cy - stadH/2 - (tribuneLevel === 0 ? 16 : 8);
     svg += `<text x="${cx}" y="${labelY}" text-anchor="middle" fill="${tColors[1]}" font-size="9" font-weight="bold">${tribuneConfig.levels[tribuneLevel]?.name || 'Stadion'}</text>`;
-    svg += `<rect x="${cx - 13}" y="${cy + stadH/2 + (tribuneLevel === 0 ? 14 : 5)}" width="26" height="13" fill="${tColors[1]}" rx="3"/>`;
-    svg += `<text x="${cx}" y="${cy + stadH/2 + (tribuneLevel === 0 ? 23 : 14)}" text-anchor="middle" fill="white" font-size="8" font-weight="bold">Nv${tribuneLevel + 1}</text>`;
+    svg += `<rect x="${cx-13}" y="${cy+stadH/2+(tribuneLevel===0?14:5)}" width="26" height="13" fill="${tColors[1]}" rx="6"/>`;
+    svg += `<text x="${cx}" y="${cy+stadH/2+(tribuneLevel===0?23:14)}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${tribuneLevel+1}</text>`;
     svg += `</g>`;
 
     // ===== GRASS (field) =====
     const grassLevel = getLevel('grass');
-    const grassColorList = ['#3a7a3a', '#3a8a3a', '#2a9a2a', '#1aaa1a'];
-    const gc = grassColorList[Math.min(grassLevel, grassColorList.length - 1)];
-    const gColors = levelColors[Math.min(grassLevel, levelColors.length - 1)];
+    const grassColorList = ['#3a7a3a','#3a8a3a','#2a9a2a','#1aaa1a'];
+    const gc = grassColorList[Math.min(grassLevel, grassColorList.length-1)];
+    const gColors = levelColors[Math.min(grassLevel, levelColors.length-1)];
     const isGrassActive = currentStadiumCategory === 'grass';
 
     svg += `<g class="stadium-building${isGrassActive ? ' active' : ''}" data-category="grass" onclick="selectStadiumCategory('grass')">`;
-    svg += `<rect x="${cx - fieldW/2}" y="${cy - fieldH/2}" width="${fieldW}" height="${fieldH}" fill="${gc}" stroke="white" stroke-width="1.5" rx="2"/>`;
-    svg += `<rect x="${cx - fieldW/2 + 3}" y="${cy - fieldH/2 + 3}" width="${fieldW - 6}" height="${fieldH - 6}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
-    svg += `<line x1="${cx}" y1="${cy - fieldH/2 + 3}" x2="${cx}" y2="${cy + fieldH/2 - 3}" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
+    svg += `<rect x="${cx-fieldW/2}" y="${cy-fieldH/2}" width="${fieldW}" height="${fieldH}" fill="${gc}" stroke="white" stroke-width="1.5" rx="2"/>`;
+    svg += `<rect x="${cx-fieldW/2+3}" y="${cy-fieldH/2+3}" width="${fieldW-6}" height="${fieldH-6}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
+    svg += `<line x1="${cx}" y1="${cy-fieldH/2+3}" x2="${cx}" y2="${cy+fieldH/2-3}" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
     svg += `<circle cx="${cx}" cy="${cy}" r="10" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
-    svg += `<rect x="${cx + fieldW/2 - 24}" y="${cy - fieldH/2 + 2}" width="22" height="12" fill="${gColors[1]}" rx="3"/>`;
-    svg += `<text x="${cx + fieldW/2 - 13}" y="${cy - fieldH/2 + 11}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${grassLevel + 1}</text>`;
+    svg += `<rect x="${cx+fieldW/2-24}" y="${cy-fieldH/2+2}" width="22" height="12" fill="${gColors[1]}" rx="6"/>`;
+    svg += `<text x="${cx+fieldW/2-13}" y="${cy-fieldH/2+11}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${grassLevel+1}</text>`;
     svg += `</g>`;
 
-    // ===== TRAINING FIELD (below stadium) =====
-    const trainLevel = getLevel('training');
-    const trainColors = levelColors[Math.min(trainLevel, levelColors.length - 1)];
-    const trainGreen = ['#3a6a3a', '#3a7a3a', '#2a8a2a', '#1a9a1a'];
-    const tg = trainGreen[Math.min(trainLevel, trainGreen.length - 1)];
-    const isTrainActive = currentStadiumCategory === 'training';
-    const trainW = 100;
-    const trainH = 58;
-    const trainX = cx - trainW / 2;
-    const trainY = 315;
-
-    svg += `<g class="stadium-building${isTrainActive ? ' active' : ''}" data-category="training" onclick="selectStadiumCategory('training')">`;
-    svg += `<rect x="${trainX}" y="${trainY}" width="${trainW}" height="${trainH}" fill="${tg}" stroke="${trainColors[1]}" stroke-width="1.5" rx="3"/>`;
-    svg += `<rect x="${trainX + 3}" y="${trainY + 3}" width="${trainW - 6}" height="${trainH - 6}" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.7"/>`;
-    svg += `<line x1="${trainX + trainW/2}" y1="${trainY + 3}" x2="${trainX + trainW/2}" y2="${trainY + trainH - 3}" stroke="rgba(255,255,255,0.3)" stroke-width="0.7"/>`;
-    svg += `<circle cx="${trainX + trainW/2}" cy="${trainY + trainH/2}" r="8" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.7"/>`;
-    if (trainLevel >= 1) {
-        for (let c = 0; c < 3; c++) svg += `<circle cx="${trainX + 12 + c * 14}" cy="${trainY + trainH - 8}" r="2.5" fill="orange" opacity="0.5"/>`;
+    // ===== TRAINING FIELD =====
+    function renderField(x, y, w, h, level, key, label, icon, colorSet) {
+        const isActive = currentStadiumCategory === key;
+        const greens = ['#3a6a3a','#3a7a3a','#2a8a2a','#1a9a1a'];
+        const fg = greens[Math.min(level, greens.length-1)];
+        const lc = colorSet;
+        svg += `<g class="stadium-building${isActive ? ' active' : ''}" data-category="${key}" onclick="selectStadiumCategory('${key}')" filter="url(#shadow-sm)">`;
+        svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fg}" stroke="${lc[1]}" stroke-width="1.5" rx="6"/>`;
+        svg += `<rect x="${x+2}" y="${y+2}" width="${w-4}" height="${h-4}" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.5" rx="4"/>`;
+        svg += `<line x1="${x+w/2}" y1="${y+2}" x2="${x+w/2}" y2="${y+h-2}" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+        svg += `<circle cx="${x+w/2}" cy="${y+h/2}" r="7" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+        // Goals
+        svg += `<rect x="${x+2}" y="${y+h/2-5}" width="4" height="10" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" rx="1"/>`;
+        svg += `<rect x="${x+w-6}" y="${y+h/2-5}" width="4" height="10" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" rx="1"/>`;
+        if (level >= 1) {
+            for (let c = 0; c < 3; c++) svg += `<circle cx="${x+14+c*12}" cy="${y+h-7}" r="2" fill="orange" opacity="0.4"/>`;
+        }
+        svg += `<text x="${x+w/2}" y="${y-6}" text-anchor="middle" fill="${lc[1]}" font-size="8" font-weight="bold">${icon} ${label}</text>`;
+        svg += `<rect x="${x+w-24}" y="${y+2}" width="22" height="12" fill="${lc[1]}" rx="6"/>`;
+        svg += `<text x="${x+w-13}" y="${y+11}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level+1}</text>`;
+        svg += `</g>`;
     }
-    svg += `<text x="${cx}" y="${trainY - 5}" text-anchor="middle" fill="${trainColors[1]}" font-size="8" font-weight="bold">💪 Training</text>`;
-    svg += `<rect x="${trainX + trainW - 24}" y="${trainY + 2}" width="22" height="12" fill="${trainColors[1]}" rx="3"/>`;
-    svg += `<text x="${trainX + trainW - 13}" y="${trainY + 11}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${trainLevel + 1}</text>`;
-    svg += `</g>`;
 
-    // ===== UNIQUE BUILDINGS (left & right columns) =====
-    // Each building has its own color scheme and visual details
-    const buildingStyles = {
-        medical: {
-            base: '#3a1a1a', accent: '#e05050', roof: '#c03030', name: 'Medisch',
-            detail: (bx, by, bw, bh, level) => {
-                let d = '';
-                // Red cross
-                d += `<rect x="${bx + bw/2 - 2}" y="${by + 14}" width="4" height="16" fill="#ff4444" rx="1"/>`;
-                d += `<rect x="${bx + bw/2 - 8}" y="${by + 20}" width="16" height="4" fill="#ff4444" rx="1"/>`;
-                // Ambulance at level 2+
-                if (level >= 1) d += `<rect x="${bx + 6}" y="${by + bh - 12}" width="14" height="8" fill="white" rx="2" opacity="0.5"/>`;
-                return d;
-            }
+    const trainLevel = getLevel('training');
+    const acadLevel = getLevel('academy');
+    renderField(trainX, trainY, trainW, trainH, trainLevel, 'training', 'Training', '', levelColors[Math.min(trainLevel, 4)]);
+    renderField(acadX, acadY, acadW, acadH, acadLevel, 'academy', 'Jeugd', '', levelColors[Math.min(acadLevel, 4)]);
+
+    // ===== BUILDINGS (left & right columns) =====
+    const buildingMeta = {
+        medical:       { icon: '', accent: '#e05050', name: 'Medisch' },
+        kantine:       { icon: '', accent: '#d4a044', name: 'Kantine' },
+        sponsoring:    { icon: '', accent: '#f5c542', name: 'Sponsoring' },
+        scouting:      { icon: '', accent: '#60a5fa', name: 'Scouting' },
+        youthscouting: { icon: '', accent: '#c084fc', name: 'Jeugdscouts' },
+        perszaal:      { icon: '', accent: '#94a3b8', name: 'Media' },
+    };
+
+    const buildingDetails = {
+        medical: (bx, by, bw, bh, level) => {
+            let d = `<rect x="${bx+bw/2-2}" y="${by+14}" width="4" height="14" fill="#ff4444" rx="1"/>`;
+            d += `<rect x="${bx+bw/2-7}" y="${by+19}" width="14" height="4" fill="#ff4444" rx="1"/>`;
+            if (level >= 2) d += `<rect x="${bx+6}" y="${by+bh-12}" width="14" height="8" fill="white" rx="2" opacity="0.4"/>`;
+            return d;
         },
-        academy: {
-            base: '#1a3a1a', accent: '#4ade80', roof: '#2d8a2e', name: 'Jeugd',
-            detail: (bx, by, bw, bh, level) => {
-                let d = '';
-                // Mini football goal
-                d += `<rect x="${bx + bw/2 - 10}" y="${by + 15}" width="20" height="12" fill="none" stroke="white" stroke-width="1" rx="1" opacity="0.5"/>`;
-                // Ball
-                d += `<circle cx="${bx + bw/2}" cy="${by + 32}" r="4" fill="white" opacity="0.4"/>`;
-                // Extra goals at higher levels
-                if (level >= 2) d += `<rect x="${bx + 8}" y="${by + 18}" width="12" height="8" fill="none" stroke="white" stroke-width="0.7" rx="1" opacity="0.3"/>`;
-                return d;
-            }
+        kantine: (bx, by, bw, bh, level) => {
+            let d = `<rect x="${bx+10}" y="${by+20}" width="${bw-20}" height="5" fill="#d4a044" opacity="0.4" rx="2"/>`;
+            d += `<rect x="${bx+bw/2-7}" y="${by+12}" width="5" height="7" fill="rgba(255,200,50,0.4)" rx="1"/>`;
+            d += `<rect x="${bx+bw/2+2}" y="${by+12}" width="5" height="7" fill="rgba(255,200,50,0.4)" rx="1"/>`;
+            d += `<rect x="${bx+bw/2-7}" y="${by+11}" width="5" height="3" fill="rgba(255,255,255,0.3)" rx="1"/>`;
+            d += `<rect x="${bx+bw/2+2}" y="${by+11}" width="5" height="3" fill="rgba(255,255,255,0.3)" rx="1"/>`;
+            if (level >= 2) { d += `<circle cx="${bx+14}" cy="${by+33}" r="3.5" fill="#d4a044" opacity="0.2"/>`; d += `<circle cx="${bx+bw-14}" cy="${by+33}" r="3.5" fill="#d4a044" opacity="0.2"/>`; }
+            return d;
         },
-        sponsoring: {
-            base: '#2a2a1a', accent: '#f5c542', roof: '#b8941f', name: 'Sponsoring',
-            detail: (bx, by, bw, bh, level) => {
-                let d = '';
-                // Billboard/banner
-                d += `<rect x="${bx + 8}" y="${by + 12}" width="${bw - 16}" height="14" fill="rgba(245,197,66,0.2)" stroke="#f5c542" stroke-width="0.8" rx="2"/>`;
-                d += `<text x="${bx + bw/2}" y="${by + 22}" text-anchor="middle" fill="#f5c542" font-size="6" font-weight="bold">SPONSOR</text>`;
-                // Extra banners at higher levels
-                if (level >= 1) d += `<rect x="${bx + 12}" y="${by + 30}" width="${bw - 24}" height="3" fill="#f5c542" opacity="0.3" rx="1"/>`;
-                if (level >= 2) d += `<rect x="${bx + 12}" y="${by + 35}" width="${bw - 24}" height="3" fill="#f5c542" opacity="0.3" rx="1"/>`;
-                return d;
-            }
+        sponsoring: (bx, by, bw, bh, level) => {
+            let d = `<rect x="${bx+8}" y="${by+12}" width="${bw-16}" height="12" fill="rgba(245,197,66,0.15)" stroke="#f5c542" stroke-width="0.7" rx="2"/>`;
+            d += `<text x="${bx+bw/2}" y="${by+21}" text-anchor="middle" fill="#f5c542" font-size="5.5" font-weight="bold">SPONSOR</text>`;
+            if (level >= 2) d += `<rect x="${bx+12}" y="${by+28}" width="${bw-24}" height="2.5" fill="#f5c542" opacity="0.25" rx="1"/>`;
+            return d;
         },
-        scouting: {
-            base: '#1a2a3a', accent: '#60a5fa', roof: '#2a5a9a', name: 'Scouting',
-            detail: (bx, by, bw, bh, level) => {
-                let d = '';
-                // Radar/satellite dish
-                d += `<circle cx="${bx + bw/2}" cy="${by + 22}" r="10" fill="none" stroke="#60a5fa" stroke-width="1.2" opacity="0.5"/>`;
-                d += `<circle cx="${bx + bw/2}" cy="${by + 22}" r="5" fill="none" stroke="#60a5fa" stroke-width="0.8" opacity="0.4"/>`;
-                d += `<circle cx="${bx + bw/2}" cy="${by + 22}" r="2" fill="#60a5fa" opacity="0.6"/>`;
-                // Expanding rings at higher levels
-                if (level >= 2) d += `<circle cx="${bx + bw/2}" cy="${by + 22}" r="16" fill="none" stroke="#60a5fa" stroke-width="0.6" opacity="0.25"/>`;
-                return d;
-            }
+        scouting: (bx, by, bw, bh, level) => {
+            let d = `<circle cx="${bx+bw/2}" cy="${by+20}" r="9" fill="none" stroke="#60a5fa" stroke-width="1" opacity="0.45"/>`;
+            d += `<circle cx="${bx+bw/2}" cy="${by+20}" r="4.5" fill="none" stroke="#60a5fa" stroke-width="0.7" opacity="0.35"/>`;
+            d += `<circle cx="${bx+bw/2}" cy="${by+20}" r="1.5" fill="#60a5fa" opacity="0.5"/>`;
+            if (level >= 3) d += `<circle cx="${bx+bw/2}" cy="${by+20}" r="14" fill="none" stroke="#60a5fa" stroke-width="0.5" opacity="0.2"/>`;
+            return d;
         },
-        youthscouting: {
-            base: '#2a1a3a', accent: '#c084fc', roof: '#6a2a9a', name: 'Scoutingcentrum',
-            detail: (bx, by, bw, bh, level) => {
-                let d = '';
-                // Binoculars icon
-                d += `<circle cx="${bx + bw/2 - 6}" cy="${by + 20}" r="5" fill="none" stroke="#c084fc" stroke-width="1" opacity="0.5"/>`;
-                d += `<circle cx="${bx + bw/2 + 6}" cy="${by + 20}" r="5" fill="none" stroke="#c084fc" stroke-width="1" opacity="0.5"/>`;
-                d += `<rect x="${bx + bw/2 - 2}" y="${by + 17}" width="4" height="6" fill="#c084fc" opacity="0.3" rx="1"/>`;
-                // Small person silhouettes
-                if (level >= 1) {
-                    for (let p = 0; p < Math.min(level + 1, 3); p++) {
-                        d += `<circle cx="${bx + 14 + p * 10}" cy="${by + 34}" r="2.5" fill="#c084fc" opacity="0.3"/>`;
-                        d += `<rect x="${bx + 12 + p * 10}" y="${by + 37}" width="5" height="6" fill="#c084fc" opacity="0.2" rx="1"/>`;
-                    }
-                }
-                return d;
-            }
+        youthscouting: (bx, by, bw, bh, level) => {
+            let d = `<circle cx="${bx+bw/2-5}" cy="${by+19}" r="4.5" fill="none" stroke="#c084fc" stroke-width="0.9" opacity="0.45"/>`;
+            d += `<circle cx="${bx+bw/2+5}" cy="${by+19}" r="4.5" fill="none" stroke="#c084fc" stroke-width="0.9" opacity="0.45"/>`;
+            d += `<rect x="${bx+bw/2-1.5}" y="${by+16}" width="3" height="5" fill="#c084fc" opacity="0.25" rx="1"/>`;
+            if (level >= 2) { for (let p=0;p<2;p++) { d += `<circle cx="${bx+16+p*10}" cy="${by+32}" r="2" fill="#c084fc" opacity="0.25"/>`; d += `<rect x="${bx+14.5+p*10}" y="${by+34.5}" width="4" height="5" fill="#c084fc" opacity="0.15" rx="1"/>`; } }
+            return d;
         },
-        kantine: {
-            base: '#3a2a1a', accent: '#d4a044', roof: '#a07820', name: 'Kantine',
-            detail: (bx, by, bw, bh, level) => {
-                let d = '';
-                // Beer tap / bar counter
-                d += `<rect x="${bx + 10}" y="${by + 22}" width="${bw - 20}" height="6" fill="#d4a044" opacity="0.4" rx="2"/>`;
-                // Beer glasses
-                d += `<rect x="${bx + bw/2 - 8}" y="${by + 13}" width="5" height="8" fill="rgba(255,200,50,0.4)" rx="1"/>`;
-                d += `<rect x="${bx + bw/2 + 3}" y="${by + 13}" width="5" height="8" fill="rgba(255,200,50,0.4)" rx="1"/>`;
-                // Foam tops
-                d += `<rect x="${bx + bw/2 - 8}" y="${by + 12}" width="5" height="3" fill="rgba(255,255,255,0.3)" rx="1"/>`;
-                d += `<rect x="${bx + bw/2 + 3}" y="${by + 12}" width="5" height="3" fill="rgba(255,255,255,0.3)" rx="1"/>`;
-                // Tables at higher levels
-                if (level >= 1) {
-                    d += `<circle cx="${bx + 14}" cy="${by + 36}" r="4" fill="#d4a044" opacity="0.25"/>`;
-                    d += `<circle cx="${bx + bw - 14}" cy="${by + 36}" r="4" fill="#d4a044" opacity="0.25"/>`;
-                }
-                return d;
-            }
-        },
-        perszaal: {
-            base: '#1a1a2a', accent: '#94a3b8', roof: '#475569', name: 'Media',
-            detail: (bx, by, bw, bh, level) => {
-                let d = '';
-                // Satellite dish on roof
-                d += `<line x1="${bx + bw - 16}" y1="${by + 2}" x2="${bx + bw - 12}" y2="${by - 6}" stroke="#94a3b8" stroke-width="1.5"/>`;
-                d += `<path d="M${bx + bw - 18} ${by - 4} Q${bx + bw - 12} ${by - 10} ${bx + bw - 6} ${by - 4}" fill="none" stroke="#94a3b8" stroke-width="1"/>`;
-                // Camera/screen
-                d += `<rect x="${bx + 10}" y="${by + 14}" width="18" height="12" fill="rgba(148,163,184,0.2)" stroke="#94a3b8" stroke-width="0.8" rx="2"/>`;
-                d += `<rect x="${bx + 12}" y="${by + 16}" width="14" height="8" fill="rgba(100,180,255,0.15)" rx="1"/>`;
-                // Microphone at higher levels
-                if (level >= 1) {
-                    d += `<line x1="${bx + bw - 18}" y1="${by + 18}" x2="${bx + bw - 18}" y2="${by + 30}" stroke="#94a3b8" stroke-width="1.2"/>`;
-                    d += `<circle cx="${bx + bw - 18}" cy="${by + 16}" r="3" fill="#94a3b8" opacity="0.4"/>`;
-                }
-                return d;
-            }
+        perszaal: (bx, by, bw, bh, level) => {
+            let d = `<line x1="${bx+bw-16}" y1="${by+3}" x2="${bx+bw-12}" y2="${by-5}" stroke="#94a3b8" stroke-width="1.3"/>`;
+            d += `<path d="M${bx+bw-18} ${by-3} Q${bx+bw-12} ${by-9} ${bx+bw-6} ${by-3}" fill="none" stroke="#94a3b8" stroke-width="0.8"/>`;
+            d += `<rect x="${bx+10}" y="${by+14}" width="16" height="10" fill="rgba(148,163,184,0.15)" stroke="#94a3b8" stroke-width="0.7" rx="2"/>`;
+            d += `<rect x="${bx+12}" y="${by+16}" width="12" height="6" fill="rgba(100,180,255,0.12)" rx="1"/>`;
+            if (level >= 2) { d += `<line x1="${bx+bw-16}" y1="${by+17}" x2="${bx+bw-16}" y2="${by+28}" stroke="#94a3b8" stroke-width="1"/>`; d += `<circle cx="${bx+bw-16}" cy="${by+15}" r="2.5" fill="#94a3b8" opacity="0.35"/>`; }
+            return d;
         }
     };
 
-    const regularBuildings = [
-        { key: 'medical',       x: leftCol,  y: row1 },
-        { key: 'academy',       x: leftCol,  y: row2 },
-        { key: 'kantine',       x: leftCol,  y: row3 },
-        { key: 'sponsoring',    x: leftCol,  y: row4 },
-        { key: 'scouting',      x: rightCol, y: row1 },
-        { key: 'youthscouting', x: rightCol, y: row2 },
-        { key: 'perszaal',      x: rightCol, y: row3 },
-    ];
+    Object.entries(positions).forEach(([key, pos]) => {
+        const level = getLevel(key);
+        const isUnbuilt = level === 0;
+        const isActive = currentStadiumCategory === key;
+        const meta = buildingMeta[key];
+        const bx = pos.x - bw/2, by = pos.y - bh/2;
+        const config = STADIUM_TILE_CONFIG[key];
+        const nextBuildName = config.levels[1]?.name || '';
 
-    regularBuildings.forEach(b => {
-        const style = buildingStyles[b.key];
-        const level = getLevel(b.key);
-        const isActive = currentStadiumCategory === b.key;
-        const bx = b.x - bw / 2;
-        const by = b.y - bh / 2;
-        // Brighter at higher levels
-        const brightness = 1 + level * 0.08;
+        svg += `<g class="stadium-building${isActive ? ' active' : ''}${isUnbuilt ? ' unbuilt' : ''}" data-category="${key}" onclick="selectStadiumCategory('${key}')" filter="url(#shadow-sm)">`;
 
-        svg += `<g class="stadium-building${isActive ? ' active' : ''}" data-category="${b.key}" onclick="selectStadiumCategory('${b.key}')">`;
-        // Shadow
-        svg += `<rect x="${bx + 2}" y="${by + 2}" width="${bw}" height="${bh}" fill="rgba(0,0,0,0.12)" rx="4"/>`;
-        // Body with unique color
-        svg += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="${style.base}" stroke="${style.accent}" stroke-width="1.5" rx="4"/>`;
-        // Colored roof
-        svg += `<rect x="${bx}" y="${by}" width="${bw}" height="7" fill="${style.roof}" rx="4"/>`;
-        svg += `<rect x="${bx}" y="${by + 5}" width="${bw}" height="2" fill="${style.roof}"/>`;
-        // Unique detail per building
-        svg += style.detail(bx, by, bw, bh, level);
-        // Name label
-        svg += `<text x="${b.x}" y="${by + bh - 4}" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="7" font-weight="600">${style.name}</text>`;
-        // Level badge
-        svg += `<rect x="${bx + bw - 24}" y="${by - 2}" width="24" height="12" fill="${style.accent}" rx="3"/>`;
-        svg += `<text x="${bx + bw - 12}" y="${by + 7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level + 1}</text>`;
+        if (isUnbuilt) {
+            // Empty plot
+            svg += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="rgba(60,80,60,0.5)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-dasharray="4 3" rx="8"/>`;
+            // Dirt/ground texture
+            svg += `<rect x="${bx+4}" y="${by+4}" width="${bw-8}" height="${bh-8}" fill="rgba(120,100,60,0.12)" rx="6"/>`;
+            // Build icon
+            svg += `<circle cx="${pos.x}" cy="${pos.y-4}" r="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>`;
+            svg += `<text x="${pos.x}" y="${pos.y}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="11">+</text>`;
+            // Label
+            svg += `<text x="${pos.x}" y="${by+bh-6}" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="6.5" font-weight="600">${meta.name}</text>`;
+            // "Bouw" hint
+            svg += `<rect x="${bx+bw/2-18}" y="${by-2}" width="36" height="12" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="0.5" rx="6"/>`;
+            svg += `<text x="${pos.x}" y="${by+7}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="6">Beschikbaar</text>`;
+        } else {
+            // Built building
+            const darkBase = { medical:'#3a1a1a', kantine:'#3a2a1a', sponsoring:'#2a2a1a', scouting:'#1a2a3a', youthscouting:'#2a1a3a', perszaal:'#1a1a2a' };
+            const roofColor = { medical:'#c03030', kantine:'#a07820', sponsoring:'#b8941f', scouting:'#2a5a9a', youthscouting:'#6a2a9a', perszaal:'#475569' };
+            svg += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="${darkBase[key]}" stroke="${meta.accent}" stroke-width="1.5" rx="8"/>`;
+            // Roof
+            svg += `<rect x="${bx}" y="${by}" width="${bw}" height="7" fill="${roofColor[key]}" rx="8"/>`;
+            svg += `<rect x="${bx}" y="${by+5}" width="${bw}" height="2" fill="${roofColor[key]}"/>`;
+            // Details
+            svg += buildingDetails[key](bx, by, bw, bh, level);
+            // Name
+            svg += `<text x="${pos.x}" y="${by+bh-5}" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="7" font-weight="600">${meta.name}</text>`;
+            // Level badge
+            svg += `<rect x="${bx+bw-24}" y="${by-2}" width="24" height="12" fill="${meta.accent}" rx="6"/>`;
+            svg += `<text x="${bx+bw-12}" y="${by+7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level}</text>`;
+        }
         svg += `</g>`;
     });
 
+    // ===== TREES (decoration) =====
+    [[22,40],[598,40],[22,370],[598,370],[170,360],[450,360],[25,165],[595,165]].forEach(([tx,ty]) => {
+        svg += `<circle cx="${tx}" cy="${ty}" r="8" fill="#1a4a1a" opacity="0.5"/>`;
+        svg += `<circle cx="${tx}" cy="${ty-3}" r="6" fill="#2a6a2a" opacity="0.5"/>`;
+        svg += `<circle cx="${tx}" cy="${ty-5}" r="4" fill="#3a8a3a" opacity="0.4"/>`;
+    });
+
+    // ===== PARKING LINES (near road) =====
+    for (let p = 0; p < 4; p++) {
+        svg += `<rect x="${170+p*14}" y="${roadY+12}" width="10" height="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" rx="1"/>`;
+        svg += `<rect x="${410+p*14}" y="${roadY+12}" width="10" height="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" rx="1"/>`;
+    }
+
     // Subtitle
-    svg += `<text x="310" y="393" text-anchor="middle" fill="rgba(255,255,255,0.15)" font-size="9" font-style="italic">Het Dorpsveld</text>`;
+    svg += `<text x="310" y="393" text-anchor="middle" fill="rgba(255,255,255,0.12)" font-size="8" font-style="italic" letter-spacing="2">Het Dorpsveld</text>`;
 
     svg += `</svg>`;
     container.innerHTML = svg;
@@ -8534,7 +8523,8 @@ const STADIUM_TILE_CONFIG = {
     medical: {
         description: 'Betere medische voorzieningen verkorten de hersteltijd van geblesseerde spelers.',
         levels: [
-            { id: 'med_1', name: 'EHBO Kist', cost: 0, effect: '-10% blessureduur' },
+            { id: 'med_0', name: 'Lege Grond', cost: 0, effect: 'Niet gebouwd' },
+            { id: 'med_1', name: 'EHBO Kist', cost: 2000, effect: '-10% blessureduur' },
             { id: 'med_2', name: 'Medische Kamer', cost: 4000, effect: '-20% blessureduur' },
             { id: 'med_3', name: 'Fysiotherapie', cost: 12000, effect: '-35% blessureduur', reqCapacity: 500 },
             { id: 'med_4', name: 'Medisch Centrum', cost: 30000, effect: '-50% blessureduur', reqCapacity: 1000 }
@@ -8554,7 +8544,8 @@ const STADIUM_TILE_CONFIG = {
     scouting: {
         description: 'Een groter scoutingnetwerk vindt betere en meer spelers.',
         levels: [
-            { id: 'scout_1', name: 'Basisnetwerk', cost: 0, effect: 'Lokaal scouten' },
+            { id: 'scout_0', name: 'Lege Grond', cost: 0, effect: 'Niet gebouwd' },
+            { id: 'scout_1', name: 'Basisnetwerk', cost: 2000, effect: 'Lokaal scouten' },
             { id: 'scout_2', name: 'Regionaal Netwerk', cost: 4000, effect: 'Regionaal scouten' },
             { id: 'scout_3', name: 'Nationaal Netwerk', cost: 12000, effect: 'Nationaal scouten', reqCapacity: 500 },
             { id: 'scout_4', name: 'Internationaal', cost: 35000, effect: 'Internationaal scouten', reqCapacity: 1000 }
@@ -8564,7 +8555,8 @@ const STADIUM_TILE_CONFIG = {
     youthscouting: {
         description: 'Betere jeugdscouting vindt talentvoller jeugdspelers voor je academie.',
         levels: [
-            { id: 'ysct_1', name: 'Lokale Scouts', cost: 0, effect: 'Basis jeugdtalent' },
+            { id: 'ysct_0', name: 'Lege Grond', cost: 0, effect: 'Niet gebouwd' },
+            { id: 'ysct_1', name: 'Lokale Scouts', cost: 2500, effect: 'Basis jeugdtalent' },
             { id: 'ysct_2', name: 'Regionale Scouts', cost: 5000, effect: 'Beter jeugdtalent' },
             { id: 'ysct_3', name: 'Nationale Scouts', cost: 15000, effect: 'Goed jeugdtalent', reqCapacity: 500 },
             { id: 'ysct_4', name: 'Elite Scouts', cost: 40000, effect: 'Top jeugdtalent', reqCapacity: 1000 }
@@ -8574,7 +8566,8 @@ const STADIUM_TILE_CONFIG = {
     kantine: {
         description: 'De kantine genereert extra inkomsten tijdens wedstrijden.',
         levels: [
-            { id: 'kantine_1', name: 'Koffiehoek', cost: 0, effect: '€50 per wedstrijd' },
+            { id: 'kantine_0', name: 'Lege Grond', cost: 0, effect: 'Niet gebouwd' },
+            { id: 'kantine_1', name: 'Koffiehoek', cost: 1500, effect: '€50 per wedstrijd' },
             { id: 'kantine_2', name: 'Clubkantine', cost: 3000, effect: '€150 per wedstrijd' },
             { id: 'kantine_3', name: 'Restaurant', cost: 10000, effect: '€400 per wedstrijd', reqCapacity: 500 },
             { id: 'kantine_4', name: 'Horeca Complex', cost: 25000, effect: '€800 per wedstrijd', reqCapacity: 1000 }
@@ -8584,7 +8577,8 @@ const STADIUM_TILE_CONFIG = {
     sponsoring: {
         description: 'Betere sponsorfaciliteiten trekken rijkere sponsors aan.',
         levels: [
-            { id: 'sponsor_1', name: 'Lokale Sponsors', cost: 0, effect: 'Basis sponsordeals' },
+            { id: 'sponsor_0', name: 'Lege Grond', cost: 0, effect: 'Niet gebouwd' },
+            { id: 'sponsor_1', name: 'Lokale Sponsors', cost: 2500, effect: 'Basis sponsordeals' },
             { id: 'sponsor_2', name: 'Regionale Sponsors', cost: 5000, effect: 'Betere deals' },
             { id: 'sponsor_3', name: 'Grote Sponsors', cost: 15000, effect: 'Premium deals', reqCapacity: 500 },
             { id: 'sponsor_4', name: 'Hoofdsponsors', cost: 40000, effect: 'Top sponsordeals', reqCapacity: 1000 }
@@ -8594,7 +8588,8 @@ const STADIUM_TILE_CONFIG = {
     perszaal: {
         description: 'Mediafaciliteiten vergroten de reputatie en bekendheid van je club.',
         levels: [
-            { id: 'pers_1', name: 'Interview Hoek', cost: 0, effect: '+5% reputatie' },
+            { id: 'pers_0', name: 'Lege Grond', cost: 0, effect: 'Niet gebouwd' },
+            { id: 'pers_1', name: 'Interview Hoek', cost: 2000, effect: '+5% reputatie' },
             { id: 'pers_2', name: 'Perszaal', cost: 4000, effect: '+10% reputatie' },
             { id: 'pers_3', name: 'Mediacentrum', cost: 12000, effect: '+20% reputatie', reqCapacity: 500 },
             { id: 'pers_4', name: 'Perscomplex', cost: 30000, effect: '+35% reputatie', reqCapacity: 1000 }
@@ -8772,7 +8767,7 @@ function updateStadiumUpgradePanel(category) {
     };
 
     if (!gameState.stadium.youthscouting) {
-        gameState.stadium.youthscouting = 'ysct_1';
+        gameState.stadium.youthscouting = 'ysct_0';
     }
 
     const currentId = gameState.stadium[config.stateKey];
@@ -9360,7 +9355,7 @@ function updateStadiumDetailPanel(category) {
 
     // Initialize youthscouting in state if needed
     if (!gameState.stadium.youthscouting) {
-        gameState.stadium.youthscouting = 'ysct_1';
+        gameState.stadium.youthscouting = 'ysct_0';
     }
 
     const currentId = gameState.stadium[config.stateKey];
