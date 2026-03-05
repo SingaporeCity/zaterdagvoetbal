@@ -5297,15 +5297,15 @@ body {
     text-align: center;
 }
 
-.player-card.transfer-card .btn-transfer-premium {
-    background: var(--accent-amber);
-    color: var(--bg-primary);
-    border-color: var(--accent-amber);
-    font-weight: 700;
+.pc-min-division.pc-min-premium {
+    color: var(--accent-amber);
+    background: rgba(255, 201, 64, 0.12);
+    border-color: rgba(255, 201, 64, 0.3);
+    cursor: pointer;
 }
 
-.player-card.transfer-card .btn-transfer-premium:hover {
-    background: #e6b400;
+.pc-min-division.pc-min-premium:hover {
+    background: rgba(255, 201, 64, 0.2);
 }
 
 .pc-min-division {

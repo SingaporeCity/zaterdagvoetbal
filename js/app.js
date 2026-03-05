@@ -4327,7 +4327,7 @@ function renderTransferMarket() {
 
         group.players.forEach(player => {
             const posData = POSITIONS[player.position] || { abbr: '??', color: '#666' };
-            const overallRange = getValueRange(player.overall, 3);
+            const overallDisplay = player.overall;
             const priceText = player.price === 0 ? 'Transfervrij' : formatCurrency(player.price);
             const energy = player.energy || 75;
             const minDiv = player.minDivision ?? clubDiv;
@@ -4366,7 +4366,7 @@ function renderTransferMarket() {
                     </div>
                     <div class="pc-ratings">
                         <div class="pc-overall" style="background: ${posData.color}">
-                            <span class="pc-overall-value">${overallRange}</span>
+                            <span class="pc-overall-value">${overallDisplay}</span>
                             <span class="pc-overall-label">ALG</span>
                         </div>
                         <div class="pc-potential-stars">
@@ -4377,7 +4377,7 @@ function renderTransferMarket() {
                     ${isInterested
                         ? `<button class="btn btn-primary btn-sm btn-transfer-buy" data-player-id="${player.id}">Kopen</button>`
                         : isOneAbove
-                            ? `<button class="btn btn-primary btn-sm btn-transfer-buy btn-transfer-premium" data-player-id="${player.id}" data-premium="true">2x Salaris</button>`
+                            ? `<span class="pc-min-division pc-min-premium" data-player-id="${player.id}">Min. ${minDivInfo?.name || 'div. ' + minDiv}</span>`
                             : `<span class="pc-min-division" title="Wil minimaal ${minDivInfo?.name || minDiv} spelen">Min. ${minDivInfo?.name || 'div. ' + minDiv}</span>`
                     }
                 </div>
@@ -4394,8 +4394,16 @@ function renderTransferMarket() {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const playerId = parseFloat(btn.dataset.playerId);
-            const isPremium = btn.dataset.premium === 'true';
-            handleTransferBuy(playerId, isPremium);
+            handleTransferBuy(playerId, false);
+        });
+    });
+
+    // Add premium (one div above) handlers
+    document.querySelectorAll('.pc-min-premium').forEach(el => {
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const playerId = parseFloat(el.dataset.playerId);
+            handleTransferBuy(playerId, true);
         });
     });
 }
