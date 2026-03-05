@@ -4186,17 +4186,17 @@ function generateTransferMarket() {
     const count = random(10, 20);
 
     for (let i = 0; i < count; i++) {
-        // Mix of players: most from current division, some from better divisions
+        // Mix: 40% own division, 25% one higher, 20% two higher, 15% three higher
         const roll = Math.random();
         let playerDiv;
-        if (roll < 0.50) {
-            playerDiv = division; // 50% from own division
-        } else if (roll < 0.75) {
-            playerDiv = Math.max(1, division - 1); // 25% one division higher
-        } else if (roll < 0.90) {
-            playerDiv = Math.max(1, division - 2); // 15% two divisions higher
+        if (roll < 0.40) {
+            playerDiv = division;
+        } else if (roll < 0.65) {
+            playerDiv = Math.max(1, division - 1);
+        } else if (roll < 0.85) {
+            playerDiv = Math.max(1, division - 2);
         } else {
-            playerDiv = Math.max(1, division - 3); // 10% three divisions higher
+            playerDiv = Math.max(1, division - 3);
         }
 
         const player = generatePlayer(playerDiv);
@@ -4212,16 +4212,12 @@ function generateTransferMarket() {
             player.isFreeAgent = false;
         }
 
-        // Minimaal gewenst niveau: spelers uit hogere divisies willen niet zakken
-        // Spelers uit eigen divisie of lager: altijd geinteresseerd
+        // Minimaal gewenst niveau (lager getal = betere divisie)
         if (playerDiv < division) {
-            // Speler uit een betere divisie — wil meestal niet zo laag spelen
-            // Kleine kans dat ze toch geinteresseerd zijn (afdankertje / avontuurlijk)
-            player.minDivision = Math.random() < 0.25
-                ? division   // 25%: toch bereid om te zakken
-                : playerDiv + random(0, 1); // Wil dicht bij eigen niveau blijven
+            // Speler uit betere divisie: 20% kans bereid te zakken, anders blijft bij eigen niveau
+            player.minDivision = Math.random() < 0.20 ? division : playerDiv;
         } else {
-            player.minDivision = division; // Uit eigen divisie: altijd geinteresseerd
+            player.minDivision = division;
         }
 
         players.push(player);
@@ -4229,6 +4225,25 @@ function generateTransferMarket() {
 
     gameState.transferMarket.players = players.sort((a, b) => b.overall - a.overall);
     gameState.transferMarket.lastRefresh = Date.now();
+}
+
+// Migrate old transfer players missing minDivision
+function migrateTransferMinDivision() {
+    const division = gameState.club.division;
+    (gameState.transferMarket.players || []).forEach(p => {
+        if (p.minDivision === undefined) {
+            // Assign based on overall relative to division average
+            const divInfo = getDivision(division);
+            const avg = (divInfo.minAttr + divInfo.maxAttr) / 2;
+            if (p.overall > avg * 1.3) {
+                p.minDivision = Math.max(1, division - 2);
+            } else if (p.overall > avg * 1.1) {
+                p.minDivision = Math.max(1, division - 1);
+            } else {
+                p.minDivision = division;
+            }
+        }
+    });
 }
 
 // Helper to get obscured value range (shows range instead of exact value)
@@ -4408,6 +4423,9 @@ function initTransferMarket() {
     if (gameState.transferMarket.players.length === 0) {
         generateTransferMarket();
     }
+
+    // Migrate old players missing minDivision
+    migrateTransferMinDivision();
 
     // Add position filter button listeners
     document.querySelectorAll('.transfer-filter').forEach(btn => {
