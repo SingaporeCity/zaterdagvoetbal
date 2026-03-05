@@ -990,6 +990,60 @@ function renderMijnSpelerPage() {
         </div>`;
     }
 
+    function recordItem(value, label) {
+        return `<div class="mp-record-item">
+            <span class="mp-record-value">${value}</span>
+            <span class="mp-record-label">${label}</span>
+        </div>`;
+    }
+
+    // --- Energie ---
+    const energy = mp.energy ?? 100;
+    const energyColor = energy > 70 ? '#4caf50' : energy >= 40 ? '#ff9800' : '#ef5350';
+    const energyLabel = energy > 70 ? 'Fit' : energy >= 40 ? 'Vermoeid' : 'Uitgeput';
+
+    // --- Seizoensstatistieken ---
+    const history = gameState.matchHistory || [];
+    const seasonHistory = history.filter(h => h.season === gameState.season);
+    const seasonMatches = seasonHistory.length;
+    const seasonGoals = seasonHistory.reduce((sum, m) => sum + (m.playerScore || 0), 0);
+    const seasonAssists = seasonHistory.reduce((sum, m) => {
+        return sum + (m.events || []).filter(e =>
+            e.type === 'goal' && e.team === 'home' && e.assistId
+        ).length;
+    }, 0);
+    const seasonCleanSheets = seasonHistory.filter(m => m.opponentScore === 0).length;
+    const seasonYellows = seasonHistory.reduce((sum, m) => {
+        return sum + (m.events || []).filter(e => e.type === 'yellow_card' && e.team === 'home').length;
+    }, 0);
+    const seasonReds = seasonHistory.reduce((sum, m) => {
+        return sum + (m.events || []).filter(e => e.type === 'red_card' && e.team === 'home').length;
+    }, 0);
+
+    // --- Carriere ---
+    const clubStats = gameState.club?.stats || {};
+    const stats = gameState.stats || {};
+    const divisionNames = ['Eredivisie', 'Eerste Divisie', 'Tweede Divisie', '1e Klasse', '2e Klasse', '3e Klasse', '4e Klasse', '5e Klasse', '6e Klasse'];
+    const highestDiv = divisionNames[clubStats.highestDivision || 8] || '6e Klasse';
+    const totalSeasons = (gameState.season || 1);
+
+    // --- Vorm (laatste 5 wedstrijden) ---
+    const last5 = history.slice(-5);
+    const vormCircles = [];
+    for (let i = 0; i < 5; i++) {
+        if (i < last5.length) {
+            const m = last5[i];
+            if (m.resultType === 'win') vormCircles.push('<span class="mp-vorm-circle mp-vorm-win">W</span>');
+            else if (m.resultType === 'draw') vormCircles.push('<span class="mp-vorm-circle mp-vorm-draw">G</span>');
+            else vormCircles.push('<span class="mp-vorm-circle mp-vorm-loss">V</span>');
+        } else {
+            vormCircles.push('<span class="mp-vorm-circle mp-vorm-empty">-</span>');
+        }
+    }
+    let streakText = '';
+    if (stats.currentWinStreak > 1) streakText = `${stats.currentWinStreak} zeges op rij`;
+    else if (stats.currentUnbeaten > 1) streakText = `${stats.currentUnbeaten} ongeslagen`;
+
     container.innerHTML = `
         <div class="mp-layout">
             <div class="mp-left">
@@ -1034,6 +1088,52 @@ function renderMijnSpelerPage() {
                     ${statBar('Schieten', a.SCH, '#ef5350')}
                     ${statBar('Verdedigen', a.VER, '#7e57c2')}
                     ${statBar('Fysiek', a.FYS, '#8d6e63')}
+                </div>
+
+                <div class="mp-stats-section">
+                    <h4 class="mp-section-title">Energie</h4>
+                    <div class="mp-energy-bar">
+                        <div class="mp-energy-track">
+                            <div class="mp-energy-fill" style="width: ${energy}%; background: ${energyColor}"></div>
+                        </div>
+                        <div class="mp-energy-info">
+                            <span class="mp-energy-value" style="color: ${energyColor}">${energy}%</span>
+                            <span class="mp-energy-label">${energyLabel}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mp-dual-grid">
+                    <div class="mp-stats-section">
+                        <h4 class="mp-section-title">Seizoen ${totalSeasons}</h4>
+                        <div class="mp-record-grid">
+                            ${recordItem(seasonMatches, 'Wedstrijden')}
+                            ${recordItem(seasonGoals, 'Doelpunten')}
+                            ${recordItem(seasonAssists, 'Assists')}
+                            ${recordItem(seasonCleanSheets, 'Clean sheets')}
+                            ${recordItem(seasonYellows, 'Geel')}
+                            ${recordItem(seasonReds, 'Rood')}
+                        </div>
+                    </div>
+                    <div class="mp-stats-section">
+                        <h4 class="mp-section-title">Carriere</h4>
+                        <div class="mp-record-grid">
+                            ${recordItem(clubStats.totalMatches || 0, 'Wedstrijden')}
+                            ${recordItem(stats.wins || 0, 'Zeges')}
+                            ${recordItem(stats.draws || 0, 'Gelijk')}
+                            ${recordItem(stats.losses || 0, 'Verloren')}
+                            ${recordItem(stats.promotions || 0, 'Promoties')}
+                            ${recordItem(highestDiv, 'Hoogste divisie')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mp-stats-section">
+                    <h4 class="mp-section-title">Vorm</h4>
+                    <div class="mp-vorm-row">
+                        ${vormCircles.join('')}
+                    </div>
+                    ${streakText ? `<span class="mp-vorm-streak">${streakText}</span>` : ''}
                 </div>
             </div>
         </div>

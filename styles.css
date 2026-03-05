@@ -18930,6 +18930,7 @@ body {
 .mp-right {
     display: flex;
     flex-direction: column;
+    gap: 16px;
 }
 
 .mp-stats-section {
@@ -18938,7 +18939,6 @@ body {
     border: 1px solid rgba(255, 200, 50, 0.07);
     box-shadow: 0 4px 16px var(--shadow);
     padding: 24px 28px;
-    flex: 1;
     display: flex;
     flex-direction: column;
 }
@@ -18987,6 +18987,131 @@ body {
     text-align: right;
 }
 
+/* --- Energie balk --- */
+.mp-energy-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mp-energy-track {
+    height: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.mp-energy-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+
+.mp-energy-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mp-energy-value {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.mp-energy-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* --- Dual grid (Seizoen + Carriere naast elkaar) --- */
+.mp-dual-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* --- Record grid (stat tegels, 2 kolommen per card) --- */
+.mp-record-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.mp-record-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.mp-record-value {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.mp-record-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 4px;
+    text-align: center;
+}
+
+/* --- Vormindicator --- */
+.mp-vorm-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.mp-vorm-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: white;
+}
+
+.mp-vorm-win {
+    background: #4caf50;
+}
+
+.mp-vorm-draw {
+    background: #ff9800;
+}
+
+.mp-vorm-loss {
+    background: #ef5350;
+}
+
+.mp-vorm-empty {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+}
+
+.mp-vorm-streak {
+    display: block;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--accent-amber);
+    margin-top: 8px;
+    letter-spacing: 0.3px;
+}
+
 /* Mobile: stack vertically */
 @media (max-width: 768px) {
     .mp-layout {
@@ -19006,6 +19131,14 @@ body {
     }
     .mp-derived-stat:last-child {
         border-right: none;
+    }
+    .mp-dual-grid {
+        grid-template-columns: 1fr;
+    }
+    .mp-vorm-circle {
+        width: 30px;
+        height: 30px;
+        font-size: 0.75rem;
     }
 }
 
