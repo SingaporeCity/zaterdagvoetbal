@@ -8204,12 +8204,10 @@ function renderStadiumMap() {
 
     // Building positions
     const positions = {
-        medical:       { x: 80,  y: 90 },
-        kantine:       { x: 80,  y: 155 },
-        sponsoring:    { x: 80,  y: 220 },
-        scouting:      { x: 540, y: 90 },
-        youthscouting: { x: 540, y: 155 },
-        perszaal:      { x: 540, y: 220 },
+        medical:       { x: 80,  y: 100 },
+        kantine:       { x: 80,  y: 175 },
+        scouting:      { x: 540, y: 100 },
+        perszaal:      { x: 540, y: 175 },
     };
 
     // Training & Academy field positions (below stadium)
@@ -8264,15 +8262,15 @@ function renderStadiumMap() {
 
     // Left vertical road (connecting left buildings)
     const leftRoadX = 80;
-    svg += `<rect x="${leftRoadX - roadW/2}" y="60" width="${roadW}" height="220" fill="${roadColor}" rx="5"/>`;
-    for (let dy = 65; dy < 270; dy += 18) {
+    svg += `<rect x="${leftRoadX - roadW/2}" y="68" width="${roadW}" height="145" fill="${roadColor}" rx="5"/>`;
+    for (let dy = 73; dy < 208; dy += 18) {
         svg += `<rect x="${leftRoadX - 0.5}" y="${dy}" width="1" height="10" fill="${lineColor}" rx="0.5"/>`;
     }
 
     // Right vertical road (connecting right buildings)
     const rightRoadX = 540;
-    svg += `<rect x="${rightRoadX - roadW/2}" y="60" width="${roadW}" height="220" fill="${roadColor}" rx="5"/>`;
-    for (let dy = 65; dy < 270; dy += 18) {
+    svg += `<rect x="${rightRoadX - roadW/2}" y="68" width="${roadW}" height="145" fill="${roadColor}" rx="5"/>`;
+    for (let dy = 73; dy < 208; dy += 18) {
         svg += `<rect x="${rightRoadX - 0.5}" y="${dy}" width="1" height="10" fill="${lineColor}" rx="0.5"/>`;
     }
 
@@ -8315,7 +8313,7 @@ function renderStadiumMap() {
         if (tribuneLevel >= 3) [[ox,oy],[ox+stadW,oy],[ox,oy+stadH],[ox+stadW,oy+stadH]].forEach(([lx,ly]) => { const dir = lx < cx ? -1 : 1; svg += `<line x1="${lx}" y1="${ly}" x2="${lx+dir*10}" y2="${ly-16}" stroke="#bbb" stroke-width="1.5"/><circle cx="${lx+dir*10}" cy="${ly-18}" r="3" fill="#ffe066"/>`; });
     }
     const labelY = cy - stadH/2 - (tribuneLevel === 0 ? 16 : 8);
-    svg += `<text x="${cx}" y="${labelY}" text-anchor="middle" fill="${tColors[1]}" font-size="9" font-weight="bold">${tribuneConfig.levels[tribuneLevel]?.name || 'Stadion'}</text>`;
+    svg += `<text x="${cx}" y="${labelY}" text-anchor="middle" fill="${tColors[1]}" font-size="9" font-weight="bold">Stadion</text>`;
     svg += `<rect x="${cx-13}" y="${cy+stadH/2+(tribuneLevel===0?14:5)}" width="26" height="13" fill="${tColors[1]}" rx="6"/>`;
     svg += `<text x="${cx}" y="${cy+stadH/2+(tribuneLevel===0?23:14)}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${tribuneLevel+1}</text>`;
     svg += `</g>`;
@@ -8332,6 +8330,7 @@ function renderStadiumMap() {
     svg += `<rect x="${cx-fieldW/2+3}" y="${cy-fieldH/2+3}" width="${fieldW-6}" height="${fieldH-6}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
     svg += `<line x1="${cx}" y1="${cy-fieldH/2+3}" x2="${cx}" y2="${cy+fieldH/2-3}" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
     svg += `<circle cx="${cx}" cy="${cy}" r="10" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
+    svg += `<text x="${cx}" y="${cy+fieldH/2-5}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7" font-weight="600" letter-spacing="1">Wedstrijdveld</text>`;
     svg += `<rect x="${cx+fieldW/2-24}" y="${cy-fieldH/2+2}" width="22" height="12" fill="${gColors[1]}" rx="6"/>`;
     svg += `<text x="${cx+fieldW/2-13}" y="${cy-fieldH/2+11}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${grassLevel+1}</text>`;
     svg += `</g>`;
@@ -8368,9 +8367,7 @@ function renderStadiumMap() {
     const buildingMeta = {
         medical:       { icon: '', accent: '#e05050', name: 'Medisch' },
         kantine:       { icon: '', accent: '#d4a044', name: 'Kantine' },
-        sponsoring:    { icon: '', accent: '#f5c542', name: 'Sponsoring' },
         scouting:      { icon: '', accent: '#60a5fa', name: 'Scouting' },
-        youthscouting: { icon: '', accent: '#c084fc', name: 'Jeugdscouts' },
         perszaal:      { icon: '', accent: '#94a3b8', name: 'Media' },
     };
 
@@ -8390,24 +8387,11 @@ function renderStadiumMap() {
             if (level >= 2) { d += `<circle cx="${bx+14}" cy="${by+33}" r="3.5" fill="#d4a044" opacity="0.2"/>`; d += `<circle cx="${bx+bw-14}" cy="${by+33}" r="3.5" fill="#d4a044" opacity="0.2"/>`; }
             return d;
         },
-        sponsoring: (bx, by, bw, bh, level) => {
-            let d = `<rect x="${bx+8}" y="${by+12}" width="${bw-16}" height="12" fill="rgba(245,197,66,0.15)" stroke="#f5c542" stroke-width="0.7" rx="2"/>`;
-            d += `<text x="${bx+bw/2}" y="${by+21}" text-anchor="middle" fill="#f5c542" font-size="5.5" font-weight="bold">SPONSOR</text>`;
-            if (level >= 2) d += `<rect x="${bx+12}" y="${by+28}" width="${bw-24}" height="2.5" fill="#f5c542" opacity="0.25" rx="1"/>`;
-            return d;
-        },
         scouting: (bx, by, bw, bh, level) => {
             let d = `<circle cx="${bx+bw/2}" cy="${by+20}" r="9" fill="none" stroke="#60a5fa" stroke-width="1" opacity="0.45"/>`;
             d += `<circle cx="${bx+bw/2}" cy="${by+20}" r="4.5" fill="none" stroke="#60a5fa" stroke-width="0.7" opacity="0.35"/>`;
             d += `<circle cx="${bx+bw/2}" cy="${by+20}" r="1.5" fill="#60a5fa" opacity="0.5"/>`;
             if (level >= 3) d += `<circle cx="${bx+bw/2}" cy="${by+20}" r="14" fill="none" stroke="#60a5fa" stroke-width="0.5" opacity="0.2"/>`;
-            return d;
-        },
-        youthscouting: (bx, by, bw, bh, level) => {
-            let d = `<circle cx="${bx+bw/2-5}" cy="${by+19}" r="4.5" fill="none" stroke="#c084fc" stroke-width="0.9" opacity="0.45"/>`;
-            d += `<circle cx="${bx+bw/2+5}" cy="${by+19}" r="4.5" fill="none" stroke="#c084fc" stroke-width="0.9" opacity="0.45"/>`;
-            d += `<rect x="${bx+bw/2-1.5}" y="${by+16}" width="3" height="5" fill="#c084fc" opacity="0.25" rx="1"/>`;
-            if (level >= 2) { for (let p=0;p<2;p++) { d += `<circle cx="${bx+16+p*10}" cy="${by+32}" r="2" fill="#c084fc" opacity="0.25"/>`; d += `<rect x="${bx+14.5+p*10}" y="${by+34.5}" width="4" height="5" fill="#c084fc" opacity="0.15" rx="1"/>`; } }
             return d;
         },
         perszaal: (bx, by, bw, bh, level) => {
@@ -8432,22 +8416,25 @@ function renderStadiumMap() {
         svg += `<g class="stadium-building${isActive ? ' active' : ''}${isUnbuilt ? ' unbuilt' : ''}" data-category="${key}" onclick="selectStadiumCategory('${key}')" filter="url(#shadow-sm)">`;
 
         if (isUnbuilt) {
-            // Empty plot
-            svg += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="rgba(60,80,60,0.5)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-dasharray="4 3" rx="8"/>`;
-            // Dirt/ground texture
-            svg += `<rect x="${bx+4}" y="${by+4}" width="${bw-8}" height="${bh-8}" fill="rgba(120,100,60,0.12)" rx="6"/>`;
+            // Empty plot — bare dirt ground
+            svg += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="#4a3d28" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="5 3" rx="8"/>`;
+            // Dirt texture patches
+            svg += `<rect x="${bx+6}" y="${by+6}" width="${bw-12}" height="${bh-12}" fill="#3e3420" rx="5"/>`;
+            svg += `<circle cx="${bx+15}" cy="${by+15}" r="4" fill="#56472e" opacity="0.5"/>`;
+            svg += `<circle cx="${bx+bw-20}" cy="${by+bh-18}" r="5" fill="#56472e" opacity="0.4"/>`;
+            svg += `<circle cx="${bx+bw/2+8}" cy="${by+12}" r="3" fill="#56472e" opacity="0.3"/>`;
             // Build icon
-            svg += `<circle cx="${pos.x}" cy="${pos.y-4}" r="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>`;
-            svg += `<text x="${pos.x}" y="${pos.y}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="11">+</text>`;
+            svg += `<circle cx="${pos.x}" cy="${pos.y-2}" r="12" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>`;
+            svg += `<text x="${pos.x}" y="${pos.y+3}" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="13" font-weight="300">+</text>`;
             // Label
-            svg += `<text x="${pos.x}" y="${by+bh-6}" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="6.5" font-weight="600">${meta.name}</text>`;
-            // "Bouw" hint
-            svg += `<rect x="${bx+bw/2-18}" y="${by-2}" width="36" height="12" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="0.5" rx="6"/>`;
-            svg += `<text x="${pos.x}" y="${by+7}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="6">Beschikbaar</text>`;
+            svg += `<text x="${pos.x}" y="${by+bh-5}" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="7" font-weight="600">${meta.name}</text>`;
+            // "Bouw" hint badge
+            svg += `<rect x="${bx+bw/2-20}" y="${by-3}" width="40" height="13" fill="rgba(255,179,0,0.15)" stroke="rgba(255,179,0,0.4)" stroke-width="0.7" rx="6"/>`;
+            svg += `<text x="${pos.x}" y="${by+7}" text-anchor="middle" fill="rgba(255,200,50,0.8)" font-size="6" font-weight="600">Beschikbaar</text>`;
         } else {
             // Built building
-            const darkBase = { medical:'#3a1a1a', kantine:'#3a2a1a', sponsoring:'#2a2a1a', scouting:'#1a2a3a', youthscouting:'#2a1a3a', perszaal:'#1a1a2a' };
-            const roofColor = { medical:'#c03030', kantine:'#a07820', sponsoring:'#b8941f', scouting:'#2a5a9a', youthscouting:'#6a2a9a', perszaal:'#475569' };
+            const darkBase = { medical:'#3a1a1a', kantine:'#3a2a1a', scouting:'#1a2a3a', perszaal:'#1a1a2a' };
+            const roofColor = { medical:'#c03030', kantine:'#a07820', scouting:'#2a5a9a', perszaal:'#475569' };
             svg += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="${darkBase[key]}" stroke="${meta.accent}" stroke-width="1.5" rx="8"/>`;
             // Roof
             svg += `<rect x="${bx}" y="${by}" width="${bw}" height="7" fill="${roofColor[key]}" rx="8"/>`;
@@ -8464,7 +8451,7 @@ function renderStadiumMap() {
     });
 
     // ===== TREES (decoration) =====
-    [[22,40],[598,40],[22,370],[598,370],[170,360],[450,360],[25,165],[595,165]].forEach(([tx,ty]) => {
+    [[22,50],[598,50],[22,360],[598,360],[170,355],[450,355],[25,140],[595,140]].forEach(([tx,ty]) => {
         svg += `<circle cx="${tx}" cy="${ty}" r="8" fill="#1a4a1a" opacity="0.5"/>`;
         svg += `<circle cx="${tx}" cy="${ty-3}" r="6" fill="#2a6a2a" opacity="0.5"/>`;
         svg += `<circle cx="${tx}" cy="${ty-5}" r="4" fill="#3a8a3a" opacity="0.4"/>`;
@@ -8492,7 +8479,7 @@ const STADIUM_TILE_CONFIG = {
     tribune: {
         description: 'Vergroot de capaciteit om meer supporters te ontvangen en meer wedstrijdinkomsten te genereren.',
         levels: [
-            { id: 'tribune_1', name: 'Houten Tribune', capacity: 200, cost: 0, effect: '200 toeschouwers' },
+            { id: 'tribune_1', name: 'Geen tribune', capacity: 200, cost: 0, effect: '200 toeschouwers' },
             { id: 'tribune_2', name: 'Stenen Tribune', capacity: 500, cost: 5000, effect: '500 toeschouwers' },
             { id: 'tribune_3', name: 'Overdekte Tribune', capacity: 1000, cost: 15000, effect: '1.000 toeschouwers' },
             { id: 'tribune_4', name: 'Moderne Tribune', capacity: 2500, cost: 40000, effect: '2.500 toeschouwers', reqCapacity: 500 },

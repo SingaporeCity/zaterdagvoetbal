@@ -12202,24 +12202,24 @@ body {
 /* Upgrade Panel overlay */
 .stadium-upgrade-panel {
     position: absolute;
-    bottom: 0;
+    top: 0;
     left: 0;
     right: 0;
     background: var(--bg-card);
-    border-top: 2px solid var(--accent-green-dim);
-    border-radius: 12px 12px 0 0;
+    border-bottom: 2px solid var(--accent-green-dim);
+    border-radius: 0 0 12px 12px;
     padding: 16px 20px;
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
     z-index: 10;
     display: flex;
     flex-wrap: wrap;
     gap: 12px 20px;
     align-items: center;
-    animation: slideUpPanel 0.2s ease-out;
+    animation: slideDownPanel 0.2s ease-out;
 }
 
-@keyframes slideUpPanel {
-    from { transform: translateY(100%); opacity: 0; }
+@keyframes slideDownPanel {
+    from { transform: translateY(-100%); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
 
