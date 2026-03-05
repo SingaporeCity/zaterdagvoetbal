@@ -2334,205 +2334,88 @@ function purchaseUpgrade(category, upgradeId) {
 let isScoutingActive = false;
 
 function renderScoutPage() {
-    const container = document.getElementById('scout-results');
-    const countEl = document.getElementById('results-count');
-    const emptyEl = document.getElementById('scout-empty');
-    const budgetEl = document.getElementById('scout-budget');
-    const hireCard = document.getElementById('scout-hire-card');
-    const scoutInterface = document.getElementById('scout-interface');
+    const section = document.getElementById('scout-tip-section');
+    if (!section) return;
 
-    // Check if scout is hired
-    const hasScout = gameState.hiredStaff?.medisch?.includes('st_scout');
-
-    // Show hire card OR scouting interface
-    if (hireCard) {
-        hireCard.style.display = hasScout ? 'none' : 'flex';
-    }
-    if (scoutInterface) {
-        scoutInterface.style.display = hasScout ? 'grid' : 'none';
+    // Initialize the chairman tip player if not yet created
+    if (!gameState.scoutTips) {
+        gameState.scoutTips = [];
     }
 
-    // Update budget display
-    if (budgetEl) {
-        budgetEl.textContent = formatCurrency(gameState.club.budget);
+    // Generate the chairman's son tip if no tips exist yet
+    if (gameState.scoutTips.length === 0 && !gameState.scoutTipClaimed) {
+        const chairmanSon = createZaterdagPlayer('centraleMid');
+        chairmanSon.name = `${randomFromArray(DUTCH_FIRST_NAMES)} Bakker`;
+        chairmanSon.age = 18;
+        chairmanSon.overall = 2;
+        chairmanSon.potential = 40;
+        chairmanSon.salary = 0;
+        chairmanSon.fixedMarketValue = 0;
+        chairmanSon.nationality = NATIONALITIES[0]; // NL
+        // Set low attributes to match overall 2
+        const attrNames = ['AAN', 'VER', 'SNE', 'FYS'];
+        attrNames.forEach(a => { chairmanSon.attributes[a] = random(1, 4); });
+        chairmanSon.overall = calculateOverall(chairmanSon.attributes, chairmanSon.position);
+        chairmanSon.tipSource = 'voorzitter';
+        gameState.scoutTips.push(chairmanSon);
     }
 
-    if (!container) return;
-
-    const results = gameState.scoutSearch.results;
-
-    // Update count
-    if (countEl) {
-        countEl.textContent = `${results.length} speler${results.length !== 1 ? 's' : ''} gevonden`;
-    }
-
-    // Show empty state or results
-    if (results.length === 0) {
-        container.innerHTML = `
-            <div class="scout-empty-state" id="scout-empty">
-                <div class="empty-icon">🔍</div>
-                <h4>Geen rapporten</h4>
-                <p>Stuur je scout op pad om talent te vinden</p>
-            </div>
-        `;
+    if (gameState.scoutTips.length === 0) {
+        section.innerHTML = '<p class="scout-no-tips">Geen tips op dit moment. Check later nog eens!</p>';
         return;
     }
 
-    // Info box explaining the scouting system
-    let html = `
-        <div class="scout-info-box">
-            <div class="scout-info-icon">💡</div>
-            <div class="scout-info-content">
-                <strong>Hoe werkt scouten?</strong>
-                <ul>
-                    <li><strong>🔍 Opnieuw scouten</strong> = smallere ranges, meer zekerheid (kost geld)</li>
-                    <li><strong>✕ Afwijzen</strong> = speler verdwijnt, morgen nieuwe kans</li>
-                    <li>Durf je te gokken of wil je zekerheid?</li>
-                </ul>
-            </div>
-        </div>
-    `;
-    results.forEach(player => {
-        const priceText = player.price === 0 ? 'Transfervrij' : formatCurrency(player.price);
-        const priceClass = player.price === 0 ? 'free' : '';
+    const posData = POSITIONS[gameState.scoutTips[0].position] || { abbr: '??', color: '#666' };
 
-        // Use scout ranges if available, otherwise fallback
-        const ranges = player.scoutRanges || {
-            overall: { min: player.overall - 3, max: player.overall + 3 },
-            potential: { min: player.potential - 5, max: player.potential + 5 },
-            attack: { min: player.attack - 25, max: player.attack + 25 },
-            defense: { min: player.defense - 25, max: player.defense + 25 },
-            speed: { min: player.speed - 25, max: player.speed + 25 },
-            stamina: { min: player.stamina - 25, max: player.stamina + 25 }
-        };
+    section.innerHTML = gameState.scoutTips.map(player => {
+        const tipLabel = player.tipSource === 'voorzitter'
+            ? '💬 <strong>Voorzitter:</strong> "Mijn zoontje kan wel redelijk voetballen, misschien is dat een idee?"'
+            : '💬 Tip van een vriend';
 
-        const scoutCount = player.scoutCount || 1;
-        const nextScoutCost = getScoutCost(scoutCount);
-        const isMaxScouted = scoutCount >= 5; // After 5 scouts, ranges are very narrow
-
-        // Helper to render a range bar
-        // Convert potential range to star rating (0-5, half stars possible)
-        const potentialToStars = (range) => {
-            const min = Math.max(1, range.min);
-            const max = Math.min(99, range.max);
-            const midpoint = (min + max) / 2;
-            // Map 0-100 to 1-5 whole stars
-            const stars = Math.round(midpoint / 20);
-            return Math.min(5, Math.max(1, stars));
-        };
-
-        // Render stars as HTML (whole stars only)
-        const renderStars = (starCount) => {
-            return renderStarsHTML(starCount);
-        };
-
-        const renderRangeBar = (label, range) => {
-            const min = Math.max(1, range.min);
-            const max = Math.min(99, range.max);
-            const width = max - min;
-            const leftPos = min;
-            return `
-                <div class="scout-attr-range">
-                    <span class="scout-attr-label">${label}</span>
-                    <div class="scout-range-bar">
-                        <div class="scout-range-track">
-                            <div class="scout-range-fill" style="left: ${leftPos}%; width: ${width}%"></div>
+        return `
+            <div class="scout-tip-card">
+                <div class="scout-tip-message">${tipLabel}</div>
+                <div class="player-card" data-player-id="${player.id}">
+                    <div class="pc-left">
+                        <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
+                        <div class="pc-age-box">
+                            <span class="pc-age-value">${player.age}</span>
+                            <span class="pc-age-label">jr</span>
                         </div>
-                        <span class="scout-range-value">${min}-${max}</span>
+                        <img class="pc-flag-img" src="https://flagcdn.com/w40/${(player.nationality.code || 'nl').toLowerCase()}.png" alt="${player.nationality.code || 'NL'}" />
                     </div>
-                </div>
-            `;
-        };
-
-        const potentialStars = potentialToStars(ranges.potential);
-        const isStarPlayer = potentialStars >= 5;
-
-        html += `
-            <div class="scout-result-card" data-player-id="${player.id}">
-                <div class="scout-result-header" style="background: ${POSITIONS[player.position].color}">
-                    <div class="scout-header-top">
-                        <span class="scout-count-badge" title="${scoutCount}x gescout">🔍 ${scoutCount}x</span>
-                        <span class="scout-result-position">${POSITIONS[player.position].abbr}</span>
-                        <span class="scout-result-flag">${player.nationality.flag}</span>
-                    </div>
-                    <div class="scout-ratings">
-                        <div class="scout-rating">
-                            <span class="scout-rating-range">${ranges.overall.min}-${ranges.overall.max}</span>
-                            <span class="scout-rating-label">ALG</span>
+                    <span class="pc-name">${player.name}</span>
+                    <span class="pc-finance">
+                        <span class="pc-salary">${formatCurrency(0)}/w</span>
+                        <span class="pc-value">${formatCurrency(0)}</span>
+                    </span>
+                    <div class="pc-condition-bars">
+                        <div class="pc-bar-item">
+                            <span class="pc-bar-label">Energie</span>
+                            <div class="pc-bar-track">
+                                <div class="pc-bar-fill" style="width: 100%; background: ${getBarColor(100)}"></div>
+                            </div>
+                            <span class="pc-bar-value">100%</span>
                         </div>
-                        <div class="scout-rating potential ${isStarPlayer ? 'star-player' : ''}">
-                            <span class="scout-stars">${renderStars(potentialStars)}</span>
-                            <span class="scout-rating-label">${isStarPlayer ? '⭐ STER' : 'POT'}</span>
+                    </div>
+                    <div class="pc-ratings">
+                        <div class="pc-overall" style="background: ${posData.color}">
+                            <span class="pc-overall-value">${player.overall}</span>
+                            <span class="pc-overall-label">ALG</span>
+                        </div>
+                        <div class="pc-potential-stars">
+                            <span class="pc-stars">${renderStarsHTML(2)}</span>
+                            <span class="pc-potential-label">POT</span>
                         </div>
                     </div>
                 </div>
-                <div class="scout-result-body">
-                    <span class="scout-result-name">${player.name}</span>
-                    <span class="scout-result-age">${player.age} jaar</span>
-
-                    <div class="scout-attributes-ranges">
-                        ${renderRangeBar('AAN', ranges.attack)}
-                        ${renderRangeBar('VER', ranges.defense)}
-                        ${renderRangeBar('SNE', ranges.speed)}
-                        ${renderRangeBar('CON', ranges.stamina)}
-                    </div>
-
-                    <div class="scout-result-actions">
-                        <div class="scout-price-row">
-                            <span class="scout-result-price ${priceClass}">${priceText}</span>
-                        </div>
-                        <div class="scout-buttons">
-                            <button class="btn btn-dismiss" data-player-id="${player.id}" title="Niet interessant - morgen nieuwe speler">
-                                ✕
-                            </button>
-                            ${!isMaxScouted ? `
-                                <button class="btn btn-secondary btn-rescout" data-player-id="${player.id}" title="Nogmaals scouten voor meer zekerheid">
-                                    🔍 ${formatCurrency(nextScoutCost)}
-                                </button>
-                            ` : `
-                                <span class="scout-maxed">✓ Volledig</span>
-                            `}
-                            <button class="btn btn-primary btn-scout-hire" data-player-id="${player.id}">
-                                Aannemen
-                            </button>
-                        </div>
-                    </div>
+                <div class="scout-tip-actions">
+                    <button class="btn btn-primary" onclick="acceptScoutTip('${player.id}')">Aannemen</button>
+                    <button class="btn btn-secondary" onclick="declineScoutTip('${player.id}')">Afwijzen</button>
                 </div>
             </div>
         `;
-    });
-
-    container.innerHTML = html;
-
-    // Add hire handlers
-    document.querySelectorAll('.btn-scout-hire').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const playerId = parseFloat(btn.dataset.playerId);
-            hireScoutedPlayer(playerId);
-        });
-    });
-
-    // Add rescout handlers
-    document.querySelectorAll('.btn-rescout').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const playerId = parseFloat(btn.dataset.playerId);
-            const result = rescoutPlayer(playerId);
-            if (!result.success) {
-                alert(result.message);
-            }
-        });
-    });
-
-    // Add dismiss handlers
-    document.querySelectorAll('.btn-dismiss').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const playerId = parseFloat(btn.dataset.playerId);
-            dismissScoutedPlayer(playerId);
-        });
-    });
+    }).join('');
 }
 
 function hireScoutedPlayer(playerId) {
@@ -2553,6 +2436,32 @@ function hireScoutedPlayer(playerId) {
     renderScoutPage();
     alert(`${player.name} is toegevoegd aan je selectie!`);
 }
+
+// Scout tip system
+window.acceptScoutTip = function(playerId) {
+    if (!gameState.scoutTips) return;
+    const idx = gameState.scoutTips.findIndex(p => String(p.id) === String(playerId));
+    if (idx === -1) return;
+
+    const player = gameState.scoutTips.splice(idx, 1)[0];
+    player.energy = 100;
+    player.condition = 100;
+    gameState.players.push(player);
+    gameState.scoutTipClaimed = true;
+    saveGame();
+    renderScoutPage();
+    renderPlayerCards();
+    showNotification(`${player.name} is toegevoegd aan je selectie!`, 'success');
+};
+
+window.declineScoutTip = function(playerId) {
+    if (!gameState.scoutTips) return;
+    gameState.scoutTips = gameState.scoutTips.filter(p => String(p.id) !== String(playerId));
+    gameState.scoutTipClaimed = true;
+    saveGame();
+    renderScoutPage();
+    showNotification('Tip afgewezen.', 'info');
+};
 
 function startScouting() {
     if (isScoutingActive) return;

@@ -11358,6 +11358,42 @@ body {
     color: #f44336;
 }
 
+.scout-tip-section {
+    margin-bottom: 20px;
+}
+
+.scout-tip-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 16px;
+}
+
+.scout-tip-message {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    background: rgba(255, 152, 0, 0.08);
+    border: 1px solid rgba(255, 152, 0, 0.2);
+    border-radius: var(--button-radius);
+    line-height: 1.5;
+}
+
+.scout-tip-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    justify-content: flex-end;
+}
+
+.scout-no-tips {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 20px;
+}
+
 #scout.page {
     position: relative;
 }
