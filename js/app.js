@@ -6442,7 +6442,7 @@ function getChecklistItems() {
         },
         {
             id: 'transfers',
-            label: 'Transferlijst afgaan',
+            label: 'Team versterken',
             done: cl.transfersVisited,
             action: 'transfers',
             icon: '🔄'

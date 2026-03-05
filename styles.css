@@ -14809,21 +14809,21 @@ body {
     overflow: hidden;
 }
 
-/* Stars: Row 2, Col 1 */
-.dash-stars {
-    grid-column: 1;
-    grid-row: 2;
-}
-
-/* Todo: Row 2-3, Col 2 */
+/* Todo: Row 2-3, Col 1 */
 .dash-todo {
-    grid-column: 2;
+    grid-column: 1;
     grid-row: 2 / 4;
 }
 
-/* Talents: Row 3, Col 1 */
+/* Stars: Row 2, Col 2 */
+.dash-stars {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+/* Talents: Row 3, Col 2 */
 .dash-talents {
-    grid-column: 1;
+    grid-column: 2;
     grid-row: 3;
 }
 
