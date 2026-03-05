@@ -4,15 +4,15 @@
  */
 
 export const DIVISIONS = [
-    { id: 8, name: '6e Klasse', minAttr: 5, maxAttr: 35, avgAttr: 20, budget: 5000, salary: { min: 0, avg: 50, max: 200 }, ticketPrice: 4 },
-    { id: 7, name: '5e Klasse', minAttr: 10, maxAttr: 45, avgAttr: 28, budget: 15000, salary: { min: 25, avg: 100, max: 400 }, ticketPrice: 5 },
-    { id: 6, name: '4e Klasse', minAttr: 15, maxAttr: 55, avgAttr: 35, budget: 40000, salary: { min: 50, avg: 200, max: 800 }, ticketPrice: 7 },
-    { id: 5, name: '3e Klasse', minAttr: 20, maxAttr: 65, avgAttr: 43, budget: 100000, salary: { min: 100, avg: 400, max: 1500 }, ticketPrice: 10 },
-    { id: 4, name: '2e Klasse', minAttr: 30, maxAttr: 75, avgAttr: 52, budget: 300000, salary: { min: 200, avg: 800, max: 3000 }, ticketPrice: 12 },
-    { id: 3, name: '1e Klasse', minAttr: 40, maxAttr: 82, avgAttr: 61, budget: 1000000, salary: { min: 500, avg: 2000, max: 7500 }, ticketPrice: 15 },
-    { id: 2, name: 'Tweede Divisie', minAttr: 50, maxAttr: 88, avgAttr: 69, budget: 5000000, salary: { min: 2000, avg: 7500, max: 25000 }, ticketPrice: 22 },
-    { id: 1, name: 'Eerste Divisie', minAttr: 60, maxAttr: 93, avgAttr: 76, budget: 20000000, salary: { min: 7500, avg: 25000, max: 100000 }, ticketPrice: 32 },
-    { id: 0, name: 'Eredivisie', minAttr: 70, maxAttr: 99, avgAttr: 84, budget: 100000000, salary: { min: 25000, avg: 100000, max: 500000 }, ticketPrice: 50 }
+    { id: 8, name: '6e Klasse', minAttr: 1, maxAttr: 10, avgAttr: 5, budget: 5000, salary: { min: 0, avg: 50, max: 200 }, ticketPrice: 4 },
+    { id: 7, name: '5e Klasse', minAttr: 10, maxAttr: 15, avgAttr: 12, budget: 15000, salary: { min: 25, avg: 100, max: 400 }, ticketPrice: 5 },
+    { id: 6, name: '4e Klasse', minAttr: 15, maxAttr: 20, avgAttr: 17, budget: 40000, salary: { min: 50, avg: 200, max: 800 }, ticketPrice: 7 },
+    { id: 5, name: '3e Klasse', minAttr: 20, maxAttr: 30, avgAttr: 25, budget: 100000, salary: { min: 100, avg: 400, max: 1500 }, ticketPrice: 10 },
+    { id: 4, name: '2e Klasse', minAttr: 30, maxAttr: 45, avgAttr: 37, budget: 300000, salary: { min: 200, avg: 800, max: 3000 }, ticketPrice: 12 },
+    { id: 3, name: '1e Klasse', minAttr: 45, maxAttr: 60, avgAttr: 52, budget: 1000000, salary: { min: 500, avg: 2000, max: 7500 }, ticketPrice: 15 },
+    { id: 2, name: 'Tweede Divisie', minAttr: 60, maxAttr: 75, avgAttr: 67, budget: 5000000, salary: { min: 2000, avg: 7500, max: 25000 }, ticketPrice: 22 },
+    { id: 1, name: 'Eerste Divisie', minAttr: 75, maxAttr: 90, avgAttr: 82, budget: 20000000, salary: { min: 7500, avg: 25000, max: 100000 }, ticketPrice: 32 },
+    { id: 0, name: 'Eredivisie', minAttr: 85, maxAttr: 99, avgAttr: 92, budget: 100000000, salary: { min: 25000, avg: 100000, max: 500000 }, ticketPrice: 50 }
 ];
 
 export const NATIONALITIES = [

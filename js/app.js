@@ -4286,10 +4286,13 @@ function renderTransferMarket() {
         players = players.filter(p => p.price >= minPrice && p.price <= maxPrice);
     }
 
-    // Apply interested filter
+    // Apply interested filter (includes players one div above — buyable at premium)
     const clubDiv = gameState.club.division;
     if (interestedOnly) {
-        players = players.filter(p => (p.minDivision || clubDiv) >= clubDiv);
+        players = players.filter(p => {
+            const md = p.minDivision ?? clubDiv;
+            return md >= clubDiv || md === clubDiv - 1;
+        });
     }
 
     if (players.length === 0) {
@@ -4327,8 +4330,10 @@ function renderTransferMarket() {
             const overallRange = getValueRange(player.overall, 3);
             const priceText = player.price === 0 ? 'Transfervrij' : formatCurrency(player.price);
             const energy = player.energy || 75;
-            const minDiv = player.minDivision || clubDiv;
-            const canBuy = minDiv >= clubDiv;
+            const minDiv = player.minDivision ?? clubDiv;
+            const isInterested = minDiv >= clubDiv;
+            const isOneAbove = !isInterested && minDiv === clubDiv - 1;
+            const minDivInfo = getDivision(minDiv);
 
             // Potential stars with uncertainty: known (yellow) + uncertain (dark)
             const realStars = potentialToStarsGlobal(player.potential || player.overall);
@@ -4369,9 +4374,11 @@ function renderTransferMarket() {
                             <span class="pc-potential-label">POT</span>
                         </div>
                     </div>
-                    ${canBuy
+                    ${isInterested
                         ? `<button class="btn btn-primary btn-sm btn-transfer-buy" data-player-id="${player.id}">Kopen</button>`
-                        : `<span class="pc-min-division" title="Wil minimaal in divisie ${minDiv} spelen">Min. div. ${minDiv}</span>`
+                        : isOneAbove
+                            ? `<button class="btn btn-primary btn-sm btn-transfer-buy btn-transfer-premium" data-player-id="${player.id}" data-premium="true">2x Salaris</button>`
+                            : `<span class="pc-min-division" title="Wil minimaal ${minDivInfo?.name || minDiv} spelen">Min. ${minDivInfo?.name || 'div. ' + minDiv}</span>`
                     }
                 </div>
             `;
@@ -4387,12 +4394,13 @@ function renderTransferMarket() {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const playerId = parseFloat(btn.dataset.playerId);
-            handleTransferBuy(playerId);
+            const isPremium = btn.dataset.premium === 'true';
+            handleTransferBuy(playerId, isPremium);
         });
     });
 }
 
-function handleTransferBuy(playerId) {
+function handleTransferBuy(playerId, isPremium = false) {
     const player = gameState.transferMarket.players.find(p => p.id === playerId);
     if (!player) return;
 
@@ -4403,11 +4411,17 @@ function handleTransferBuy(playerId) {
         return;
     }
 
+    // Premium: double salary for players one division above
+    if (isPremium) {
+        player.salary = Math.round(player.salary * 2);
+    }
+
     const costText = player.price === 0
         ? `gratis (${formatCurrency(player.signingBonus)} tekengeld)`
         : formatCurrency(player.price);
+    const premiumNote = isPremium ? ` (dubbel salaris: ${formatCurrency(player.salary)}/w)` : '';
 
-    if (confirm(`Wil je ${player.name} contracteren voor ${costText}?`)) {
+    if (confirm(`Wil je ${player.name} contracteren voor ${costText}${premiumNote}?`)) {
         gameState.club.budget -= totalCost;
         gameState.players.push(player);
         gameState.transferMarket.players = gameState.transferMarket.players.filter(p => p.id !== playerId);
@@ -4415,6 +4429,9 @@ function handleTransferBuy(playerId) {
         updateBudgetDisplays();
         renderTransferMarket();
         alert(`${player.name} is toegevoegd aan je selectie!`);
+    } else if (isPremium) {
+        // Revert salary if cancelled
+        player.salary = Math.round(player.salary / 2);
     }
 }
 
