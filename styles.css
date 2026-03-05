@@ -13831,6 +13831,104 @@ body {
 
 .training-intro p { margin: 0; }
 
+/* Training player bar */
+.training-player-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+}
+
+.tp-avatar {
+    width: 64px;
+    height: 80px;
+    flex-shrink: 0;
+    filter: drop-shadow(1px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.tp-avatar svg {
+    width: 100%;
+    height: 100%;
+}
+
+.tp-info {
+    flex-shrink: 0;
+    min-width: 100px;
+}
+
+.tp-name {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--accent-cream);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.tp-meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.tp-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    margin-left: 12px;
+    border-left: 1px solid var(--border);
+    padding-left: 20px;
+}
+
+.tp-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.tp-option-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.tp-option-text {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+}
+
+.tp-option-text strong {
+    color: var(--text-primary);
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 1px;
+}
+
+@media (max-width: 768px) {
+    .training-player-bar {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 12px 14px;
+    }
+
+    .tp-options {
+        margin-left: 0;
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid var(--border);
+        padding-top: 12px;
+        width: 100%;
+    }
+
+    .tp-name {
+        font-size: 1.1rem;
+    }
+}
+
 .training-cooldown {
     font-size: 0.8rem;
 }

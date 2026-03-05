@@ -2594,6 +2594,56 @@ function renderTrainingPage() {
             : '<span class="cooldown-badge available">1 sessie beschikbaar</span>';
     }
 
+    // Player bar
+    const playerBar = document.getElementById('training-player-bar');
+    if (playerBar) {
+        playerBar.innerHTML = `
+            <div class="tp-avatar">
+                <svg viewBox="0 0 80 100">
+                    <ellipse cx="40" cy="28" rx="18" ry="19" fill="#f5d0c5"/>
+                    <ellipse cx="40" cy="15" rx="16" ry="9" fill="#4a3728"/>
+                    <circle cx="33" cy="26" r="2.5" fill="white"/>
+                    <circle cx="47" cy="26" r="2.5" fill="white"/>
+                    <circle cx="33.5" cy="26.5" r="1.2" fill="#333"/>
+                    <circle cx="47.5" cy="26.5" r="1.2" fill="#333"/>
+                    <path d="M36 35 Q40 38 44 35" fill="none" stroke="#a0522d" stroke-width="1.2"/>
+                    <path d="M15 95 Q15 65 25 58 L40 62 L55 58 Q65 65 65 95 L65 100 L15 100 Z" fill="var(--accent-green-dim)"/>
+                    <text x="40" y="85" text-anchor="middle" fill="white" font-family="var(--font-display)" font-size="16" font-weight="bold">${mp.number}</text>
+                    <path d="M32 58 L40 62 L48 58" fill="none" stroke="white" stroke-width="1.5"/>
+                    <rect x="22" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                    <rect x="42" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                </svg>
+            </div>
+            <div class="tp-info">
+                <div class="tp-name">${mp.name}</div>
+                <div class="tp-meta">${mp.position} · ${mp.age} jaar · #${mp.number}</div>
+            </div>
+            <div class="tp-options">
+                <div class="tp-option">
+                    <span class="tp-option-icon">⚡</span>
+                    <div class="tp-option-text">
+                        <strong>Training</strong>
+                        <span>Verbeter een vaardigheid: snelheid, techniek, passing, schieten, verdediging of fysiek.</span>
+                    </div>
+                </div>
+                <div class="tp-option">
+                    <span class="tp-option-icon">💆</span>
+                    <div class="tp-option-text">
+                        <strong>Massage</strong>
+                        <span>Herstel energie zodat je fitter aan de volgende wedstrijd begint.</span>
+                    </div>
+                </div>
+                <div class="tp-option">
+                    <span class="tp-option-icon">🔭</span>
+                    <div class="tp-option-text">
+                        <strong>Spionage</strong>
+                        <span>Analyseer je volgende tegenstander en ontdek hun sterke en zwakke punten.</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     const ATTR_COLORS = {
         SNE: '#2196f3', TEC: '#9c27b0', PAS: '#4caf50',
         SCH: '#f44336', VER: '#ff9800', FYS: '#795548', ENE: '#ff9800'
