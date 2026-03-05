@@ -334,34 +334,60 @@ function generatePlayerPhoto(name, position) {
 function generateSquad(division) {
     const squad = [];
 
-    // Keepers (2)
-    for (let i = 0; i < 2; i++) {
-        squad.push(generatePlayer(division, 'keeper'));
-    }
+    // Zaterdagvoetbal: recreational old-timers squad
+    const positionList = [
+        'keeper', 'keeper',
+        'linksback', 'centraleVerdediger', 'centraleVerdediger', 'rechtsback', 'centraleVerdediger',
+        'centraleMid', 'centraleMid', 'centraleMid', 'centraleMid',
+        'linksbuiten', 'linksbuiten', 'rechtsbuiten', 'rechtsbuiten',
+        'spits', 'spits'
+    ];
 
-    // Defenders (5) - mix of backs and center backs
-    squad.push(generatePlayer(division, 'linksback'));
-    squad.push(generatePlayer(division, 'centraleVerdediger'));
-    squad.push(generatePlayer(division, 'centraleVerdediger'));
-    squad.push(generatePlayer(division, 'rechtsback'));
-    squad.push(generatePlayer(division, 'centraleVerdediger')); // Extra CB
-
-    // Midfielders (5)
-    for (let i = 0; i < 5; i++) {
-        squad.push(generatePlayer(division, 'centraleMid'));
-    }
-
-    // Wingers (4)
-    squad.push(generatePlayer(division, 'linksbuiten'));
-    squad.push(generatePlayer(division, 'linksbuiten'));
-    squad.push(generatePlayer(division, 'rechtsbuiten'));
-    squad.push(generatePlayer(division, 'rechtsbuiten'));
-
-    // Strikers (2)
-    squad.push(generatePlayer(division, 'spits'));
-    squad.push(generatePlayer(division, 'spits'));
+    positionList.forEach(position => {
+        squad.push(createZaterdagPlayer(position));
+    });
 
     return squad;
+}
+
+function createZaterdagPlayer(position) {
+    const isKeeper = position === 'keeper';
+    const attrNames = isKeeper ? ['REF', 'BAL', 'SNE', 'FYS'] : ['AAN', 'VER', 'SNE', 'FYS'];
+    const attributes = {};
+
+    attrNames.forEach(attr => {
+        attributes[attr] = random(2, 10);
+    });
+
+    const overall = calculateOverall(attributes, position);
+    // Zaterdagvoetbal: 90% Nederlands, 10% overig
+    const nationality = Math.random() < 0.90 ? NATIONALITIES[0] : generateNationality();
+    const tag = getPlayerTag(attributes, position);
+    const playerName = generatePlayerName();
+    const playerAge = random(40, 55);
+
+    return {
+        id: Date.now() + Math.random(),
+        name: playerName,
+        age: playerAge,
+        position: position,
+        nationality: nationality,
+        attributes: attributes,
+        overall: overall,
+        tag: tag.name,
+        tagBonus: tag.bonus,
+        personality: generatePersonality(8, 0.5),
+        salary: 0,
+        goals: 0,
+        assists: 0,
+        morale: random(60, 90),
+        fitness: random(80, 100),
+        condition: random(70, 100),
+        energy: random(60, 100),
+        potential: overall + random(0, 2),
+        fixedMarketValue: 0,
+        photo: generatePlayerPhoto(playerName, position)
+    };
 }
 
 // ================================================
@@ -631,6 +657,7 @@ function calculatePlayerValue(player, division, forTransfer = true) {
 
 // Get market value for display (never random 0)
 function getPlayerMarketValue(player) {
+    if (player.fixedMarketValue !== undefined) return player.fixedMarketValue;
     return calculatePlayerValue(player, gameState.club?.division, false);
 }
 
@@ -848,7 +875,7 @@ function createPlayerCardHTML(player, mini = false) {
         `;
     }
 
-    const marketValue = player.isMyPlayer ? 0 : getPlayerMarketValue(player);
+    const marketValue = player.isMyPlayer ? 1000 : getPlayerMarketValue(player);
     const energy = player.energy || 75;
     const myPlayerClass = player.isMyPlayer ? ' my-player-card' : '';
 
@@ -872,7 +899,7 @@ function createPlayerCardHTML(player, mini = false) {
                     <span class="pc-name">${player.name}</span>
                     <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
                     <span class="pc-finance">
-                        <span class="pc-salary">${formatCurrency(player.salary || 50)}/w</span>
+                        <span class="pc-salary">${formatCurrency(player.salary ?? 50)}/w</span>
                         <span class="pc-value">${formatCurrency(marketValue)}</span>
                     </span>
                 </div>
@@ -908,16 +935,16 @@ function initMyPlayer() {
     if (!gameState.myPlayer) {
         gameState.myPlayer = {
             name: 'Patrick',
-            age: 28,
+            age: 45,
             position: 'CM',
             number: 10,
             attributes: {
-                SNE: 52,
-                TEC: 45,
-                PAS: 58,
-                SCH: 41,
-                VER: 48,
-                FYS: 61
+                SNE: 15,
+                TEC: 15,
+                PAS: 15,
+                SCH: 15,
+                VER: 15,
+                FYS: 15
             }
         };
     }

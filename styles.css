@@ -13907,7 +13907,7 @@ body {
 }
 
 .pc-name-row .pc-finance {
-    margin-left: auto;
+    margin-left: 16px;
     display: flex;
     gap: 12px;
     font-size: 0.7rem;
