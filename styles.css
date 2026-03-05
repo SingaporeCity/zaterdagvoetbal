@@ -12050,6 +12050,21 @@ body {
     justify-content: center;
 }
 
+.yc-stars .pc-stars {
+    display: flex;
+    gap: 2px;
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+.yc-stars .star.full {
+    color: #ffd600;
+}
+
+.yc-stars .star.empty {
+    color: rgba(255, 255, 255, 0.3);
+}
+
 .yc-action {
     display: flex;
     align-items: center;
