@@ -423,8 +423,20 @@
                     </div>
                 </header>
 
-                <div class="mijnspeler-dashboard" id="mijnspeler-dashboard">
-                    <!-- Filled by JS -->
+                <div class="msp-tabs">
+                    <button class="msp-tab active" data-msp-tab="overzicht">Overzicht</button>
+                    <button class="msp-tab" data-msp-tab="speler">Spelersprestaties</button>
+                    <button class="msp-tab" data-msp-tab="manager">Managersprestaties</button>
+                </div>
+
+                <div class="msp-panel active" id="msp-overzicht">
+                    <div class="mijnspeler-dashboard" id="mijnspeler-dashboard"></div>
+                </div>
+                <div class="msp-panel" id="msp-speler">
+                    <div id="speler-prestaties"></div>
+                </div>
+                <div class="msp-panel" id="msp-manager">
+                    <div id="manager-prestaties"></div>
                 </div>
             </section>
 

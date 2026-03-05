@@ -76,15 +76,19 @@ import {
     awardXP,
     getNextOpponent,
     getZoneInfo,
-    getSeasonSchedule
+    getSeasonSchedule,
+    MANAGER_LEVELS,
+    XP_REWARDS
 } from './progression.js';
 
 import {
     checkAchievements,
     getAllAchievements,
+    getAchievementsByCategory,
     getAchievementStats,
     getRecentAchievements,
-    initAchievements
+    initAchievements,
+    CATEGORIES
 } from './achievements.js';
 
 import {
@@ -1141,6 +1145,271 @@ function renderMijnSpelerPage() {
             </div>
         </div>
     `;
+}
+
+// ================================================
+// MIJN SPELER — TABS & PRESTATIES
+// ================================================
+
+let mspTabsInitialized = false;
+function initMijnSpelerTabs() {
+    if (mspTabsInitialized) return;
+    mspTabsInitialized = true;
+
+    const tabs = document.querySelectorAll('.msp-tab');
+    const panels = document.querySelectorAll('.msp-panel');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.dataset.mspTab;
+
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            panels.forEach(panel => {
+                panel.classList.remove('active');
+                if (panel.id === `msp-${targetTab}`) {
+                    panel.classList.add('active');
+                }
+            });
+
+            if (targetTab === 'overzicht') renderMijnSpelerPage();
+            else if (targetTab === 'speler') renderSpelersPrestaties();
+            else if (targetTab === 'manager') renderManagersPrestaties();
+        });
+    });
+}
+
+function renderAchievementCards(achievements, filterCategories) {
+    const filtered = achievements.filter(a => filterCategories.includes(a.category));
+    const stats = { total: filtered.length, unlocked: filtered.filter(a => a.unlocked).length };
+    const progressPct = stats.total > 0 ? Math.round((stats.unlocked / stats.total) * 100) : 0;
+
+    // Category labels
+    const catLabels = {
+        matches: 'Wedstrijden', goals: 'Doelpunten', season: 'Seizoen',
+        club: 'Club', players: 'Spelers', stadium: 'Stadion', special: 'Speciaal'
+    };
+
+    const filterBtns = filterCategories.map(cat =>
+        `<button class="ach-filter-btn" data-ach-cat="${cat}">${catLabels[cat] || cat}</button>`
+    ).join('');
+
+    function renderCards(category) {
+        const cards = filtered
+            .filter(a => !category || a.category === category)
+            .map(a => {
+                const isHidden = a.hidden && !a.unlocked;
+                const name = isHidden ? '???' : a.name;
+                const desc = isHidden ? 'Nog niet ontdekt...' : a.description;
+                const icon = isHidden ? '❓' : a.icon;
+                const cls = a.unlocked ? 'ach-card unlocked' : (isHidden ? 'ach-card hidden-ach' : 'ach-card');
+                return `<div class="${cls}">
+                    <span class="ach-icon">${icon}</span>
+                    <div class="ach-info">
+                        <span class="ach-name">${name}</span>
+                        <span class="ach-desc">${desc}</span>
+                    </div>
+                    ${a.unlocked ? '<span class="ach-check">✓</span>' : ''}
+                </div>`;
+            }).join('');
+        return cards;
+    }
+
+    return { progressPct, stats, filterBtns, renderCards, defaultCategory: filterCategories[0] };
+}
+
+function renderSpelersPrestaties() {
+    const container = document.getElementById('speler-prestaties');
+    if (!container) return;
+
+    // --- Stats ---
+    const history = gameState.matchHistory || [];
+    const seasonHistory = history.filter(h => h.season === gameState.season);
+    const clubStats = gameState.club?.stats || {};
+    const stats = gameState.stats || {};
+    const totalSeasons = gameState.season || 1;
+
+    const seasonMatches = seasonHistory.length;
+    const seasonGoals = seasonHistory.reduce((sum, m) => sum + (m.playerScore || 0), 0);
+    const seasonAssists = seasonHistory.reduce((sum, m) => {
+        return sum + (m.events || []).filter(e => e.type === 'goal' && e.team === 'home' && e.assistId).length;
+    }, 0);
+    const seasonCleanSheets = seasonHistory.filter(m => m.opponentScore === 0).length;
+    const seasonWins = seasonHistory.filter(m => m.resultType === 'win').length;
+    const seasonDraws = seasonHistory.filter(m => m.resultType === 'draw').length;
+    const seasonLosses = seasonHistory.filter(m => m.resultType === 'loss').length;
+
+    function recordItem(value, label) {
+        return `<div class="mp-record-item">
+            <span class="mp-record-value">${value}</span>
+            <span class="mp-record-label">${label}</span>
+        </div>`;
+    }
+
+    // --- Achievements ---
+    const allAch = getAllAchievements(gameState);
+    const spelerCats = [CATEGORIES.MATCHES, CATEGORIES.GOALS, CATEGORIES.SEASON, CATEGORIES.SPECIAL];
+    const ach = renderAchievementCards(allAch, spelerCats);
+
+    container.innerHTML = `
+        <div class="mp-dual-grid" style="margin-bottom: 16px;">
+            <div class="mp-stats-section">
+                <h4 class="mp-section-title">Seizoen ${totalSeasons}</h4>
+                <div class="mp-record-grid">
+                    ${recordItem(seasonMatches, 'Wedstrijden')}
+                    ${recordItem(seasonGoals, 'Doelpunten')}
+                    ${recordItem(seasonAssists, 'Assists')}
+                    ${recordItem(seasonCleanSheets, 'Clean sheets')}
+                    ${recordItem(seasonWins, 'Zeges')}
+                    ${recordItem(seasonDraws + ' / ' + seasonLosses, 'Gelijk / Verloren')}
+                </div>
+            </div>
+            <div class="mp-stats-section">
+                <h4 class="mp-section-title">Carrière</h4>
+                <div class="mp-record-grid">
+                    ${recordItem(clubStats.totalMatches || 0, 'Wedstrijden')}
+                    ${recordItem(clubStats.totalGoals || 0, 'Doelpunten')}
+                    ${recordItem(stats.wins || 0, 'Zeges')}
+                    ${recordItem(stats.draws || 0, 'Gelijk')}
+                    ${recordItem(stats.losses || 0, 'Verloren')}
+                    ${recordItem(stats.cleanSheets || 0, 'Clean sheets')}
+                </div>
+            </div>
+        </div>
+
+        <div class="mp-stats-section">
+            <h4 class="mp-section-title">Spelersprestaties</h4>
+            <div class="ach-progress">
+                <div class="ach-progress-bar">
+                    <div class="ach-progress-fill" style="width: ${ach.progressPct}%"></div>
+                </div>
+                <span class="ach-progress-text">${ach.stats.unlocked} / ${ach.stats.total}</span>
+            </div>
+            <div class="ach-filters" id="speler-ach-filters">
+                <button class="ach-filter-btn active" data-ach-cat="all">Alles</button>
+                ${ach.filterBtns}
+            </div>
+            <div class="ach-grid" id="speler-ach-grid">
+                ${ach.renderCards(null)}
+            </div>
+        </div>
+    `;
+
+    // Filter click handlers
+    container.querySelectorAll('.ach-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.querySelectorAll('.ach-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const cat = btn.dataset.achCat;
+            const grid = document.getElementById('speler-ach-grid');
+            if (grid) grid.innerHTML = ach.renderCards(cat === 'all' ? null : cat);
+        });
+    });
+}
+
+function renderManagersPrestaties() {
+    const container = document.getElementById('manager-prestaties');
+    if (!container) return;
+
+    // --- XP & Level ---
+    const managerXP = gameState.manager?.xp || 0;
+    const levelInfo = getManagerLevel(managerXP);
+    const progressPct = Math.round(levelInfo.progress * 100);
+
+    // --- Level Roadmap ---
+    const roadmapSteps = MANAGER_LEVELS.map(lvl => {
+        let cls = 'xp-step future';
+        if (lvl.level < levelInfo.level) cls = 'xp-step achieved';
+        else if (lvl.level === levelInfo.level) cls = 'xp-step current';
+        return `<div class="${cls}">
+            <div class="xp-dot">${lvl.level <= levelInfo.level ? '✓' : lvl.level}</div>
+            <span class="xp-step-label">${lvl.title}</span>
+        </div>`;
+    }).join('');
+
+    // --- XP Rewards ---
+    const rewardLabels = {
+        matchWin: 'Wedstrijd gewonnen',
+        matchDraw: 'Gelijkspel',
+        matchLoss: 'Wedstrijd verloren',
+        cleanSheet: 'Clean sheet',
+        goalScored: 'Doelpunt gescoord',
+        promotion: 'Promotie',
+        title: 'Kampioenschap',
+        youthGraduate: 'Jeugdspeler doorgeschoven',
+        playerSold: 'Speler verkocht',
+        stadiumUpgrade: 'Stadion-upgrade',
+        achievementUnlocked: 'Achievement behaald'
+    };
+
+    const rewardItems = Object.entries(XP_REWARDS).map(([key, xp]) =>
+        `<div class="xp-reward-item">
+            <span class="xp-reward-action">${rewardLabels[key] || key}</span>
+            <span class="xp-reward-xp">+${xp} XP</span>
+        </div>`
+    ).join('');
+
+    // --- Manager Achievements ---
+    const allAch = getAllAchievements(gameState);
+    const mgrCats = [CATEGORIES.CLUB, CATEGORIES.PLAYERS, CATEGORIES.STADIUM];
+    const ach = renderAchievementCards(allAch, mgrCats);
+
+    container.innerHTML = `
+        <div class="xp-hero">
+            <div class="xp-level">Level ${levelInfo.level}</div>
+            <div class="xp-title">${levelInfo.title}</div>
+            <div class="xp-bar-track">
+                <div class="xp-bar-fill" style="width: ${progressPct}%"></div>
+            </div>
+            <div class="xp-info">
+                <span>${managerXP} XP totaal</span>
+                <span>${levelInfo.xpToNext > 0 ? levelInfo.xpToNext + ' XP tot volgend level' : 'Max level!'}</span>
+            </div>
+        </div>
+
+        <div class="mp-stats-section" style="margin-bottom: 16px;">
+            <h4 class="mp-section-title">Level Roadmap</h4>
+            <div class="xp-roadmap">
+                ${roadmapSteps}
+            </div>
+        </div>
+
+        <div class="mp-stats-section" style="margin-bottom: 16px;">
+            <h4 class="mp-section-title">XP Beloningen</h4>
+            <div class="xp-rewards">
+                ${rewardItems}
+            </div>
+        </div>
+
+        <div class="mp-stats-section">
+            <h4 class="mp-section-title">Managersprestaties</h4>
+            <div class="ach-progress">
+                <div class="ach-progress-bar">
+                    <div class="ach-progress-fill" style="width: ${ach.progressPct}%"></div>
+                </div>
+                <span class="ach-progress-text">${ach.stats.unlocked} / ${ach.stats.total}</span>
+            </div>
+            <div class="ach-filters" id="manager-ach-filters">
+                <button class="ach-filter-btn active" data-ach-cat="all">Alles</button>
+                ${ach.filterBtns}
+            </div>
+            <div class="ach-grid" id="manager-ach-grid">
+                ${ach.renderCards(null)}
+            </div>
+        </div>
+    `;
+
+    // Filter click handlers
+    container.querySelectorAll('.ach-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.querySelectorAll('.ach-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const cat = btn.dataset.achCat;
+            const grid = document.getElementById('manager-ach-grid');
+            if (grid) grid.innerHTML = ach.renderCards(cat === 'all' ? null : cat);
+        });
+    });
 }
 
 // ================================================
@@ -3989,7 +4258,17 @@ function navigateToPage(page) {
     if (page === 'sponsors') renderSponsorsPage();
     if (page === 'activities') renderActivitiesPage();
     if (page === 'staff') renderStaffCenterPage();
-    if (page === 'mijnspeler') renderMijnSpelerPage();
+    if (page === 'mijnspeler') {
+        renderMijnSpelerPage();
+        initMijnSpelerTabs();
+        // Render active tab content
+        const activeTab = document.querySelector('.msp-tab.active');
+        if (activeTab) {
+            const tab = activeTab.dataset.mspTab;
+            if (tab === 'speler') renderSpelersPrestaties();
+            else if (tab === 'manager') renderManagersPrestaties();
+        }
+    }
     if (page === 'mijnteam') renderMijnTeamPage();
     if (page === 'jeugdteam') renderJeugdteamPage();
     if (page === 'kantine') renderKantineDashboard();

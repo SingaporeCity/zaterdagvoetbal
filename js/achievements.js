@@ -107,6 +107,51 @@ const ACHIEVEMENTS = {
         reward: { cash: 2000 },
         check: (state) => (state.stats?.comebacks || 0) >= 1
     },
+    tenMatches: {
+        id: 'tenMatches',
+        name: 'Debuutseizoen',
+        description: 'Speel 10 wedstrijden',
+        category: CATEGORIES.MATCHES,
+        icon: '⚽',
+        reward: { cash: 500 },
+        check: (state) => (state.club.stats?.totalMatches || 0) >= 10
+    },
+    hundredMatches: {
+        id: 'hundredMatches',
+        name: 'Clubicoon',
+        description: 'Speel 100 wedstrijden',
+        category: CATEGORIES.MATCHES,
+        icon: '🏟️',
+        reward: { cash: 15000 },
+        check: (state) => (state.club.stats?.totalMatches || 0) >= 100
+    },
+    tenDraws: {
+        id: 'tenDraws',
+        name: 'Puntendeler',
+        description: '10 gelijke spelen',
+        category: CATEGORIES.MATCHES,
+        icon: '🤝',
+        reward: { cash: 2000 },
+        check: (state) => (state.stats?.draws || 0) >= 10
+    },
+    homeKing: {
+        id: 'homeKing',
+        name: 'Thuiskoning',
+        description: 'Win 10 thuiswedstrijden',
+        category: CATEGORIES.MATCHES,
+        icon: '🏠',
+        reward: { cash: 3000 },
+        check: (state) => (state.stats?.homeWins || 0) >= 10
+    },
+    neverGiveUp: {
+        id: 'neverGiveUp',
+        name: 'Nooit Opgeven',
+        description: 'Maak 5 comebacks',
+        category: CATEGORIES.MATCHES,
+        icon: '💪',
+        reward: { cash: 5000 },
+        check: (state) => (state.stats?.comebacks || 0) >= 5
+    },
 
     // Goal achievements
     firstGoal: {
@@ -153,6 +198,49 @@ const ACHIEVEMENTS = {
         icon: '🎩',
         reward: { cash: 2500 },
         check: (state) => (state.stats?.hatTricks || 0) >= 1
+    },
+    tenGoals: {
+        id: 'tenGoals',
+        name: 'Doelpuntenmaker',
+        description: 'Scoor 10 doelpunten',
+        category: CATEGORIES.GOALS,
+        icon: '⚽',
+        reward: { cash: 1000 },
+        check: (state) => (state.club.stats?.totalGoals || 0) >= 10
+    },
+    twoHundredGoals: {
+        id: 'twoHundredGoals',
+        name: 'Topscorer Aller Tijden',
+        description: 'Scoor 200 doelpunten',
+        category: CATEGORIES.GOALS,
+        icon: '👑',
+        reward: { cash: 50000 },
+        check: (state) => (state.club.stats?.totalGoals || 0) >= 200
+    },
+    threeHatTricks: {
+        id: 'threeHatTricks',
+        name: 'Hattrick Koning',
+        description: 'Maak 3 hattricks',
+        category: CATEGORIES.GOALS,
+        icon: '🎩',
+        reward: { cash: 7500 },
+        check: (state) => (state.stats?.hatTricks || 0) >= 3
+    },
+    goalMachine: {
+        id: 'goalMachine',
+        name: 'Verborgen',
+        description: '25 doelpunten in 1 seizoen',
+        category: CATEGORIES.GOALS,
+        icon: '❓',
+        hidden: true,
+        reward: { cash: 20000 },
+        check: (state) => {
+            const history = state.matchHistory || [];
+            const seasonGoals = history
+                .filter(h => h.season === state.season)
+                .reduce((sum, m) => sum + (m.playerScore || 0), 0);
+            return seasonGoals >= 25;
+        }
     },
 
     // Season achievements
@@ -210,6 +298,52 @@ const ACHIEVEMENTS = {
         reward: { cash: 1000 },
         check: (state) => (state.stats?.relegationEscapes || 0) >= 1
     },
+    fiveSeasons: {
+        id: 'fiveSeasons',
+        name: 'Veteraan',
+        description: '5 seizoenen gespeeld',
+        category: CATEGORIES.SEASON,
+        icon: '📅',
+        reward: { cash: 5000 },
+        check: (state) => (state.season || 1) >= 5
+    },
+    tenSeasons: {
+        id: 'tenSeasons',
+        name: 'Clublegende',
+        description: '10 seizoenen gespeeld',
+        category: CATEGORIES.SEASON,
+        icon: '🏛️',
+        reward: { cash: 25000 },
+        check: (state) => (state.season || 1) >= 10
+    },
+    backToBack: {
+        id: 'backToBack',
+        name: 'Back-to-Back',
+        description: '2 promoties op rij',
+        category: CATEGORIES.SEASON,
+        icon: '🔄',
+        reward: { cash: 50000 },
+        check: (state) => (state.stats?.consecutivePromotions || 0) >= 2
+    },
+    yoyo: {
+        id: 'yoyo',
+        name: 'Verborgen',
+        description: 'Promoveer en degradeer in opeenvolgende seizoenen',
+        category: CATEGORIES.SEASON,
+        icon: '❓',
+        hidden: true,
+        reward: { cash: 5000 },
+        check: (state) => state.stats?.yoyoClub === true
+    },
+    secondDivision: {
+        id: 'secondDivision',
+        name: 'Tweede Divisie',
+        description: 'Bereik de Tweede Divisie',
+        category: CATEGORIES.SEASON,
+        icon: '🥈',
+        reward: { cash: 25000 },
+        check: (state) => state.club.division <= 3
+    },
 
     // Club achievements
     millionaire: {
@@ -247,6 +381,58 @@ const ACHIEVEMENTS = {
         icon: '🌟',
         reward: { cash: 25000 },
         check: (state) => state.club.reputation >= 90
+    },
+    fiveHundredK: {
+        id: 'fiveHundredK',
+        name: 'Halve Ton',
+        description: 'Heb €500.000 op de bank',
+        category: CATEGORIES.CLUB,
+        icon: '💰',
+        reward: { xp: 250 },
+        check: (state) => state.club.budget >= 500000
+    },
+    fiftyReputation: {
+        id: 'fiftyReputation',
+        name: 'Bekende Club',
+        description: 'Bereik 50 reputatie',
+        category: CATEGORIES.CLUB,
+        icon: '📰',
+        reward: { cash: 5000 },
+        check: (state) => state.club.reputation >= 50
+    },
+    hundredReputation: {
+        id: 'hundredReputation',
+        name: 'Topclub van Nederland',
+        description: 'Bereik 100 reputatie',
+        category: CATEGORIES.CLUB,
+        icon: '⭐',
+        reward: { cash: 50000 },
+        check: (state) => state.club.reputation >= 100
+    },
+    firstSponsor: {
+        id: 'firstSponsor',
+        name: 'Eerste Sponsor',
+        description: 'Sluit een sponsordeal',
+        category: CATEGORIES.CLUB,
+        icon: '🤝',
+        reward: { cash: 1000 },
+        check: (state) => {
+            const sponsors = state.sponsors || {};
+            return Object.values(sponsors).some(s => s && s.name);
+        }
+    },
+    fullSponsors: {
+        id: 'fullSponsors',
+        name: 'Sponsormagneet',
+        description: 'Alle sponsorslots gevuld',
+        category: CATEGORIES.CLUB,
+        icon: '💼',
+        reward: { cash: 10000 },
+        check: (state) => {
+            const sponsors = state.sponsors || {};
+            const slots = ['shirt', 'sleeve', 'stadium', 'training'];
+            return slots.every(s => sponsors[s] && sponsors[s].name);
+        }
     },
 
     // Player achievements
@@ -313,6 +499,55 @@ const ACHIEVEMENTS = {
         reward: { cash: 5000 },
         check: (state) => (state.stats?.highestSale || 0) >= 100000
     },
+    twentyYouthGrads: {
+        id: 'twentyYouthGrads',
+        name: 'Jeugdopleider',
+        description: 'Laat 20 jeugdspelers doorstromen',
+        category: CATEGORIES.PLAYERS,
+        icon: '🎓',
+        reward: { cash: 30000 },
+        check: (state) => (state.stats?.youthGraduates || 0) >= 20
+    },
+    bigSale: {
+        id: 'bigSale',
+        name: 'Kassa!',
+        description: 'Verkoop een speler voor €50.000+',
+        category: CATEGORIES.PLAYERS,
+        icon: '💸',
+        reward: { cash: 3000 },
+        check: (state) => (state.stats?.highestSale || 0) >= 50000
+    },
+    hugeSale: {
+        id: 'hugeSale',
+        name: 'Jackpot',
+        description: 'Verkoop een speler voor €200.000+',
+        category: CATEGORIES.PLAYERS,
+        icon: '🎰',
+        reward: { cash: 10000 },
+        check: (state) => (state.stats?.highestSale || 0) >= 200000
+    },
+    fullBench: {
+        id: 'fullBench',
+        name: 'Brede Selectie',
+        description: '22+ spelers in selectie',
+        category: CATEGORIES.PLAYERS,
+        icon: '👥',
+        reward: { cash: 2500 },
+        check: (state) => state.players.length >= 22
+    },
+    superStar: {
+        id: 'superStar',
+        name: 'Superster',
+        description: 'Heb een speler met 90+ gemiddeld',
+        category: CATEGORIES.PLAYERS,
+        icon: '🌟',
+        reward: { cash: 50000 },
+        check: (state) => state.players.some(p => {
+            const attrs = p.attributes || {};
+            const vals = Object.values(attrs).filter(v => typeof v === 'number');
+            return vals.length > 0 && (vals.reduce((a, b) => a + b, 0) / vals.length) >= 90;
+        })
+    },
 
     // Stadium achievements
     stadiumFull: {
@@ -350,6 +585,37 @@ const ACHIEVEMENTS = {
         icon: '🏢',
         reward: { cash: 25000 },
         check: (state) => hasAllFacilitiesLevel3(state)
+    },
+    thousandSeats: {
+        id: 'thousandSeats',
+        name: 'Volle Bak',
+        description: '1.000 stoeltjes in je stadion',
+        category: CATEGORIES.STADIUM,
+        icon: '🎉',
+        reward: { cash: 2000 },
+        check: (state) => state.stadium.capacity >= 1000
+    },
+    fiveThousandSeats: {
+        id: 'fiveThousandSeats',
+        name: 'Mini-stadion',
+        description: '5.000 capaciteit bereikt',
+        category: CATEGORIES.STADIUM,
+        icon: '🏟️',
+        reward: { cash: 10000 },
+        check: (state) => state.stadium.capacity >= 5000
+    },
+    firstUpgrade: {
+        id: 'firstUpgrade',
+        name: 'Verborgen',
+        description: 'Eerste stadion-upgrade',
+        category: CATEGORIES.STADIUM,
+        icon: '❓',
+        hidden: true,
+        reward: { cash: 1000 },
+        check: (state) => {
+            const s = state.stadium;
+            return (s.capacity > 200) || s.training || s.medical || s.academy || s.scouting || s.kantine;
+        }
     },
 
     // Special/Dutch achievements
@@ -449,6 +715,61 @@ const ACHIEVEMENTS = {
         hidden: true,
         reward: { cash: 25000 },
         check: (state) => state.players.some(p => p.fromYouth && p.overall >= 85)
+    },
+    saturdayTen: {
+        id: 'saturdayTen',
+        name: 'Zaterdagspeler',
+        description: 'Speel 10 wedstrijden op zaterdag',
+        category: CATEGORIES.SPECIAL,
+        icon: '⚽',
+        reward: { cash: 2000 },
+        check: (state) => (state.stats?.saturdayMatches || 0) >= 10
+    },
+    selloutTen: {
+        id: 'selloutTen',
+        name: 'Uitverkocht!',
+        description: '10x een uitverkocht stadion',
+        category: CATEGORIES.SPECIAL,
+        icon: '🎫',
+        reward: { cash: 5000 },
+        check: (state) => (state.stats?.sellouts || 0) >= 10
+    },
+    noLoss: {
+        id: 'noLoss',
+        name: 'Verborgen',
+        description: 'Heel seizoen ongeslagen',
+        category: CATEGORIES.SPECIAL,
+        icon: '❓',
+        hidden: true,
+        reward: { cash: 100000 },
+        check: (state) => {
+            const history = state.matchHistory || [];
+            const seasonHistory = history.filter(h => h.season === state.season);
+            return seasonHistory.length >= 14 && seasonHistory.every(m => m.resultType !== 'loss');
+        }
+    },
+    centurion: {
+        id: 'centurion',
+        name: 'Verborgen',
+        description: '100 zeges behaald',
+        category: CATEGORIES.SPECIAL,
+        icon: '❓',
+        hidden: true,
+        reward: { cash: 25000 },
+        check: (state) => (state.stats?.wins || 0) >= 100
+    },
+    dedicatedManager: {
+        id: 'dedicatedManager',
+        name: 'Verborgen',
+        description: 'Alle dagelijkse taken afgevinkt',
+        category: CATEGORIES.SPECIAL,
+        icon: '❓',
+        hidden: true,
+        reward: { cash: 5000 },
+        check: (state) => {
+            const tasks = state.dailyTasks || [];
+            return tasks.length > 0 && tasks.every(t => t.completed);
+        }
     }
 };
 
