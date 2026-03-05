@@ -2663,69 +2663,73 @@ const POSITION_GROUP_LABELS = {
 
 let trainingTimerInterval = null;
 
+function getTodayString() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function hasTrainedToday(mp) {
+    return mp.lastTrainingDate === getTodayString();
+}
+
 function renderTrainingPage() {
     const mp = initMyPlayer();
     const a = mp.attributes;
+    const trainedToday = hasTrainedToday(mp);
 
-    // Show current player stats
-    const statsContainer = document.getElementById('my-player-training-stats');
-    if (statsContainer) {
-        const ATTR_COLORS = {
-            SNE: '#2196f3', TEC: '#9c27b0', PAS: '#4caf50',
-            SCH: '#f44336', VER: '#ff9800', FYS: '#795548'
-        };
-        statsContainer.innerHTML = `
-            <div class="training-player-header">
-                <span class="training-player-name">${mp.name}</span>
-                <span class="training-player-energy" style="color: ${getBarColor(mp.energy)}">Energie: ${mp.energy}%</span>
-            </div>
-            <div class="training-attrs-display">
-                ${Object.entries(a).map(([key, val]) => `
-                    <div class="training-attr">
-                        <span class="ta-label">${key}</span>
-                        <div class="ta-bar-track">
-                            <div class="ta-bar-fill" style="width: ${val}%; background: ${ATTR_COLORS[key] || '#666'}"></div>
-                        </div>
-                        <span class="ta-value">${val}</span>
+    // Cooldown display
+    const cooldownEl = document.getElementById('training-cooldown');
+    if (cooldownEl) {
+        cooldownEl.innerHTML = trainedToday
+            ? '<span class="cooldown-badge used">Vandaag getraind</span>'
+            : '<span class="cooldown-badge available">1 sessie beschikbaar</span>';
+    }
+
+    const ATTR_COLORS = {
+        SNE: '#2196f3', TEC: '#9c27b0', PAS: '#4caf50',
+        SCH: '#f44336', VER: '#ff9800', FYS: '#795548', ENE: '#ff9800'
+    };
+
+    const columns = [
+        { key: 'SNE', name: 'Snelheid', icon: '⚡' },
+        { key: 'TEC', name: 'Techniek', icon: '🎯' },
+        { key: 'PAS', name: 'Passing', icon: '👟' },
+        { key: 'SCH', name: 'Schieten', icon: '⚽' },
+        { key: 'VER', name: 'Verdediging', icon: '🛡️' },
+        { key: 'FYS', name: 'Fysiek', icon: '💪' },
+        { key: 'ENE', name: 'Energie', icon: '💆', isEnergy: true }
+    ];
+
+    const container = document.getElementById('training-columns');
+    if (!container) return;
+
+    container.innerHTML = columns.map(col => {
+        const value = col.isEnergy ? mp.energy : a[col.key];
+        const maxVal = col.isEnergy ? 100 : 99;
+        const pct = Math.round((value / maxVal) * 100);
+        const color = ATTR_COLORS[col.key];
+        const canTrain = col.isEnergy
+            ? (mp.energy < 100 && !trainedToday)
+            : (!trainedToday);
+        const btnLabel = col.isEnergy ? 'Massage' : 'Train';
+        const btnAction = canTrain ? `trainMyPlayer('${col.isEnergy ? 'massage' : col.key}')` : '';
+
+        return `
+            <div class="tc-column">
+                <div class="tc-icon">${col.icon}</div>
+                <div class="tc-label">${col.name}</div>
+                <div class="tc-bar-container">
+                    <div class="tc-bar-track">
+                        <div class="tc-bar-fill" style="height: ${pct}%; background: ${color}"></div>
                     </div>
-                `).join('')}
+                </div>
+                <div class="tc-value" style="color: ${color}">${value}</div>
+                <button class="btn btn-sm ${canTrain ? 'btn-primary' : 'btn-secondary'} tc-train-btn"
+                        onclick="${btnAction}" ${!canTrain ? 'disabled' : ''}>
+                    ${btnLabel}
+                </button>
             </div>
         `;
-    }
-
-    // Show training options
-    const grid = document.getElementById('training-options-grid');
-    if (grid) {
-        const options = [
-            { key: 'SNE', name: 'Snelheid', icon: '⚡', desc: 'Train je snelheid en explosiviteit' },
-            { key: 'TEC', name: 'Techniek', icon: '🎯', desc: 'Verbeter balcontrole en dribbelen' },
-            { key: 'PAS', name: 'Passing', icon: '👟', desc: 'Verbeter je passing en overzicht' },
-            { key: 'SCH', name: 'Schieten', icon: '⚽', desc: 'Train je schot en afronding' },
-            { key: 'VER', name: 'Verdediging', icon: '🛡️', desc: 'Verbeter tackles en positionering' },
-            { key: 'FYS', name: 'Fysiek', icon: '💪', desc: 'Verbeter kracht en uithoudingsvermogen' },
-            { key: 'massage', name: 'Massage', icon: '💆', desc: 'Herstel 50% energie', isMassage: true }
-        ];
-
-        grid.innerHTML = options.map(opt => {
-            const currentVal = opt.isMassage ? null : a[opt.key];
-            const canTrain = opt.isMassage ? mp.energy < 100 : mp.energy >= 20;
-
-            return `
-                <div class="training-option-card ${!canTrain ? 'disabled' : ''}" onclick="${canTrain ? `trainMyPlayer('${opt.key}')` : ''}">
-                    <div class="toc-icon">${opt.icon}</div>
-                    <div class="toc-info">
-                        <div class="toc-name">${opt.name}</div>
-                        <div class="toc-desc">${opt.desc}</div>
-                    </div>
-                    ${opt.isMassage
-                        ? '<div class="toc-value massage">+50%</div>'
-                        : `<div class="toc-value">${currentVal}</div>`
-                    }
-                    <div class="toc-cost">${opt.isMassage ? 'Gratis' : '-20 energie'}</div>
-                </div>
-            `;
-        }).join('');
-    }
+    }).join('');
 }
 
 // Training tabs switching
@@ -3568,20 +3572,22 @@ function selectTeamTraining(type) {
     renderTeamTraining();
 }
 
-// Train my player (individual training)
+// Train my player (individual training, 1x per day)
 window.trainMyPlayer = function(key) {
     const mp = initMyPlayer();
 
+    if (hasTrainedToday(mp)) {
+        showNotification('Je hebt vandaag al getraind! Kom morgen terug.', 'warning');
+        return;
+    }
+
     if (key === 'massage') {
         mp.energy = Math.min(100, mp.energy + 50);
+        mp.lastTrainingDate = getTodayString();
         showNotification('Massage voltooid! +50% energie', 'success');
     } else {
-        if (mp.energy < 20) {
-            showNotification('Niet genoeg energie! Neem eerst een massage.', 'warning');
-            return;
-        }
-        mp.energy -= 20;
         mp.attributes[key] = Math.min(99, mp.attributes[key] + 1);
+        mp.lastTrainingDate = getTodayString();
         showNotification(`${key} getraind! Nu op ${mp.attributes[key]}`, 'success');
     }
 
@@ -5115,17 +5121,26 @@ function renderJeugdteamPage() {
 
 function generateInitialYouthPlayers() {
     // Generate 3-5 players per age group
+    // Star allocation: pupillen 1x3★, junioren 1x2★, aspiranten 1x2★, rest 1★
     const ageGroups = [
-        { min: 12, max: 13, count: random(3, 5) },
-        { min: 14, max: 15, count: random(3, 5) },
-        { min: 16, max: 17, count: random(2, 4) }
+        { min: 12, max: 13, count: random(3, 5), topStars: 3 },
+        { min: 14, max: 15, count: random(3, 5), topStars: 2 },
+        { min: 16, max: 17, count: random(2, 4), topStars: 2 }
     ];
 
     ageGroups.forEach(group => {
+        const groupPlayers = [];
         for (let i = 0; i < group.count; i++) {
             const player = generateYouthPlayer(group.min, group.max);
-            gameState.youthPlayers.push(player);
+            player.potentialStars = 1;
+            groupPlayers.push(player);
         }
+        // Assign top stars to the best player in this group
+        groupPlayers.sort((a, b) => b.potential - a.potential);
+        if (groupPlayers.length > 0) {
+            groupPlayers[0].potentialStars = group.topStars;
+        }
+        groupPlayers.forEach(p => gameState.youthPlayers.push(p));
     });
 }
 
@@ -5237,11 +5252,11 @@ function renderYouthPlayers(ageGroup) {
 function createYouthPlayerCard(player) {
     const posData = POSITIONS[player.position] || { abbr: '??', color: '#666', name: 'Onbekend' };
     const canSign = player.age >= 16;
-    const supertalentClass = player.isSupertalent ? ' supertalent' : '';
+    const stars = player.potentialStars || 1;
 
     // Same flat 5-column grid layout as selectie cards
     return `
-        <div class="player-card youth-card${supertalentClass}" data-player-id="${player.id}">
+        <div class="player-card youth-card" data-player-id="${player.id}">
             <div class="pc-left">
                 <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
                 <div class="pc-age-box">
@@ -5250,7 +5265,7 @@ function createYouthPlayerCard(player) {
                 </div>
                 <img class="pc-flag-img" src="https://flagcdn.com/w40/${(player.nationality.code || 'nl').toLowerCase()}.png" alt="${player.nationality.code || 'NL'}" />
             </div>
-            <span class="pc-name">${player.name}${player.isSupertalent ? ' ⭐' : ''}</span>
+            <span class="pc-name">${player.name}</span>
             <span class="pc-finance">
                 <button class="btn ${canSign ? 'btn-primary' : 'btn-secondary'} btn-sign-contract btn-sm"
                         data-player-id="${player.id}"
@@ -5273,7 +5288,8 @@ function createYouthPlayerCard(player) {
                     <span class="pc-overall-label">ALG</span>
                 </div>
                 <div class="pc-potential-stars">
-                    <span class="pc-growth-text">Groei +${player.growthRate}/sz</span>
+                    <span class="pc-stars">${renderStarsHTML(stars)}</span>
+                    <span class="pc-potential-label">POT</span>
                 </div>
             </div>
         </div>
@@ -5867,6 +5883,28 @@ function initGame() {
 
     // Migrate existing players: ensure 90% Dutch nationality + zaterdagvoetbal stats
     migratePlayersToZaterdag();
+
+    // Migrate youth players: assign potentialStars if missing
+    if (gameState.youthPlayers && gameState.youthPlayers.length > 0) {
+        const needsMigration = gameState.youthPlayers.some(p => p.potentialStars === undefined);
+        if (needsMigration) {
+            // Group by age category and assign stars
+            const groups = { '12-13': [], '14-15': [], '16-17': [] };
+            gameState.youthPlayers.forEach(p => {
+                p.potentialStars = p.potentialStars || 1;
+                if (p.age <= 13) groups['12-13'].push(p);
+                else if (p.age <= 15) groups['14-15'].push(p);
+                else groups['16-17'].push(p);
+            });
+            const starAlloc = { '12-13': 3, '14-15': 2, '16-17': 2 };
+            Object.entries(groups).forEach(([key, players]) => {
+                if (players.length > 0) {
+                    players.sort((a, b) => b.potential - a.potential);
+                    players[0].potentialStars = starAlloc[key];
+                }
+            });
+        }
+    }
 
     // Check and apply daily reward (silently)
     const dailyRewardResult = checkDailyReward(gameState);

@@ -11763,6 +11763,7 @@ body {
     font-size: 0.8rem;
     color: var(--text-secondary);
     line-height: 1.5;
+    margin-bottom: 12px;
 }
 
 .youth-info-box p { margin: 0; }
@@ -13722,7 +13723,7 @@ body {
     padding-bottom: 20px;
 }
 
-/* Training page - individual training */
+/* Training page - vertical bar columns */
 .training-intro {
     background: var(--bg-card);
     border: 2px solid var(--border);
@@ -13736,148 +13737,98 @@ body {
 
 .training-intro p { margin: 0; }
 
-.my-player-training-stats {
+.training-cooldown {
+    font-size: 0.8rem;
+}
+
+.cooldown-badge {
+    padding: 4px 12px;
+    border-radius: var(--button-radius);
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.cooldown-badge.available {
+    background: rgba(76, 175, 80, 0.15);
+    color: var(--accent-green);
+}
+
+.cooldown-badge.used {
+    background: rgba(244, 67, 54, 0.12);
+    color: #f44336;
+}
+
+.training-columns {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    min-height: 400px;
+}
+
+.tc-column {
     background: var(--bg-card);
     border: 2px solid var(--border);
     border-radius: var(--card-radius);
-    padding: 16px 18px;
-    margin-bottom: 16px;
-}
-
-.training-player-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.training-player-name {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    color: var(--text-primary);
-}
-
-.training-player-energy {
-    font-family: var(--font-display);
-    font-size: 0.95rem;
-    font-weight: 600;
-}
-
-.training-attrs-display {
+    padding: 16px 8px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-}
-
-.training-attr {
-    display: grid;
-    grid-template-columns: 36px 1fr 32px;
     align-items: center;
     gap: 8px;
 }
 
-.ta-label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-}
-
-.ta-bar-track {
-    height: 8px;
-    background: var(--bg-primary);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.ta-bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.3s ease;
-}
-
-.ta-value {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    text-align: right;
-}
-
-.training-options-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 12px;
-}
-
-.training-option-card {
-    background: var(--bg-card);
-    border: 2px solid var(--border);
-    border-radius: var(--card-radius);
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.training-option-card:hover:not(.disabled) {
-    border-color: var(--accent-green-dim);
-    transform: translateY(-1px);
-}
-
-.training-option-card.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.toc-icon {
-    font-size: 1.8rem;
-    width: 44px;
-    height: 44px;
+.tc-icon {
+    font-size: 1.6rem;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-primary);
-    border-radius: 50%;
-    flex-shrink: 0;
 }
 
-.toc-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.toc-name {
+.tc-label {
     font-family: var(--font-display);
-    font-size: 0.95rem;
-    color: var(--text-primary);
-}
-
-.toc-desc {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    margin-top: 2px;
-}
-
-.toc-value {
-    font-family: var(--font-display);
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    min-width: 36px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
     text-align: center;
-}
-
-.toc-value.massage {
-    color: var(--accent-green);
-    font-size: 1rem;
-}
-
-.toc-cost {
-    font-size: 0.7rem;
-    color: var(--text-muted);
     white-space: nowrap;
+}
+
+.tc-bar-container {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 4px 0;
+}
+
+.tc-bar-track {
+    width: 28px;
+    height: 100%;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    min-height: 180px;
+}
+
+.tc-bar-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border-radius: 6px;
+    transition: height 0.4s ease;
+}
+
+.tc-value {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.tc-train-btn {
+    width: 100%;
+    font-size: 0.75rem;
+    padding: 6px 4px;
 }
 
 /* Position Training Modal */
