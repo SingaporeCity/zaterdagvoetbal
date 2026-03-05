@@ -5279,12 +5279,24 @@ function renderYouthPlayers(ageGroup) {
     });
 }
 
+function getYouthMaxLevel(age) {
+    if (age >= 16) return 5;  // Aspiranten
+    if (age >= 14) return 3;  // Junioren
+    return 1;                 // Pupillen
+}
+
+function getYouthLevel(overall, maxLevel) {
+    const normalized = Math.max(0, Math.min(1, (overall - 5) / 25));
+    return Math.max(1, Math.ceil(normalized * maxLevel));
+}
+
 function createYouthPlayerCard(player) {
     const posData = POSITIONS[player.position] || { abbr: '??', color: '#666', name: 'Onbekend' };
     const canSign = player.age >= 16;
     const stars = player.potentialStars || 1;
+    const maxLevel = getYouthMaxLevel(player.age);
+    const level = getYouthLevel(player.overall, maxLevel);
 
-    // Same flat 5-column grid layout as selectie cards
     return `
         <div class="player-card youth-card" data-player-id="${player.id}">
             <div class="pc-left">
@@ -5300,7 +5312,7 @@ function createYouthPlayerCard(player) {
                 <button class="btn ${canSign ? 'btn-primary' : 'btn-secondary'} btn-sign-contract btn-sm"
                         data-player-id="${player.id}"
                         ${!canSign ? 'disabled' : ''}>
-                    ${canSign ? 'Contract' : '16+'}
+                    ${canSign ? 'Overhevelen naar Eerste Team' : 'Te jong voor het eerste team'}
                 </button>
             </span>
             <div class="pc-condition-bars">
@@ -5314,8 +5326,8 @@ function createYouthPlayerCard(player) {
             </div>
             <div class="pc-ratings">
                 <div class="pc-overall" style="background: ${posData.color}">
-                    <span class="pc-overall-value">${player.overall || '?'}</span>
-                    <span class="pc-overall-label">ALG</span>
+                    <span class="pc-overall-value">${level}</span>
+                    <span class="pc-overall-label">Niv.</span>
                 </div>
                 <div class="pc-potential-stars">
                     <span class="pc-stars">${renderStarsHTML(stars)}</span>
@@ -5347,7 +5359,7 @@ function signYouthContract(playerId) {
     const youthPlayer = gameState.youthPlayers[playerIndex];
 
     if (youthPlayer.age < 16) {
-        alert('Spelers moeten minimaal 16 jaar oud zijn om een profcontract te tekenen.');
+        alert('Deze speler is te jong voor het eerste team.');
         return;
     }
 
