@@ -142,7 +142,7 @@
                             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                         </svg>
                     </span>
-                    <span>Scout</span>
+                    <span>Scouting</span>
                 </li>
                 <li class="nav-item" data-page="jeugdteam">
                     <span class="nav-icon">
@@ -980,128 +980,22 @@
             <section id="scout" class="page">
                 <header class="page-header">
                     <div class="header-left">
-                        <h2 class="page-title">Scout</h2>
-                        <p class="page-subtitle handwritten">Vind verborgen talent</p>
-                    </div>
-                    <div class="header-right">
-                        <div class="transfer-budget">
-                            <span class="budget-label">Budget:</span>
-                            <span class="budget-value" id="scout-budget">€5.000</span>
-                        </div>
+                        <h2 class="page-title">Scouting</h2>
+                        <p class="page-subtitle handwritten">Nieuwe spelers vinden</p>
                     </div>
                 </header>
 
-                <!-- Scout Hire Card (shown when no scout) -->
-                <div class="scout-hire-card" id="scout-hire-card">
-                    <div class="shc-icon">🔍</div>
-                    <h3>Scout Aannemen</h3>
-                    <p>Om spelers te kunnen vinden heb je een scout nodig. Je scout vindt elke dag 3 nieuwe spelers die je kunt bekijken.</p>
-                    <ul class="shc-features">
-                        <li>📋 Dagelijks 3 nieuwe spelers</li>
-                        <li>🔍 Scout vaker voor meer zekerheid</li>
-                        <li>✕ Niet interessant? Morgen nieuwe kans</li>
-                    </ul>
-                    <button class="btn btn-primary btn-lg" onclick="hireScoutDirect()">
-                        Scout Aannemen — €1
-                    </button>
+                <div class="scout-intro-box">
+                    <p>Bij het zaterdagvoetbal heb je geen professionele scout. Maar af en toe krijg je een tip van een vriend over iemand die (soms tegen betaling) wel wil meespelen. Houd deze pagina in de gaten!</p>
                 </div>
 
-                <!-- Scouting Interface (hidden until scout hired) -->
-                <div class="scout-grid" id="scout-interface">
-                    <!-- Left Panel: Scout & Filters -->
-                    <div class="scout-panel card">
-                        <!-- Scout Avatar -->
-                        <div class="scout-avatar-section">
-                            <div class="scout-avatar">
-                                <svg viewBox="0 0 100 120" class="scout-svg">
-                                    <circle cx="50" cy="50" r="45" fill="#f5f5f5"/>
-                                    <ellipse cx="50" cy="48" rx="28" ry="30" fill="#d4a574"/>
-                                    <ellipse cx="50" cy="25" rx="26" ry="14" fill="#4a4a4a"/>
-                                    <ellipse cx="30" cy="35" rx="8" ry="12" fill="#4a4a4a"/>
-                                    <ellipse cx="70" cy="35" rx="8" ry="12" fill="#4a4a4a"/>
-                                    <ellipse cx="40" cy="45" rx="6" ry="7" fill="white"/>
-                                    <ellipse cx="60" cy="45" rx="6" ry="7" fill="white"/>
-                                    <circle cx="41" cy="46" r="3" fill="#2c3e50"/>
-                                    <circle cx="61" cy="46" r="3" fill="#2c3e50"/>
-                                    <circle cx="42" cy="45" r="1" fill="white"/>
-                                    <circle cx="62" cy="45" r="1" fill="white"/>
-                                    <path d="M34 38 Q40 35 46 38" fill="none" stroke="#3d3d3d" stroke-width="2"/>
-                                    <path d="M54 38 Q60 35 66 38" fill="none" stroke="#3d3d3d" stroke-width="2"/>
-                                    <ellipse cx="50" cy="55" rx="4" ry="5" fill="#c68642"/>
-                                    <path d="M42 65 Q50 72 58 65" fill="none" stroke="#8b5a3c" stroke-width="2" stroke-linecap="round"/>
-                                    <path d="M22 95 Q22 80 35 78 L50 85 L65 78 Q78 80 78 95 L78 120 L22 120 Z" fill="#1565c0"/>
-                                    <path d="M40 78 L50 88 L60 78" fill="white"/>
-                                    <g transform="translate(68, 55)">
-                                        <circle cx="12" cy="12" r="14" fill="none" stroke="#ff9800" stroke-width="4"/>
-                                        <circle cx="12" cy="12" r="10" fill="#fff9c4" fill-opacity="0.4"/>
-                                        <line x1="0" y1="24" x2="-10" y2="38" stroke="#795548" stroke-width="5" stroke-linecap="round"/>
-                                    </g>
-                                    <circle cx="30" cy="95" r="8" fill="#ffc107"/>
-                                    <text x="30" y="99" text-anchor="middle" fill="#5d4e37" font-size="10" font-weight="bold">S</text>
-                                </svg>
-                            </div>
-                            <div class="scout-info">
-                                <h3>Jan de Vries</h3>
-                                <span class="scout-title">Hoofdscout</span>
-                            </div>
-                        </div>
-
-                        <!-- Filters -->
-                        <div class="scout-filters">
-                            <div class="filter-group">
-                                <label>Positie</label>
-                                <select id="scout-position" class="scout-select">
-                                    <option value="all">Alle posities</option>
-                                    <option value="keeper">Keeper</option>
-                                    <option value="linksback">Linksback</option>
-                                    <option value="centraleVerdediger">Centrale Verdediger</option>
-                                    <option value="rechtsback">Rechtsback</option>
-                                    <option value="linksMid">Links Middenvelder</option>
-                                    <option value="centraleMid">Centrale Middenvelder</option>
-                                    <option value="rechtsMid">Rechts Middenvelder</option>
-                                    <option value="linksbuiten">Linksbuiten</option>
-                                    <option value="rechtsbuiten">Rechtsbuiten</option>
-                                    <option value="spits">Spits</option>
-                                </select>
-                            </div>
-
-                            <div class="filter-group">
-                                <label>Leeftijd: <span id="age-range-display">16 - 35</span></label>
-                                <div class="age-inputs">
-                                    <input type="number" id="scout-min-age" min="16" max="35" value="16" class="age-input">
-                                    <span class="age-separator">—</span>
-                                    <input type="number" id="scout-max-age" min="16" max="35" value="35" class="age-input">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Scout Button -->
-                        <button class="btn btn-primary btn-scout" id="scout-search-btn">
-                            <span class="btn-scout-icon">🔍</span>
-                            <span class="btn-scout-text">Scout Versturen</span>
-                        </button>
-
-                        <!-- Scout Status -->
-                        <div class="scout-status" id="scout-status">
-                            <p class="scout-status-text">Klaar om te scouten</p>
-                        </div>
-                    </div>
-
-                    <!-- Right Panel: Results -->
-                    <div class="scout-results-panel">
-                        <div class="results-header">
-                            <h3>Scout Rapporten</h3>
-                            <span class="results-count" id="results-count">0 spelers gevonden</span>
-                        </div>
-
-                        <div class="scout-results-grid" id="scout-results">
-                            <!-- Empty state -->
-                            <div class="scout-empty-state" id="scout-empty">
-                                <div class="empty-icon">🔍</div>
-                                <h4>Geen rapporten</h4>
-                                <p>Stuur je scout op pad om talent te vinden</p>
-                            </div>
-                        </div>
+                <div class="scout-locked-card">
+                    <div class="slc-icon">🏗️</div>
+                    <h3>Scoutingscentrum</h3>
+                    <p>Je hebt nog geen scoutingscentrum. Promoveer eerst naar <strong>Divisie 5</strong> om een scoutingscentrum te kunnen bouwen en gericht spelers te zoeken.</p>
+                    <div class="slc-requirement">
+                        <span class="slc-req-icon">🔒</span>
+                        <span class="slc-req-text">Vereist: Divisie 5</span>
                     </div>
                 </div>
             </section>
