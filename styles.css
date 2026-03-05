@@ -4980,9 +4980,9 @@ body {
    ================================================ */
 .player-card {
     display: grid;
-    grid-template-columns: 80px 1fr 130px auto;
+    grid-template-columns: 80px minmax(100px, 1fr) 36px 140px 130px auto;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     padding: 6px 16px;
     background: linear-gradient(90deg, var(--bg-card) 0%, var(--bg-primary) 100%);
     border-bottom: 1px solid var(--border);

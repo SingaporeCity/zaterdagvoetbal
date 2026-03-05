@@ -884,7 +884,7 @@ function createPlayerCardHTML(player, mini = false) {
         ? potentialToStarsGlobal(99)
         : (player.overall >= 25 ? 2 : 1);
 
-    // Compact horizontal card
+    // Compact horizontal card - flat grid layout for equal column alignment
     return `
         <div class="player-card${myPlayerClass}" data-player-id="${player.id}">
             <div class="pc-left">
@@ -894,16 +894,12 @@ function createPlayerCardHTML(player, mini = false) {
                 </div>
                 <img class="pc-flag-img" src="https://flagcdn.com/w40/${(player.nationality.code || 'nl').toLowerCase()}.png" alt="${player.nationality.code || 'NL'}" />
             </div>
-            <div class="pc-info">
-                <div class="pc-name-row">
-                    <span class="pc-name">${player.name}</span>
-                    <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
-                    <span class="pc-finance">
-                        <span class="pc-salary">${formatCurrency(player.salary ?? 50)}/w</span>
-                        <span class="pc-value">${formatCurrency(marketValue)}</span>
-                    </span>
-                </div>
-            </div>
+            <span class="pc-name">${player.name}</span>
+            <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
+            <span class="pc-finance">
+                <span class="pc-salary">${formatCurrency(player.salary ?? 50)}/w</span>
+                <span class="pc-value">${formatCurrency(marketValue)}</span>
+            </span>
             <div class="pc-condition-bars">
                 <div class="pc-bar-item">
                     <span class="pc-bar-label">Energie</span>
@@ -5722,6 +5718,34 @@ function initChairmanTips() {
     chairmanTipInterval = setInterval(updateChairmanTip, 15000);
 }
 
+function migratePlayersToZaterdag() {
+    if (!gameState.players || gameState.players.length === 0) return;
+
+    const nlNat = NATIONALITIES[0]; // { code: 'NL', flag: '🇳🇱', ... }
+
+    gameState.players.forEach(player => {
+        // Ensure nationality has code property (needed for flag images)
+        if (player.nationality && !player.nationality.code) {
+            const match = NATIONALITIES.find(n => n.name === player.nationality.name);
+            if (match) {
+                player.nationality = match;
+            } else {
+                player.nationality = nlNat;
+            }
+        }
+
+        // Make ~90% Dutch: if not already Dutch, 90% chance to convert
+        if (player.nationality && player.nationality.code !== 'NL' && Math.random() < 0.90) {
+            player.nationality = nlNat;
+        }
+
+        // Zaterdagvoetbal stats: salary 0, age 40-55, low overall
+        player.salary = 0;
+        if (player.age < 40) player.age = random(40, 55);
+        if (player.fixedMarketValue === undefined) player.fixedMarketValue = 0;
+    });
+}
+
 function initGame() {
     // Check for existing save
     const savedState = loadGame();
@@ -5742,6 +5766,9 @@ function initGame() {
         gameState.standings = generateNewStandings(gameState.club.name, gameState.club.division);
         gameState.achievements = initAchievements();
     }
+
+    // Migrate existing players: ensure 90% Dutch nationality + zaterdagvoetbal stats
+    migratePlayersToZaterdag();
 
     // Check and apply daily reward (silently)
     const dailyRewardResult = checkDailyReward(gameState);
