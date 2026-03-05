@@ -970,7 +970,6 @@ function renderMijnSpelerPage() {
     if (!container) return;
 
     const mp = initMyPlayer();
-    const derived = getMyPlayerDerived(mp);
     const a = mp.attributes;
 
     function statBar(label, value, color) {
@@ -980,13 +979,6 @@ function renderMijnSpelerPage() {
                 <div class="mp-stat-bar-fill" style="width: ${value}%; background: ${color}"></div>
             </div>
             <span class="mp-stat-value">${value}</span>
-        </div>`;
-    }
-
-    function derivedBlock(label, value, color) {
-        return `<div class="mp-derived-stat">
-            <span class="mp-derived-value" style="color: ${color}">${value}</span>
-            <span class="mp-derived-label">${label}</span>
         </div>`;
     }
 
@@ -1046,7 +1038,7 @@ function renderMijnSpelerPage() {
 
     container.innerHTML = `
         <div class="mp-layout">
-            <div class="mp-left">
+            <div class="mp-top">
                 <div class="mp-avatar-card">
                     <div class="mp-avatar">
                         <svg viewBox="0 0 80 100">
@@ -1072,37 +1064,6 @@ function renderMijnSpelerPage() {
                     </div>
                 </div>
 
-                <div class="mp-derived-section">
-                    ${derivedBlock('Aanval', derived.aanval, '#ef5350')}
-                    ${derivedBlock('Verdediging', derived.verdediging, '#42a5f5')}
-                    ${derivedBlock('Gemiddeld', derived.gemiddeld, 'var(--accent-amber)')}
-                </div>
-            </div>
-
-            <div class="mp-right">
-                <div class="mp-stats-section">
-                    <h4 class="mp-section-title">Kwaliteiten</h4>
-                    ${statBar('Snelheid', a.SNE, '#ff9800')}
-                    ${statBar('Techniek', a.TEC, '#4caf50')}
-                    ${statBar('Passen', a.PAS, '#29b6f6')}
-                    ${statBar('Schieten', a.SCH, '#ef5350')}
-                    ${statBar('Verdedigen', a.VER, '#7e57c2')}
-                    ${statBar('Fysiek', a.FYS, '#8d6e63')}
-                </div>
-
-                <div class="mp-stats-section">
-                    <h4 class="mp-section-title">Energie</h4>
-                    <div class="mp-energy-bar">
-                        <div class="mp-energy-track">
-                            <div class="mp-energy-fill" style="width: ${energy}%; background: ${energyColor}"></div>
-                        </div>
-                        <div class="mp-energy-info">
-                            <span class="mp-energy-value" style="color: ${energyColor}">${energy}%</span>
-                            <span class="mp-energy-label">${energyLabel}</span>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="mp-dual-grid">
                     <div class="mp-stats-section">
                         <h4 class="mp-section-title">Seizoen ${totalSeasons}</h4>
@@ -1124,6 +1085,33 @@ function renderMijnSpelerPage() {
                             ${recordItem(stats.losses || 0, 'Verloren')}
                             ${recordItem(stats.promotions || 0, 'Promoties')}
                             ${recordItem(highestDiv, 'Hoogste divisie')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mp-bottom">
+                <div class="mp-dual-grid">
+                    <div class="mp-stats-section">
+                        <h4 class="mp-section-title">Kwaliteiten</h4>
+                        ${statBar('Snelheid', a.SNE, '#ff9800')}
+                        ${statBar('Techniek', a.TEC, '#4caf50')}
+                        ${statBar('Passen', a.PAS, '#29b6f6')}
+                        ${statBar('Schieten', a.SCH, '#ef5350')}
+                        ${statBar('Verdedigen', a.VER, '#7e57c2')}
+                        ${statBar('Fysiek', a.FYS, '#8d6e63')}
+                    </div>
+
+                    <div class="mp-stats-section">
+                        <h4 class="mp-section-title">Energie</h4>
+                        <div class="mp-energy-bar">
+                            <div class="mp-energy-track">
+                                <div class="mp-energy-fill" style="width: ${energy}%; background: ${energyColor}"></div>
+                            </div>
+                            <div class="mp-energy-info">
+                                <span class="mp-energy-value" style="color: ${energyColor}">${energy}%</span>
+                                <span class="mp-energy-label">${energyLabel}</span>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -18819,15 +18819,20 @@ body {
 }
 
 .mp-layout {
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     width: 100%;
-    height: 100%;
-    align-content: stretch;
 }
 
-.mp-left {
+.mp-top {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.mp-bottom {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -18888,49 +18893,6 @@ body {
 .mp-number {
     font-family: var(--font-display);
     color: var(--accent-amber);
-}
-
-.mp-derived-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    background: var(--bg-card);
-    border-radius: var(--card-radius);
-    border: 1px solid rgba(255, 200, 50, 0.07);
-    box-shadow: 0 4px 16px var(--shadow);
-    overflow: hidden;
-}
-
-.mp-derived-stat {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 20px;
-    border-bottom: 1px solid rgba(255, 200, 50, 0.05);
-}
-
-.mp-derived-stat:last-child {
-    border-bottom: none;
-}
-
-.mp-derived-label {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.mp-derived-value {
-    font-family: var(--font-display);
-    font-size: 1.6rem;
-    font-weight: 700;
-    line-height: 1;
-}
-
-.mp-right {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
 }
 
 .mp-stats-section {
@@ -19026,7 +18988,7 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* --- Dual grid (Seizoen + Carriere naast elkaar) --- */
+/* --- Dual grid --- */
 .mp-dual-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -19114,23 +19076,8 @@ body {
 
 /* Mobile: stack vertically */
 @media (max-width: 768px) {
-    .mp-layout {
+    .mp-top {
         grid-template-columns: 1fr;
-        height: auto;
-    }
-    .mp-derived-section {
-        flex-direction: row;
-    }
-    .mp-derived-stat {
-        flex-direction: column;
-        text-align: center;
-        gap: 4px;
-        padding: 12px 8px;
-        border-bottom: none;
-        border-right: 1px solid rgba(255, 200, 50, 0.05);
-    }
-    .mp-derived-stat:last-child {
-        border-right: none;
     }
     .mp-dual-grid {
         grid-template-columns: 1fr;
