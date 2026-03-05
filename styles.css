@@ -4,43 +4,43 @@
 
 /* CSS Custom Properties */
 :root {
-    /* VOETBALKANTINE - Lighter Green Palette */
-    --bg-primary: #162b12;
-    --bg-secondary: #1e3518;
-    --bg-card: #243d1e;
-    --bg-card-hover: #2c4a26;
-    --bg-sidebar: #1a2814;
+    /* VOETBALKANTINE - Speels & Leesbaar */
+    --bg-primary: #13241a;
+    --bg-secondary: #1a3025;
+    --bg-card: #1e3a2a;
+    --bg-card-hover: #264a34;
+    --bg-sidebar: #111e16;
 
-    /* Accent Colors - Kantine */
-    --accent-green: #4caf50;
-    --accent-green-dim: #388e3c;
-    --accent-orange: #ff8f00;
-    --accent-orange-glow: rgba(255, 143, 0, 0.35);
-    --accent-amber: #ffb300;
-    --accent-cream: #fff8e1;
+    /* Accent Colors - Levendig */
+    --accent-green: #5ce065;
+    --accent-green-dim: #3db847;
+    --accent-orange: #ff9020;
+    --accent-orange-glow: rgba(255, 144, 32, 0.4);
+    --accent-amber: #ffc940;
+    --accent-cream: #fffdf5;
 
-    /* Text */
-    --text-primary: #f0ece0;
-    --text-secondary: #b0a890;
-    --text-muted: #7d7560;
+    /* Text - Hoger contrast */
+    --text-primary: #f5f2ea;
+    --text-secondary: #c4bda8;
+    --text-muted: #8a8270;
 
     /* Borders & Surfaces */
-    --border: rgba(255, 248, 225, 0.10);
-    --border-accent: rgba(76, 175, 80, 0.30);
-    --glass: rgba(255, 248, 225, 0.04);
-    --shadow: rgba(0, 0, 0, 0.4);
+    --border: rgba(255, 248, 225, 0.12);
+    --border-accent: rgba(92, 224, 101, 0.30);
+    --glass: rgba(255, 248, 225, 0.05);
+    --shadow: rgba(0, 0, 0, 0.45);
 
     /* Status */
-    --success: #4caf50;
-    --warning: #ffb300;
-    --error: #e53935;
-    --info: #42a5f5;
+    --success: #5ce065;
+    --warning: #ffc940;
+    --error: #ff5252;
+    --info: #52b5ff;
 
     /* Sizing */
     --sidebar-width: 260px;
     --header-height: 80px;
-    --card-radius: 10px;
-    --button-radius: 8px;
+    --card-radius: 12px;
+    --button-radius: 10px;
 
     /* Typography */
     --font-display: 'Bebas Neue', sans-serif;
@@ -72,10 +72,17 @@ body {
     line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
-    /* Subtle noise texture for worn kantine feel */
+    /* Grass stripe texture + warm kantine glow */
     background-image:
-        radial-gradient(ellipse at 20% 50%, rgba(76, 175, 80, 0.03) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(255, 143, 0, 0.02) 0%, transparent 50%);
+        repeating-linear-gradient(
+            90deg,
+            rgba(92, 224, 101, 0.012) 0px,
+            rgba(92, 224, 101, 0.012) 40px,
+            transparent 40px,
+            transparent 80px
+        ),
+        radial-gradient(ellipse at 15% 85%, rgba(255, 180, 50, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 15%, rgba(92, 224, 101, 0.025) 0%, transparent 50%);
 }
 
 /* Grass Texture Overlay - hidden in dark theme */
@@ -97,7 +104,15 @@ body {
    ================================================ */
 .sidebar {
     width: var(--sidebar-width);
-    background: linear-gradient(180deg, #2a2010 0%, #1a2814 40%, #182510 100%);
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent 0px,
+            transparent 59px,
+            rgba(255, 200, 100, 0.02) 59px,
+            rgba(255, 200, 100, 0.02) 60px
+        ),
+        linear-gradient(180deg, #1e2418 0%, #18261a 50%, #121c10 100%);
     color: var(--text-primary);
     display: flex;
     flex-direction: column;
@@ -106,8 +121,8 @@ body {
     left: 0;
     bottom: 0;
     z-index: 100;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.6);
-    border-right: 1px solid rgba(255, 200, 50, 0.06);
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5);
+    border-right: 1px solid rgba(92, 224, 101, 0.08);
 }
 
 .sidebar::before {
@@ -119,10 +134,10 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
-    border-bottom: 1px solid rgba(255, 200, 50, 0.1);
+    border-bottom: 1px solid rgba(92, 224, 101, 0.1);
     position: relative;
     z-index: 1;
-    background: rgba(0, 0, 0, 0.15);
+    background: linear-gradient(180deg, rgba(255, 180, 50, 0.06) 0%, rgba(0, 0, 0, 0.15) 100%);
 }
 
 .club-badge {
@@ -156,12 +171,12 @@ body {
 
 .club-division {
     font-size: 0.85rem;
-    background: rgba(255, 179, 0, 0.15);
+    background: rgba(255, 201, 64, 0.15);
     color: var(--accent-amber);
     padding: 2px 8px;
     border-radius: 4px;
     display: inline-block;
-    border: 1px solid rgba(255, 179, 0, 0.1);
+    border: 1px solid rgba(255, 201, 64, 0.1);
     letter-spacing: 0.5px;
 }
 
@@ -201,11 +216,11 @@ body {
     background: var(--accent-amber);
     transform: scaleY(0);
     transition: transform var(--transition-normal);
-    box-shadow: 0 0 8px rgba(255, 179, 0, 0.4);
+    box-shadow: 0 0 8px rgba(255, 201, 64, 0.4);
 }
 
 .nav-item:hover {
-    background: rgba(255, 179, 0, 0.06);
+    background: rgba(255, 201, 64, 0.06);
 }
 
 .nav-item:hover::before {
@@ -213,7 +228,7 @@ body {
 }
 
 .nav-item.active {
-    background: rgba(255, 179, 0, 0.1);
+    background: linear-gradient(90deg, rgba(255, 200, 64, 0.12) 0%, rgba(92, 224, 101, 0.04) 100%);
     color: var(--accent-amber);
 }
 
@@ -252,7 +267,7 @@ body {
 
 .sidebar-footer {
     padding: 20px;
-    border-top: 1px solid rgba(255, 200, 50, 0.08);
+    border-top: 1px solid rgba(92, 224, 101, 0.08);
     position: relative;
     z-index: 1;
     background: rgba(0, 0, 0, 0.1);
@@ -266,10 +281,10 @@ body {
 
 .quick-stats .stat {
     text-align: center;
-    background: rgba(255, 248, 225, 0.04);
+    background: linear-gradient(135deg, rgba(255, 248, 225, 0.04) 0%, rgba(255, 180, 50, 0.02) 100%);
     padding: 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 200, 50, 0.06);
+    border-radius: 10px;
+    border: 1px solid rgba(92, 224, 101, 0.06);
 }
 
 .quick-stats .stat-label {
@@ -296,6 +311,8 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    /* Zijlijn accent */
+    border-left: 2px solid rgba(92, 224, 101, 0.04);
 }
 
 /* Page Styles */
@@ -345,8 +362,23 @@ body {
     align-items: flex-start;
     margin-bottom: 12px;
     padding-bottom: 10px;
-    border-bottom: 2px solid rgba(255, 200, 50, 0.06);
+    border-bottom: 2px solid rgba(92, 224, 101, 0.1);
     flex-shrink: 0;
+    position: relative;
+}
+
+/* Middenstip accent on page header */
+.page-header::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--bg-primary);
+    border: 2px solid rgba(92, 224, 101, 0.1);
 }
 
 .page-title {
@@ -355,7 +387,7 @@ body {
     color: var(--accent-cream);
     letter-spacing: 3px;
     margin-bottom: 4px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .page-subtitle {
@@ -408,11 +440,33 @@ body {
     box-shadow: 0 4px 12px var(--shadow);
     overflow: hidden;
     transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
+    position: relative;
+}
+
+/* Hoekvlag accent — subtle corner arc */
+.card::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(92, 224, 101, 0.06);
+    border-radius: 0 0 16px 0;
+    border-top: none;
+    border-left: none;
+    pointer-events: none;
+    z-index: 1;
+    transition: border-color var(--transition-normal);
 }
 
 .card:hover {
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 20px rgba(92, 224, 101, 0.12);
     border-color: var(--border-accent);
+}
+
+.card:hover::before {
+    border-color: rgba(92, 224, 101, 0.2);
 }
 
 .card-header {
@@ -420,7 +474,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 16px 20px;
-    background: var(--bg-secondary);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(255, 180, 50, 0.03) 100%);
     border-bottom: 1px solid var(--border);
 }
 
@@ -514,11 +568,24 @@ body {
 .next-match-card::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(76, 175, 80, 0.05) 0%, transparent 70%);
+    top: 50%;
+    right: 30px;
+    width: 80px;
+    height: 80px;
+    transform: translateY(-50%);
+    border: 2px solid rgba(92, 224, 101, 0.06);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.next-match-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 70px;
+    width: 2px;
+    height: 100%;
+    background: rgba(92, 224, 101, 0.05);
     pointer-events: none;
 }
 
@@ -684,7 +751,7 @@ body {
 }
 
 .standings-table tr.highlight {
-    background: linear-gradient(90deg, rgba(76, 175, 80, 0.08) 0%, transparent 100%);
+    background: linear-gradient(90deg, rgba(92, 224, 101, 0.08) 0%, transparent 100%);
 }
 
 .standings-table tr.highlight td:first-child {
@@ -730,7 +797,7 @@ body {
 
 .quick-action:hover {
     border-color: var(--border-accent);
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 15px rgba(92, 224, 101, 0.1);
 }
 
 .action-icon {
@@ -842,7 +909,7 @@ body {
     font-size: 0.8rem;
     font-weight: 700;
     color: var(--accent-green-dim);
-    background: rgba(76, 175, 80, 0.08);
+    background: rgba(92, 224, 101, 0.08);
     padding: 1px 6px;
     border-radius: 8px;
 }
@@ -899,12 +966,12 @@ body {
 }
 
 .news-badge.match {
-    background: rgba(76, 175, 80, 0.15);
+    background: rgba(92, 224, 101, 0.15);
     color: var(--success);
 }
 
 .news-badge.transfer {
-    background: rgba(255, 143, 0, 0.15);
+    background: rgba(255, 144, 32, 0.15);
     color: var(--accent-orange);
 }
 
@@ -1374,7 +1441,7 @@ body {
 
 .combo-mini.active {
     border-left-color: var(--accent-orange);
-    background: rgba(255, 143, 0, 0.08);
+    background: rgba(255, 144, 32, 0.08);
     opacity: 1;
 }
 
@@ -1483,7 +1550,7 @@ body {
 
 .combo.active {
     border-left-color: var(--accent-orange);
-    background: rgba(255, 143, 0, 0.08);
+    background: rgba(255, 144, 32, 0.08);
 }
 
 .combo-name {
@@ -1864,12 +1931,12 @@ body {
 
 .session-card.completed {
     border-color: var(--success);
-    background: linear-gradient(135deg, rgba(76, 175, 80, 0.06) 0%, var(--bg-card) 100%);
+    background: linear-gradient(135deg, rgba(92, 224, 101, 0.06) 0%, var(--bg-card) 100%);
 }
 
 .session-card.active {
     border-color: var(--accent-orange);
-    box-shadow: 0 0 0 4px rgba(255, 143, 0, 0.15);
+    box-shadow: 0 0 0 4px rgba(255, 144, 32, 0.15);
 }
 
 .session-card.locked {
@@ -1941,12 +2008,12 @@ body {
 
 .training-type-btn:hover {
     border-color: var(--border-accent);
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 15px rgba(92, 224, 101, 0.1);
 }
 
 .training-type-btn.selected {
     border-color: var(--accent-orange);
-    background: rgba(255, 143, 0, 0.08);
+    background: rgba(255, 144, 32, 0.08);
 }
 
 .training-icon {
@@ -2121,7 +2188,7 @@ body {
 }
 
 .tier-facility {
-    background: rgba(76, 175, 80, 0.08);
+    background: rgba(92, 224, 101, 0.08);
     color: var(--accent-green-dim);
     font-size: 0.65rem;
     padding: 2px 6px;
@@ -2213,11 +2280,11 @@ body {
     position: relative;
 }
 
-.facility-slot:hover { box-shadow: 0 0 10px rgba(76, 175, 80, 0.15); }
+.facility-slot:hover { box-shadow: 0 0 10px rgba(92, 224, 101, 0.15); }
 
 .facility-slot.empty {
-    background: rgba(76, 175, 80, 0.08);
-    border: 2px dashed rgba(76, 175, 80, 0.15);
+    background: rgba(92, 224, 101, 0.08);
+    border: 2px dashed rgba(92, 224, 101, 0.15);
 }
 
 .facility-slot.built {
@@ -2344,7 +2411,7 @@ body {
 
 .upgrade-card.current {
     border-color: var(--success);
-    background: linear-gradient(90deg, rgba(76, 175, 80, 0.06) 0%, var(--bg-card) 100%);
+    background: linear-gradient(90deg, rgba(92, 224, 101, 0.06) 0%, var(--bg-card) 100%);
 }
 
 .upgrade-card.locked {
@@ -2418,7 +2485,7 @@ body {
 
 .scout-mission.active {
     border-color: var(--accent-orange);
-    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(255, 143, 0, 0.04) 100%);
+    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(255, 144, 32, 0.04) 100%);
 }
 
 .scout-mission.complete {
@@ -2623,7 +2690,7 @@ body {
 }
 
 .transfer-card:hover {
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 20px rgba(92, 224, 101, 0.1);
     border-color: var(--border-accent);
 }
 
@@ -3026,11 +3093,13 @@ body {
     background: linear-gradient(135deg, var(--accent-green), var(--accent-green-dim));
     color: white;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(92, 224, 101, 0.15);
 }
 
 .btn-primary:hover {
     background: linear-gradient(135deg, var(--accent-green-dim), var(--accent-green));
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 4px 20px rgba(92, 224, 101, 0.3);
+    transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -4160,7 +4229,7 @@ body {
 }
 
 .transfer-card:hover {
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.08);
+    box-shadow: 0 0 15px rgba(92, 224, 101, 0.08);
     border-color: var(--border-accent);
 }
 
@@ -5018,7 +5087,7 @@ body {
 
 /* Highlight "Mijn Speler" in selectie */
 .player-card.my-player-card {
-    background: linear-gradient(90deg, rgba(255, 179, 0, 0.08) 0%, rgba(255, 179, 0, 0.03) 100%);
+    background: linear-gradient(90deg, rgba(255, 201, 64, 0.08) 0%, rgba(255, 201, 64, 0.03) 100%);
     border-left: 3px solid var(--accent-amber);
 }
 
@@ -5495,7 +5564,7 @@ body {
 }
 
 .player-card-row:hover {
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.08);
+    box-shadow: 0 0 15px rgba(92, 224, 101, 0.08);
     border-color: var(--border-accent);
 }
 
@@ -5772,7 +5841,7 @@ body {
 
 .network-option.selected {
     border-color: var(--success);
-    background: rgba(76, 175, 80, 0.1);
+    background: rgba(92, 224, 101, 0.1);
 }
 
 .network-icon {
@@ -6781,7 +6850,7 @@ body {
 
 .trainer-card.training {
     border-color: var(--accent-orange);
-    background: rgba(255, 143, 0, 0.04);
+    background: rgba(255, 144, 32, 0.04);
 }
 
 .tc-icon {
@@ -6903,8 +6972,8 @@ body {
 
 .trainer-icon.aan { background: rgba(255, 82, 82, 0.1); }
 .trainer-icon.ver { background: rgba(68, 138, 255, 0.1); }
-.trainer-icon.tec { background: rgba(76, 175, 80, 0.08); }
-.trainer-icon.sne { background: rgba(255, 143, 0, 0.1); }
+.trainer-icon.tec { background: rgba(92, 224, 101, 0.08); }
+.trainer-icon.sne { background: rgba(255, 144, 32, 0.1); }
 .trainer-icon.fys { background: rgba(156, 39, 176, 0.1); }
 
 .trainer-info h4 {
@@ -7035,7 +7104,7 @@ body {
 }
 
 .tto-icon.defense { background: rgba(68, 138, 255, 0.1); }
-.tto-icon.setpiece { background: rgba(255, 143, 0, 0.1); }
+.tto-icon.setpiece { background: rgba(255, 144, 32, 0.1); }
 .tto-icon.attack { background: rgba(255, 82, 82, 0.1); }
 
 .tto-info h4 {
@@ -7112,7 +7181,7 @@ body {
 
 .staff-card:hover:not(.locked):not(.hired) {
     border-color: var(--border-accent);
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.08);
+    box-shadow: 0 0 15px rgba(92, 224, 101, 0.08);
 }
 
 .staff-icon {
@@ -7276,8 +7345,8 @@ body {
 }
 
 .intensity-effect-item.positive {
-    background: rgba(76, 175, 80, 0.1);
-    border: 1px solid rgba(76, 175, 80, 0.3);
+    background: rgba(92, 224, 101, 0.1);
+    border: 1px solid rgba(92, 224, 101, 0.3);
 }
 
 .intensity-effect-item.negative {
@@ -7365,7 +7434,7 @@ body {
 
 .assistant-card:hover:not(.hired):not(.locked) {
     border-color: var(--border-accent);
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.08);
+    box-shadow: 0 0 15px rgba(92, 224, 101, 0.08);
 }
 
 .assistant-card.locked {
@@ -7824,7 +7893,7 @@ body {
 }
 
 .stadium-upgrade-item.owned {
-    background: rgba(76, 175, 80, 0.1);
+    background: rgba(92, 224, 101, 0.1);
     border-color: var(--success);
 }
 
@@ -7924,7 +7993,7 @@ body {
 }
 
 .iso-facility:hover {
-    filter: brightness(1.15) drop-shadow(0 0 12px rgba(76, 175, 80, 0.3));
+    filter: brightness(1.15) drop-shadow(0 0 12px rgba(92, 224, 101, 0.3));
 }
 
 .iso-facility text {
@@ -8038,7 +8107,7 @@ body {
 
 .sponsor-card.selected {
     border-color: var(--accent-green-dim);
-    background: rgba(76, 175, 80, 0.04);
+    background: rgba(92, 224, 101, 0.04);
 }
 
 .sponsor-icon {
@@ -8057,12 +8126,12 @@ body {
 }
 
 .sponsor-icon.balanced {
-    background: rgba(76, 175, 80, 0.08);
+    background: rgba(92, 224, 101, 0.08);
     color: var(--accent-green-dim);
 }
 
 .sponsor-icon.risky {
-    background: rgba(255, 143, 0, 0.1);
+    background: rgba(255, 144, 32, 0.1);
     color: var(--accent-orange);
 }
 
@@ -8085,12 +8154,12 @@ body {
 }
 
 .risk-indicator.low {
-    background: rgba(76, 175, 80, 0.08);
+    background: rgba(92, 224, 101, 0.08);
     color: var(--accent-green-dim);
 }
 
 .risk-indicator.medium {
-    background: rgba(255, 143, 0, 0.1);
+    background: rgba(255, 144, 32, 0.1);
     color: var(--accent-orange);
 }
 
@@ -8216,7 +8285,7 @@ body {
 }
 
 .activity-icon.trainingcamp {
-    background: rgba(76, 175, 80, 0.08);
+    background: rgba(92, 224, 101, 0.08);
     color: var(--accent-green-dim);
 }
 
@@ -8244,7 +8313,7 @@ body {
 }
 
 .activity-effect {
-    background: rgba(76, 175, 80, 0.08);
+    background: rgba(92, 224, 101, 0.08);
     color: var(--accent-green-dim);
     padding: 8px 12px;
     border-radius: 6px;
@@ -8679,7 +8748,7 @@ body {
 
 .lineup-slot.drag-over .lineup-empty-slot {
     border-color: var(--accent-orange);
-    background: rgba(255, 143, 0, 0.15);
+    background: rgba(255, 144, 32, 0.15);
 }
 
 .lineup-empty-slot {
@@ -8752,7 +8821,7 @@ body {
 
 .lineup-player.has-chemistry {
     border-color: var(--accent-green);
-    box-shadow: 0 0 12px rgba(76, 175, 80, 0.5), 0 2px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 0 12px rgba(92, 224, 101, 0.5), 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .chemistry-boost {
@@ -8834,7 +8903,7 @@ body {
 
 .playstyle-btn.active {
     border-color: var(--accent-green-dim);
-    background: rgba(76, 175, 80, 0.08);
+    background: rgba(92, 224, 101, 0.08);
 }
 
 .ps-icon {
@@ -8968,7 +9037,7 @@ body {
 }
 
 .staff-card:hover {
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.08);
+    box-shadow: 0 0 15px rgba(92, 224, 101, 0.08);
     border-color: var(--border-accent);
 }
 
@@ -10101,7 +10170,7 @@ body {
 
 .quick-action:hover {
     background: var(--bg-card-hover);
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.08);
+    box-shadow: 0 0 15px rgba(92, 224, 101, 0.08);
 }
 
 .quick-action .action-icon {
@@ -10164,7 +10233,7 @@ body {
 }
 
 .standings-table tbody tr.highlight {
-    background: rgba(76, 175, 80, 0.06);
+    background: rgba(92, 224, 101, 0.06);
 }
 
 .standings-table tbody tr.highlight td {
@@ -10649,18 +10718,18 @@ body {
 }
 
 .position-slot:hover {
-    background: rgba(255, 143, 0, 0.1);
-    border-color: rgba(255, 143, 0, 0.3);
+    background: rgba(255, 144, 32, 0.1);
+    border-color: rgba(255, 144, 32, 0.3);
 }
 
 .position-slot.drag-over {
-    background: rgba(255, 143, 0, 0.25);
+    background: rgba(255, 144, 32, 0.25);
     border-color: var(--accent-orange);
 }
 
 .position-slot.drag-over .position-marker {
     transform: scale(1.15);
-    box-shadow: 0 0 20px rgba(255, 143, 0, 0.6);
+    box-shadow: 0 0 20px rgba(255, 144, 32, 0.6);
 }
 
 .position-marker {
@@ -10801,12 +10870,12 @@ body {
 }
 
 .lineup-slot:hover {
-    background: rgba(255, 143, 0, 0.15) !important;
-    border-color: rgba(255, 143, 0, 0.4) !important;
+    background: rgba(255, 144, 32, 0.15) !important;
+    border-color: rgba(255, 144, 32, 0.4) !important;
 }
 
 .lineup-slot.drag-over {
-    background: rgba(255, 143, 0, 0.3) !important;
+    background: rgba(255, 144, 32, 0.3) !important;
     border-color: var(--accent-orange) !important;
 }
 
@@ -11069,7 +11138,7 @@ body {
 
 .tactic-option.active {
     border-color: var(--accent-green-dim);
-    background: rgba(76, 175, 80, 0.08);
+    background: rgba(92, 224, 101, 0.08);
 }
 
 .tactic-option .option-icon {
@@ -11197,7 +11266,7 @@ body {
 
 .specialist-card-large:hover {
     border-color: var(--border-accent);
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 20px rgba(92, 224, 101, 0.1);
 }
 
 .specialist-header-large {
@@ -11301,7 +11370,7 @@ body {
 }
 
 .scout-intro-box {
-    background: rgba(76, 175, 80, 0.06);
+    background: rgba(92, 224, 101, 0.06);
     border: 2px solid var(--accent-green-dim);
     padding: 14px 18px;
     border-radius: var(--card-radius);
@@ -11678,7 +11747,7 @@ body {
 }
 
 .scout-player-card:hover {
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 20px rgba(92, 224, 101, 0.1);
     border-color: var(--border-accent);
 }
 
@@ -11951,7 +12020,7 @@ body {
 }
 
 .youth-tip {
-    background: rgba(76, 175, 80, 0.06);
+    background: rgba(92, 224, 101, 0.06);
     border: 2px solid var(--accent-green-dim);
     padding: 10px 12px;
     border-radius: var(--card-radius);
@@ -11960,7 +12029,7 @@ body {
 }
 
 .youth-info-box {
-    background: rgba(76, 175, 80, 0.06);
+    background: rgba(92, 224, 101, 0.06);
     border: 2px solid var(--accent-green-dim);
     padding: 12px 14px;
     border-radius: var(--card-radius);
@@ -12073,7 +12142,7 @@ body {
 }
 
 .player-card.youth-card.supertalent {
-    background: linear-gradient(90deg, rgba(255, 143, 0, 0.12) 0%, var(--bg-card) 30%);
+    background: linear-gradient(90deg, rgba(255, 144, 32, 0.12) 0%, var(--bg-card) 30%);
 }
 
 .player-card.youth-card.supertalent::before {
@@ -12183,11 +12252,11 @@ body {
 }
 
 .stadium-building:hover {
-    filter: brightness(1.25) drop-shadow(0 0 10px rgba(76, 175, 80, 0.5)) !important;
+    filter: brightness(1.25) drop-shadow(0 0 10px rgba(92, 224, 101, 0.5)) !important;
 }
 
 .stadium-building.active {
-    filter: brightness(1.2) drop-shadow(0 0 14px rgba(76, 175, 80, 0.7)) !important;
+    filter: brightness(1.2) drop-shadow(0 0 14px rgba(92, 224, 101, 0.7)) !important;
 }
 
 .stadium-building.unbuilt {
@@ -12272,8 +12341,8 @@ body {
 
 .sup-current {
     padding: 6px 12px;
-    background: rgba(76, 175, 80, 0.1);
-    border: 1px solid rgba(76, 175, 80, 0.25);
+    background: rgba(92, 224, 101, 0.1);
+    border: 1px solid rgba(92, 224, 101, 0.25);
     border-radius: 6px;
     font-size: 0.85rem;
     color: var(--text-primary);
@@ -12281,8 +12350,8 @@ body {
 
 .sup-next {
     padding: 6px 12px;
-    background: rgba(255, 179, 0, 0.08);
-    border: 1px solid rgba(255, 179, 0, 0.2);
+    background: rgba(255, 201, 64, 0.08);
+    border: 1px solid rgba(255, 201, 64, 0.2);
     border-radius: 6px;
     font-size: 0.85rem;
     color: var(--text-secondary);
@@ -12592,7 +12661,7 @@ body {
     align-items: center;
     gap: 12px;
     padding: 16px;
-    background: rgba(76, 175, 80, 0.06);
+    background: rgba(92, 224, 101, 0.06);
     border-radius: var(--button-radius);
     margin-bottom: 20px;
 }
@@ -12827,7 +12896,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px;
-    background: rgba(255, 143, 0, 0.1);
+    background: rgba(255, 144, 32, 0.1);
     border: 2px solid var(--accent-orange);
     border-radius: 8px;
 }
@@ -12901,7 +12970,7 @@ body {
 .sponsor-block:hover {
     border-color: var(--border-accent);
     background: var(--bg-card-hover);
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.08);
+    box-shadow: 0 0 15px rgba(92, 224, 101, 0.08);
 }
 
 .sponsor-block.active {
@@ -13362,7 +13431,7 @@ body {
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
-    background: rgba(255, 143, 0, 0.06);
+    background: rgba(255, 144, 32, 0.06);
     border: 1px solid var(--border);
     border-left: 3px solid var(--accent-orange);
     border-radius: 6px;
@@ -13705,7 +13774,7 @@ body {
 
 .activity-card-compact:hover {
     border-color: var(--border-accent);
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.08);
+    box-shadow: 0 0 15px rgba(92, 224, 101, 0.08);
 }
 
 .acc-icon {
@@ -13736,7 +13805,7 @@ body {
     font-size: 1rem;
     color: var(--accent-orange);
     padding: 4px 12px;
-    background: rgba(255, 143, 0, 0.1);
+    background: rgba(255, 144, 32, 0.1);
     border-radius: var(--button-radius);
 }
 
@@ -14094,7 +14163,7 @@ body {
 }
 
 .cooldown-badge.available {
-    background: rgba(76, 175, 80, 0.15);
+    background: rgba(92, 224, 101, 0.15);
     color: var(--accent-green);
 }
 
@@ -14319,7 +14388,7 @@ body {
 }
 
 .stat-streak:hover {
-    background: rgba(255, 143, 0, 0.15);
+    background: rgba(255, 144, 32, 0.15);
 }
 
 .stat-streak .stat-value {
@@ -14358,7 +14427,7 @@ body {
     padding: 10px 20px;
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 179, 0, 0.12);
+    border: 1px solid rgba(255, 201, 64, 0.12);
 }
 
 /* Push header-right content away from global top bar */
@@ -14616,7 +14685,7 @@ body {
     gap: 16px;
     padding-bottom: 12px;
     margin-bottom: 0;
-    border-bottom: 2px solid rgba(255, 179, 0, 0.1);
+    border-bottom: 2px solid rgba(255, 201, 64, 0.1);
     flex-shrink: 0;
     flex-wrap: wrap;
 }
@@ -14708,8 +14777,8 @@ body {
         0deg,
         transparent,
         transparent 48px,
-        rgba(76, 175, 80, 0.015) 48px,
-        rgba(76, 175, 80, 0.015) 96px
+        rgba(92, 224, 101, 0.015) 48px,
+        rgba(92, 224, 101, 0.015) 96px
     );
 }
 
@@ -14773,7 +14842,7 @@ body {
     gap: 8px;
     padding: 10px 14px;
     background: linear-gradient(135deg, #1a2410 0%, #162010 100%);
-    border-bottom: 1px solid rgba(255, 179, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 201, 64, 0.1);
     border-radius: var(--card-radius) var(--card-radius) 0 0;
     font-family: var(--font-display);
     font-size: 1rem;
@@ -14827,8 +14896,8 @@ body {
 .todo-card:hover,
 .talents-card:hover,
 .chairman-card:hover {
-    box-shadow: 0 6px 24px rgba(255, 143, 0, 0.12), inset 0 1px 0 rgba(255, 248, 225, 0.06);
-    border-color: rgba(255, 179, 0, 0.15);
+    box-shadow: 0 6px 24px rgba(255, 144, 32, 0.12), inset 0 1px 0 rgba(255, 248, 225, 0.06);
+    border-color: rgba(255, 201, 64, 0.15);
     z-index: 10;
 }
 
@@ -14878,8 +14947,8 @@ body {
         linear-gradient(135deg, #1a3a1a 0%, #0d2a0d 50%, #0a200a 100%);
     min-height: 0;
     position: relative;
-    border-top: 1px solid rgba(76, 175, 80, 0.2);
-    border-bottom: 1px solid rgba(76, 175, 80, 0.2);
+    border-top: 1px solid rgba(92, 224, 101, 0.2);
+    border-bottom: 1px solid rgba(92, 224, 101, 0.2);
     /* Subtle chalk center line */
     background-image:
         linear-gradient(135deg, #1a3a1a 0%, #0d2a0d 50%, #0a200a 100%),
@@ -14963,7 +15032,7 @@ body {
     font-size: 1.4rem;
     font-weight: 800;
     color: var(--accent-cream);
-    text-shadow: 2px 2px 0 rgba(0,0,0,0.5), 0 0 12px rgba(255, 179, 0, 0.2);
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.5), 0 0 12px rgba(255, 201, 64, 0.2);
     letter-spacing: 3px;
 }
 
@@ -14971,11 +15040,11 @@ body {
     font-family: var(--font-display);
     font-size: 1.1rem;
     color: var(--accent-amber);
-    background: rgba(255, 179, 0, 0.08);
+    background: rgba(255, 201, 64, 0.08);
     padding: 6px 12px;
     border-radius: 4px;
     letter-spacing: 2px;
-    border: 1px solid rgba(255, 179, 0, 0.15);
+    border: 1px solid rgba(255, 201, 64, 0.15);
     font-weight: 700;
 }
 
@@ -14986,7 +15055,7 @@ body {
     gap: 8px;
     margin: 8px 12px;
     padding: 12px 20px;
-    background: linear-gradient(135deg, #e65100, #ff8f00);
+    background: linear-gradient(135deg, #e65100, #ff9020);
     border: none;
     border-radius: var(--button-radius);
     color: white;
@@ -15005,7 +15074,7 @@ body {
 .match-play-btn:hover {
     box-shadow: 0 0 30px var(--accent-orange-glow);
     transform: translateY(-1px);
-    background: linear-gradient(135deg, #ff8f00, #ffb300);
+    background: linear-gradient(135deg, #ff9020, #ffc940);
 }
 
 .match-play-btn:active {
@@ -15069,7 +15138,7 @@ body {
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border-bottom: 1px solid rgba(76, 175, 80, 0.15);
+    border-bottom: 1px solid rgba(92, 224, 101, 0.15);
 }
 
 .standings-table th:first-child { width: 24px; text-align: center; }
@@ -15105,7 +15174,7 @@ body {
 .standings-table td:nth-child(n+3) { text-align: center; }
 
 .standings-table tr.is-player {
-    background: rgba(255, 143, 0, 0.1);
+    background: rgba(255, 144, 32, 0.1);
 }
 
 .standings-table tr.is-player td {
@@ -15115,7 +15184,7 @@ body {
 
 /* Promotion zone */
 .standings-table tbody tr:nth-child(-n+3) td {
-    background: rgba(76, 175, 80, 0.06);
+    background: rgba(92, 224, 101, 0.06);
 }
 
 .standings-table tbody tr:nth-child(-n+3) td:first-child {
@@ -15159,7 +15228,7 @@ body {
 
 .sp-item:hover {
     border-left-color: var(--accent-orange);
-    background: rgba(255, 143, 0, 0.06);
+    background: rgba(255, 144, 32, 0.06);
 }
 
 .sp-flag { font-size: 1.1rem; }
@@ -15573,8 +15642,8 @@ body {
 .chairman-message {
     flex: 1;
     /* Speech bubble - kantine warmth */
-    background: rgba(255, 179, 0, 0.06);
-    border: 2px solid rgba(255, 179, 0, 0.2);
+    background: rgba(255, 201, 64, 0.06);
+    border: 2px solid rgba(255, 201, 64, 0.2);
     border-radius: 8px;
     padding: 10px 12px;
     position: relative;
@@ -15595,7 +15664,7 @@ body {
     height: 0;
     border-top: 10px solid transparent;
     border-bottom: 10px solid transparent;
-    border-right: 12px solid rgba(255, 179, 0, 0.2);
+    border-right: 12px solid rgba(255, 201, 64, 0.2);
 }
 
 .chairman-message::after {
@@ -15607,7 +15676,7 @@ body {
     height: 0;
     border-top: 7px solid transparent;
     border-bottom: 7px solid transparent;
-    border-right: 9px solid rgba(255, 179, 0, 0.06);
+    border-right: 9px solid rgba(255, 201, 64, 0.06);
 }
 
 /* Dashboard card scrollbar styling */
@@ -15888,7 +15957,7 @@ body {
     align-items: center;
     gap: 6px;
     padding: 5px 8px;
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.06), rgba(255, 143, 0, 0.06));
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.06), rgba(255, 144, 32, 0.06));
     border-radius: 6px;
     border-left: 2px solid #ffd700;
 }
@@ -16047,7 +16116,7 @@ body {
 
 /* Player's own team */
 .dsc-table tr.is-player {
-    background: rgba(255, 143, 0, 0.15);
+    background: rgba(255, 144, 32, 0.15);
 }
 
 .dsc-table tr.is-player td {
@@ -16134,7 +16203,7 @@ body {
 }
 
 .dtc-item:hover {
-    background: rgba(76, 175, 80, 0.08);
+    background: rgba(92, 224, 101, 0.08);
     transform: translateX(2px);
 }
 
@@ -17539,7 +17608,7 @@ body {
 }
 
 .km-card:hover {
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 20px rgba(92, 224, 101, 0.1);
     border-color: var(--border-accent);
 }
 
@@ -18207,7 +18276,7 @@ body {
 
 .k-link-yellow { background: rgba(255, 171, 0, 0.15); border: 1px solid rgba(255, 171, 0, 0.3); }
 .k-link-pink { background: rgba(255, 82, 82, 0.15); border: 1px solid rgba(255, 82, 82, 0.3); }
-.k-link-green { background: rgba(76, 175, 80, 0.1); border: 1px solid var(--border-accent); }
+.k-link-green { background: rgba(92, 224, 101, 0.1); border: 1px solid var(--border-accent); }
 .k-link-blue { background: rgba(68, 138, 255, 0.15); border: 1px solid rgba(68, 138, 255, 0.3); }
 
 .k-link-icon {
@@ -18841,7 +18910,7 @@ body {
 .mp-avatar-card {
     background: linear-gradient(160deg, #264a24 0%, #1a3a1a 100%);
     border-radius: var(--card-radius);
-    border: 1px solid rgba(76, 175, 80, 0.15);
+    border: 1px solid rgba(92, 224, 101, 0.15);
     box-shadow: 0 4px 16px var(--shadow);
     padding: 28px 20px 20px;
     text-align: center;
@@ -19049,11 +19118,11 @@ body {
 }
 
 .mp-vorm-win {
-    background: #4caf50;
+    background: #5ce065;
 }
 
 .mp-vorm-draw {
-    background: #ff9800;
+    background: #ff9020;
 }
 
 .mp-vorm-loss {
@@ -19109,12 +19178,12 @@ body {
 /* Match card header - scoreboard feel */
 .match-card-header {
     background: linear-gradient(135deg, #1a2a10, #0d1a08) !important;
-    border-bottom: 2px solid rgba(255, 179, 0, 0.12) !important;
+    border-bottom: 2px solid rgba(255, 201, 64, 0.12) !important;
 }
 
 /* Kantine warm glow on active card */
 .dash-match:hover .match-card {
-    box-shadow: 0 0 30px rgba(255, 143, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 30px rgba(255, 144, 32, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 /* Stars card - trophy cabinet feel */
@@ -19129,12 +19198,12 @@ body {
 }
 
 .notification-item:hover {
-    background: rgba(255, 179, 0, 0.04);
+    background: rgba(255, 201, 64, 0.04);
 }
 
 /* Chairman card - warm corner */
 .chairman-card {
-    background: linear-gradient(135deg, var(--bg-card), rgba(255, 179, 0, 0.03)) !important;
+    background: linear-gradient(135deg, var(--bg-card), rgba(255, 201, 64, 0.03)) !important;
 }
 
 /* Standings - score sheet feel */
@@ -19151,7 +19220,7 @@ body {
     right: 10px;
     width: 30px;
     height: 12px;
-    background: rgba(255, 179, 0, 0.12);
+    background: rgba(255, 201, 64, 0.12);
     transform: rotate(1deg);
     border-radius: 0 0 3px 3px;
     z-index: 5;
@@ -19167,15 +19236,15 @@ body {
     transform: translateX(-50%) rotate(-0.5deg);
     width: 28px;
     height: 10px;
-    background: rgba(255, 179, 0, 0.1);
+    background: rgba(255, 201, 64, 0.1);
     border-radius: 0 0 2px 2px;
     z-index: 5;
 }
 
 /* Badge glow - warm amber instead of cold */
 @keyframes badgeFloat {
-    0%, 100% { transform: translateY(0); filter: drop-shadow(0 4px 8px rgba(255, 143, 0, 0.15)); }
-    50% { transform: translateY(-4px); filter: drop-shadow(0 8px 12px rgba(255, 143, 0, 0.25)); }
+    0%, 100% { transform: translateY(0); filter: drop-shadow(0 4px 8px rgba(255, 144, 32, 0.15)); }
+    50% { transform: translateY(-4px); filter: drop-shadow(0 8px 12px rgba(255, 144, 32, 0.25)); }
 }
 
 /* Team name on match card */
@@ -19187,7 +19256,7 @@ body {
 /* Nav badge - kantine orange */
 .nav-badge {
     background: var(--accent-orange) !important;
-    box-shadow: 0 0 8px rgba(255, 143, 0, 0.3);
+    box-shadow: 0 0 8px rgba(255, 144, 32, 0.3);
 }
 
 /* ================================================
@@ -19473,7 +19542,7 @@ body {
     gap: 16px;
     padding: 16px 24px;
     margin: 0 24px 20px;
-    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(255, 143, 0, 0.05));
+    background: linear-gradient(135deg, rgba(92, 224, 101, 0.1), rgba(255, 144, 32, 0.05));
     border: 1px solid var(--border-accent);
     border-radius: 12px;
 }
@@ -19700,8 +19769,8 @@ body {
 }
 
 .program-result-win {
-    background: rgba(76, 175, 80, 0.15);
-    color: #4caf50;
+    background: rgba(92, 224, 101, 0.15);
+    color: #5ce065;
 }
 
 .program-result-loss {

@@ -6089,6 +6089,32 @@ function initGame() {
         }
     }
 
+    // Migrate stadium: buildings that should start unbuilt
+    if (gameState.stadium) {
+        const unbuiltMigrations = {
+            medical: 'med_0', scouting: 'scout_0', youthscouting: 'ysct_0',
+            kantine: 'kantine_0', sponsoring: 'sponsor_0', perszaal: 'pers_0'
+        };
+        Object.entries(unbuiltMigrations).forEach(([key, lvl0]) => {
+            const config = STADIUM_TILE_CONFIG[key];
+            if (!config) return;
+            const currentId = gameState.stadium[config.stateKey];
+            // If still on old free level 1 (cost was 0), migrate to level 0
+            if (currentId === config.levels[1]?.id) {
+                const oldCost = config.levels[1]?.cost;
+                // Only migrate if they never actually paid to build (old saves had cost 0)
+                if (oldCost && !gameState.stadium._migratedV3) {
+                    gameState.stadium[config.stateKey] = lvl0;
+                }
+            }
+            // If key is missing entirely, set to unbuilt
+            if (!currentId) {
+                gameState.stadium[config.stateKey] = lvl0;
+            }
+        });
+        gameState.stadium._migratedV3 = true;
+    }
+
     // Check and apply daily reward (silently)
     const dailyRewardResult = checkDailyReward(gameState);
     // Reward is claimed but no modal shown
