@@ -888,6 +888,7 @@ function createPlayerCardHTML(player, mini = false) {
     return `
         <div class="player-card${myPlayerClass}" data-player-id="${player.id}">
             <div class="pc-left">
+                <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
                 <div class="pc-age-box">
                     <span class="pc-age-value">${player.age}</span>
                     <span class="pc-age-label">jr</span>
@@ -895,7 +896,6 @@ function createPlayerCardHTML(player, mini = false) {
                 <img class="pc-flag-img" src="https://flagcdn.com/w40/${(player.nationality.code || 'nl').toLowerCase()}.png" alt="${player.nationality.code || 'NL'}" />
             </div>
             <span class="pc-name">${player.name}</span>
-            <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
             <span class="pc-finance">
                 <span class="pc-salary">${formatCurrency(player.salary ?? 50)}/w</span>
                 <span class="pc-value">${formatCurrency(marketValue)}</span>

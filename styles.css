@@ -4980,7 +4980,7 @@ body {
    ================================================ */
 .player-card {
     display: grid;
-    grid-template-columns: 5fr 10fr 2fr 9fr 8fr 7fr;
+    grid-template-columns: 7fr 10fr 9fr 8fr 7fr;
     align-items: center;
     gap: 10px;
     padding: 6px 16px;
@@ -5194,8 +5194,8 @@ body {
 
 .pc-potential-stars .pc-stars {
     display: flex;
-    gap: 1px;
-    font-size: 0.7rem;
+    gap: 2px;
+    font-size: 1.05rem;
     line-height: 1;
 }
 
