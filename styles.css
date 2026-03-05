@@ -13925,6 +13925,75 @@ body {
     padding: 6px 4px;
 }
 
+.tc-desc {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.2;
+    min-height: 22px;
+}
+
+/* Spy column */
+.tc-spy {
+    border-color: var(--accent) !important;
+}
+.tc-spy-target {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 6px;
+}
+.tc-spy-vs {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.tc-spy-name {
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    color: var(--text-primary);
+    text-align: center;
+    word-break: break-word;
+}
+
+/* Spy report modal */
+.spy-report {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+.spy-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+.spy-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+.spy-value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.spy-weakness {
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: rgba(255, 152, 0, 0.15);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    color: var(--accent);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
 /* Position Training Modal */
 #position-training-modal .modal-content {
     max-width: 400px;

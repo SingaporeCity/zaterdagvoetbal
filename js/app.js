@@ -2599,19 +2599,42 @@ function renderTrainingPage() {
     };
 
     const columns = [
-        { key: 'SNE', name: 'Snelheid', icon: '⚡' },
-        { key: 'TEC', name: 'Techniek', icon: '🎯' },
-        { key: 'PAS', name: 'Passing', icon: '👟' },
-        { key: 'SCH', name: 'Schieten', icon: '⚽' },
-        { key: 'VER', name: 'Verdediging', icon: '🛡️' },
-        { key: 'FYS', name: 'Fysiek', icon: '💪' },
-        { key: 'ENE', name: 'Energie', icon: '💆', isEnergy: true }
+        { key: 'SNE', name: 'Snelheid', icon: '⚡', desc: 'Sprint en versnelling' },
+        { key: 'TEC', name: 'Techniek', icon: '🎯', desc: 'Balcontrole en dribbels' },
+        { key: 'PAS', name: 'Passing', icon: '👟', desc: 'Korte en lange passes' },
+        { key: 'SCH', name: 'Schieten', icon: '⚽', desc: 'Afronding en schoten' },
+        { key: 'VER', name: 'Verdediging', icon: '🛡️', desc: 'Tackles en positionering' },
+        { key: 'FYS', name: 'Fysiek', icon: '💪', desc: 'Kracht en uithoudingsvermogen' },
+        { key: 'ENE', name: 'Massage', icon: '💆', desc: 'Herstel je energie', isEnergy: true },
+        { key: 'SPY', name: 'Bespioneer', icon: '🔭', desc: 'Analyseer de tegenstander', isSpy: true }
     ];
 
     const container = document.getElementById('training-columns');
     if (!container) return;
 
     container.innerHTML = columns.map(col => {
+        if (col.isSpy) {
+            const canSpy = !trainedToday;
+            const opponentName = gameState.nextMatch?.opponent || 'Onbekend';
+            return `
+                <div class="tc-column tc-spy">
+                    <div class="tc-icon">${col.icon}</div>
+                    <div class="tc-label">${col.name}</div>
+                    <div class="tc-desc">${col.desc}</div>
+                    <div class="tc-bar-container">
+                        <div class="tc-spy-target">
+                            <span class="tc-spy-vs">VS</span>
+                            <span class="tc-spy-name">${opponentName}</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm ${canSpy ? 'btn-primary' : 'btn-secondary'} tc-train-btn"
+                            onclick="${canSpy ? "trainMyPlayer('spy')" : ''}" ${!canSpy ? 'disabled' : ''}>
+                        Spioneer
+                    </button>
+                </div>
+            `;
+        }
+
         const value = col.isEnergy ? mp.energy : a[col.key];
         const maxVal = col.isEnergy ? 100 : 99;
         const pct = Math.round((value / maxVal) * 100);
@@ -2626,6 +2649,7 @@ function renderTrainingPage() {
             <div class="tc-column">
                 <div class="tc-icon">${col.icon}</div>
                 <div class="tc-label">${col.name}</div>
+                <div class="tc-desc">${col.desc}</div>
                 <div class="tc-bar-container">
                     <div class="tc-bar-track">
                         <div class="tc-bar-fill" style="height: ${pct}%; background: ${color}"></div>
@@ -3494,6 +3518,46 @@ window.trainMyPlayer = function(key) {
         mp.energy = Math.min(100, mp.energy + 50);
         mp.lastTrainingDate = getTodayString();
         showNotification('Massage voltooid! +50% energie', 'success');
+    } else if (key === 'spy') {
+        mp.lastTrainingDate = getTodayString();
+        // Generate opponent intel
+        const opponent = generateOpponent(
+            gameState.club.division,
+            gameState.nextMatch?.opponentPosition || Math.floor(Math.random() * 8) + 1
+        );
+        const formations = ['4-4-2', '4-3-3', '3-5-2', '4-5-1', '4-2-3-1', '5-3-2'];
+        const formation = formations[Math.floor(Math.random() * formations.length)];
+        const styles = ['Aanvallend', 'Verdedigend', 'Gebalanceerd', 'Hoog druk', 'Counter'];
+        const style = styles[Math.floor(Math.random() * styles.length)];
+        const stats = { Aanval: opponent.strength.attack, Middenveld: opponent.strength.midfield, Verdediging: opponent.strength.defense };
+        const weakest = Object.entries(stats).sort((a, b) => a[1] - b[1])[0];
+
+        // Give match bonus
+        gameState.nextMatchBonus = (gameState.nextMatchBonus || 0) + 3;
+
+        // Show spy report modal
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'spy-modal';
+        modal.innerHTML = `
+            <div class="modal-backdrop" onclick="closeSpyModal()"></div>
+            <div class="modal-content">
+                <button class="modal-close" onclick="closeSpyModal()">&times;</button>
+                <h3>Scoutingsrapport</h3>
+                <p class="modal-subtitle">${gameState.nextMatch?.opponent || 'Tegenstander'}</p>
+                <div class="spy-report">
+                    <div class="spy-row"><span class="spy-label">Formatie</span><span class="spy-value">${formation}</span></div>
+                    <div class="spy-row"><span class="spy-label">Speelstijl</span><span class="spy-value">${style}</span></div>
+                    <div class="spy-row"><span class="spy-label">Aanval</span><span class="spy-value">${opponent.strength.attack}</span></div>
+                    <div class="spy-row"><span class="spy-label">Middenveld</span><span class="spy-value">${opponent.strength.midfield}</span></div>
+                    <div class="spy-row"><span class="spy-label">Verdediging</span><span class="spy-value">${opponent.strength.defense}</span></div>
+                    <div class="spy-weakness">Zwakke plek: <strong>${weakest[0]}</strong> (${weakest[1]})</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        requestAnimationFrame(() => modal.classList.add('active'));
+        showNotification('Tegenstander bespioneerd! +3% wedstrijdbonus', 'success');
     } else {
         mp.attributes[key] = Math.min(99, mp.attributes[key] + 1);
         mp.lastTrainingDate = getTodayString();
@@ -3503,6 +3567,11 @@ window.trainMyPlayer = function(key) {
     saveGame();
     renderTrainingPage();
     renderPlayerCards();
+};
+
+window.closeSpyModal = function() {
+    const modal = document.getElementById('spy-modal');
+    if (modal) { modal.classList.remove('active'); setTimeout(() => modal.remove(), 200); }
 };
 
 // Make functions globally available
