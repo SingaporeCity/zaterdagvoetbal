@@ -11930,7 +11930,21 @@ body {
 
 /* Youth card extras - uses same .player-card base */
 .player-card.youth-card {
+    grid-template-columns: 7fr 10fr auto auto auto;
     padding-right: 12px;
+}
+
+.yc-stars {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.yc-action {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    white-space: nowrap;
 }
 
 .player-card.youth-card.supertalent {

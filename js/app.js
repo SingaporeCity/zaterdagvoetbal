@@ -5309,32 +5309,20 @@ function createYouthPlayerCard(player) {
                 <img class="pc-flag-img" src="https://flagcdn.com/w40/${(player.nationality.code || 'nl').toLowerCase()}.png" alt="${player.nationality.code || 'NL'}" />
             </div>
             <span class="pc-name">${player.name}</span>
-            <span class="pc-finance">
+            <div class="pc-overall" style="background: ${posData.color}">
+                <span class="pc-overall-value">${level}</span>
+                <span class="pc-overall-label">Niv.</span>
+            </div>
+            <div class="yc-stars">
+                <span class="pc-stars">${renderStarsHTML(stars)}</span>
+            </div>
+            <span class="yc-action">
                 <button class="btn ${canSign ? 'btn-primary' : 'btn-secondary'} btn-sign-contract btn-sm"
                         data-player-id="${player.id}"
                         ${!canSign ? 'disabled' : ''}>
                     ${canSign ? 'Overhevelen naar Eerste Team' : 'Te jong voor het eerste team'}
                 </button>
             </span>
-            <div class="pc-condition-bars">
-                <div class="pc-bar-item">
-                    <span class="pc-bar-label">POT</span>
-                    <div class="pc-bar-track">
-                        <div class="pc-bar-fill" style="width: ${player.potential}%; background: ${getBarColor(player.potential)}"></div>
-                    </div>
-                    <span class="pc-bar-value">${player.potential}</span>
-                </div>
-            </div>
-            <div class="pc-ratings">
-                <div class="pc-overall" style="background: ${posData.color}">
-                    <span class="pc-overall-value">${level}</span>
-                    <span class="pc-overall-label">Niv.</span>
-                </div>
-                <div class="pc-potential-stars">
-                    <span class="pc-stars">${renderStarsHTML(stars)}</span>
-                    <span class="pc-potential-label">POT</span>
-                </div>
-            </div>
         </div>
     `;
 }
