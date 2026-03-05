@@ -2617,6 +2617,7 @@ function renderTrainingPage() {
             <div class="tp-info">
                 <div class="tp-name">${mp.name}</div>
                 <div class="tp-meta">${mp.position} · ${mp.age} jaar · #${mp.number}</div>
+                <div class="tp-alg"><span class="tp-alg-value">${getMyPlayerDerived(mp).gemiddeld}</span> ALG</div>
             </div>
             <div class="tp-options">
                 <div class="tp-option">

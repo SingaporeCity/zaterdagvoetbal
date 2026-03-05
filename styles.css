@@ -13873,6 +13873,20 @@ body {
     color: var(--text-secondary);
 }
 
+.tp-alg {
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.tp-alg-value {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--accent);
+    margin-right: 4px;
+}
+
 .tp-options {
     display: flex;
     flex-direction: column;
@@ -13952,7 +13966,7 @@ body {
 
 .training-columns {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(8, 1fr);
     gap: 10px;
     min-height: 400px;
 }
