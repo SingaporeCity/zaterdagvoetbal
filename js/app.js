@@ -5965,13 +5965,11 @@ function signYouthContract(playerId) {
 
 function calculateDailyFinances() {
     // === INCOME ===
-    // Shirt sponsor income (weekly divided by 7)
+    // Shirt + bord sponsor income (weekly divided by 7)
     const shirtSponsor = gameState.sponsor;
     const shirtWeekly = shirtSponsor?.weeklyPay || 0;
     const bordWeekly = gameState.sponsorSlots?.bord?.weeklyIncome || 0;
-    const mouwWeekly = gameState.sponsorSlots?.mouw?.weeklyIncome || 0;
-    const broekWeekly = gameState.sponsorSlots?.broek?.weeklyIncome || 0;
-    const sponsorWeeklyIncome = shirtWeekly + bordWeekly + mouwWeekly + broekWeekly;
+    const sponsorWeeklyIncome = shirtWeekly + bordWeekly;
     const sponsorDailyIncome = Math.round(sponsorWeeklyIncome / 7);
 
     // Sponsoring level bonus
@@ -7113,6 +7111,9 @@ function playMatch() {
     // Advance week
     gameState.week++;
 
+    // Tick sponsor contracts (decrease weeks remaining)
+    tickSponsorContracts();
+
     // Refresh sponsor market for new week
     generateSponsorMarket();
 
@@ -7938,30 +7939,17 @@ const STADIUM_SPONSORS = {
 };
 
 const SPONSOR_POOL = [
-    // Bordsponsors (€200-750/week)
-    { id: 'bord_supermarkt', slot: 'bord', name: 'Supermarkt Van Dalen', icon: '🛒', weeklyIncome: 250, minReputation: 5 },
-    { id: 'bord_garage', slot: 'bord', name: 'Garage De Versnelling', icon: '🔧', weeklyIncome: 300, minReputation: 10 },
-    { id: 'bord_brouwerij', slot: 'bord', name: 'Brouwerij De Gouden Tap', icon: '🍻', weeklyIncome: 400, minReputation: 20 },
-    { id: 'bord_bouwmarkt', slot: 'bord', name: 'Bouwmarkt Henk & Zonen', icon: '🏗️', weeklyIncome: 350, minReputation: 15 },
-    { id: 'bord_autohandel', slot: 'bord', name: 'Autohandel Kansen', icon: '🚗', weeklyIncome: 500, minReputation: 30 },
-    { id: 'bord_verzekering', slot: 'bord', name: 'Verzekeringen Direct', icon: '🛡️', weeklyIncome: 600, minReputation: 40 },
-    { id: 'bord_makelaardij', slot: 'bord', name: 'Makelaardij Van Houten', icon: '🏠', weeklyIncome: 750, minReputation: 55 },
-    // Mouwsponsors (€75-300/week)
-    { id: 'mouw_bloemen', slot: 'mouw', name: 'Bloemen Bij Bep', icon: '💐', weeklyIncome: 75, minReputation: 5 },
-    { id: 'mouw_kapper', slot: 'mouw', name: 'Kapsalon Kort & Krachtig', icon: '💇', weeklyIncome: 100, minReputation: 10 },
-    { id: 'mouw_pizzeria', slot: 'mouw', name: 'Pizzeria Napoli', icon: '🍕', weeklyIncome: 125, minReputation: 15 },
-    { id: 'mouw_fietsen', slot: 'mouw', name: 'Fietsenmaker Trappers', icon: '🚲', weeklyIncome: 150, minReputation: 20 },
-    { id: 'mouw_slager', slot: 'mouw', name: 'Slagerij Het Varkentje', icon: '🥩', weeklyIncome: 200, minReputation: 30 },
-    { id: 'mouw_drogist', slot: 'mouw', name: 'Drogisterij Fris & Gezond', icon: '🧴', weeklyIncome: 250, minReputation: 40 },
-    { id: 'mouw_tandarts', slot: 'mouw', name: 'Tandarts Van der Molen', icon: '🦷', weeklyIncome: 300, minReputation: 50 },
-    // Broeksponsors (€25-100/week)
-    { id: 'broek_snackbar', slot: 'broek', name: 'Snackbar De Vetbol', icon: '🍟', weeklyIncome: 25, minReputation: 5 },
-    { id: 'broek_ijskar', slot: 'broek', name: 'IJskar Ome Henk', icon: '🍦', weeklyIncome: 40, minReputation: 10 },
-    { id: 'broek_escape', slot: 'broek', name: 'Escape Room De Kleedkamer', icon: '🔑', weeklyIncome: 50, minReputation: 15 },
-    { id: 'broek_wasserette', slot: 'broek', name: 'Wasserette Schoon & Snel', icon: '🧺', weeklyIncome: 60, minReputation: 20 },
-    { id: 'broek_dierenwinkel', slot: 'broek', name: 'Dierenwinkel Woef & Miauw', icon: '🐾', weeklyIncome: 75, minReputation: 30 },
-    { id: 'broek_tattooshop', slot: 'broek', name: 'Tattoo Studio Inkt', icon: '🎨', weeklyIncome: 90, minReputation: 40 },
-    { id: 'broek_zonnebank', slot: 'broek', name: 'Zonnebank Paradise', icon: '☀️', weeklyIncome: 100, minReputation: 50 },
+    // Bordsponsors (€200-750/week, 4-14 weken contract)
+    { id: 'bord_supermarkt', slot: 'bord', name: 'Supermarkt Van Dalen', icon: '🛒', weeklyIncome: 250, minReputation: 5, duration: 6 },
+    { id: 'bord_garage', slot: 'bord', name: 'Garage De Versnelling', icon: '🔧', weeklyIncome: 300, minReputation: 10, duration: 8 },
+    { id: 'bord_brouwerij', slot: 'bord', name: 'Brouwerij De Gouden Tap', icon: '🍻', weeklyIncome: 400, minReputation: 20, duration: 10 },
+    { id: 'bord_bouwmarkt', slot: 'bord', name: 'Bouwmarkt Henk & Zonen', icon: '🏗️', weeklyIncome: 350, minReputation: 15, duration: 8 },
+    { id: 'bord_autohandel', slot: 'bord', name: 'Autohandel Kansen', icon: '🚗', weeklyIncome: 500, minReputation: 30, duration: 12 },
+    { id: 'bord_verzekering', slot: 'bord', name: 'Verzekeringen Direct', icon: '🛡️', weeklyIncome: 600, minReputation: 40, duration: 14 },
+    { id: 'bord_makelaardij', slot: 'bord', name: 'Makelaardij Van Houten', icon: '🏠', weeklyIncome: 750, minReputation: 55, duration: 14 },
+    { id: 'bord_fysiotherapie', slot: 'bord', name: 'Fysio Topfit', icon: '💪', weeklyIncome: 200, minReputation: 5, duration: 4 },
+    { id: 'bord_accountant', slot: 'bord', name: 'Boekhouder Balans BV', icon: '📊', weeklyIncome: 450, minReputation: 25, duration: 10 },
+    { id: 'bord_tuincentrum', slot: 'bord', name: 'Tuincentrum Groen & Groei', icon: '🌿', weeklyIncome: 275, minReputation: 8, duration: 6 },
 ];
 
 const SCOUTING_NETWORKS = {
@@ -8118,10 +8106,35 @@ function selectStadiumSponsor(sponsorId) {
     showNotification(`${STADIUM_SPONSORS[sponsorId].name} is nu je stadionsponsor!`, 'success');
 }
 
+function expireSponsorContracts() {
+    const bord = gameState.sponsorSlots?.bord;
+    if (bord && bord.weeksRemaining != null && bord.weeksRemaining <= 0) {
+        showNotification(`Contract met ${bord.name} is afgelopen.`, 'info');
+        gameState.sponsorSlots.bord = null;
+        saveGame();
+    }
+}
+
+function tickSponsorContracts() {
+    const bord = gameState.sponsorSlots?.bord;
+    if (bord && bord.weeksRemaining != null) {
+        bord.weeksRemaining--;
+        if (bord.weeksRemaining <= 0) {
+            showNotification(`Contract met ${bord.name} is afgelopen.`, 'info');
+            gameState.sponsorSlots.bord = null;
+        }
+    }
+}
+
 function renderSponsorsPage() {
-    // Ensure defaults for old saves
-    if (!gameState.sponsorSlots) gameState.sponsorSlots = { bord: null, mouw: null, broek: null };
+    // Ensure defaults for old saves — migrate old mouw/broek away
+    if (!gameState.sponsorSlots) gameState.sponsorSlots = { bord: null };
+    delete gameState.sponsorSlots.mouw;
+    delete gameState.sponsorSlots.broek;
     if (!gameState.sponsorMarket) gameState.sponsorMarket = { offers: [], generatedForWeek: 0 };
+
+    // Expire finished contracts
+    expireSponsorContracts();
 
     renderShirtSponsorGrid();
     renderSponsorMarket();
@@ -8178,14 +8191,15 @@ function renderSponsorMarket() {
         return;
     }
 
-    const slotLabels = { bord: '📋 Bord', mouw: '💪 Mouw', broek: '🩳 Broek' };
-
     container.innerHTML = offers.map(offer => `
         <div class="sponsor-market-offer" onclick="selectMarketSponsor('${offer.id}')">
-            <span class="smo-slot-badge smo-slot-${offer.slot}">${slotLabels[offer.slot]}</span>
+            <span class="smo-slot-badge smo-slot-bord">📋 Bordsponsor</span>
             <div class="smo-icon">${offer.icon}</div>
             <div class="smo-name">${offer.name}</div>
-            <div class="smo-income">€${offer.weeklyIncome}/week</div>
+            <div class="smo-details">
+                <span class="smo-income">€${offer.weeklyIncome}/week</span>
+                <span class="smo-duration">${offer.duration} weken</span>
+            </div>
         </div>
     `).join('');
 }
@@ -8194,19 +8208,27 @@ function selectMarketSponsor(id) {
     const offer = gameState.sponsorMarket.offers.find(o => o.id === id);
     if (!offer) return;
 
-    // Place in correct slot
-    gameState.sponsorSlots[offer.slot] = {
+    // Check if slot already occupied
+    if (gameState.sponsorSlots.bord) {
+        showNotification('Je hebt al een bordsponsor! Wacht tot het contract afloopt.', 'warning');
+        return;
+    }
+
+    // Place in bord slot with contract duration
+    gameState.sponsorSlots.bord = {
         id: offer.id,
         name: offer.name,
         icon: offer.icon,
         weeklyIncome: offer.weeklyIncome,
-        slot: offer.slot
+        slot: 'bord',
+        weeksRemaining: offer.duration || 8,
+        startedAtWeek: gameState.week
     };
 
     // Remove from market
     gameState.sponsorMarket.offers = gameState.sponsorMarket.offers.filter(o => o.id !== id);
 
-    showNotification(`${offer.name} is nu je ${offer.slot}sponsor!`, 'success');
+    showNotification(`${offer.name} is nu je bordsponsor voor ${offer.duration || 8} weken!`, 'success');
     renderSponsorMarket();
     renderSponsorOverview();
     saveGame();
@@ -8228,40 +8250,43 @@ function renderSponsorOverview() {
     // Update kit display
     updateSponsorKitDisplay();
 
-    const slots = [
-        { key: 'shirt', label: '👕 Shirt', data: gameState.sponsor ? { name: gameState.sponsor.name, weeklyIncome: gameState.sponsor.weeklyPay } : null },
-        { key: 'bord', label: '📋 Bord', data: gameState.sponsorSlots.bord },
-        { key: 'mouw', label: '💪 Mouw', data: gameState.sponsorSlots.mouw },
-        { key: 'broek', label: '🩳 Broek', data: gameState.sponsorSlots.broek }
-    ];
+    const shirtData = gameState.sponsor ? { name: gameState.sponsor.name, weeklyIncome: gameState.sponsor.weeklyPay } : null;
+    const bordData = gameState.sponsorSlots?.bord || null;
 
-    const slotsHtml = slots.map(s => {
-        if (s.data) {
-            const clearBtn = s.key !== 'shirt' ? `<button class="spo-clear" onclick="clearSponsorSlot('${s.key}')" title="Verwijderen">✕</button>` : '';
-            return `<div class="spo-slot filled">
-                <span class="spo-label">${s.label}</span>
-                <span class="spo-name">${s.data.name}</span>
-                <span class="spo-income">€${s.data.weeklyIncome}/w</span>
-                ${clearBtn}
+    function slotTile(label, data, key) {
+        if (data) {
+            const weeksInfo = data.weeksRemaining != null ? `<span class="spo-weeks">${data.weeksRemaining}w resterend</span>` : '';
+            const clearBtn = key !== 'shirt' ? `<button class="spo-clear" onclick="clearSponsorSlot('${key}')" title="Verwijderen">✕</button>` : '';
+            return `<div class="spo-tile filled">
+                <div class="spo-tile-header">
+                    <span class="spo-label">${label}</span>
+                    ${clearBtn}
+                </div>
+                <span class="spo-name">${data.name}</span>
+                <div class="spo-tile-footer">
+                    <span class="spo-income">€${data.weeklyIncome}/w</span>
+                    ${weeksInfo}
+                </div>
             </div>`;
         }
-        return `<div class="spo-slot empty">
-            <span class="spo-label">${s.label}</span>
+        return `<div class="spo-tile empty">
+            <div class="spo-tile-header"><span class="spo-label">${label}</span></div>
             <span class="spo-name">Geen sponsor</span>
-            <span class="spo-income">-</span>
+            <div class="spo-tile-footer"><span class="spo-income">-</span></div>
         </div>`;
-    }).join('');
+    }
 
     const shirtWeekly = gameState.sponsor?.weeklyPay || 0;
-    const bordWeekly = gameState.sponsorSlots.bord?.weeklyIncome || 0;
-    const mouwWeekly = gameState.sponsorSlots.mouw?.weeklyIncome || 0;
-    const broekWeekly = gameState.sponsorSlots.broek?.weeklyIncome || 0;
-    const totalWeekly = shirtWeekly + bordWeekly + mouwWeekly + broekWeekly;
+    const bordWeekly = bordData?.weeklyIncome || 0;
+    const totalWeekly = shirtWeekly + bordWeekly;
 
     const overviewContent = document.getElementById('sponsor-overview-content');
     if (overviewContent) {
         overviewContent.innerHTML = `
-            <div class="spo-slots">${slotsHtml}</div>
+            <div class="spo-tiles">
+                ${slotTile('👕 Shirtsponsor', shirtData, 'shirt')}
+                ${slotTile('📋 Bordsponsor', bordData, 'bord')}
+            </div>
             <div class="spo-total">
                 <span>Totaal per week</span>
                 <span>€${totalWeekly}</span>

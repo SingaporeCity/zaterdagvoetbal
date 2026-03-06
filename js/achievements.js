@@ -424,14 +424,12 @@ const ACHIEVEMENTS = {
     fullSponsors: {
         id: 'fullSponsors',
         name: 'Sponsormagneet',
-        description: 'Alle sponsorslots gevuld',
+        description: 'Shirt- en bordsponsor tegelijk',
         category: CATEGORIES.CLUB,
         icon: '💼',
         reward: { cash: 10000 },
         check: (state) => {
-            const sponsors = state.sponsors || {};
-            const slots = ['shirt', 'sleeve', 'stadium', 'training'];
-            return slots.every(s => sponsors[s] && sponsors[s].name);
+            return state.sponsor && state.sponsorSlots?.bord;
         }
     },
 
