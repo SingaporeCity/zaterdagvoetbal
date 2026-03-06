@@ -11983,6 +11983,105 @@ body {
     color: var(--text-muted);
 }
 
+/* Academy Capacity Display */
+.academy-capacity {
+    margin-bottom: 10px;
+}
+
+.acap-title {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.acap-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin-bottom: 2px;
+}
+
+.acap-row .acap-label {
+    color: var(--text-secondary);
+}
+
+.acap-row .acap-count {
+    font-weight: 600;
+    color: var(--accent-green);
+}
+
+.acap-row.full {
+    background: rgba(244, 67, 54, 0.08);
+}
+
+.acap-row.full .acap-count {
+    color: #ef5350;
+}
+
+.acap-row.full .acap-label {
+    color: #ef5350;
+}
+
+/* Youth Tab Badges */
+.ytab-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+}
+
+.youth-tab.active .ytab-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.ytab-badge.badge-full {
+    background: rgba(244, 67, 54, 0.2);
+    color: #ef5350;
+}
+
+.youth-tab.active .ytab-badge.badge-full {
+    background: rgba(244, 67, 54, 0.3);
+    color: #ffcdd2;
+}
+
+.youth-tab.tab-full {
+    opacity: 0.8;
+}
+
+/* Youth Full Banner */
+.youth-full-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(244, 67, 54, 0.08);
+    border: 1px solid rgba(244, 67, 54, 0.2);
+    margin-bottom: 10px;
+    grid-column: 1 / -1;
+}
+
+.yfb-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.yfb-text {
+    font-size: 0.78rem;
+    color: #ef5350;
+    line-height: 1.3;
+}
+
 .scouting-level-display {
     background: var(--bg-primary);
     padding: 8px 12px;

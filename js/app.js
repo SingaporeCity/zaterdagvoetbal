@@ -5687,20 +5687,78 @@ function initAchievementsToggle() {
 
 let currentYouthAgeGroup = '12-13';
 
+function getYouthMaxPerCategory() {
+    const level = gameState.stadium?.academy || 'acad_1';
+    const map = { acad_1: 3, acad_2: 4, acad_3: 5, acad_4: 7 };
+    return map[level] || 3;
+}
+
+function getYouthCategoryCount(ageGroup) {
+    const [minAge, maxAge] = ageGroup.split('-').map(Number);
+    return gameState.youthPlayers.filter(p => p.age >= minAge && p.age <= maxAge).length;
+}
+
 function renderJeugdteamPage() {
     // Generate initial youth players if empty
     if (gameState.youthPlayers.length === 0) {
         generateInitialYouthPlayers();
     }
 
-    // Update stats
-    updateYouthStats();
+    // Update academy capacity display
+    updateAcademyCapacity();
 
     // Render current age group
     renderYouthPlayers(currentYouthAgeGroup);
 
+    // Update tab badges
+    updateYouthTabBadges();
+
     // Init tab listeners
     initYouthTabListeners();
+}
+
+function updateAcademyCapacity() {
+    const container = document.getElementById('academy-capacity');
+    if (!container) return;
+
+    const max = getYouthMaxPerCategory();
+    const groups = [
+        { label: 'Pupillen', age: '12-13' },
+        { label: 'Junioren', age: '14-15' },
+        { label: 'Aspiranten', age: '16-17' }
+    ];
+
+    container.innerHTML = `
+        <div class="acap-title">Max ${max} per categorie</div>
+        ${groups.map(g => {
+            const count = getYouthCategoryCount(g.age);
+            const full = count >= max;
+            return `<div class="acap-row ${full ? 'full' : ''}">
+                <span class="acap-label">${g.label}</span>
+                <span class="acap-count">${count}/${max}</span>
+            </div>`;
+        }).join('')}
+    `;
+}
+
+function updateYouthTabBadges() {
+    const max = getYouthMaxPerCategory();
+    document.querySelectorAll('.youth-tab').forEach(tab => {
+        const age = tab.dataset.age;
+        const count = getYouthCategoryCount(age);
+        const full = count >= max;
+        tab.classList.toggle('tab-full', full);
+
+        // Update or create badge
+        let badge = tab.querySelector('.ytab-badge');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'ytab-badge';
+            tab.appendChild(badge);
+        }
+        badge.textContent = `${count}/${max}`;
+        badge.classList.toggle('badge-full', full);
+    });
 }
 
 function generateInitialYouthPlayers() {
@@ -5818,7 +5876,16 @@ function renderYouthPlayers(ageGroup) {
     // Sort by potential descending
     players.sort((a, b) => b.potential - a.potential);
 
-    grid.innerHTML = players.map(player => createYouthPlayerCard(player)).join('');
+    // Check if category is full
+    const max = getYouthMaxPerCategory();
+    const isFull = players.length >= max;
+
+    const fullBanner = isFull ? `<div class="youth-full-banner">
+        <span class="yfb-icon">🚫</span>
+        <span class="yfb-text">Deze categorie zit vol (${players.length}/${max}). Ontslaa een speler om ruimte te maken voor nieuw talent.</span>
+    </div>` : '';
+
+    grid.innerHTML = fullBanner + players.map(player => createYouthPlayerCard(player)).join('');
 
     // Add contract button listeners
     grid.querySelectorAll('.btn-sign-contract').forEach(btn => {
@@ -5962,8 +6029,9 @@ function signYouthContract(playerId) {
     gameState.youthPlayers.splice(playerIndex, 1);
 
     // Re-render
-    updateYouthStats();
     renderYouthPlayers(currentYouthAgeGroup);
+    updateAcademyCapacity();
+    updateYouthTabBadges();
 
     showNotification(`${youthPlayer.name} heeft een profcontract getekend!`, 'success');
 }
@@ -5976,6 +6044,8 @@ function dismissYouthPlayer(playerId) {
     gameState.youthPlayers.splice(playerIndex, 1);
 
     renderYouthPlayers(currentYouthAgeGroup);
+    updateAcademyCapacity();
+    updateYouthTabBadges();
     showNotification(`${player.name} is ontslagen uit de jeugdopleiding.`, 'info');
     saveGame();
 }
