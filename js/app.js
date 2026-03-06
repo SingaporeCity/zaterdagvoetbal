@@ -3022,6 +3022,11 @@ function renderTrainingPage() {
     const a = mp.attributes;
     const trainedToday = hasTrainedToday(mp);
 
+    // Check if any trainer is hired
+    if (!gameState.hiredStaff) gameState.hiredStaff = { trainers: [], medisch: [] };
+    const hasTrainer = gameState.hiredStaff.trainers?.length > 0;
+    const hiredTrainerIds = gameState.hiredStaff.trainers || [];
+
     // Cooldown display
     const cooldownEl = document.getElementById('training-cooldown');
     if (cooldownEl) {
@@ -3030,7 +3035,36 @@ function renderTrainingPage() {
             : '<span class="cooldown-badge available">1 sessie beschikbaar</span>';
     }
 
-    // Player bar
+    // Trainer status card (like youth academy card)
+    const trainerCard = document.getElementById('trainer-status-card');
+    if (trainerCard) {
+        const trainerCount = hiredTrainerIds.length;
+        const trainerNames = hiredTrainerIds.map(id => {
+            const t = STAFF_TRAINERS.find(s => s.id === id);
+            return t ? `<div class="tsc-trainer-row"><span class="tsc-trainer-icon">${t.icon}</span> <span class="tsc-trainer-name">${t.name}</span></div>` : '';
+        }).join('');
+
+        trainerCard.innerHTML = `
+            <div class="tsc-header">
+                <span class="tsc-icon">🏋️</span>
+                <span class="tsc-title">Persoonlijke Trainer</span>
+            </div>
+            <div class="tsc-status ${hasTrainer ? 'has-trainer' : 'no-trainer'}">
+                ${hasTrainer
+                    ? `<span class="tsc-count">${trainerCount}/5 trainers</span>`
+                    : '<span class="tsc-none">Geen trainer</span>'
+                }
+            </div>
+            ${hasTrainer ? `<div class="tsc-trainers">${trainerNames}</div>` : `
+                <div class="tsc-warning">Je kunt geen vaardigheden trainen zonder trainer</div>
+            `}
+            <button class="btn btn-secondary tsc-link-btn" onclick="navigateTo('staff')">
+                ${hasTrainer ? 'Beheer staf' : 'Neem een trainer aan'}
+            </button>
+        `;
+    }
+
+    // Player bar (compact, sidebar)
     const playerBar = document.getElementById('training-player-bar');
     if (playerBar) {
         playerBar.innerHTML = `
@@ -3055,99 +3089,122 @@ function renderTrainingPage() {
                 <div class="tp-meta">${mp.position} · ${mp.age} jaar · #${mp.number}</div>
                 <div class="tp-alg"><span class="tp-alg-value">${getMyPlayerDerived(mp).gemiddeld}</span> ALG</div>
             </div>
-            <div class="tp-options">
-                <div class="tp-option">
-                    <span class="tp-option-icon">⚡</span>
-                    <div class="tp-option-text">
-                        <strong>Training</strong>
-                        <span>Verbeter een vaardigheid: snelheid, techniek, passing, schieten, verdediging of fysiek.</span>
-                    </div>
-                </div>
-                <div class="tp-option">
-                    <span class="tp-option-icon">💆</span>
-                    <div class="tp-option-text">
-                        <strong>Massage</strong>
-                        <span>Herstel energie zodat je fitter aan de volgende wedstrijd begint.</span>
-                    </div>
-                </div>
-                <div class="tp-option">
-                    <span class="tp-option-icon">🔭</span>
-                    <div class="tp-option-text">
-                        <strong>Spionage</strong>
-                        <span>Analyseer je volgende tegenstander en ontdek hun sterke en zwakke punten.</span>
-                    </div>
-                </div>
-            </div>
         `;
     }
 
+    // Attribute colors
     const ATTR_COLORS = {
         SNE: '#2196f3', TEC: '#9c27b0', PAS: '#4caf50',
         SCH: '#f44336', VER: '#ff9800', FYS: '#795548', ENE: '#ff9800'
     };
 
-    const columns = [
-        { key: 'SNE', name: 'Snelheid', icon: '⚡', desc: 'Sprint en versnelling' },
-        { key: 'TEC', name: 'Techniek', icon: '🎯', desc: 'Balcontrole en dribbels' },
-        { key: 'PAS', name: 'Passing', icon: '👟', desc: 'Korte en lange passes' },
-        { key: 'SCH', name: 'Schieten', icon: '⚽', desc: 'Afronding en schoten' },
-        { key: 'VER', name: 'Verdediging', icon: '🛡️', desc: 'Tackles en positionering' },
-        { key: 'FYS', name: 'Fysiek', icon: '💪', desc: 'Kracht en uithoudingsvermogen' },
+    // Training rows (horizontal bars)
+    const rows = [
+        { key: 'SNE', name: 'Snelheid', icon: '⚡', desc: 'Sprint en versnelling', isSkill: true },
+        { key: 'TEC', name: 'Techniek', icon: '🎯', desc: 'Balcontrole en dribbels', isSkill: true },
+        { key: 'PAS', name: 'Passing', icon: '👟', desc: 'Korte en lange passes', isSkill: true },
+        { key: 'SCH', name: 'Schieten', icon: '⚽', desc: 'Afronding en schoten', isSkill: true },
+        { key: 'VER', name: 'Verdediging', icon: '🛡️', desc: 'Tackles en positionering', isSkill: true },
+        { key: 'FYS', name: 'Fysiek', icon: '💪', desc: 'Kracht en uithoudingsvermogen', isSkill: true },
         { key: 'ENE', name: 'Massage', icon: '💆', desc: 'Herstel je energie', isEnergy: true },
         { key: 'SPY', name: 'Bespioneer', icon: '🔭', desc: 'Analyseer de tegenstander', isSpy: true }
     ];
 
-    const container = document.getElementById('training-columns');
+    const container = document.getElementById('training-rows');
     if (!container) return;
 
-    container.innerHTML = columns.map(col => {
-        if (col.isSpy) {
+    container.innerHTML = rows.map(row => {
+        // Spy row
+        if (row.isSpy) {
             const canSpy = !trainedToday;
             const opponentName = gameState.nextMatch?.opponent || 'Onbekend';
             return `
-                <div class="tc-column tc-spy">
-                    <div class="tc-icon">${col.icon}</div>
-                    <div class="tc-label">${col.name}</div>
-                    <div class="tc-desc">${col.desc}</div>
-                    <div class="tc-bar-container">
-                        <div class="tc-spy-target">
-                            <span class="tc-spy-vs">VS</span>
-                            <span class="tc-spy-name">${opponentName}</span>
+                <div class="tr-row tr-spy">
+                    <div class="tr-left">
+                        <span class="tr-icon">${row.icon}</span>
+                        <div class="tr-info">
+                            <span class="tr-name">${row.name}</span>
+                            <span class="tr-desc">${row.desc}</span>
                         </div>
                     </div>
-                    <button class="btn btn-sm ${canSpy ? 'btn-primary' : 'btn-secondary'} tc-train-btn"
-                            onclick="${canSpy ? "trainMyPlayer('spy')" : ''}" ${!canSpy ? 'disabled' : ''}>
-                        Spioneer
-                    </button>
+                    <div class="tr-center">
+                        <div class="tr-spy-opponent">
+                            <span class="tr-spy-vs">VS</span>
+                            <span class="tr-spy-name">${opponentName}</span>
+                        </div>
+                    </div>
+                    <div class="tr-right">
+                        <button class="btn btn-sm ${canSpy ? 'btn-primary' : 'btn-secondary'} tr-train-btn"
+                                onclick="${canSpy ? "trainMyPlayer('spy')" : ''}" ${!canSpy ? 'disabled' : ''}>
+                            Spioneer
+                        </button>
+                    </div>
                 </div>
             `;
         }
 
-        const value = col.isEnergy ? mp.energy : a[col.key];
-        const maxVal = col.isEnergy ? 100 : 99;
-        const pct = Math.round((value / maxVal) * 100);
-        const color = ATTR_COLORS[col.key];
-        const canTrain = col.isEnergy
-            ? (mp.energy < 100 && !trainedToday)
-            : (!trainedToday);
-        const btnLabel = col.isEnergy ? 'Massage' : 'Train';
-        const btnAction = canTrain ? `trainMyPlayer('${col.isEnergy ? 'massage' : col.key}')` : '';
-
-        return `
-            <div class="tc-column">
-                <div class="tc-icon">${col.icon}</div>
-                <div class="tc-label">${col.name}</div>
-                <div class="tc-desc">${col.desc}</div>
-                <div class="tc-bar-container">
-                    <div class="tc-bar-track">
-                        <div class="tc-bar-fill" style="height: ${pct}%; background: ${color}"></div>
+        // Energy/Massage row
+        if (row.isEnergy) {
+            const value = mp.energy;
+            const pct = Math.round(value);
+            const color = ATTR_COLORS.ENE;
+            const canTrain = mp.energy < 100 && !trainedToday;
+            return `
+                <div class="tr-row tr-massage">
+                    <div class="tr-left">
+                        <span class="tr-icon">${row.icon}</span>
+                        <div class="tr-info">
+                            <span class="tr-name">${row.name}</span>
+                            <span class="tr-desc">${row.desc}</span>
+                        </div>
+                    </div>
+                    <div class="tr-center">
+                        <div class="tr-bar-track">
+                            <div class="tr-bar-fill" style="width: ${pct}%; background: ${color}"></div>
+                        </div>
+                        <span class="tr-value" style="color: ${color}">${value}%</span>
+                    </div>
+                    <div class="tr-right">
+                        <button class="btn btn-sm ${canTrain ? 'btn-primary' : 'btn-secondary'} tr-train-btn"
+                                onclick="${canTrain ? "trainMyPlayer('massage')" : ''}" ${!canTrain ? 'disabled' : ''}>
+                            Massage
+                        </button>
                     </div>
                 </div>
-                <div class="tc-value" style="color: ${color}">${value}</div>
-                <button class="btn btn-sm ${canTrain ? 'btn-primary' : 'btn-secondary'} tc-train-btn"
-                        onclick="${btnAction}" ${!canTrain ? 'disabled' : ''}>
-                    ${btnLabel}
-                </button>
+            `;
+        }
+
+        // Skill rows (locked if no trainer)
+        const value = a[row.key];
+        const pct = Math.round((value / 99) * 100);
+        const color = ATTR_COLORS[row.key];
+        const locked = row.isSkill && !hasTrainer;
+        const canTrain = !locked && !trainedToday;
+
+        return `
+            <div class="tr-row ${locked ? 'tr-locked' : ''}">
+                <div class="tr-left">
+                    <span class="tr-icon">${row.icon}</span>
+                    <div class="tr-info">
+                        <span class="tr-name">${row.name}</span>
+                        <span class="tr-desc">${row.desc}</span>
+                    </div>
+                </div>
+                <div class="tr-center">
+                    <div class="tr-bar-track">
+                        <div class="tr-bar-fill" style="width: ${pct}%; background: ${locked ? 'var(--text-muted)' : color}"></div>
+                    </div>
+                    <span class="tr-value" style="color: ${locked ? 'var(--text-muted)' : color}">${value}</span>
+                </div>
+                <div class="tr-right">
+                    ${locked
+                        ? '<span class="tr-locked-label">🔒 Geen trainer</span>'
+                        : `<button class="btn btn-sm ${canTrain ? 'btn-primary' : 'btn-secondary'} tr-train-btn"
+                                onclick="${canTrain ? `trainMyPlayer('${row.key}')` : ''}" ${!canTrain ? 'disabled' : ''}>
+                            Train
+                        </button>`
+                    }
+                </div>
             </div>
         `;
     }).join('');
@@ -4000,6 +4057,16 @@ window.trainMyPlayer = function(key) {
     if (hasTrainedToday(mp)) {
         showNotification('Je hebt vandaag al getraind! Kom morgen terug.', 'warning');
         return;
+    }
+
+    // Block skill training without trainer (massage & spy always allowed)
+    const skillKeys = ['SNE', 'TEC', 'PAS', 'SCH', 'VER', 'FYS'];
+    if (skillKeys.includes(key)) {
+        if (!gameState.hiredStaff) gameState.hiredStaff = { trainers: [], medisch: [] };
+        if (!gameState.hiredStaff.trainers?.length) {
+            showNotification('Je hebt een trainer nodig om vaardigheden te trainen!', 'warning');
+            return;
+        }
     }
 
     if (key === 'massage') {

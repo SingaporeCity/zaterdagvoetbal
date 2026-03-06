@@ -937,19 +937,33 @@
                 <header class="page-header">
                     <div class="header-left">
                         <h2 class="page-title">Training</h2>
-                        <p class="page-subtitle handwritten">Train, masseer of bespioneer</p>
+                        <p class="page-subtitle handwritten">Verbeter je speler en bereid je voor op de wedstrijd</p>
                     </div>
                     <div class="header-right">
                         <div class="training-cooldown" id="training-cooldown"></div>
                     </div>
                 </header>
 
-                <div class="training-player-bar" id="training-player-bar">
-                    <!-- Filled by JS: avatar + name/age/number + 3 options -->
-                </div>
+                <div class="training-layout">
+                    <!-- Left sidebar: Trainer status + Player info -->
+                    <div class="training-sidebar">
+                        <div class="training-player-bar" id="training-player-bar">
+                            <!-- Filled by JS -->
+                        </div>
+                        <div class="trainer-status-card" id="trainer-status-card">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
 
-                <div class="training-columns" id="training-columns">
-                    <!-- Filled by JS: 7 vertical bar columns -->
+                    <!-- Main content: Horizontal attribute bars -->
+                    <div class="training-main">
+                        <div class="training-info-box">
+                            <p>Train in je vrije tijd om je speler te verbeteren. Je mag één sessie per dag doen — kies een vaardigheid, neem een massage of bespioneer de tegenstander.</p>
+                        </div>
+                        <div class="training-rows" id="training-rows">
+                            <!-- Filled by JS: horizontal bar rows -->
+                        </div>
+                    </div>
                 </div>
             </section>
 
