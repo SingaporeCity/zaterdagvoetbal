@@ -29,7 +29,8 @@ import {
     getDivision,
     calculatePotential,
     getNextMidnight,
-    formatTimeRemaining
+    formatTimeRemaining,
+    getPotentialStars
 } from './utils.js';
 
 import {
@@ -6625,6 +6626,125 @@ function migratePlayersToZaterdag() {
     });
 }
 
+function generateFakeMatchHistory() {
+    const opponents = ['FC Rivaal', 'SC Concordia', 'Vv De Meeuwen', 'SV Oranje'];
+    const results = [
+        { playerScore: 3, opponentScore: 1, resultType: 'win' },
+        { playerScore: 0, opponentScore: 2, resultType: 'loss' },
+        { playerScore: 1, opponentScore: 1, resultType: 'draw' },
+        { playerScore: 2, opponentScore: 0, resultType: 'win' }
+    ];
+
+    if (!gameState.matchHistory) gameState.matchHistory = [];
+    const lineupPlayers = (gameState.lineup || []).filter(p => p != null);
+    const playersForRatings = lineupPlayers.length > 0 ? lineupPlayers : gameState.players.slice(0, 11);
+    // Attackers/midfielders more likely to score
+    const attackers = playersForRatings.filter(p => ['spits', 'linksbuiten', 'rechtsbuiten', 'linksMid', 'centraleMid', 'rechtsMid'].includes(p.position));
+    const scorerPool = attackers.length > 0 ? attackers : playersForRatings;
+
+    for (let i = 0; i < 4; i++) {
+        const isHome = i % 2 === 0;
+        const pScore = results[i].playerScore;
+        const oScore = results[i].opponentScore;
+
+        // Start with base ratings, no goals/assists
+        const ratings = playersForRatings.map(p => ({
+            id: p.id,
+            name: p.name,
+            position: p.position,
+            rating: Math.round((5.5 + Math.random() * 3.5) * 10) / 10,
+            goals: 0,
+            assists: 0,
+            yellowCards: Math.random() < 0.12 ? 1 : 0,
+            redCards: 0
+        }));
+
+        // Distribute player goals among scorerPool players and create goal events
+        const fakeEvents = [];
+        const usedMinutes = new Set();
+        for (let g = 0; g < pScore; g++) {
+            const scorerIdx = Math.floor(Math.random() * scorerPool.length);
+            const scorer = scorerPool[scorerIdx];
+            const ratingEntry = ratings.find(r => r.id === scorer.id);
+            if (ratingEntry) {
+                ratingEntry.goals++;
+                ratingEntry.rating = Math.round((ratingEntry.rating + 1.0) * 10) / 10;
+            }
+            let minute;
+            do { minute = 5 + Math.floor(Math.random() * 85); } while (usedMinutes.has(minute));
+            usedMinutes.add(minute);
+            fakeEvents.push({
+                minute,
+                type: 'goal',
+                team: isHome ? 'home' : 'away',
+                player: scorer.name,
+                playerId: scorer.id,
+                commentary: `${scorer.name} scoort! ${minute}'`
+            });
+        }
+        // Opponent goals (no specific player)
+        for (let g = 0; g < oScore; g++) {
+            let minute;
+            do { minute = 5 + Math.floor(Math.random() * 85); } while (usedMinutes.has(minute));
+            usedMinutes.add(minute);
+            fakeEvents.push({
+                minute,
+                type: 'goal',
+                team: isHome ? 'away' : 'home',
+                player: 'Tegenstander',
+                commentary: `Tegendoelpunt in de ${minute}e minuut.`
+            });
+        }
+        // Add yellow card events for players that got one
+        ratings.filter(r => r.yellowCards > 0).forEach(r => {
+            let minute;
+            do { minute = 5 + Math.floor(Math.random() * 85); } while (usedMinutes.has(minute));
+            usedMinutes.add(minute);
+            fakeEvents.push({
+                minute,
+                type: 'yellow_card',
+                team: isHome ? 'home' : 'away',
+                player: r.name,
+                playerId: r.id,
+                commentary: `Gele kaart voor ${r.name}.`
+            });
+        });
+        fakeEvents.sort((a, b) => a.minute - b.minute);
+
+        const possHome = 45 + Math.floor(Math.random() * 20);
+        const bestPlayer = [...ratings].sort((a, b) => b.rating - a.rating)[0];
+
+        gameState.matchHistory.push({
+            week: i + 1,
+            season: gameState.season,
+            opponent: opponents[i],
+            isHome,
+            playerScore: pScore,
+            opponentScore: oScore,
+            resultType: results[i].resultType,
+            events: fakeEvents,
+            possession: { home: possHome, away: 100 - possHome },
+            shots: { home: 5 + Math.floor(Math.random() * 10), away: 3 + Math.floor(Math.random() * 8) },
+            shotsOnTarget: { home: 2 + Math.floor(Math.random() * 5), away: 1 + Math.floor(Math.random() * 4) },
+            corners: { home: Math.floor(Math.random() * 6), away: Math.floor(Math.random() * 6) },
+            fouls: { home: 3 + Math.floor(Math.random() * 8), away: 3 + Math.floor(Math.random() * 8) },
+            cards: { home: { yellow: ratings.filter(r => r.yellowCards > 0).length, red: 0 }, away: { yellow: Math.floor(Math.random() * 3), red: 0 } },
+            manOfTheMatch: bestPlayer ? { name: bestPlayer.name, rating: bestPlayer.rating } : null,
+            playerRatings: ratings,
+            improvements: [],
+            chairmanComments: {
+                positive: 'De voorzitter waardeert de inzet van het team.',
+                negative: 'De voorzitter ziet altijd ruimte voor verbetering.'
+            }
+        });
+    }
+
+    // Set lastMatch to most recent
+    gameState.lastMatch = gameState.matchHistory[gameState.matchHistory.length - 1];
+    // Set week to 5 (after 4 matches)
+    gameState.week = 5;
+}
+
 function initGame() {
     // Check for existing save
     const savedState = loadGame();
@@ -6717,6 +6837,11 @@ function initGame() {
     // Check and apply daily reward (silently)
     const dailyRewardResult = checkDailyReward(gameState);
     // Reward is claimed but no modal shown
+
+    // Generate fake match history for testing (only on first load with no history)
+    if ((!gameState.matchHistory || gameState.matchHistory.length === 0) && gameState.players.length > 0) {
+        generateFakeMatchHistory();
+    }
 
     // Render initial content
     renderStandings();
@@ -7281,6 +7406,44 @@ function playMatch() {
     if (opponentScore === 0) awardPlayerXP(gameState, 'cleanSheet');
     awardPlayerXP(gameState, 'goalScored', playerScore * 10);
 
+    // Player improvement: players with potential > 1 star get +1 overall
+    const improvements = [];
+    gameState.players.forEach(player => {
+        if (!player) return;
+        const stars = getPotentialStars(player.overall, player.potential);
+        if (stars > 1 && player.overall < player.potential) {
+            const weights = POSITIONS[player.position].weights;
+            const primaryAttr = Object.entries(weights).sort((a, b) => b[1] - a[1])[0][0];
+            player.attributes[primaryAttr] = Math.min(99, player.attributes[primaryAttr] + 1);
+            player.overall = calculateOverall(player.attributes, player.position);
+            improvements.push({ name: player.name, newOverall: player.overall, stars });
+        }
+    });
+
+    // Compact playerRatings for storage
+    const compactRatings = result.playerRatings ? Object.entries(result.playerRatings).map(([id, data]) => ({
+        id: Number(id),
+        name: data.player.name,
+        position: data.player.position,
+        rating: Math.round(data.rating * 10) / 10,
+        goals: data.goals,
+        assists: data.assists,
+        yellowCards: data.yellowCards,
+        redCards: data.redCards
+    })) : [];
+
+    // Count corners from events
+    const cornersHome = result.events.filter(e => e.type === 'corner' && e.team === 'home').length;
+    const cornersAway = result.events.filter(e => e.type === 'corner' && e.team === 'away').length;
+
+    // Generate chairman comments
+    const chairmanComments = generateChairmanComments(result, isHome, improvements, resultType, playerScore, opponentScore);
+
+    // Important events to store
+    const storedEvents = result.events.filter(e =>
+        ['goal', 'own_goal', 'yellow_card', 'red_card', 'substitution', 'injury', 'penalty', 'penalty_miss'].includes(e.type)
+    );
+
     // Store last match
     gameState.lastMatch = {
         ...result,
@@ -7288,7 +7451,13 @@ function playMatch() {
         playerScore,
         opponentScore,
         resultType,
-        opponent: opponent.name
+        opponent: opponent.name,
+        playerRatings: compactRatings,
+        improvements,
+        chairmanComments,
+        corners: { home: cornersHome, away: cornersAway },
+        fouls: result.fouls || { home: 0, away: 0 },
+        cards: result.cards || { home: { yellow: 0, red: 0 }, away: { yellow: 0, red: 0 } }
     };
 
     // Push to match history
@@ -7301,13 +7470,17 @@ function playMatch() {
         playerScore,
         opponentScore,
         resultType,
-        events: result.events.filter(e =>
-            ['goal', 'own_goal', 'yellow_card', 'red_card', 'substitution', 'injury', 'penalty', 'penalty_miss'].includes(e.type)
-        ),
+        events: storedEvents,
         possession: result.possession,
         shots: result.shots,
         shotsOnTarget: result.shotsOnTarget,
-        manOfTheMatch: result.manOfTheMatch
+        corners: { home: cornersHome, away: cornersAway },
+        fouls: result.fouls || { home: 0, away: 0 },
+        cards: result.cards || { home: { yellow: 0, red: 0 }, away: { yellow: 0, red: 0 } },
+        manOfTheMatch: result.manOfTheMatch,
+        playerRatings: compactRatings,
+        improvements,
+        chairmanComments
     });
 
     // Advance week
@@ -7416,7 +7589,36 @@ function renderMatchesPage() {
     });
 
     renderMatchReport();
+    renderPlayerRatingsTab();
     renderMatchProgram();
+}
+
+function generateChairmanComments(result, isHome, improvements, resultType, playerScore, opponentScore) {
+    const positiveOptions = [];
+    const negativeOptions = [];
+
+    // Positive options
+    if (resultType === 'win') positiveOptions.push('De voorzitter is tevreden met de overwinning.');
+    if (opponentScore === 0) positiveOptions.push('De voorzitter prijst de verdediging — geen tegendoelpunt!');
+    if (playerScore >= 3) positiveOptions.push('Wat een doelpuntenfestijn! De voorzitter geniet.');
+    if (result.manOfTheMatch) positiveOptions.push(`De voorzitter is onder de indruk van ${result.manOfTheMatch.name}.`);
+    if (improvements.length > 0) positiveOptions.push(`${improvements[0].name} wordt steeds beter! De voorzitter ziet de groei.`);
+    if (positiveOptions.length === 0) positiveOptions.push('De voorzitter waardeert de inzet van het team.');
+
+    // Negative options
+    if (resultType === 'loss') negativeOptions.push('De voorzitter maakt zich zorgen over het resultaat.');
+    if (opponentScore >= 3) negativeOptions.push('Te veel tegendoelpunten. De voorzitter wil actie.');
+    const cards = (result.events || []).filter(e => e.type === 'yellow_card' || e.type === 'red_card');
+    if (cards.length >= 2) negativeOptions.push('Te veel kaarten. De discipline moet beter.');
+    const possession = isHome ? result.possession?.home : result.possession?.away;
+    if (possession && possession < 40) negativeOptions.push('De voorzitter vindt dat we meer aan de bal moeten zijn.');
+    if (playerScore === 0) negativeOptions.push('Niet gescoord. De voorzitter verwacht meer aanvallend vermogen.');
+    if (negativeOptions.length === 0) negativeOptions.push('De voorzitter ziet altijd ruimte voor verbetering.');
+
+    return {
+        positive: positiveOptions[Math.floor(Math.random() * positiveOptions.length)],
+        negative: negativeOptions[Math.floor(Math.random() * negativeOptions.length)]
+    };
 }
 
 function renderMatchReport() {
@@ -7439,100 +7641,227 @@ function renderMatchReport() {
     const resultClass = resultType === 'win' ? 'result-win' : resultType === 'loss' ? 'result-loss' : 'result-draw';
     const resultText = resultType === 'win' ? 'Gewonnen!' : resultType === 'loss' ? 'Verloren' : 'Gelijkspel';
 
-    const eventIcons = {
-        'goal': '⚽', 'own_goal': '⚽', 'yellow_card': '🟨', 'red_card': '🟥',
-        'substitution': '🔄', 'injury': '🤕', 'penalty': '⚽', 'penalty_miss': '❌'
-    };
-
-    const importantEvents = match.events.filter(e =>
-        ['goal', 'own_goal', 'yellow_card', 'red_card', 'substitution', 'injury', 'penalty', 'penalty_miss'].includes(e.type)
-    );
-
+    // Stats
     const possHome = isHome ? match.possession.home : match.possession.away;
     const possAway = isHome ? match.possession.away : match.possession.home;
     const shotsHome = isHome ? match.shots.home : match.shots.away;
     const shotsAway = isHome ? match.shots.away : match.shots.home;
     const sotHome = isHome ? match.shotsOnTarget.home : match.shotsOnTarget.away;
     const sotAway = isHome ? match.shotsOnTarget.away : match.shotsOnTarget.home;
+    const cornersHome = isHome ? (match.corners?.home || 0) : (match.corners?.away || 0);
+    const cornersAway = isHome ? (match.corners?.away || 0) : (match.corners?.home || 0);
+    const foulsHome = isHome ? (match.fouls?.home || 0) : (match.fouls?.away || 0);
+    const foulsAway = isHome ? (match.fouls?.away || 0) : (match.fouls?.home || 0);
+    const cardsYellowHome = isHome ? (match.cards?.home?.yellow || 0) : (match.cards?.away?.yellow || 0);
+    const cardsYellowAway = isHome ? (match.cards?.away?.yellow || 0) : (match.cards?.home?.yellow || 0);
+    const cardsRedHome = isHome ? (match.cards?.home?.red || 0) : (match.cards?.away?.red || 0);
+    const cardsRedAway = isHome ? (match.cards?.away?.red || 0) : (match.cards?.home?.red || 0);
+
+    // Goal scorers with minutes — only show OUR team's goals
+    const events = match.events || [];
+    const ourTeam = isHome ? 'home' : 'away';
+    const ourGoals = events.filter(e => (e.type === 'goal' || e.type === 'penalty') && e.team === ourTeam).sort((a, b) => a.minute - b.minute);
+    const ownGoalEvents = events.filter(e => e.type === 'own_goal' && e.team === ourTeam).sort((a, b) => a.minute - b.minute);
+    const cardEvents = events.filter(e => (e.type === 'yellow_card' || e.type === 'red_card') && e.team === ourTeam).sort((a, b) => a.minute - b.minute);
+
+    const ratings = match.playerRatings || [];
+    let goalItems = [];
+    if (ourGoals.length > 0 || ownGoalEvents.length > 0) {
+        ourGoals.forEach(g => goalItems.push({ minute: g.minute, name: g.player || '?', ownGoal: false }));
+        ownGoalEvents.forEach(g => goalItems.push({ minute: g.minute, name: g.player || '?', ownGoal: true }));
+        goalItems.sort((a, b) => (a.minute || 0) - (b.minute || 0));
+    } else if (playerScore > 0) {
+        // Fallback: build from playerRatings goals
+        const scorers = ratings.filter(p => p.goals > 0);
+        scorers.forEach(p => {
+            for (let i = 0; i < p.goals; i++) {
+                goalItems.push({ minute: null, name: p.name, ownGoal: false });
+            }
+        });
+    }
+
+    const goalSummaryHtml = goalItems.length > 0 ? `
+        <div class="report-goal-summary">
+            ${goalItems.map(g => {
+                const minuteStr = g.minute ? `${g.minute}' ` : '';
+                return g.ownGoal
+                    ? `<span class="report-goal-item own-goal">⚽ ${minuteStr}${g.name} (e.d.)</span>`
+                    : `<span class="report-goal-item">⚽ ${minuteStr}${g.name}</span>`;
+            }).join('')}
+        </div>
+    ` : '';
+
+    const cardSummaryHtml = cardEvents.length > 0 ? `
+        <div class="report-card-summary">
+            ${cardEvents.map(c => `<span class="report-card-item">${c.type === 'red_card' ? '🟥' : '🟨'} ${c.minute}' ${c.player || ''}</span>`).join('')}
+        </div>
+    ` : '';
+
+    // Player ratings (compact, sorted by rating)
+    const sortedRatings = [...ratings].sort((a, b) => b.rating - a.rating);
+    const ratingsHtml = sortedRatings.length > 0 ? `
+        <table class="match-ratings-table">
+            <thead>
+                <tr><th>Pos</th><th>Speler</th><th>Cijfer</th><th></th></tr>
+            </thead>
+            <tbody>
+                ${sortedRatings.map(p => {
+                    const ratingClass = p.rating >= 8.0 ? 'good' : p.rating >= 6.5 ? 'okay' : 'poor';
+                    const posAbbr = POSITIONS[p.position]?.abbr || p.position;
+                    const icons = (p.goals ? '⚽'.repeat(p.goals) : '') + (p.assists ? '🅰️'.repeat(p.assists) : '') + (p.yellowCards ? '🟨'.repeat(p.yellowCards) : '') + (p.redCards ? '🟥'.repeat(p.redCards) : '');
+                    return `<tr>
+                        <td>${posAbbr}</td>
+                        <td>${p.name}</td>
+                        <td><span class="match-rating-badge ${ratingClass}">${p.rating.toFixed(1)}</span></td>
+                        <td class="rating-icons">${icons}</td>
+                    </tr>`;
+                }).join('')}
+            </tbody>
+        </table>
+    ` : '';
+
+    // Chairman + improvements (compact)
+    const comments = match.chairmanComments;
+    const improvements = match.improvements || [];
 
     container.innerHTML = `
         <div class="match-report-container">
-            <div class="match-result-scoreboard ${resultClass}">
-                <div class="match-result-team home">
-                    <span class="match-result-team-name">${gameState.club.name}</span>
+            <div class="report-grid">
+                <div class="report-col-left">
+                    <div class="match-result-scoreboard ${resultClass}">
+                        <div class="match-result-team home">
+                            <span class="match-result-team-name">${gameState.club.name}</span>
+                        </div>
+                        <div class="match-result-score-display">
+                            <span class="match-result-score-num">${playerScore}</span>
+                            <span class="match-result-score-sep">-</span>
+                            <span class="match-result-score-num">${opponentScore}</span>
+                        </div>
+                        <div class="match-result-team away">
+                            <span class="match-result-team-name">${opponent}</span>
+                        </div>
+                    </div>
+                    <div class="match-result-verdict">${resultText}</div>
+                    ${goalSummaryHtml}
+                    ${cardSummaryHtml}
+
+                    <div class="match-result-stats-compact">
+                        <div class="stat-compact-row"><span class="stat-compact-val">${possHome}%</span><span class="stat-compact-label">Balbezit</span><span class="stat-compact-val">${possAway}%</span></div>
+                        <div class="stat-compact-row"><span class="stat-compact-val">${shotsHome}</span><span class="stat-compact-label">Schoten</span><span class="stat-compact-val">${shotsAway}</span></div>
+                        <div class="stat-compact-row"><span class="stat-compact-val">${sotHome}</span><span class="stat-compact-label">Op doel</span><span class="stat-compact-val">${sotAway}</span></div>
+                        <div class="stat-compact-row"><span class="stat-compact-val">${cornersHome}</span><span class="stat-compact-label">Corners</span><span class="stat-compact-val">${cornersAway}</span></div>
+                        <div class="stat-compact-row"><span class="stat-compact-val">${foulsHome}</span><span class="stat-compact-label">Overtredingen</span><span class="stat-compact-val">${foulsAway}</span></div>
+                        <div class="stat-compact-row"><span class="stat-compact-val">${cardsYellowHome} / ${cardsRedHome}</span><span class="stat-compact-label">Geel / Rood</span><span class="stat-compact-val">${cardsYellowAway} / ${cardsRedAway}</span></div>
+                    </div>
+
+                    ${match.manOfTheMatch ? `
+                        <div class="match-result-motm">
+                            <span class="match-result-motm-star">⭐</span>
+                            <div class="match-result-motm-info">
+                                <span class="match-result-motm-label">Man of the Match</span>
+                                <span class="match-result-motm-name">${match.manOfTheMatch.name}</span>
+                                ${match.manOfTheMatch.rating ? `<span class="match-result-motm-rating">${match.manOfTheMatch.rating.toFixed(1)}</span>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${comments ? `
+                        <div class="chairman-comments">
+                            <div class="chairman-comment positive">${comments.positive}</div>
+                            <div class="chairman-comment negative">${comments.negative}</div>
+                        </div>
+                    ` : ''}
+
+                    ${improvements.length > 0 ? `
+                        <div class="improvement-list">
+                            ${improvements.map(imp => {
+                                const starsStr = '★'.repeat(imp.stars) + '☆'.repeat(5 - imp.stars);
+                                return `<div class="improvement-item">${imp.name} ↑ ${imp.newOverall} <span class="improvement-stars">(${starsStr})</span></div>`;
+                            }).join('')}
+                        </div>
+                    ` : ''}
                 </div>
-                <div class="match-result-score-display">
-                    <span class="match-result-score-num">${playerScore}</span>
-                    <span class="match-result-score-sep">-</span>
-                    <span class="match-result-score-num">${opponentScore}</span>
-                </div>
-                <div class="match-result-team away">
-                    <span class="match-result-team-name">${opponent}</span>
+
+                <div class="report-col-right">
+                    <h3 class="report-section-title">Spelercijfers</h3>
+                    ${ratingsHtml}
                 </div>
             </div>
-            <div class="match-result-verdict">${resultText}</div>
+        </div>
+    `;
+}
 
-            <div class="match-result-timeline">
-                <h3>Wedstrijdverloop</h3>
-                <div class="match-result-timeline-track">
-                    ${importantEvents.map(event => `
-                        <div class="match-result-event ${event.type}">
-                            <span class="match-result-event-icon">${eventIcons[event.type] || '📋'}</span>
-                            <span class="match-result-event-minute">${event.minute}'</span>
-                            <span class="match-result-event-text">${event.commentary || event.description || event.type}</span>
-                        </div>
-                    `).join('')}
-                    ${importantEvents.length === 0 ? '<div class="match-result-event"><span class="match-result-event-text">Geen bijzondere gebeurtenissen</span></div>' : ''}
-                </div>
+function renderPlayerRatingsTab() {
+    const container = document.getElementById('matches-waardering');
+    if (!container) return;
+
+    const history = (gameState.matchHistory || []).filter(h => h.season === gameState.season && h.playerRatings && h.playerRatings.length > 0);
+    const recentMatches = history.slice(-5);
+
+    if (recentMatches.length === 0) {
+        container.innerHTML = `
+            <div class="match-report-empty">
+                <div class="match-report-empty-icon">📊</div>
+                <p>Nog geen beoordelingen</p>
+                <p class="match-report-empty-sub">Speel wedstrijden om spelersbeoordelingen te zien.</p>
             </div>
+        `;
+        return;
+    }
 
-            <div class="match-result-stats">
-                <h3>Statistieken</h3>
-                <div class="match-result-stat-row">
-                    <span class="match-result-stat-value">${possHome}%</span>
-                    <div class="match-result-stat-bar-container">
-                        <span class="match-result-stat-label">Balbezit</span>
-                        <div class="match-result-stat-bar">
-                            <div class="match-result-stat-fill home" style="width: ${possHome}%"></div>
-                            <div class="match-result-stat-fill away" style="width: ${possAway}%"></div>
-                        </div>
-                    </div>
-                    <span class="match-result-stat-value">${possAway}%</span>
-                </div>
-                <div class="match-result-stat-row">
-                    <span class="match-result-stat-value">${shotsHome}</span>
-                    <div class="match-result-stat-bar-container">
-                        <span class="match-result-stat-label">Schoten</span>
-                        <div class="match-result-stat-bar">
-                            <div class="match-result-stat-fill home" style="width: ${shotsHome + shotsAway > 0 ? (shotsHome / (shotsHome + shotsAway) * 100) : 50}%"></div>
-                            <div class="match-result-stat-fill away" style="width: ${shotsHome + shotsAway > 0 ? (shotsAway / (shotsHome + shotsAway) * 100) : 50}%"></div>
-                        </div>
-                    </div>
-                    <span class="match-result-stat-value">${shotsAway}</span>
-                </div>
-                <div class="match-result-stat-row">
-                    <span class="match-result-stat-value">${sotHome}</span>
-                    <div class="match-result-stat-bar-container">
-                        <span class="match-result-stat-label">Op doel</span>
-                        <div class="match-result-stat-bar">
-                            <div class="match-result-stat-fill home" style="width: ${sotHome + sotAway > 0 ? (sotHome / (sotHome + sotAway) * 100) : 50}%"></div>
-                            <div class="match-result-stat-fill away" style="width: ${sotHome + sotAway > 0 ? (sotAway / (sotHome + sotAway) * 100) : 50}%"></div>
-                        </div>
-                    </div>
-                    <span class="match-result-stat-value">${sotAway}</span>
-                </div>
+    // Build form overview
+    const playerMap = new Map();
+    recentMatches.forEach(m => {
+        (m.playerRatings || []).forEach(p => {
+            if (!playerMap.has(p.id)) {
+                playerMap.set(p.id, { name: p.name, position: p.position, ratings: [] });
+            }
+        });
+    });
+    recentMatches.forEach((m, idx) => {
+        const matchRatings = new Map((m.playerRatings || []).map(p => [p.id, p.rating]));
+        playerMap.forEach((data, id) => {
+            data.ratings[idx] = matchRatings.get(id) || null;
+        });
+    });
+    const posOrder = ['keeper', 'linksback', 'centraleVerdediger', 'rechtsback', 'linksMid', 'centraleMid', 'rechtsMid', 'linksbuiten', 'rechtsbuiten', 'spits'];
+    const players = [...playerMap.entries()].sort((a, b) => {
+        return posOrder.indexOf(a[1].position) - posOrder.indexOf(b[1].position);
+    });
+
+    container.innerHTML = `
+        <div class="waardering-container">
+            <div class="waardering-section">
+                <h3>Vormoverzicht — Seizoen ${gameState.season}</h3>
+                <table class="form-table">
+                    <thead>
+                        <tr>
+                            <th>Pos</th>
+                            <th>Speler</th>
+                            ${recentMatches.map(m => `<th>W${m.week}</th>`).join('')}
+                            <th>Gem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${players.map(([id, data]) => {
+                            const validRatings = data.ratings.filter(r => r !== null && r !== undefined);
+                            const avg = validRatings.length > 0 ? validRatings.reduce((s, r) => s + r, 0) / validRatings.length : 0;
+                            const avgClass = avg >= 8.0 ? 'good' : avg >= 6.5 ? 'okay' : 'poor';
+                            const posAbbr = POSITIONS[data.position]?.abbr || data.position;
+                            return `<tr>
+                                <td class="form-pos">${posAbbr}</td>
+                                <td>${data.name}</td>
+                                ${data.ratings.map(r => {
+                                    if (r === null || r === undefined) return '<td><span class="form-badge none">-</span></td>';
+                                    const cls = r >= 8.0 ? 'good' : r >= 6.5 ? 'okay' : 'poor';
+                                    return `<td><span class="form-badge ${cls}">${r.toFixed(1)}</span></td>`;
+                                }).join('')}
+                                <td><span class="form-badge ${avgClass}">${avg > 0 ? avg.toFixed(1) : '-'}</span></td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
             </div>
-
-            ${match.manOfTheMatch ? `
-                <div class="match-result-motm">
-                    <div class="match-result-motm-star">&#11088;</div>
-                    <div class="match-result-motm-info">
-                        <span class="match-result-motm-label">Man of the Match</span>
-                        <span class="match-result-motm-name">${match.manOfTheMatch.name}</span>
-                        ${match.manOfTheMatch.rating ? `<span class="match-result-motm-rating">${match.manOfTheMatch.rating.toFixed(1)}</span>` : ''}
-                    </div>
-                </div>
-            ` : ''}
         </div>
     `;
 }
@@ -8806,34 +9135,113 @@ function populateSpecialistSelects() {
         gameState.specialists = { cornerTaker: null, penaltyTaker: null, freekickTaker: null, captain: null };
     }
 
-    // Only lineup players, sorted by overall descending
-    const lineupPlayers = gameState.lineup.filter(p => p !== null).sort((a, b) => b.overall - a.overall);
+    const inLineup = gameState.lineup.filter(p => p != null);
+    const lineupPlayers = (inLineup.length > 0 ? inLineup : gameState.players || [])
+        .sort((a, b) => (b.overall || 0) - (a.overall || 0));
     const posAbbr = (pos) => POSITIONS[pos]?.abbr || pos;
+    const posColor = (pos) => POSITIONS[pos]?.color || '#666';
 
-    const selects = [
-        { id: 'corner-taker', key: 'cornerTaker' },
-        { id: 'penalty-taker', key: 'penaltyTaker' },
-        { id: 'freekick-taker', key: 'freekickTaker' },
-        { id: 'captain-select', key: 'captain' }
-    ];
+    const primary = gameState.club.colors.primary || '#1b5e20';
+    const secondary = gameState.club.colors.secondary || '#f5f0e1';
 
-    for (const { id, key } of selects) {
-        const select = document.getElementById(id);
-        if (!select) continue;
-
-        const selectedId = gameState.specialists[key];
-        let html = '<option value="">-- Selecteer --</option>';
-        for (const p of lineupPlayers) {
-            const sel = p.id === selectedId ? 'selected' : '';
-            html += `<option value="${p.id}" ${sel}>${p.name}  (${posAbbr(p.position)} ${p.overall})</option>`;
-        }
-        select.innerHTML = html;
-
-        select.onchange = () => {
-            gameState.specialists[key] = select.value || null;
-            saveGame();
-        };
+    function renderShirtSvg(name, overall) {
+        const lastName = name.includes(' ') ? name.split(' ').pop() : name;
+        return `<svg viewBox="0 0 120 140" class="spec-shirt-svg">
+            <path d="M30,8 L20,12 L4,28 L14,38 L24,28 L24,130 L96,130 L96,28 L106,38 L116,28 L100,12 L90,8 C85,20 75,26 60,26 C45,26 35,20 30,8Z"
+                  fill="${primary}" stroke="${secondary}" stroke-width="2"/>
+            <path d="M30,8 C35,20 45,26 60,26 C75,26 85,20 90,8"
+                  fill="none" stroke="${secondary}" stroke-width="1.5"/>
+            <text x="60" y="72" text-anchor="middle" font-size="36" font-weight="900"
+                  fill="${secondary}" font-family="sans-serif">${overall}</text>
+            <text x="60" y="104" text-anchor="middle" font-size="${lastName.length > 10 ? 9 : lastName.length > 7 ? 11 : 13}" font-weight="800"
+                  fill="${secondary}" font-family="sans-serif" text-transform="uppercase"
+                  letter-spacing="1">${lastName.toUpperCase()}</text>
+        </svg>`;
     }
+
+    function renderPlayerRow(p, isSelected) {
+        const color = posColor(p.position);
+        return `
+            <div class="spec-player-row ${isSelected ? 'selected' : ''}" data-player-id="${p.id}">
+                <span class="spec-player-badge" style="background: ${color}">${p.overall}</span>
+                <span class="spec-player-name">${p.name}</span>
+                <span class="spec-player-age">${p.age}j</span>
+                <span class="spec-player-pos">${posAbbr(p.position)}</span>
+            </div>
+        `;
+    }
+
+    const cards = document.querySelectorAll('.spec-card');
+    const dropdownMap = {
+        cornerTaker: 'corner-taker',
+        penaltyTaker: 'penalty-taker',
+        freekickTaker: 'freekick-taker',
+        captain: 'captain-select'
+    };
+
+    for (const card of cards) {
+        const key = card.dataset.role;
+        if (!key) continue;
+
+        const dropdownId = dropdownMap[key];
+        const dropdown = document.getElementById(dropdownId);
+        if (!dropdown) continue;
+
+        const emptyEl = card.querySelector('.spec-card-empty');
+        const shirtEl = card.querySelector('.spec-card-shirt');
+        const selectedEl = dropdown.querySelector('.spec-selected');
+        const optionsEl = dropdown.querySelector('.spec-options');
+        const selectedId = gameState.specialists[key];
+        const selectedPlayer = lineupPlayers.find(p => String(p.id) === String(selectedId));
+
+        // Show shirt or empty state
+        if (selectedPlayer) {
+            card.classList.add('has-player');
+            shirtEl.innerHTML = renderShirtSvg(selectedPlayer.name, selectedPlayer.overall) +
+                `<span class="spec-shirt-role">${card.dataset.label}</span>`;
+            selectedEl.innerHTML = `<span class="spec-change-text">Wijzig</span><span class="spec-chevron"></span>`;
+        } else {
+            card.classList.remove('has-player');
+            shirtEl.innerHTML = '';
+            selectedEl.innerHTML = `<span class="spec-change-text">Selecteer</span><span class="spec-chevron"></span>`;
+        }
+
+        // Render options list
+        let optionsHtml = `<div class="spec-player-row spec-clear-option" data-player-id="">
+            <span class="spec-clear-text">Geen specialist</span>
+        </div>`;
+        for (const p of lineupPlayers) {
+            optionsHtml += renderPlayerRow(p, String(p.id) === String(selectedId));
+        }
+        optionsEl.innerHTML = optionsHtml;
+
+        // Click on card opens dropdown
+        card.onclick = (e) => {
+            if (e.target.closest('.spec-options')) return;
+            e.stopPropagation();
+            document.querySelectorAll('.spec-dropdown.open').forEach(d => {
+                if (d !== dropdown) d.classList.remove('open');
+            });
+            dropdown.classList.toggle('open');
+        };
+
+        // Option click handlers
+        optionsEl.querySelectorAll('.spec-player-row').forEach(row => {
+            row.onclick = (e) => {
+                e.stopPropagation();
+                const playerId = row.dataset.playerId;
+                gameState.specialists[key] = playerId || null;
+                dropdown.classList.remove('open');
+                saveGame();
+                populateSpecialistSelects();
+            };
+        });
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.spec-dropdown.open').forEach(d => d.classList.remove('open'));
+    }, { once: true });
 }
 
 // ================================================

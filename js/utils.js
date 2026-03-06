@@ -54,3 +54,12 @@ export function formatTimeRemaining(ms) {
     const seconds = Math.floor((ms % (1000 * 60)) / 1000);
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
+
+export function getPotentialStars(overall, potential) {
+    const gap = potential - overall;
+    if (gap <= 2) return 1;
+    if (gap <= 7) return 2;
+    if (gap <= 14) return 3;
+    if (gap <= 24) return 4;
+    return 5;
+}
