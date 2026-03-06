@@ -9005,7 +9005,7 @@ function renderStadiumMap() {
     // ===== STADIUM (tribune) =====
     const tribuneColors = ['#6a4a2a', '#5a5a5a', '#4a4a6a', '#3a3a7a', '#8a6a0a'];
     const tc = tribuneColors[tribuneLevel];
-    const levelColors = [['#5a3a1a','#8B6914'],['#2d6a2e','#4ade80'],['#1a4a8a','#60a5fa'],['#6a2a9a','#a855f7'],['#8a5a0a','#f59e0b']];
+    const levelColors = [['#6b6b6b','#ef5350'],['#1b5e20','#4ade80'],['#1565c0','#42a5f5'],['#6a1b9a','#ce93d8'],['#e65100','#ffd54f']];
     const tColors = levelColors[Math.min(tribuneLevel, levelColors.length - 1)];
     const isStadActive = currentStadiumCategory === 'tribune';
 
@@ -9028,9 +9028,9 @@ function renderStadiumMap() {
         if (tribuneLevel >= 3) [[ox,oy],[ox+stadW,oy],[ox,oy+stadH],[ox+stadW,oy+stadH]].forEach(([lx,ly]) => { const dir = lx < cx ? -1 : 1; svg += `<line x1="${lx}" y1="${ly}" x2="${lx+dir*10}" y2="${ly-16}" stroke="#bbb" stroke-width="1.5"/><circle cx="${lx+dir*10}" cy="${ly-18}" r="3" fill="#ffe066"/>`; });
     }
     const labelY = cy - stadH/2 - (tribuneLevel === 0 ? 6 : 8);
-    svg += `<text x="${cx - 16}" y="${labelY}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Stadion</text>`;
-    svg += `<rect x="${cx + 8}" y="${labelY - 10}" width="26" height="13" fill="${tColors[1]}" rx="6"/>`;
-    svg += `<text x="${cx + 21}" y="${labelY - 1}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${tribuneLevel}</text>`;
+    svg += `<text x="${cx - 16}" y="${labelY}" text-anchor="middle" fill="white" font-size="8" font-weight="bold">Stadion</text>`;
+    svg += `<rect x="${cx + 8}" y="${labelY - 10}" width="22" height="12" fill="${tColors[1]}" rx="6"/>`;
+    svg += `<text x="${cx + 19}" y="${labelY - 1}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${tribuneLevel + 1}</text>`;
     svg += `</g>`;
 
     // ===== GRASS (field) =====
@@ -9040,11 +9040,23 @@ function renderStadiumMap() {
     const gColors = levelColors[Math.min(grassLevel, levelColors.length-1)];
     const isGrassActive = currentStadiumCategory === 'grass';
 
-    svg += `<g class="stadium-building${isGrassActive ? ' active' : ''}" data-category="grass" onclick="selectStadiumCategory('tribune')">`;
+    svg += `<g class="stadium-building${isGrassActive ? ' active' : ''}" data-category="grass" onclick="selectStadiumCategory('grass')">`;
     svg += `<rect x="${cx-fieldW/2}" y="${cy-fieldH/2}" width="${fieldW}" height="${fieldH}" fill="${gc}" stroke="white" stroke-width="1.5" rx="2"/>`;
     svg += `<rect x="${cx-fieldW/2+3}" y="${cy-fieldH/2+3}" width="${fieldW-6}" height="${fieldH-6}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
     svg += `<line x1="${cx}" y1="${cy-fieldH/2+3}" x2="${cx}" y2="${cy+fieldH/2-3}" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
     svg += `<circle cx="${cx}" cy="${cy}" r="10" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
+    // Penalty areas (left & right)
+    svg += `<rect x="${cx-fieldW/2+3}" y="${cy-18}" width="20" height="36" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
+    svg += `<rect x="${cx+fieldW/2-23}" y="${cy-18}" width="20" height="36" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
+    // Goal area (small box)
+    svg += `<rect x="${cx-fieldW/2+3}" y="${cy-10}" width="10" height="20" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
+    svg += `<rect x="${cx+fieldW/2-13}" y="${cy-10}" width="10" height="20" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
+    // Penalty arcs (half circles on the 16m line)
+    svg += `<path d="M${cx-fieldW/2+23} ${cy-8} A 10 10 0 0 1 ${cx-fieldW/2+23} ${cy+8}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
+    svg += `<path d="M${cx+fieldW/2-23} ${cy-8} A 10 10 0 0 0 ${cx+fieldW/2-23} ${cy+8}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>`;
+    // Goals (nets)
+    svg += `<rect x="${cx-fieldW/2-4}" y="${cy-6}" width="4" height="12" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="0.8" rx="1"/>`;
+    svg += `<rect x="${cx+fieldW/2}" y="${cy-6}" width="4" height="12" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="0.8" rx="1"/>`;
     svg += `<text x="${cx - 16}" y="${cy+fieldH/2-5}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7" font-weight="600" letter-spacing="1">Wedstrijdveld</text>`;
     svg += `<rect x="${cx + 22}" y="${cy+fieldH/2-13}" width="22" height="12" fill="${gColors[1]}" rx="6"/>`;
     svg += `<text x="${cx + 33}" y="${cy+fieldH/2-4}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${grassLevel+1}</text>`;
@@ -9061,9 +9073,15 @@ function renderStadiumMap() {
         svg += `<rect x="${x+2}" y="${y+2}" width="${w-4}" height="${h-4}" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.5" rx="4"/>`;
         svg += `<line x1="${x+w/2}" y1="${y+2}" x2="${x+w/2}" y2="${y+h-2}" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
         svg += `<circle cx="${x+w/2}" cy="${y+h/2}" r="7" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+        // Penalty areas
+        svg += `<rect x="${x+2}" y="${y+h/2-12}" width="14" height="24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+        svg += `<rect x="${x+w-16}" y="${y+h/2-12}" width="14" height="24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+        // Penalty arcs
+        svg += `<path d="M${x+16} ${y+h/2-6} A 7 7 0 0 1 ${x+16} ${y+h/2+6}" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+        svg += `<path d="M${x+w-16} ${y+h/2-6} A 7 7 0 0 0 ${x+w-16} ${y+h/2+6}" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
         // Goals
-        svg += `<rect x="${x+2}" y="${y+h/2-5}" width="4" height="10" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" rx="1"/>`;
-        svg += `<rect x="${x+w-6}" y="${y+h/2-5}" width="4" height="10" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" rx="1"/>`;
+        svg += `<rect x="${x-2}" y="${y+h/2-4}" width="4" height="8" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.5" rx="1"/>`;
+        svg += `<rect x="${x+w-2}" y="${y+h/2-4}" width="4" height="8" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.5" rx="1"/>`;
         if (level >= 1) {
             for (let c = 0; c < 3; c++) svg += `<circle cx="${x+14+c*12}" cy="${y+h-7}" r="2" fill="orange" opacity="0.4"/>`;
         }
@@ -9089,20 +9107,34 @@ function renderStadiumMap() {
     svg += `<rect x="${f1x}" y="${f1y}" width="${acadSmallW}" height="${acadSmallH}" fill="${acFg}" stroke="${acColors[1]}" stroke-width="1.5" rx="4"/>`;
     svg += `<line x1="${f1x+2}" y1="${f1y+acadSmallH/2}" x2="${f1x+acadSmallW-2}" y2="${f1y+acadSmallH/2}" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
     svg += `<circle cx="${f1x+acadSmallW/2}" cy="${f1y+acadSmallH/2}" r="5" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
-    svg += `<rect x="${f1x+acadSmallW/2-4}" y="${f1y+1}" width="8" height="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.5" rx="0.5"/>`;
-    svg += `<rect x="${f1x+acadSmallW/2-4}" y="${f1y+acadSmallH-4}" width="8" height="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.5" rx="0.5"/>`;
+    // Penalty areas field 1
+    svg += `<rect x="${f1x+acadSmallW/2-8}" y="${f1y+1}" width="16" height="10" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+    svg += `<rect x="${f1x+acadSmallW/2-8}" y="${f1y+acadSmallH-11}" width="16" height="10" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+    // Penalty arcs field 1
+    svg += `<path d="M${f1x+acadSmallW/2-5} ${f1y+11} A 5 5 0 0 1 ${f1x+acadSmallW/2+5} ${f1y+11}" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+    svg += `<path d="M${f1x+acadSmallW/2-5} ${f1y+acadSmallH-11} A 5 5 0 0 0 ${f1x+acadSmallW/2+5} ${f1y+acadSmallH-11}" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+    // Goals field 1
+    svg += `<rect x="${f1x+acadSmallW/2-4}" y="${f1y-2}" width="8" height="3" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" rx="0.5"/>`;
+    svg += `<rect x="${f1x+acadSmallW/2-4}" y="${f1y+acadSmallH-1}" width="8" height="3" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" rx="0.5"/>`;
     // Field 2 (goals on short sides = top/bottom, midline horizontal)
     const f2x = acadX + acadSmallW + acadGap;
     svg += `<rect x="${f2x}" y="${f1y}" width="${acadSmallW}" height="${acadSmallH}" fill="${acFg}" stroke="${acColors[1]}" stroke-width="1.5" rx="4"/>`;
     svg += `<line x1="${f2x+2}" y1="${f1y+acadSmallH/2}" x2="${f2x+acadSmallW-2}" y2="${f1y+acadSmallH/2}" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
     svg += `<circle cx="${f2x+acadSmallW/2}" cy="${f1y+acadSmallH/2}" r="5" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
-    svg += `<rect x="${f2x+acadSmallW/2-4}" y="${f1y+1}" width="8" height="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.5" rx="0.5"/>`;
-    svg += `<rect x="${f2x+acadSmallW/2-4}" y="${f1y+acadSmallH-4}" width="8" height="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.5" rx="0.5"/>`;
+    // Penalty areas field 2
+    svg += `<rect x="${f2x+acadSmallW/2-8}" y="${f1y+1}" width="16" height="10" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+    svg += `<rect x="${f2x+acadSmallW/2-8}" y="${f1y+acadSmallH-11}" width="16" height="10" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+    // Penalty arcs field 2
+    svg += `<path d="M${f2x+acadSmallW/2-5} ${f1y+11} A 5 5 0 0 1 ${f2x+acadSmallW/2+5} ${f1y+11}" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+    svg += `<path d="M${f2x+acadSmallW/2-5} ${f1y+acadSmallH-11} A 5 5 0 0 0 ${f2x+acadSmallW/2+5} ${f1y+acadSmallH-11}" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>`;
+    // Goals field 2
+    svg += `<rect x="${f2x+acadSmallW/2-4}" y="${f1y-2}" width="8" height="3" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" rx="0.5"/>`;
+    svg += `<rect x="${f2x+acadSmallW/2-4}" y="${f1y+acadSmallH-1}" width="8" height="3" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" rx="0.5"/>`;
     // Label + level badge
     const acadCenterX = acadX + acadSmallW + acadGap/2;
-    svg += `<text x="${acadCenterX - 14}" y="${f1y-6}" text-anchor="middle" fill="${acColors[1]}" font-size="8" font-weight="bold">Jeugd</text>`;
-    svg += `<rect x="${acadCenterX + 6}" y="${f1y-16}" width="22" height="12" fill="${acColors[1]}" rx="6"/>`;
-    svg += `<text x="${acadCenterX + 17}" y="${f1y-7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${acadLevel+1}</text>`;
+    svg += `<text x="${acadCenterX - 10}" y="${f1y-6}" text-anchor="middle" fill="${acColors[1]}" font-size="8" font-weight="bold">Jeugdacademie</text>`;
+    svg += `<rect x="${acadCenterX + 30}" y="${f1y-16}" width="22" height="12" fill="${acColors[1]}" rx="6"/>`;
+    svg += `<text x="${acadCenterX + 41}" y="${f1y-7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${acadLevel+1}</text>`;
     svg += `</g>`;
 
     // ===== BUILDINGS (left & right columns) =====
@@ -9166,8 +9198,8 @@ function renderStadiumMap() {
             svg += `<circle cx="${pos.x}" cy="${pos.y-2}" r="12" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>`;
             svg += `<text x="${pos.x}" y="${pos.y+3}" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="13" font-weight="300">+</text>`;
             svg += `<text x="${pos.x}" y="${by+cbh-5}" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="7" font-weight="600">${meta.name}</text>`;
-            svg += `<rect x="${bx+cbw-24}" y="${by+2}" width="24" height="12" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" rx="6"/>`;
-            svg += `<text x="${bx+cbw-12}" y="${by+11}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="7" font-weight="bold">Nv0</text>`;
+            svg += `<rect x="${bx+cbw-24}" y="${by+2}" width="24" height="12" fill="#9e9e9e" rx="6"/>`;
+            svg += `<text x="${bx+cbw-12}" y="${by+11}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv0</text>`;
         } else {
             const darkBase = { medical:'#3a1a1a', kantine:'#3a2a1a', scouting:'#1a2a3a', perszaal:'#1a1a2a' };
             const roofColor = { medical:'#c03030', kantine:'#a07820', scouting:'#2a5a9a', perszaal:'#475569' };
@@ -9194,6 +9226,49 @@ function renderStadiumMap() {
         svg += `<rect x="${40+p*14}" y="${roadTop+8}" width="10" height="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" rx="1"/>`;
         svg += `<rect x="${540+p*14}" y="${roadTop+8}" width="10" height="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" rx="1"/>`;
     }
+
+    // ===== VILLAGE HOUSES (dorpshuisjes) =====
+    const houses = [
+        // Left top houses
+        { x: 38, y: 60, w: 18, h: 14, roof: '#8b4513', wall: '#d2b48c' },
+        { x: 60, y: 55, w: 14, h: 12, roof: '#a0522d', wall: '#deb887' },
+        { x: 42, y: 82, w: 16, h: 13, roof: '#6b3a1a', wall: '#c4a67a' },
+        // Right bottom houses
+        { x: 550, y: 310, w: 18, h: 14, roof: '#a0522d', wall: '#d2b48c' },
+        { x: 572, y: 325, w: 14, h: 11, roof: '#8b4513', wall: '#deb887' },
+        { x: 555, y: 345, w: 16, h: 13, roof: '#6b3a1a', wall: '#c4a67a' },
+    ];
+    houses.forEach(h => {
+        // Wall
+        svg += `<rect x="${h.x}" y="${h.y}" width="${h.w}" height="${h.h}" fill="${h.wall}" rx="1" opacity="0.7"/>`;
+        // Roof (triangle)
+        svg += `<polygon points="${h.x-2},${h.y} ${h.x+h.w/2},${h.y-6} ${h.x+h.w+2},${h.y}" fill="${h.roof}" opacity="0.8"/>`;
+        // Window
+        svg += `<rect x="${h.x+h.w/2-2}" y="${h.y+3}" width="4" height="3" fill="rgba(255,220,100,0.5)" rx="0.5"/>`;
+        // Door
+        svg += `<rect x="${h.x+h.w/2-1.5}" y="${h.y+h.h-5}" width="3" height="5" fill="${h.roof}" opacity="0.6" rx="0.5"/>`;
+    });
+
+    // ===== WINDMILL (molen, rechts boven) =====
+    const mx = 580, my = 340;
+    // Tower
+    svg += `<polygon points="${mx-5},${my} ${mx-3},${my-22} ${mx+3},${my-22} ${mx+5},${my}" fill="#8b7355" opacity="0.8"/>`;
+    // Cap/roof
+    svg += `<polygon points="${mx-4},${my-22} ${mx},${my-27} ${mx+4},${my-22}" fill="#5a4a3a" opacity="0.8"/>`;
+    // Blades (4 wieken)
+    svg += `<line x1="${mx}" y1="${my-24}" x2="${mx-14}" y2="${my-36}" stroke="#7a6a5a" stroke-width="1.5" opacity="0.7"/>`;
+    svg += `<line x1="${mx}" y1="${my-24}" x2="${mx+14}" y2="${my-12}" stroke="#7a6a5a" stroke-width="1.5" opacity="0.7"/>`;
+    svg += `<line x1="${mx}" y1="${my-24}" x2="${mx+12}" y2="${my-38}" stroke="#7a6a5a" stroke-width="1.5" opacity="0.7"/>`;
+    svg += `<line x1="${mx}" y1="${my-24}" x2="${mx-12}" y2="${my-10}" stroke="#7a6a5a" stroke-width="1.5" opacity="0.7"/>`;
+    // Blade sails
+    svg += `<polygon points="${mx},${my-24} ${mx-14},${my-36} ${mx-12},${my-35}" fill="rgba(255,255,255,0.2)"/>`;
+    svg += `<polygon points="${mx},${my-24} ${mx+14},${my-12} ${mx+12},${my-13}" fill="rgba(255,255,255,0.2)"/>`;
+    svg += `<polygon points="${mx},${my-24} ${mx+12},${my-38} ${mx+11},${my-36}" fill="rgba(255,255,255,0.2)"/>`;
+    svg += `<polygon points="${mx},${my-24} ${mx-12},${my-10} ${mx-11},${my-12}" fill="rgba(255,255,255,0.2)"/>`;
+    // Center hub
+    svg += `<circle cx="${mx}" cy="${my-24}" r="1.5" fill="#5a4a3a" opacity="0.8"/>`;
+    // Door
+    svg += `<rect x="${mx-2}" y="${my-5}" width="4" height="5" fill="#5a4a3a" opacity="0.6" rx="1"/>`;
 
     // Subtitle
     svg += `<text x="310" y="393" text-anchor="middle" fill="rgba(255,255,255,0.12)" font-size="8" font-style="italic" letter-spacing="2">Het Dorpsveld</text>`;
