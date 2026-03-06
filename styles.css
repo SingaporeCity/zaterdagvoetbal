@@ -12146,32 +12146,23 @@ body {
     padding-right: 12px;
 }
 
-.yc-stars {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.yc-stars .pc-stars {
-    display: flex;
-    gap: 2px;
-    font-size: 1.05rem;
-    line-height: 1;
-}
-
-.yc-stars .star.full {
-    color: #ffd600;
-}
-
-.yc-stars .star.empty {
-    color: rgba(255, 255, 255, 0.3);
-}
-
 .yc-action {
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    gap: 6px;
     white-space: nowrap;
+}
+
+.btn-danger {
+    background: rgba(244, 67, 54, 0.12);
+    color: #ef5350;
+    border: 1px solid rgba(244, 67, 54, 0.25);
+}
+
+.btn-danger:hover {
+    background: rgba(244, 67, 54, 0.25);
+    color: #f44336;
 }
 
 .player-card.youth-card.supertalent {

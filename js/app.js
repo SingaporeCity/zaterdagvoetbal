@@ -5792,11 +5792,7 @@ function generateYouthPlayer(minAge, maxAge) {
 }
 
 function updateYouthStats() {
-    const youthCount = gameState.youthPlayers.length;
-    const talentCount = gameState.youthPlayers.filter(p => p.isSupertalent).length;
-
-    document.getElementById('youth-count').textContent = youthCount;
-    document.getElementById('youth-talents').textContent = talentCount;
+    // Stats tiles removed — no-op for compatibility
 }
 
 function renderYouthPlayers(ageGroup) {
@@ -5829,6 +5825,14 @@ function renderYouthPlayers(ageGroup) {
         btn.addEventListener('click', () => {
             const playerId = parseFloat(btn.dataset.playerId);
             signYouthContract(playerId);
+        });
+    });
+
+    // Add dismiss button listeners
+    grid.querySelectorAll('.btn-dismiss-youth').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const playerId = parseFloat(btn.dataset.playerId);
+            dismissYouthPlayer(playerId);
         });
     });
 }
@@ -5866,14 +5870,19 @@ function createYouthPlayerCard(player) {
                 <span class="pc-overall-value">${level}</span>
                 <span class="pc-overall-label">Niv.</span>
             </div>
-            <div class="yc-stars">
+            <div class="pc-potential-stars">
                 <span class="pc-stars">${renderStarsHTML(stars)}</span>
+                <span class="pc-potential-label">POT</span>
             </div>
             <span class="yc-action">
                 <button class="btn ${canSign ? 'btn-primary' : 'btn-secondary'} btn-sign-contract btn-sm"
                         data-player-id="${player.id}"
                         ${!canSign ? 'disabled' : ''}>
-                    ${canSign ? 'Overhevelen naar Eerste Team' : 'Te jong voor het eerste team'}
+                    ${canSign ? 'Overhevelen' : 'Te jong'}
+                </button>
+                <button class="btn btn-danger btn-dismiss-youth btn-sm"
+                        data-player-id="${player.id}">
+                    Ontslaan
                 </button>
             </span>
         </div>
@@ -5956,7 +5965,19 @@ function signYouthContract(playerId) {
     updateYouthStats();
     renderYouthPlayers(currentYouthAgeGroup);
 
-    alert(`${youthPlayer.name} heeft een profcontract getekend en is toegevoegd aan de A-selectie!`);
+    showNotification(`${youthPlayer.name} heeft een profcontract getekend!`, 'success');
+}
+
+function dismissYouthPlayer(playerId) {
+    const playerIndex = gameState.youthPlayers.findIndex(p => p.id === playerId);
+    if (playerIndex === -1) return;
+
+    const player = gameState.youthPlayers[playerIndex];
+    gameState.youthPlayers.splice(playerIndex, 1);
+
+    renderYouthPlayers(currentYouthAgeGroup);
+    showNotification(`${player.name} is ontslagen uit de jeugdopleiding.`, 'info');
+    saveGame();
 }
 
 // ================================================
