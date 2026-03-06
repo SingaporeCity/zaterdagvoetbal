@@ -74,11 +74,15 @@ import {
     checkDailyReward,
     getManagerLevel,
     awardXP,
+    getPlayerLevel,
+    awardPlayerXP,
     getNextOpponent,
     getZoneInfo,
     getSeasonSchedule,
     MANAGER_LEVELS,
-    XP_REWARDS
+    XP_REWARDS,
+    PLAYER_LEVELS,
+    PLAYER_XP_REWARDS
 } from './progression.js';
 
 import {
@@ -970,6 +974,9 @@ function initMyPlayer() {
     if (a.PAS === undefined) a.PAS = 12;
     if (a.SCH === undefined) a.SCH = 12;
     if (gameState.myPlayer.energy === undefined) gameState.myPlayer.energy = 100;
+    // Migrate player XP fields
+    if (gameState.myPlayer.xp === undefined) gameState.myPlayer.xp = 0;
+    if (gameState.myPlayer.spentSkillPoints === undefined) gameState.myPlayer.spentSkillPoints = 0;
     // Migrate to ALG 12: clamp all attributes
     const attrKeys = ['SNE', 'TEC', 'PAS', 'SCH', 'VER', 'FYS'];
     attrKeys.forEach(k => { if (a[k] > 12) a[k] = 12; });
@@ -1173,9 +1180,8 @@ function initMijnSpelerTabs() {
                 }
             });
 
-            if (targetTab === 'overzicht') renderMijnSpelerPage();
-            else if (targetTab === 'speler') renderSpelersPrestaties();
-            else if (targetTab === 'manager') renderManagersPrestaties();
+            if (targetTab === 'voortgang') renderVoortgang();
+            else if (targetTab === 'prestaties') renderPrestaties();
         });
     });
 }
@@ -1204,10 +1210,12 @@ function renderAchievementCards(achievements, filterCategories) {
                 const desc = isHidden ? 'Nog niet ontdekt...' : a.description;
                 const icon = isHidden ? '❓' : a.icon;
                 const cls = a.unlocked ? 'ach-card unlocked' : (isHidden ? 'ach-card hidden-ach' : 'ach-card');
+                const xpBadge = a.reward?.playerXP ? `<span class="ach-xp-badge">+${a.reward.playerXP} XP</span>` :
+                                a.reward?.managerXP ? `<span class="ach-xp-badge mgr">+${a.reward.managerXP} XP</span>` : '';
                 return `<div class="${cls}">
                     <span class="ach-icon">${icon}</span>
                     <div class="ach-info">
-                        <span class="ach-name">${name}</span>
+                        <span class="ach-name">${name}${xpBadge}</span>
                         <span class="ach-desc">${desc}</span>
                     </div>
                     ${a.unlocked ? '<span class="ach-check">✓</span>' : ''}
@@ -1219,195 +1227,287 @@ function renderAchievementCards(achievements, filterCategories) {
     return { progressPct, stats, filterBtns, renderCards, defaultCategory: filterCategories[0] };
 }
 
-function renderSpelersPrestaties() {
-    const container = document.getElementById('speler-prestaties');
+// ================================================
+// VOORTGANG TAB — Speler XP + Manager XP samen
+// ================================================
+
+function renderVoortgang() {
+    const container = document.getElementById('voortgang-content');
     if (!container) return;
 
-    // --- Stats ---
-    const history = gameState.matchHistory || [];
-    const seasonHistory = history.filter(h => h.season === gameState.season);
-    const clubStats = gameState.club?.stats || {};
-    const stats = gameState.stats || {};
-    const totalSeasons = gameState.season || 1;
+    const mp = initMyPlayer();
+    const a = mp.attributes;
 
-    const seasonMatches = seasonHistory.length;
-    const seasonGoals = seasonHistory.reduce((sum, m) => sum + (m.playerScore || 0), 0);
-    const seasonAssists = seasonHistory.reduce((sum, m) => {
-        return sum + (m.events || []).filter(e => e.type === 'goal' && e.team === 'home' && e.assistId).length;
-    }, 0);
-    const seasonCleanSheets = seasonHistory.filter(m => m.opponentScore === 0).length;
-    const seasonWins = seasonHistory.filter(m => m.resultType === 'win').length;
-    const seasonDraws = seasonHistory.filter(m => m.resultType === 'draw').length;
-    const seasonLosses = seasonHistory.filter(m => m.resultType === 'loss').length;
+    // --- Helper: build XP bar to next level ---
+    function buildXPBar(xp, levels, fillClass, accentColor, rewardHint) {
+        const currentIdx = levels.findIndex((l, i) => i + 1 < levels.length ? xp < levels[i + 1].xpRequired : true);
+        const currentLvl = levels[currentIdx];
+        const next = levels[currentIdx + 1];
 
-    function recordItem(value, label) {
-        return `<div class="mp-record-item">
-            <span class="mp-record-value">${value}</span>
-            <span class="mp-record-label">${label}</span>
+        // Bar range: from current level XP to next level XP
+        const barStart = currentLvl.xpRequired;
+        const barEnd = next ? next.xpRequired : barStart;
+        const barRange = barEnd - barStart;
+        const fillPct = barRange > 0 ? Math.min(100, ((xp - barStart) / barRange) * 100) : 100;
+
+        // Milestone marker at end of bar (next level)
+        let marker = '';
+        if (next) {
+            marker = `<div class="vg-bar-marker vg-bar-marker-end" style="left: 100%">
+                <div class="vg-bar-dot" style="border-color: ${accentColor}">${next.level}</div>
+                <span class="vg-bar-marker-label">${next.title}</span>
+            </div>`;
+        }
+
+        return `<div class="vg-bar-wrap">
+            <div class="vg-xp-bar-track">
+                <div class="vg-xp-bar-fill ${fillClass}" style="width: ${fillPct}%"></div>
+                ${marker}
+            </div>
+            <div class="vg-xp-info">
+                <span>${xp} XP</span>
+                <div class="vg-xp-info-right">
+                    <span>${next ? (next.xpRequired - xp) + ' tot Lv ' + next.level : 'Max!'}</span>
+                    ${next && rewardHint ? `<span class="vg-xp-reward-hint">${rewardHint}</span>` : ''}
+                </div>
+            </div>
         </div>`;
     }
 
-    // --- Achievements ---
-    const allAch = getAllAchievements(gameState);
-    const spelerCats = [CATEGORIES.MATCHES, CATEGORIES.GOALS, CATEGORIES.SEASON, CATEGORIES.SPECIAL];
-    const ach = renderAchievementCards(allAch, spelerCats);
+    // --- Speler XP ---
+    const playerXP = mp.xp || 0;
+    const pLevel = getPlayerLevel(playerXP);
+    const availableSkillPoints = Math.max(0, pLevel.skillPoints - (mp.spentSkillPoints || 0));
 
-    container.innerHTML = `
-        <div class="mp-dual-grid" style="margin-bottom: 16px;">
-            <div class="mp-stats-section">
-                <h4 class="mp-section-title">Seizoen ${totalSeasons}</h4>
-                <div class="mp-record-grid">
-                    ${recordItem(seasonMatches, 'Wedstrijden')}
-                    ${recordItem(seasonGoals, 'Doelpunten')}
-                    ${recordItem(seasonAssists, 'Assists')}
-                    ${recordItem(seasonCleanSheets, 'Clean sheets')}
-                    ${recordItem(seasonWins, 'Zeges')}
-                    ${recordItem(seasonDraws + ' / ' + seasonLosses, 'Gelijk / Verloren')}
-                </div>
+    const attrLabels = { SNE: 'SNE', TEC: 'TEC', PAS: 'PAS', SCH: 'SCH', VER: 'VER', FYS: 'FYS' };
+    const attrColors = { SNE: '#ff9800', TEC: '#4caf50', PAS: '#29b6f6', SCH: '#ef5350', VER: '#7e57c2', FYS: '#8d6e63' };
+
+    const attrFullNames = { SNE: 'Snelheid', TEC: 'Techniek', PAS: 'Passen', SCH: 'Schieten', VER: 'Verdedigen', FYS: 'Fysiek' };
+    const skillTiles = Object.entries(attrLabels).map(([key, label]) => {
+        const val = a[key] || 0;
+        const disabled = availableSkillPoints <= 0 || val >= 99 ? 'disabled' : '';
+        return `<div class="vg-skill-tile" style="border-color: ${attrColors[key]}20">
+            <div class="vg-skill-tile-top">
+                <span class="vg-skill-label" style="color: ${attrColors[key]}">${attrFullNames[key]}</span>
+                <span class="vg-skill-value">${val}</span>
             </div>
-            <div class="mp-stats-section">
-                <h4 class="mp-section-title">Carrière</h4>
-                <div class="mp-record-grid">
-                    ${recordItem(clubStats.totalMatches || 0, 'Wedstrijden')}
-                    ${recordItem(clubStats.totalGoals || 0, 'Doelpunten')}
-                    ${recordItem(stats.wins || 0, 'Zeges')}
-                    ${recordItem(stats.draws || 0, 'Gelijk')}
-                    ${recordItem(stats.losses || 0, 'Verloren')}
-                    ${recordItem(stats.cleanSheets || 0, 'Clean sheets')}
-                </div>
-            </div>
-        </div>
-
-        <div class="mp-stats-section">
-            <h4 class="mp-section-title">Spelersprestaties</h4>
-            <div class="ach-progress">
-                <div class="ach-progress-bar">
-                    <div class="ach-progress-fill" style="width: ${ach.progressPct}%"></div>
-                </div>
-                <span class="ach-progress-text">${ach.stats.unlocked} / ${ach.stats.total}</span>
-            </div>
-            <div class="ach-filters" id="speler-ach-filters">
-                <button class="ach-filter-btn active" data-ach-cat="all">Alles</button>
-                ${ach.filterBtns}
-            </div>
-            <div class="ach-grid" id="speler-ach-grid">
-                ${ach.renderCards(null)}
-            </div>
-        </div>
-    `;
-
-    // Filter click handlers
-    container.querySelectorAll('.ach-filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            container.querySelectorAll('.ach-filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const cat = btn.dataset.achCat;
-            const grid = document.getElementById('speler-ach-grid');
-            if (grid) grid.innerHTML = ach.renderCards(cat === 'all' ? null : cat);
-        });
-    });
-}
-
-function renderManagersPrestaties() {
-    const container = document.getElementById('manager-prestaties');
-    if (!container) return;
-
-    // --- XP & Level ---
-    const managerXP = gameState.manager?.xp || 0;
-    const levelInfo = getManagerLevel(managerXP);
-    const progressPct = Math.round(levelInfo.progress * 100);
-
-    // --- Level Roadmap ---
-    const roadmapSteps = MANAGER_LEVELS.map(lvl => {
-        let cls = 'xp-step future';
-        if (lvl.level < levelInfo.level) cls = 'xp-step achieved';
-        else if (lvl.level === levelInfo.level) cls = 'xp-step current';
-        return `<div class="${cls}">
-            <div class="xp-dot">${lvl.level <= levelInfo.level ? '✓' : lvl.level}</div>
-            <span class="xp-step-label">${lvl.title}</span>
+            <button class="vg-skill-btn" onclick="window.spendSkillPoint('${key}')" ${disabled}>+1</button>
         </div>`;
     }).join('');
 
-    // --- XP Rewards ---
-    const rewardLabels = {
-        matchWin: 'Wedstrijd gewonnen',
-        matchDraw: 'Gelijkspel',
-        matchLoss: 'Wedstrijd verloren',
-        cleanSheet: 'Clean sheet',
-        goalScored: 'Doelpunt gescoord',
-        promotion: 'Promotie',
-        title: 'Kampioenschap',
-        youthGraduate: 'Jeugdspeler doorgeschoven',
-        playerSold: 'Speler verkocht',
-        stadiumUpgrade: 'Stadion-upgrade',
-        achievementUnlocked: 'Achievement behaald'
-    };
+    // Player XP rewards
+    const pRewards = Object.entries(PLAYER_XP_REWARDS).map(([k, v]) => {
+        const labels = { matchWin: 'Winst', matchDraw: 'Gelijk', goalScored: 'Doelpunt', cleanSheet: 'Clean sheet', hatTrick: 'Hattrick', promotion: 'Promotie', title: 'Titel' };
+        return `<span class="vg-xp-tag">${labels[k] || k} +${v}</span>`;
+    }).join('');
 
-    const rewardItems = Object.entries(XP_REWARDS).map(([key, xp]) =>
-        `<div class="xp-reward-item">
-            <span class="xp-reward-action">${rewardLabels[key] || key}</span>
-            <span class="xp-reward-xp">+${xp} XP</span>
-        </div>`
-    ).join('');
+    // --- Manager XP ---
+    const managerXP = gameState.manager?.xp || 0;
+    const mLevel = getManagerLevel(managerXP);
+    const nextManagerLevel = MANAGER_LEVELS.find(l => l.xpRequired > managerXP);
+    const nextCashReward = nextManagerLevel?.cashReward || 0;
 
-    // --- Manager Achievements ---
-    const allAch = getAllAchievements(gameState);
-    const mgrCats = [CATEGORIES.CLUB, CATEGORIES.PLAYERS, CATEGORIES.STADIUM];
-    const ach = renderAchievementCards(allAch, mgrCats);
+    // --- Carriere stats ---
+    const clubStats = gameState.club?.stats || {};
+    const cStats = gameState.stats || {};
+    const divisionNames = ['Eredivisie', 'Eerste Divisie', 'Tweede Divisie', '1e Klasse', '2e Klasse', '3e Klasse', '4e Klasse', '5e Klasse', '6e Klasse'];
+    const highestDiv = divisionNames[clubStats.highestDivision || 8] || '6e Klasse';
+
+    // Manager XP rewards
+    const mRewards = Object.entries(XP_REWARDS).map(([k, v]) => {
+        const labels = { matchWin: 'Winst', matchDraw: 'Gelijk', cleanSheet: 'Clean sheet', goalScored: 'Doelpunt', promotion: 'Promotie', title: 'Titel', youthGraduate: 'Jeugd', playerSold: 'Verkoop', stadiumUpgrade: 'Stadion', achievementUnlocked: 'Achievement' };
+        return `<span class="vg-xp-tag">${labels[k] || k} +${v}</span>`;
+    }).join('');
 
     container.innerHTML = `
-        <div class="xp-hero">
-            <div class="xp-level">Level ${levelInfo.level}</div>
-            <div class="xp-title">${levelInfo.title}</div>
-            <div class="xp-bar-track">
-                <div class="xp-bar-fill" style="width: ${progressPct}%"></div>
-            </div>
-            <div class="xp-info">
-                <span>${managerXP} XP totaal</span>
-                <span>${levelInfo.xpToNext > 0 ? levelInfo.xpToNext + ' XP tot volgend level' : 'Max level!'}</span>
-            </div>
-        </div>
-
-        <div class="mp-stats-section" style="margin-bottom: 16px;">
-            <h4 class="mp-section-title">Level Roadmap</h4>
-            <div class="xp-roadmap">
-                ${roadmapSteps}
-            </div>
-        </div>
-
-        <div class="mp-stats-section" style="margin-bottom: 16px;">
-            <h4 class="mp-section-title">XP Beloningen</h4>
-            <div class="xp-rewards">
-                ${rewardItems}
-            </div>
-        </div>
-
-        <div class="mp-stats-section">
-            <h4 class="mp-section-title">Managersprestaties</h4>
-            <div class="ach-progress">
-                <div class="ach-progress-bar">
-                    <div class="ach-progress-fill" style="width: ${ach.progressPct}%"></div>
+        <div class="vg-dual">
+            <div class="vg-section vg-player">
+                <div class="vg-hero-row">
+                    <div class="vg-avatar">
+                        <svg viewBox="0 0 80 100">
+                            <ellipse cx="40" cy="28" rx="18" ry="19" fill="#f5d0c5"/>
+                            <ellipse cx="40" cy="15" rx="16" ry="9" fill="#4a3728"/>
+                            <circle cx="33" cy="26" r="2.5" fill="white"/>
+                            <circle cx="47" cy="26" r="2.5" fill="white"/>
+                            <circle cx="33.5" cy="26.5" r="1.2" fill="#333"/>
+                            <circle cx="47.5" cy="26.5" r="1.2" fill="#333"/>
+                            <path d="M36 35 Q40 38 44 35" fill="none" stroke="#a0522d" stroke-width="1.2"/>
+                            <path d="M15 95 Q15 65 25 58 L40 62 L55 58 Q65 65 65 95 L65 100 L15 100 Z" fill="var(--accent-green-dim)"/>
+                            <text x="40" y="85" text-anchor="middle" fill="white" font-family="var(--font-display)" font-size="16" font-weight="bold">${mp.number}</text>
+                            <path d="M32 58 L40 62 L48 58" fill="none" stroke="white" stroke-width="1.5"/>
+                            <rect x="22" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                            <rect x="42" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                        </svg>
+                    </div>
+                    <div class="vg-hero-info">
+                        <h4 class="vg-section-title" style="color: #4caf50;">${mp.name}</h4>
+                        <p class="vg-section-subtitle">${mp.position} · #${mp.number} · ${mp.age} jaar</p>
+                        <div class="vg-level" style="color: #4caf50;">Level ${pLevel.level} — ${pLevel.title}</div>
+                        <div class="vg-skill-points-badge">${availableSkillPoints > 0 ? `<span class="vg-sp-active">${availableSkillPoints} skill ${availableSkillPoints === 1 ? 'punt' : 'punten'} beschikbaar</span>` : `<span class="vg-sp-none">${pLevel.skillPoints} punten besteed</span>`}</div>
+                    </div>
                 </div>
-                <span class="ach-progress-text">${ach.stats.unlocked} / ${ach.stats.total}</span>
+
+                ${buildXPBar(playerXP, PLAYER_LEVELS, 'vg-player-fill', '#4caf50', '+1 skill punt')}
+
+                <div class="vg-skill-panel">
+                    <div class="vg-skill-header">
+                        <span class="vg-skill-title">Attributen</span>
+                        <span class="vg-skill-available">${availableSkillPoints > 0 ? availableSkillPoints + ' te besteden' : 'Level up voor punten'}</span>
+                    </div>
+                    <div class="vg-skill-grid">
+                        ${skillTiles}
+                    </div>
+                </div>
+
+                <details class="vg-xp-dropdown">
+                    <summary class="vg-xp-dropdown-toggle">Hoe verdien ik XP?</summary>
+                    <div class="vg-xp-tags">
+                        ${pRewards}
+                    </div>
+                </details>
             </div>
-            <div class="ach-filters" id="manager-ach-filters">
-                <button class="ach-filter-btn active" data-ach-cat="all">Alles</button>
-                ${ach.filterBtns}
+
+            <div class="vg-section vg-manager">
+                <div class="vg-hero-row">
+                    <div class="vg-avatar vg-avatar-manager">
+                        <svg viewBox="0 0 80 100">
+                            <ellipse cx="40" cy="28" rx="18" ry="19" fill="#f5d0c5"/>
+                            <ellipse cx="40" cy="14" rx="17" ry="10" fill="#2c2c2c"/>
+                            <circle cx="33" cy="26" r="2.5" fill="white"/>
+                            <circle cx="47" cy="26" r="2.5" fill="white"/>
+                            <circle cx="33.5" cy="26.5" r="1.2" fill="#333"/>
+                            <circle cx="47.5" cy="26.5" r="1.2" fill="#333"/>
+                            <path d="M36 35 Q40 38 44 35" fill="none" stroke="#a0522d" stroke-width="1.2"/>
+                            <path d="M15 95 Q15 65 25 58 L40 55 L55 58 Q65 65 65 95 L65 100 L15 100 Z" fill="#2c2c2c"/>
+                            <path d="M35 55 L40 55 L45 55 L43 75 L37 75 Z" fill="#333"/>
+                            <path d="M37 55 L40 60 L43 55" fill="none" stroke="#ff9800" stroke-width="1.5"/>
+                            <rect x="22" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                            <rect x="42" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                        </svg>
+                    </div>
+                    <div class="vg-hero-info">
+                        <h4 class="vg-section-title" style="color: #ff9800;">Trainer</h4>
+                        <p class="vg-section-subtitle">Level up en verdien geld voor je club</p>
+                        <div class="vg-level" style="color: #ff9800;">Level ${mLevel.level} — ${mLevel.title}</div>
+                    </div>
+                </div>
+
+                ${buildXPBar(managerXP, MANAGER_LEVELS, 'vg-manager-fill', '#ff9800', nextCashReward > 0 ? `+€${nextCashReward.toLocaleString('nl-NL')}` : '')}
+
+                <div class="vg-carriere">
+                    <h5 class="vg-carriere-title">Carriere</h5>
+                    <div class="vg-carriere-grid">
+                        <div class="vg-carriere-item"><span class="vg-carriere-value">${clubStats.totalMatches || 0}</span><span class="vg-carriere-label">Wedstrijden</span></div>
+                        <div class="vg-carriere-item"><span class="vg-carriere-value">${cStats.wins || 0}</span><span class="vg-carriere-label">Zeges</span></div>
+                        <div class="vg-carriere-item"><span class="vg-carriere-value">${cStats.draws || 0}</span><span class="vg-carriere-label">Gelijk</span></div>
+                        <div class="vg-carriere-item"><span class="vg-carriere-value">${cStats.losses || 0}</span><span class="vg-carriere-label">Verloren</span></div>
+                        <div class="vg-carriere-item"><span class="vg-carriere-value">${cStats.promotions || 0}</span><span class="vg-carriere-label">Promoties</span></div>
+                        <div class="vg-carriere-item"><span class="vg-carriere-value">${highestDiv}</span><span class="vg-carriere-label">Hoogste divisie</span></div>
+                    </div>
+                </div>
+
+                <details class="vg-xp-dropdown">
+                    <summary class="vg-xp-dropdown-toggle">Hoe verdien ik XP?</summary>
+                    <div class="vg-xp-tags">
+                        ${mRewards}
+                    </div>
+                </details>
             </div>
-            <div class="ach-grid" id="manager-ach-grid">
-                ${ach.renderCards(null)}
+        </div>
+    `;
+}
+
+// Skill point spending
+window.spendSkillPoint = function(attr) {
+    const mp = initMyPlayer();
+    const pLevel = getPlayerLevel(mp.xp || 0);
+    const availablePoints = Math.max(0, pLevel.skillPoints - (mp.spentSkillPoints || 0));
+
+    if (availablePoints <= 0) return;
+    if ((mp.attributes[attr] || 0) >= 99) return;
+
+    mp.attributes[attr]++;
+    mp.spentSkillPoints = (mp.spentSkillPoints || 0) + 1;
+
+    saveGame(gameState);
+    renderVoortgang();
+};
+
+// ================================================
+// PRESTATIES TAB — Speler + Manager achievements naast elkaar
+// ================================================
+
+function renderPrestaties() {
+    const container = document.getElementById('prestaties-content');
+    if (!container) return;
+
+    const allAch = getAllAchievements(gameState);
+
+    // Speler achievements
+    const spelerCats = [CATEGORIES.MATCHES, CATEGORIES.GOALS, CATEGORIES.SEASON, CATEGORIES.SPECIAL];
+    const spelerAch = renderAchievementCards(allAch, spelerCats);
+
+    // Manager achievements
+    const mgrCats = [CATEGORIES.CLUB, CATEGORIES.PLAYERS, CATEGORIES.STADIUM];
+    const mgrAch = renderAchievementCards(allAch, mgrCats);
+
+    container.innerHTML = `
+        <div class="prs-dual">
+            <div class="prs-column">
+                <h4 class="mp-section-title">Spelersprestaties</h4>
+                <div class="ach-progress">
+                    <div class="ach-progress-bar">
+                        <div class="ach-progress-fill" style="width: ${spelerAch.progressPct}%"></div>
+                    </div>
+                    <span class="ach-progress-text">${spelerAch.stats.unlocked} / ${spelerAch.stats.total}</span>
+                </div>
+                <div class="ach-filters" id="speler-ach-filters">
+                    <button class="ach-filter-btn active" data-ach-cat="all">Alles</button>
+                    ${spelerAch.filterBtns}
+                </div>
+                <div class="ach-grid" id="speler-ach-grid">
+                    ${spelerAch.renderCards(null)}
+                </div>
+            </div>
+
+            <div class="prs-column">
+                <h4 class="mp-section-title">Managersprestaties</h4>
+                <div class="ach-progress">
+                    <div class="ach-progress-bar">
+                        <div class="ach-progress-fill" style="width: ${mgrAch.progressPct}%"></div>
+                    </div>
+                    <span class="ach-progress-text">${mgrAch.stats.unlocked} / ${mgrAch.stats.total}</span>
+                </div>
+                <div class="ach-filters" id="manager-ach-filters">
+                    <button class="ach-filter-btn active" data-ach-cat="all">Alles</button>
+                    ${mgrAch.filterBtns}
+                </div>
+                <div class="ach-grid" id="manager-ach-grid">
+                    ${mgrAch.renderCards(null)}
+                </div>
             </div>
         </div>
     `;
 
-    // Filter click handlers
-    container.querySelectorAll('.ach-filter-btn').forEach(btn => {
+    // Speler filter handlers
+    container.querySelectorAll('#speler-ach-filters .ach-filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            container.querySelectorAll('.ach-filter-btn').forEach(b => b.classList.remove('active'));
+            container.querySelectorAll('#speler-ach-filters .ach-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const cat = btn.dataset.achCat;
+            const grid = document.getElementById('speler-ach-grid');
+            if (grid) grid.innerHTML = spelerAch.renderCards(cat === 'all' ? null : cat);
+        });
+    });
+
+    // Manager filter handlers
+    container.querySelectorAll('#manager-ach-filters .ach-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.querySelectorAll('#manager-ach-filters .ach-filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const cat = btn.dataset.achCat;
             const grid = document.getElementById('manager-ach-grid');
-            if (grid) grid.innerHTML = ach.renderCards(cat === 'all' ? null : cat);
+            if (grid) grid.innerHTML = mgrAch.renderCards(cat === 'all' ? null : cat);
         });
     });
 }
@@ -1421,27 +1521,34 @@ function renderTacticsPage() {
     renderLineupPitch();
     renderAvailablePlayers();
     updateLineupFit();
-    initTacticsControls();
+    renderTacticsOptions();
     populateSpecialistSelects();
     renderTeamTraining();
+}
+
+const FORMATION_DRIVE = { '4-3-3': 100, '4-4-2': 20 };
+
+function getFormationDrive(key) {
+    return FORMATION_DRIVE[key] || 0;
 }
 
 function renderFormationDropdown() {
     const select = document.getElementById('formation-select');
     if (!select) return;
 
-    // Sort formations
+    // Sort formations by bedrevenheid descending, then alphabetically
     const sortedFormations = Object.entries(FORMATIONS).sort((a, b) => {
-        const partsA = a[0].split('-').map(Number);
-        const partsB = b[0].split('-').map(Number);
-        if (partsB[0] !== partsA[0]) return partsB[0] - partsA[0];
-        return 0;
+        const driveA = getFormationDrive(a[0]);
+        const driveB = getFormationDrive(b[0]);
+        if (driveB !== driveA) return driveB - driveA;
+        return a[0].localeCompare(b[0]);
     });
 
     let html = '';
-    for (const [key, formation] of sortedFormations) {
+    for (const [key] of sortedFormations) {
         const selected = gameState.formation === key ? 'selected' : '';
-        html += `<option value="${key}" ${selected}>${key}</option>`;
+        const drive = getFormationDrive(key);
+        html += `<option value="${key}" ${selected}>${key}  —  ${drive}%</option>`;
     }
     select.innerHTML = html;
 
@@ -1503,7 +1610,18 @@ function renderFormationDropdown() {
         renderLineupPitch();
         renderAvailablePlayers();
         updateLineupFit();
+        updateFormationDrive();
     };
+
+    updateFormationDrive();
+}
+
+function updateFormationDrive() {
+    const el = document.getElementById('formation-drive');
+    if (!el) return;
+    const pct = getFormationDrive(gameState.formation);
+    el.textContent = `Tactische bedrevenheid: ${pct}%`;
+    el.style.color = pct >= 80 ? 'var(--accent-green-dim)' : pct > 0 ? 'var(--text-secondary)' : 'var(--text-muted)';
 }
 
 // Helper to get position type (keeper, defense, midfield, attack)
@@ -1707,11 +1825,27 @@ function updateLineupFit() {
     const fitFill = document.getElementById('lineup-fit-fill');
     const fitScore = document.getElementById('lineup-fit-score');
 
-    const filledCount = gameState.lineup.filter(p => p).length;
-    const fit = Math.round((filledCount / 11) * 100);
+    // Team Samenhang: based on how long players have been playing together
+    // Each player tracks matchesTogether; new players start at 0
+    const lineupIds = gameState.lineup.filter(p => p).map(p => p.id);
+    const count = lineupIds.length;
+    if (count === 0) {
+        if (fitFill) fitFill.style.width = '0%';
+        if (fitScore) fitScore.textContent = '0%';
+        return;
+    }
 
-    if (fitFill) fitFill.style.width = `${fit}%`;
-    if (fitScore) fitScore.textContent = `${fit}%`;
+    // Average matchesTogether across lineup players (capped at 20 for 100%)
+    let total = 0;
+    for (const p of gameState.lineup) {
+        if (!p) continue;
+        total += Math.min(p.matchesTogether || 0, 20);
+    }
+    const avg = total / count;
+    const samenhang = Math.round((avg / 20) * 100);
+
+    if (fitFill) fitFill.style.width = `${samenhang}%`;
+    if (fitScore) fitScore.textContent = `${samenhang}%`;
 }
 
 // Drag & Drop for lineup
@@ -1818,61 +1952,27 @@ function handleLineupDrop(targetSlotIndex) {
     updateLineupFit();
 }
 
-function initTacticsControls() {
-    // Playstyle buttons
-    document.querySelectorAll('.playstyle-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.playstyle-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            gameState.tactics.playstyle = btn.dataset.style;
-        });
-    });
-
-    // Tactic choice buttons
-    document.querySelectorAll('.tactic-choice').forEach(btn => {
-        btn.addEventListener('click', () => {
-            btn.parentElement.querySelectorAll('.tactic-choice').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
-    });
-
-    // Width slider info
-    const widthSlider = document.getElementById('tactic-width');
-    const widthInfo = document.getElementById('width-info');
-    if (widthSlider && widthInfo) {
-        widthSlider.addEventListener('input', () => {
-            const val = parseInt(widthSlider.value);
-            if (val < 30) widthInfo.textContent = 'Smal: Compacte verdediging, minder ruimte';
-            else if (val < 70) widthInfo.textContent = 'Normaal: Standaard veldbreedte';
-            else widthInfo.textContent = 'Breed: Meer ruimte op vleugels, risicovol';
-        });
-    }
-}
-
-function renderAdvancedTactics() {
-    const container = document.querySelector('.advanced-tactics');
+function renderTacticsOptions() {
+    const container = document.getElementById('tactics-options-grid');
     if (!container) return;
 
+    const categoryLabels = {
+        mentaliteit: 'Mentaliteit',
+        offensief: 'Offensief',
+        speltempo: 'Speltempo',
+        veldbreedte: 'Veldbreedte',
+        dekking: 'Dekking'
+    };
+
     let html = '';
-
     for (const [category, options] of Object.entries(TACTICS)) {
-        html += `
-            <div class="tactic-category">
-                <h4>${category === 'mentality' ? 'Mentaliteit' :
-                      category === 'pressing' ? 'Druk' :
-                      category === 'passingStyle' ? 'Speelstijl' :
-                      category === 'tempo' ? 'Tempo' : 'Breedte'}</h4>
-                <div class="tactic-options">
-        `;
+        html += `<div class="tactic-category-row">`;
+        html += `<span class="tactic-category-label tactic-label--${category}">${categoryLabels[category] || category}</span>`;
+        html += `<div class="tactic-button-group">`;
 
-        options.forEach(option => {
+        options.forEach((option, idx) => {
             const isActive = gameState.tactics[category] === option.id ? 'active' : '';
-            html += `
-                <button class="tactic-option ${isActive}" data-category="${category}" data-option="${option.id}">
-                    <span class="tactic-icon">${option.icon}</span>
-                    <span class="tactic-name">${option.name}</span>
-                </button>
-            `;
+            html += `<button class="tactic-btn tactic-btn--${category}-${idx} ${isActive}" data-category="${category}" data-option="${option.id}">${option.name}</button>`;
         });
 
         html += `</div></div>`;
@@ -1880,18 +1980,18 @@ function renderAdvancedTactics() {
 
     container.innerHTML = html;
 
-    // Add handlers
-    document.querySelectorAll('.tactic-option').forEach(btn => {
+    // Add click handlers
+    container.querySelectorAll('.tactic-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const category = btn.dataset.category;
             const option = btn.dataset.option;
 
             // Remove active from siblings
-            btn.parentElement.querySelectorAll('.tactic-option').forEach(b => b.classList.remove('active'));
+            btn.closest('.tactic-button-group').querySelectorAll('.tactic-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
             gameState.tactics[category] = option;
-            updateTacticsFitDisplay();
+            saveGame();
         });
     });
 }
@@ -4323,17 +4423,16 @@ function navigateToPage(page) {
     if (page === 'transfers') renderTransferMarket();
     if (page === 'finances') renderDailyFinances();
     if (page === 'sponsors') renderSponsorsPage();
-    if (page === 'activities') renderActivitiesPage();
+    // activities page removed
     if (page === 'staff') renderStaffCenterPage();
     if (page === 'mijnspeler') {
-        renderMijnSpelerPage();
         initMijnSpelerTabs();
         // Render active tab content
         const activeTab = document.querySelector('.msp-tab.active');
         if (activeTab) {
             const tab = activeTab.dataset.mspTab;
-            if (tab === 'speler') renderSpelersPrestaties();
-            else if (tab === 'manager') renderManagersPrestaties();
+            if (tab === 'voortgang') renderVoortgang();
+            else if (tab === 'prestaties') renderPrestaties();
         }
     }
     if (page === 'mijnteam') renderMijnTeamPage();
@@ -5057,84 +5156,7 @@ function initScoutCriteria() {
 // ADVANCED TACTICS HANDLERS
 // ================================================
 
-function initAdvancedTactics() {
-    // Toggles
-    document.getElementById('tactic-keeper-pressure')?.addEventListener('change', (e) => {
-        gameState.advancedTactics.keeperPressure = e.target.checked;
-    });
-
-    document.getElementById('tactic-set-pieces')?.addEventListener('change', (e) => {
-        gameState.advancedTactics.forceSetPieces = e.target.checked;
-    });
-
-    // Choice buttons (both old .choice-btn and new .choice-btn-sm)
-    document.querySelectorAll('.choice-btn, .choice-btn-sm').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const choice = btn.dataset.choice;
-            // Find parent group - works for both old and new layouts
-            const group = btn.closest('.tactic-choice-group') || btn.closest('.choice-btns');
-            group.querySelectorAll('.choice-btn, .choice-btn-sm').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            if (choice.startsWith('fullback-')) {
-                gameState.advancedTactics.fullbackRuns = choice.replace('fullback-', '');
-            } else if (choice.startsWith('marking-')) {
-                gameState.advancedTactics.marking = choice.replace('marking-', '');
-                updateMarkingExplanation();
-            }
-        });
-    });
-
-    // Sliders
-    const attackDefenseSlider = document.getElementById('tactic-attack-defense');
-    const intensitySlider = document.getElementById('tactic-intensity');
-
-    attackDefenseSlider?.addEventListener('input', (e) => {
-        gameState.advancedTactics.attackDefense = parseInt(e.target.value);
-        updateSliderLabels();
-    });
-
-    intensitySlider?.addEventListener('input', (e) => {
-        gameState.advancedTactics.duelIntensity = parseInt(e.target.value);
-        updateSliderLabels();
-    });
-
-    updateSliderLabels();
-}
-
-function updateMarkingExplanation() {
-    const explanation = document.getElementById('marking-explanation');
-    if (!explanation) return;
-
-    if (gameState.advancedTactics.marking === 'zone') {
-        explanation.innerHTML = '<p>Zone: Spelers dekken gebieden. Beter tegen teams met veel balbezit.</p>';
-    } else {
-        explanation.innerHTML = '<p>Man: Spelers volgen tegenstanders. Beter tegen individuele kwaliteit.</p>';
-    }
-}
-
-function updateSliderLabels() {
-    const attackDefenseValue = document.getElementById('attack-defense-value');
-    const intensityValue = document.getElementById('intensity-value');
-
-    if (attackDefenseValue) {
-        const val = gameState.advancedTactics.attackDefense;
-        if (val < 25) attackDefenseValue.textContent = 'Zeer Verdedigend';
-        else if (val < 40) attackDefenseValue.textContent = 'Verdedigend';
-        else if (val < 60) attackDefenseValue.textContent = 'Gebalanceerd';
-        else if (val < 75) attackDefenseValue.textContent = 'Aanvallend';
-        else attackDefenseValue.textContent = 'Zeer Aanvallend';
-    }
-
-    if (intensityValue) {
-        const val = gameState.advancedTactics.duelIntensity;
-        if (val < 25) intensityValue.textContent = 'Voorzichtig';
-        else if (val < 40) intensityValue.textContent = 'Rustig';
-        else if (val < 60) intensityValue.textContent = 'Normaal';
-        else if (val < 75) intensityValue.textContent = 'Intens';
-        else intensityValue.textContent = 'Agressief';
-    }
-}
+// initAdvancedTactics, updateMarkingExplanation, updateSliderLabels removed — replaced by renderTacticsOptions
 
 // ================================================
 // TACTICS TABS & LINEUP BUILDER
@@ -5148,11 +5170,9 @@ function initTacticsTabs() {
         tab.addEventListener('click', () => {
             const targetTab = tab.dataset.tab;
 
-            // Update tab active states
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
 
-            // Update panel visibility
             panels.forEach(panel => {
                 panel.classList.remove('active');
                 if (panel.id === `${targetTab}-panel`) {
@@ -5160,16 +5180,17 @@ function initTacticsTabs() {
                 }
             });
 
-            // Initialize lineup when opstelling tab is opened
             if (targetTab === 'opstelling') {
                 renderLineupPitch();
                 renderAvailablePlayers();
                 updateLineupFit();
             }
-
-            // Initialize specialists when specialisten tab is opened
+            if (targetTab === 'tactiek') {
+                renderTacticsOptions();
+                renderTeamTraining();
+            }
             if (targetTab === 'specialisten') {
-                initSpecialists();
+                populateSpecialistSelects();
             }
         });
     });
@@ -6625,6 +6646,23 @@ function initGame() {
         gameState.achievements = initAchievements();
     }
 
+    // Migrate tactics: old keys → new keys
+    if (gameState.tactics && gameState.tactics.mentality !== undefined) {
+        const oldTactics = gameState.tactics;
+        const offensiefMap = { defensive: 'verdedigend', balanced: 'gebalanceerd', attacking: 'offensief', ultra_attacking: 'leeroy' };
+        const tempoMap = { slow: 'rustig', normal: 'normaal', fast: 'snel', counter: 'snel' };
+        const breedteMap = { narrow: 'smal', normal: 'gebalanceerd', wide: 'breed' };
+        const dekkingVal = (gameState.advancedTactics?.marking) || 'zone';
+        gameState.tactics = {
+            mentaliteit: 'normaal',
+            offensief: offensiefMap[oldTactics.mentality] || 'gebalanceerd',
+            speltempo: tempoMap[oldTactics.tempo] || 'normaal',
+            veldbreedte: breedteMap[oldTactics.width] || 'gebalanceerd',
+            dekking: dekkingVal === 'man' ? 'man' : 'zone'
+        };
+        delete gameState.advancedTactics;
+    }
+
     // Migrate existing players: ensure 90% Dutch nationality + zaterdagvoetbal stats
     migratePlayersToZaterdag();
 
@@ -6698,7 +6736,6 @@ function initGame() {
     // Initialize new features
     initTransferMarket();
     initScoutCriteria();
-    initAdvancedTactics();
     initTacticsTabs();
     initChairmanTips();
     initPlayMatchButton();
@@ -7232,10 +7269,17 @@ function playMatch() {
         gameState.stats.saturdayMatches++;
     }
 
-    // Award XP
-    awardXP(gameState, resultType === 'win' ? 'matchWin' : resultType === 'draw' ? 'matchDraw' : 'matchLoss');
+    // Award Manager XP
+    if (resultType === 'win') awardXP(gameState, 'matchWin');
+    else if (resultType === 'draw') awardXP(gameState, 'matchDraw');
     if (opponentScore === 0) awardXP(gameState, 'cleanSheet');
     awardXP(gameState, 'goalScored', playerScore * 5);
+
+    // Award Player XP
+    if (resultType === 'win') awardPlayerXP(gameState, 'matchWin');
+    else if (resultType === 'draw') awardPlayerXP(gameState, 'matchDraw');
+    if (opponentScore === 0) awardPlayerXP(gameState, 'cleanSheet');
+    awardPlayerXP(gameState, 'goalScored', playerScore * 10);
 
     // Store last match
     gameState.lastMatch = {
@@ -7335,12 +7379,14 @@ function handleEndOfSeason() {
     if (result.promoted) {
         gameState.stats.promotions++;
         awardXP(gameState, 'promotion');
+        awardPlayerXP(gameState, 'promotion');
     }
     if (result.position === 6) {
         gameState.stats.relegationEscapes++;
     }
     if (result.isChampion) {
         awardXP(gameState, 'title');
+        awardPlayerXP(gameState, 'title');
     }
 
     // Start new season
@@ -8510,87 +8556,9 @@ function selectScoutingNetwork(networkId) {
 
 window.selectScoutingNetwork = selectScoutingNetwork;
 
-// ================================================
-// ACTIVITIES SYSTEM
-// ================================================
+// Activities system removed
 
-const ACTIVITIES = {
-    trainingcamp: {
-        name: 'Trainingskamp',
-        cost: 2500,
-        effect: 'fitness',
-        value: 2
-    },
-    teamparty: {
-        name: 'Teamuitje',
-        cost: 1000,
-        effect: 'chemistry',
-        value: 10
-    },
-    tactical: {
-        name: 'Tactische Sessie',
-        cost: 500,
-        effect: 'tactics',
-        value: 5
-    }
-};
-
-function startActivity(activityId) {
-    const activity = ACTIVITIES[activityId];
-    if (!activity) return;
-
-    if (gameState.club.budget < activity.cost) {
-        showNotification('Niet genoeg budget voor deze activiteit!', 'error');
-        return;
-    }
-
-    gameState.club.budget -= activity.cost;
-
-    // Apply effect based on activity type
-    if (activity.effect === 'fitness') {
-        gameState.players.forEach(player => {
-            if (player.attributes.FYS) {
-                player.attributes.FYS = Math.min(99, player.attributes.FYS + activity.value);
-            }
-        });
-        showNotification(`Trainingskamp afgerond! Alle spelers +${activity.value} FYS`, 'success');
-    } else if (activity.effect === 'chemistry') {
-        gameState.teamChemistry = (gameState.teamChemistry || 50) + activity.value;
-        showNotification(`Teamuitje geslaagd! +${activity.value}% teamchemie`, 'success');
-    } else if (activity.effect === 'tactics') {
-        gameState.nextMatchBonus = (gameState.nextMatchBonus || 0) + activity.value;
-        showNotification(`Tactische sessie gedaan! +${activity.value}% volgende wedstrijd`, 'success');
-    }
-
-    updateUI();
-}
-
-function renderActivitiesPage() {
-    // Update costs display based on current budget
-    document.querySelectorAll('.activity-card').forEach(card => {
-        const activityId = card.dataset.activity;
-        const activity = ACTIVITIES[activityId];
-        if (activity) {
-            const costEl = card.querySelector('.activity-cost');
-            if (costEl) {
-                costEl.textContent = formatCurrency(activity.cost);
-            }
-            // Disable if not enough budget
-            const btn = card.querySelector('.activity-btn');
-            if (btn) {
-                if (gameState.club.budget < activity.cost) {
-                    btn.disabled = true;
-                    btn.textContent = 'Te weinig budget';
-                } else {
-                    btn.disabled = false;
-                    btn.textContent = 'Uitvoeren';
-                }
-            }
-        }
-    });
-}
-
-window.startActivity = startActivity;
+// startActivity, renderActivitiesPage, window.startActivity removed
 
 // ================================================
 // STAFF CENTER PAGE
@@ -8834,69 +8802,38 @@ window.hireStaffMember = function(category, staffId, cost) {
 // ================================================
 
 function populateSpecialistSelects() {
-    const cornerSelect = document.getElementById('corner-taker');
-    const penaltySelect = document.getElementById('penalty-taker');
-    const freekickSelect = document.getElementById('freekick-taker');
-    const captainSelect = document.getElementById('captain-select');
-
-    if (!cornerSelect || !penaltySelect || !freekickSelect || !captainSelect) return;
-
-    // Get all players for selection
-    const allPlayers = gameState.players.filter(p => !p.injured);
-
-    // Sort by position for better organization
-    const sortedPlayers = [...allPlayers].sort((a, b) => {
-        const posOrder = { K: 1, V: 2, M: 3, A: 4 };
-        return (posOrder[a.position] || 5) - (posOrder[b.position] || 5);
-    });
-
-    // Generate options HTML
-    const generateOptions = (players, selectedId) => {
-        let html = '<option value="">-- Selecteer speler --</option>';
-        players.forEach(player => {
-            const selected = player.id === selectedId ? 'selected' : '';
-            const posLabel = { K: 'Keeper', V: 'Verdediger', M: 'Middenvelder', A: 'Aanvaller' }[player.position] || player.position;
-            html += `<option value="${player.id}" ${selected}>${player.name} (${posLabel} - ${player.overall})</option>`;
-        });
-        return html;
-    };
-
-    // Initialize specialists object if not exists
     if (!gameState.specialists) {
-        gameState.specialists = {
-            cornerTaker: null,
-            penaltyTaker: null,
-            freekickTaker: null,
-            captain: null
-        };
+        gameState.specialists = { cornerTaker: null, penaltyTaker: null, freekickTaker: null, captain: null };
     }
 
-    // Populate selects
-    cornerSelect.innerHTML = generateOptions(sortedPlayers, gameState.specialists.cornerTaker);
-    penaltySelect.innerHTML = generateOptions(sortedPlayers, gameState.specialists.penaltyTaker);
-    freekickSelect.innerHTML = generateOptions(sortedPlayers, gameState.specialists.freekickTaker);
-    captainSelect.innerHTML = generateOptions(sortedPlayers, gameState.specialists.captain);
+    // Only lineup players, sorted by overall descending
+    const lineupPlayers = gameState.lineup.filter(p => p !== null).sort((a, b) => b.overall - a.overall);
+    const posAbbr = (pos) => POSITIONS[pos]?.abbr || pos;
 
-    // Add event listeners
-    cornerSelect.onchange = (e) => {
-        gameState.specialists.cornerTaker = e.target.value || null;
-        showNotification('Cornernemer ingesteld', 'success');
-    };
+    const selects = [
+        { id: 'corner-taker', key: 'cornerTaker' },
+        { id: 'penalty-taker', key: 'penaltyTaker' },
+        { id: 'freekick-taker', key: 'freekickTaker' },
+        { id: 'captain-select', key: 'captain' }
+    ];
 
-    penaltySelect.onchange = (e) => {
-        gameState.specialists.penaltyTaker = e.target.value || null;
-        showNotification('Strafschopnemer ingesteld', 'success');
-    };
+    for (const { id, key } of selects) {
+        const select = document.getElementById(id);
+        if (!select) continue;
 
-    freekickSelect.onchange = (e) => {
-        gameState.specialists.freekickTaker = e.target.value || null;
-        showNotification('Vrije trap nemer ingesteld', 'success');
-    };
+        const selectedId = gameState.specialists[key];
+        let html = '<option value="">-- Selecteer --</option>';
+        for (const p of lineupPlayers) {
+            const sel = p.id === selectedId ? 'selected' : '';
+            html += `<option value="${p.id}" ${sel}>${p.name}  (${posAbbr(p.position)} ${p.overall})</option>`;
+        }
+        select.innerHTML = html;
 
-    captainSelect.onchange = (e) => {
-        gameState.specialists.captain = e.target.value || null;
-        showNotification('Aanvoerder ingesteld', 'success');
-    };
+        select.onchange = () => {
+            gameState.specialists[key] = select.value || null;
+            saveGame();
+        };
+    }
 }
 
 // ================================================

@@ -139,34 +139,32 @@ export const DUTCH_LAST_NAMES = [
 ];
 
 export const TACTICS = {
-    mentality: [
-        { id: 'defensive', name: 'Verdedigend', icon: '🛡️', effect: { defense: 15, attack: -10 } },
-        { id: 'balanced', name: 'Gebalanceerd', icon: '⚖️', effect: { defense: 0, attack: 0 } },
-        { id: 'attacking', name: 'Aanvallend', icon: '⚔️', effect: { defense: -10, attack: 15 } },
-        { id: 'ultra_attacking', name: 'Ultra Aanvallend', icon: '🔥', effect: { defense: -20, attack: 25 } }
+    mentaliteit: [
+        { id: 'rustig',  name: 'Rustig',  effect: { foulChance: -0.04, cardChance: -0.10 } },
+        { id: 'normaal', name: 'Normaal', effect: { foulChance: 0, cardChance: 0 } },
+        { id: 'hard',    name: 'Hard',    effect: { foulChance: 0.04, cardChance: 0.10 } },
+        { id: 'extreem', name: 'Extreem', effect: { foulChance: 0.08, cardChance: 0.20 } }
     ],
-    pressing: [
-        { id: 'low', name: 'Laag Blok', icon: '📉', effect: { stamina: 10, pressing: -15 } },
-        { id: 'medium', name: 'Medium Druk', icon: '📊', effect: { stamina: 0, pressing: 0 } },
-        { id: 'high', name: 'Hoge Druk', icon: '📈', effect: { stamina: -15, pressing: 20 } },
-        { id: 'gegenpressing', name: 'Gegenpressing', icon: '⚡', effect: { stamina: -25, pressing: 30, recovery: 20 } }
+    offensief: [
+        { id: 'zeer_verdedigend', name: 'Zeer Verdedigend', effect: { attack: -20, defense: 20 } },
+        { id: 'verdedigend',      name: 'Verdedigend',      effect: { attack: -10, defense: 10 } },
+        { id: 'gebalanceerd',     name: 'Gebalanceerd',     effect: { attack: 0, defense: 0 } },
+        { id: 'offensief',        name: 'Offensief',        effect: { attack: 10, defense: -10 } },
+        { id: 'leeroy',           name: 'Leeroy Jenkins',   effect: { attack: 25, defense: -20 } }
     ],
-    passingStyle: [
-        { id: 'direct', name: 'Direct Spel', icon: '➡️', effect: { longballs: 15, possession: -10 } },
-        { id: 'mixed', name: 'Gemengd', icon: '🔀', effect: { longballs: 0, possession: 0 } },
-        { id: 'possession', name: 'Balbezit', icon: '🔄', effect: { longballs: -10, possession: 15 } },
-        { id: 'tiki_taka', name: 'Tiki-Taka', icon: '🎯', effect: { longballs: -20, possession: 25, requires_tec: 60 } }
+    speltempo: [
+        { id: 'rustig',  name: 'Rustig',  effect: { control: 10, surprise: -10, stamina: 5 } },
+        { id: 'normaal', name: 'Normaal', effect: { control: 0, surprise: 0, stamina: 0 } },
+        { id: 'snel',    name: 'Snel',    effect: { control: -10, surprise: 15, stamina: -10 } }
     ],
-    tempo: [
-        { id: 'slow', name: 'Langzaam', icon: '🐢', effect: { control: 10, surprise: -10 } },
-        { id: 'normal', name: 'Normaal', icon: '🚶', effect: { control: 0, surprise: 0 } },
-        { id: 'fast', name: 'Snel', icon: '🏃', effect: { control: -10, surprise: 15 } },
-        { id: 'counter', name: 'Counter', icon: '⚡', effect: { control: -15, surprise: 25, counter: 20 } }
+    veldbreedte: [
+        { id: 'smal',         name: 'Smal',         effect: { central: 15, wide: -10 } },
+        { id: 'gebalanceerd', name: 'Gebalanceerd', effect: { central: 0, wide: 0 } },
+        { id: 'breed',        name: 'Breed',        effect: { central: -10, wide: 15 } }
     ],
-    width: [
-        { id: 'narrow', name: 'Smal', icon: '↔️', effect: { central: 15, wide: -10 } },
-        { id: 'normal', name: 'Normaal', icon: '⬜', effect: { central: 0, wide: 0 } },
-        { id: 'wide', name: 'Breed', icon: '↕️', effect: { central: -10, wide: 15 } }
+    dekking: [
+        { id: 'man',  name: 'Man',  effect: { pressing: 10, counterVulnerable: 10 } },
+        { id: 'zone', name: 'Zone', effect: { pressing: -5, counterVulnerable: -5 } }
     ]
 };
 

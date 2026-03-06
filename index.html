@@ -117,13 +117,6 @@
                         </svg>
                     </span>
                     <span>Tactiek</span>
-                    <ul class="nav-submenu">
-                        <li data-tab="opstelling">Opstelling</li>
-                        <li data-tab="tactiek">Tactiek</li>
-                        <li data-tab="specialisten">Specialisten</li>
-                        <li data-tab="wedstrijd">Wedstrijdvoorbereiding</li>
-                        <li data-tab="activiteiten">Activiteiten</li>
-                    </ul>
                 </li>
                 <li class="nav-item" data-page="training">
                     <span class="nav-icon">
@@ -200,15 +193,6 @@
                         </svg>
                     </span>
                     <span>Sponsors</span>
-                </li>
-                <li class="nav-item" data-page="activities">
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M12 6v6l4 2"/>
-                        </svg>
-                    </span>
-                    <span>Activiteiten</span>
                 </li>
                 <li class="nav-item" data-page="finances">
                     <span class="nav-icon">
@@ -419,24 +403,20 @@
                 <header class="page-header">
                     <div class="header-left">
                         <h2 class="page-title">Mijn Speler</h2>
-                        <p class="page-subtitle handwritten">Jouw voetballer</p>
+                        <p class="page-subtitle handwritten">Speel wedstrijden, verdien XP en maak je speler beter</p>
                     </div>
                 </header>
 
                 <div class="msp-tabs">
-                    <button class="msp-tab active" data-msp-tab="overzicht">Overzicht</button>
-                    <button class="msp-tab" data-msp-tab="speler">Spelersprestaties</button>
-                    <button class="msp-tab" data-msp-tab="manager">Managersprestaties</button>
+                    <button class="msp-tab active" data-msp-tab="voortgang">Voortgang</button>
+                    <button class="msp-tab" data-msp-tab="prestaties">Prestaties</button>
                 </div>
 
-                <div class="msp-panel active" id="msp-overzicht">
-                    <div class="mijnspeler-dashboard" id="mijnspeler-dashboard"></div>
+                <div class="msp-panel active" id="msp-voortgang">
+                    <div id="voortgang-content"></div>
                 </div>
-                <div class="msp-panel" id="msp-speler">
-                    <div id="speler-prestaties"></div>
-                </div>
-                <div class="msp-panel" id="msp-manager">
-                    <div id="manager-prestaties"></div>
+                <div class="msp-panel" id="msp-prestaties">
+                    <div id="prestaties-content"></div>
                 </div>
             </section>
 
@@ -668,39 +648,29 @@
                     </div>
                 </header>
 
-                <!-- Tactics Tabs -->
+                <!-- Subtabs -->
                 <div class="tactics-tabs">
                     <button class="tactics-tab active" data-tab="opstelling">Opstelling</button>
                     <button class="tactics-tab" data-tab="tactiek">Tactiek</button>
                     <button class="tactics-tab" data-tab="specialisten">Specialisten</button>
-                    <button class="tactics-tab" data-tab="wedstrijd">Wedstrijdvoorbereiding</button>
-                    <button class="tactics-tab" data-tab="activiteiten">Activiteiten</button>
                 </div>
 
-                <!-- Opstelling Tab -->
+                <!-- Opstelling Panel -->
                 <div class="tactics-panel active" id="opstelling-panel">
                     <div class="lineup-container">
-                        <!-- Left: Available Players -->
                         <div class="lineup-players-panel">
                             <h4>Beschikbare Spelers</h4>
-                            <div class="lineup-player-groups" id="lineup-available-players">
-                                <!-- Players grouped by position, filled by JS -->
-                            </div>
+                            <div class="lineup-player-groups" id="lineup-available-players"></div>
                         </div>
-
-                        <!-- Center: Pitch with formation -->
                         <div class="lineup-pitch-panel">
                             <div class="formation-selector">
                                 <span class="formation-label">Formatie:</span>
-                                <select id="formation-select" class="formation-dropdown">
-                                    <!-- Options filled by JS -->
-                                </select>
+                                <select id="formation-select" class="formation-dropdown"></select>
+                                <span class="formation-drive" id="formation-drive"></span>
                             </div>
-                            <div class="lineup-pitch" id="lineup-pitch">
-                                <!-- Pitch with slots filled by JS -->
-                            </div>
+                            <div class="lineup-pitch" id="lineup-pitch"></div>
                             <div class="lineup-fit-display">
-                                <span>Team Fit:</span>
+                                <span>Team Samenhang:</span>
                                 <div class="fit-bar"><div class="fit-bar-fill" id="lineup-fit-fill"></div></div>
                                 <span id="lineup-fit-score">0%</span>
                             </div>
@@ -708,225 +678,114 @@
                     </div>
                 </div>
 
-                <!-- Tactiek Tab -->
+                <!-- Tactiek Panel (+ Wedstrijdvoorbereiding) -->
                 <div class="tactics-panel" id="tactiek-panel">
-                    <div class="tactics-grid">
-                        <!-- Speelstijl -->
-                        <div class="tactics-section">
-                            <h4>Speelstijl</h4>
-                            <div class="playstyle-options" id="playstyle-options">
-                                <button class="playstyle-btn active" data-style="balanced" title="Gebalanceerd spel met mix van aanval en verdediging">
-                                    <span class="ps-icon">⚖️</span>
-                                    <span class="ps-name">Gebalanceerd</span>
-                                </button>
-                                <button class="playstyle-btn" data-style="counter" title="Snel omschakelen na balverovering">
-                                    <span class="ps-icon">⚡</span>
-                                    <span class="ps-name">Counter</span>
-                                </button>
-                                <button class="playstyle-btn" data-style="possession" title="Balbezit en controle">
-                                    <span class="ps-icon">🎯</span>
-                                    <span class="ps-name">Balbezit</span>
-                                </button>
-                                <button class="playstyle-btn" data-style="wings" title="Aanvallen via de vleugels">
-                                    <span class="ps-icon">🦅</span>
-                                    <span class="ps-name">Vleugelspel</span>
-                                </button>
-                                <button class="playstyle-btn" data-style="park" title="Verdedigend met 10 man achter de bal">
-                                    <span class="ps-icon">🚌</span>
-                                    <span class="ps-name">Parkeer de Bus</span>
-                                </button>
-                                <button class="playstyle-btn" data-style="leeroy" title="All-in aanvallen, risicovol!">
-                                    <span class="ps-icon">🔥</span>
-                                    <span class="ps-name">Leeroy Jenkins</span>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="tactics-section-block">
+                        <h3 class="section-block-title">Tactiek</h3>
+                        <div id="tactics-options-grid" class="tactics-options-grid"></div>
+                    </div>
 
-                        <!-- Veldbreedte -->
-                        <div class="tactics-section">
-                            <h4>Veldbreedte</h4>
-                            <div class="width-slider-container">
-                                <span class="width-label">Smal</span>
-                                <input type="range" id="tactic-width" min="0" max="100" value="50" class="width-slider">
-                                <span class="width-label">Breed</span>
-                            </div>
-                            <p class="tactic-info" id="width-info">Normaal: Standaard veldbreedte</p>
-                        </div>
-
-                        <!-- Pressing & Defensie -->
-                        <div class="tactics-section">
-                            <h4>Pressing & Verdediging</h4>
-                            <div class="tactic-row">
-                                <span class="tactic-name">Pressing Hoogte</span>
-                                <div class="tactic-slider-wrap">
-                                    <span>Laag</span>
-                                    <input type="range" id="tactic-pressing" min="0" max="100" value="50">
-                                    <span>Hoog</span>
+                    <div class="tactics-section-block">
+                        <div class="team-training-panel">
+                            <h3 class="section-block-title">Wedstrijdvoorbereiding</h3>
+                            <p class="training-rules">Kies een focus voor het hele team</p>
+                            <div class="team-training-options" id="team-training-options">
+                                <div class="team-training-option" data-type="defense" onclick="selectTeamTraining('defense')">
+                                    <div class="tto-icon defense">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2" width="28" height="28">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="tto-info">
+                                        <h4>Verdedigende Impulsen</h4>
+                                        <p>Betere verdediging volgende wedstrijd</p>
+                                    </div>
+                                    <div class="tto-status">
+                                        <button class="btn btn-secondary btn-small">Selecteer</button>
+                                    </div>
+                                </div>
+                                <div class="team-training-option" data-type="setpiece" onclick="selectTeamTraining('setpiece')">
+                                    <div class="tto-icon setpiece">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="#ef6c00" stroke-width="2" width="28" height="28">
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <path d="M12 6v6l4 2"/>
+                                        </svg>
+                                    </div>
+                                    <div class="tto-info">
+                                        <h4>Standaardsituaties</h4>
+                                        <p>Betere corners en vrije trappen</p>
+                                    </div>
+                                    <div class="tto-status">
+                                        <button class="btn btn-secondary btn-small">Selecteer</button>
+                                    </div>
+                                </div>
+                                <div class="team-training-option" data-type="attack" onclick="selectTeamTraining('attack')">
+                                    <div class="tto-icon attack">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="#c62828" stroke-width="2" width="28" height="28">
+                                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                                        </svg>
+                                    </div>
+                                    <div class="tto-info">
+                                        <h4>Aanvallende Bewegingen</h4>
+                                        <p>Betere aanval volgende wedstrijd</p>
+                                    </div>
+                                    <div class="tto-status">
+                                        <button class="btn btn-secondary btn-small">Selecteer</button>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="tactic-row">
-                                <span class="tactic-name">Dekking</span>
-                                <div class="tactic-choice-btns">
-                                    <button class="tactic-choice active" data-choice="zone">Zone</button>
-                                    <button class="tactic-choice" data-choice="man">Man-dekking</button>
+                            <div class="team-training-timer" id="team-training-timer" style="display: none;">
+                                <div class="ttt-progress">
+                                    <div class="ttt-progress-bar"></div>
                                 </div>
+                                <span class="ttt-time">Nog 04:32:15</span>
                             </div>
                         </div>
-
-                        <!-- Aanval Opties -->
-                        <div class="tactics-section">
-                            <h4>Aanval</h4>
-                            <div class="tactic-row">
-                                <span class="tactic-name">Tempo</span>
-                                <div class="tactic-slider-wrap">
-                                    <span>Rustig</span>
-                                    <input type="range" id="tactic-tempo" min="0" max="100" value="50">
-                                    <span>Snel</span>
-                                </div>
-                            </div>
-                            <div class="tactic-row">
-                                <span class="tactic-name">Backs</span>
-                                <div class="tactic-choice-btns">
-                                    <button class="tactic-choice active" data-choice="stay">Blijven</button>
-                                    <button class="tactic-choice" data-choice="overlap">Overlap</button>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 
-                <!-- Specialisten Tab -->
+                <!-- Specialisten Panel -->
                 <div class="tactics-panel" id="specialisten-panel">
-                    <div class="specialists-2x2">
-                        <div class="specialist-card-large">
-                            <div class="specialist-header-large">
-                                <span class="specialist-icon-large">🎯</span>
-                                <span class="specialist-title-large">Cornernemers</span>
+                    <div class="specialists-grid" id="specialists-grid">
+                        <div class="spec-card">
+                            <div class="spec-card-header">
+                                <span class="spec-card-icon">🎯</span>
+                                <div class="spec-card-titles">
+                                    <span class="spec-card-title">Cornernemer</span>
+                                    <span class="spec-card-hint">Geen spits of centrale verdediger</span>
+                                </div>
                             </div>
-                            <select class="specialist-select-large" id="corner-taker">
-                                <option value="">-- Selecteer speler --</option>
-                            </select>
+                            <select class="spec-select" id="corner-taker"></select>
                         </div>
-                        <div class="specialist-card-large">
-                            <div class="specialist-header-large">
-                                <span class="specialist-icon-large">⚽</span>
-                                <span class="specialist-title-large">Strafschopnemer</span>
+                        <div class="spec-card">
+                            <div class="spec-card-header">
+                                <span class="spec-card-icon">⚽</span>
+                                <div class="spec-card-titles">
+                                    <span class="spec-card-title">Strafschopnemer</span>
+                                    <span class="spec-card-hint">De meest ervaren speler</span>
+                                </div>
                             </div>
-                            <select class="specialist-select-large" id="penalty-taker">
-                                <option value="">-- Selecteer speler --</option>
-                            </select>
+                            <select class="spec-select" id="penalty-taker"></select>
                         </div>
-                        <div class="specialist-card-large">
-                            <div class="specialist-header-large">
-                                <span class="specialist-icon-large">🦶</span>
-                                <span class="specialist-title-large">Vrije Trap Nemer</span>
+                        <div class="spec-card">
+                            <div class="spec-card-header">
+                                <span class="spec-card-icon">🦶</span>
+                                <div class="spec-card-titles">
+                                    <span class="spec-card-title">Vrije Trap Nemer</span>
+                                    <span class="spec-card-hint">De meest aanvallende speler</span>
+                                </div>
                             </div>
-                            <select class="specialist-select-large" id="freekick-taker">
-                                <option value="">-- Selecteer speler --</option>
-                            </select>
+                            <select class="spec-select" id="freekick-taker"></select>
                         </div>
-                        <div class="specialist-card-large">
-                            <div class="specialist-header-large">
-                                <span class="specialist-icon-large">©️</span>
-                                <span class="specialist-title-large">Aanvoerder</span>
-                            </div>
-                            <select class="specialist-select-large" id="captain-select">
-                                <option value="">-- Selecteer speler --</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Wedstrijdvoorbereiding Panel (moved from Training) -->
-                <div class="tactics-panel" id="wedstrijd-panel">
-                    <div class="team-training-panel">
-                        <h3>Wedstrijdvoorbereiding</h3>
-                        <p class="training-rules">Kies een focus voor het hele team</p>
-
-                        <div class="team-training-options" id="team-training-options">
-                            <div class="team-training-option" data-type="defense" onclick="selectTeamTraining('defense')">
-                                <div class="tto-icon defense">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2" width="28" height="28">
-                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                                    </svg>
-                                </div>
-                                <div class="tto-info">
-                                    <h4>Verdedigende Impulsen</h4>
-                                    <p>+10% verdediging voor volgende wedstrijd</p>
-                                </div>
-                                <div class="tto-status">
-                                    <button class="btn btn-secondary btn-small">Selecteer</button>
+                        <div class="spec-card">
+                            <div class="spec-card-header">
+                                <span class="spec-card-icon">©️</span>
+                                <div class="spec-card-titles">
+                                    <span class="spec-card-title">Aanvoerder</span>
+                                    <span class="spec-card-hint">De beste en meest ervaren</span>
                                 </div>
                             </div>
-
-                            <div class="team-training-option" data-type="setpiece" onclick="selectTeamTraining('setpiece')">
-                                <div class="tto-icon setpiece">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="#ef6c00" stroke-width="2" width="28" height="28">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <path d="M12 6v6l4 2"/>
-                                    </svg>
-                                </div>
-                                <div class="tto-info">
-                                    <h4>Standaardsituaties</h4>
-                                    <p>+15% corners en vrije trappen</p>
-                                </div>
-                                <div class="tto-status">
-                                    <button class="btn btn-secondary btn-small">Selecteer</button>
-                                </div>
-                            </div>
-
-                            <div class="team-training-option" data-type="attack" onclick="selectTeamTraining('attack')">
-                                <div class="tto-icon attack">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="#c62828" stroke-width="2" width="28" height="28">
-                                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                                    </svg>
-                                </div>
-                                <div class="tto-info">
-                                    <h4>Aanvallende Bewegingen</h4>
-                                    <p>+10% aanval voor volgende wedstrijd</p>
-                                </div>
-                                <div class="tto-status">
-                                    <button class="btn btn-secondary btn-small">Selecteer</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="team-training-timer" id="team-training-timer" style="display: none;">
-                            <div class="ttt-progress">
-                                <div class="ttt-progress-bar"></div>
-                            </div>
-                            <span class="ttt-time">Nog 04:32:15</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Activiteiten Panel -->
-                <div class="tactics-panel" id="activiteiten-panel">
-                    <div class="activity-cards-grid">
-                        <div class="activity-card-compact" onclick="startActivity('trainingcamp')">
-                            <div class="acc-icon">🏕️</div>
-                            <div class="acc-info">
-                                <h4>Trainingskamp</h4>
-                                <span class="acc-effect">+2 Fitness hele team</span>
-                            </div>
-                            <div class="acc-cost">€2.500</div>
-                        </div>
-                        <div class="activity-card-compact" onclick="startActivity('teamparty')">
-                            <div class="acc-icon">🎉</div>
-                            <div class="acc-info">
-                                <h4>Teamuitje</h4>
-                                <span class="acc-effect">+10% Teamchemie</span>
-                            </div>
-                            <div class="acc-cost">€1.000</div>
-                        </div>
-                        <div class="activity-card-compact" onclick="startActivity('tactical')">
-                            <div class="acc-icon">📋</div>
-                            <div class="acc-info">
-                                <h4>Tactische Sessie</h4>
-                                <span class="acc-effect">+5% Tactiek volgende wed</span>
-                            </div>
-                            <div class="acc-cost">€500</div>
+                            <select class="spec-select" id="captain-select"></select>
                         </div>
                     </div>
                 </div>
@@ -1193,75 +1052,7 @@
                 </div>
             </section>
 
-            <!-- Activities Page -->
-            <section id="activities" class="page">
-                <header class="page-header">
-                    <div class="header-left">
-                        <h2 class="page-title">Extra Activiteiten</h2>
-                        <p class="page-subtitle handwritten">Versterk het team</p>
-                    </div>
-                </header>
-
-                <div class="activities-container">
-                    <p class="activities-intro">Organiseer speciale activiteiten om je team te versterken. Elke activiteit heeft unieke voordelen.</p>
-
-                    <div class="activity-cards" id="activity-cards">
-                        <div class="activity-card" data-activity="trainingcamp" onclick="startActivity('trainingcamp')">
-                            <div class="activity-icon trainingcamp">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <path d="M12 6v6l4 2"/>
-                                </svg>
-                            </div>
-                            <h3>Trainingskamp</h3>
-                            <p class="activity-desc">3 dagen intensief trainen in het buitenland</p>
-                            <div class="activity-effect">
-                                <span>+2 Fitness voor hele team</span>
-                            </div>
-                            <div class="activity-cost">
-                                <span>Kosten: €2.500</span>
-                            </div>
-                            <button class="btn btn-primary activity-start-btn">Organiseren</button>
-                        </div>
-
-                        <div class="activity-card" data-activity="teamparty" onclick="startActivity('teamparty')">
-                            <div class="activity-icon teamparty">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                                    <circle cx="12" cy="7" r="4"/>
-                                </svg>
-                            </div>
-                            <h3>Teamuitje</h3>
-                            <p class="activity-desc">Een avond met het hele team</p>
-                            <div class="activity-effect">
-                                <span>+10% Teamchemie</span>
-                            </div>
-                            <div class="activity-cost">
-                                <span>Kosten: €1.000</span>
-                            </div>
-                            <button class="btn btn-primary activity-start-btn">Organiseren</button>
-                        </div>
-
-                        <div class="activity-card" data-activity="tactical" onclick="startActivity('tactical')">
-                            <div class="activity-icon tactical">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
-                                    <path d="M3 9h18M9 21V9"/>
-                                </svg>
-                            </div>
-                            <h3>Tactische Sessie</h3>
-                            <p class="activity-desc">Video-analyse en tactiekbespreking</p>
-                            <div class="activity-effect">
-                                <span>+5% Tactisch begrip volgende wedstrijd</span>
-                            </div>
-                            <div class="activity-cost">
-                                <span>Kosten: €500</span>
-                            </div>
-                            <button class="btn btn-primary activity-start-btn">Organiseren</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <!-- Activities Page removed -->
 
             <!-- Finances Page -->
             <section id="finances" class="page">

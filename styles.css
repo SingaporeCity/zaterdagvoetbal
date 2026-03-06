@@ -331,8 +331,10 @@ body {
 /* Pages that should scroll */
 #transfers.page.active,
 #squad.page.active,
-#staff.page.active {
-    overflow-y: auto;
+#staff.page.active,
+#mijnspeler.page.active,
+#tactics.page.active {
+    overflow: hidden;
 }
 
 /* Pages that should fit without scroll */
@@ -6230,17 +6232,18 @@ body {
 }
 
 /* ================================================
-   TACTICS PAGE TABS
+   TACTICS PAGE - SUBTABS
    ================================================ */
 
 .tactics-tabs {
     display: flex;
     gap: 4px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
     background: var(--bg-primary);
     padding: 4px;
     border-radius: var(--button-radius);
     width: fit-content;
+    flex-shrink: 0;
 }
 
 .tactics-tab {
@@ -6270,7 +6273,136 @@ body {
 }
 
 .tactics-panel.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.tactics-section-block {
+    margin-bottom: 12px;
+    background: var(--bg-card);
+    border-radius: var(--card-radius);
+    padding: 16px;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+.section-block-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+/* Tactics Options Grid */
+.tactics-options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tactic-category-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.tactic-category-label {
+    min-width: 120px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.tactic-label--mentaliteit { color: #e53935; }
+.tactic-label--offensief { color: #1e88e5; }
+.tactic-label--speltempo { color: #fb8c00; }
+.tactic-label--veldbreedte { color: #8e24aa; }
+.tactic-label--dekking { color: #00897b; }
+
+.tactic-button-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.tactic-btn {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: var(--font-body);
+}
+
+.tactic-btn:hover {
+    border-color: var(--accent-green-dim);
+    color: var(--text-primary);
+}
+
+.tactic-btn.active {
+    color: white;
+}
+
+/* Mentaliteit: green → yellow → orange → red */
+.tactic-btn--mentaliteit-0.active { background: #43a047; border-color: #43a047; }
+.tactic-btn--mentaliteit-1.active { background: #7cb342; border-color: #7cb342; }
+.tactic-btn--mentaliteit-2.active { background: #f57c00; border-color: #f57c00; }
+.tactic-btn--mentaliteit-3.active { background: #d32f2f; border-color: #d32f2f; }
+.tactic-btn--mentaliteit-0:hover { border-color: #43a047; }
+.tactic-btn--mentaliteit-1:hover { border-color: #7cb342; }
+.tactic-btn--mentaliteit-2:hover { border-color: #f57c00; }
+.tactic-btn--mentaliteit-3:hover { border-color: #d32f2f; }
+
+/* Offensief: dark blue (verdedigend) → blue → balanced → orange → red */
+.tactic-btn--offensief-0.active { background: #1565c0; border-color: #1565c0; }
+.tactic-btn--offensief-1.active { background: #1e88e5; border-color: #1e88e5; }
+.tactic-btn--offensief-2.active { background: #5c6bc0; border-color: #5c6bc0; }
+.tactic-btn--offensief-3.active { background: #f57c00; border-color: #f57c00; }
+.tactic-btn--offensief-4.active { background: #d32f2f; border-color: #d32f2f; }
+.tactic-btn--offensief-0:hover { border-color: #1565c0; }
+.tactic-btn--offensief-1:hover { border-color: #1e88e5; }
+.tactic-btn--offensief-2:hover { border-color: #5c6bc0; }
+.tactic-btn--offensief-3:hover { border-color: #f57c00; }
+.tactic-btn--offensief-4:hover { border-color: #d32f2f; }
+
+/* Speltempo: teal → green → orange */
+.tactic-btn--speltempo-0.active { background: #00897b; border-color: #00897b; }
+.tactic-btn--speltempo-1.active { background: #7cb342; border-color: #7cb342; }
+.tactic-btn--speltempo-2.active { background: #fb8c00; border-color: #fb8c00; }
+.tactic-btn--speltempo-0:hover { border-color: #00897b; }
+.tactic-btn--speltempo-1:hover { border-color: #7cb342; }
+.tactic-btn--speltempo-2:hover { border-color: #fb8c00; }
+
+/* Veldbreedte: purple → balanced → wide pink */
+.tactic-btn--veldbreedte-0.active { background: #7b1fa2; border-color: #7b1fa2; }
+.tactic-btn--veldbreedte-1.active { background: #8e24aa; border-color: #8e24aa; }
+.tactic-btn--veldbreedte-2.active { background: #ab47bc; border-color: #ab47bc; }
+.tactic-btn--veldbreedte-0:hover { border-color: #7b1fa2; }
+.tactic-btn--veldbreedte-1:hover { border-color: #8e24aa; }
+.tactic-btn--veldbreedte-2:hover { border-color: #ab47bc; }
+
+/* Dekking: 2 distinct colors */
+.tactic-btn--dekking-0.active { background: #e65100; border-color: #e65100; }
+.tactic-btn--dekking-1.active { background: #00838f; border-color: #00838f; }
+.tactic-btn--dekking-0:hover { border-color: #e65100; }
+.tactic-btn--dekking-1:hover { border-color: #00838f; }
+
+/* Responsive: stacked on mobile */
+@media (max-width: 600px) {
+    .tactic-category-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    .tactic-category-label {
+        min-width: unset;
+    }
 }
 
 /* Opstelling tab - lineup builder */
@@ -6290,9 +6422,7 @@ body {
 .lineup-pitch {
     position: relative;
     width: 100%;
-    max-width: 600px;
     margin: 0 auto;
-    aspect-ratio: 1/1.4;
     background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dim) 100%);
     border-radius: var(--card-radius);
     overflow: hidden;
@@ -7086,33 +7216,37 @@ body {
 .team-training-panel {
     background: var(--bg-card);
     border-radius: var(--card-radius);
-    padding: 24px;
-    box-shadow: 0 2px 8px var(--shadow);
+    padding: 0;
+    box-shadow: none;
 }
 
 .team-training-panel h3 {
     font-family: var(--font-display);
     font-size: 1.3rem;
     color: var(--accent-green-dim);
-    margin-bottom: 20px;
+    margin-bottom: 8px;
+}
+
+.team-training-panel .training-rules {
+    margin-bottom: 8px;
 }
 
 .team-training-options {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
 
 .team-training-option {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 16px;
+    gap: 10px;
+    padding: 10px 14px;
     background: var(--bg-primary);
     border-radius: var(--button-radius);
     cursor: pointer;
     border: 2px solid transparent;
     transition: all var(--transition-fast);
+    flex: 1;
 }
 
 .team-training-option:hover {
@@ -7125,8 +7259,8 @@ body {
 }
 
 .tto-icon {
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -8600,8 +8734,8 @@ body {
     display: grid;
     grid-template-columns: 280px 1fr;
     gap: 20px;
-    height: calc(100vh - 200px);
-    min-height: 500px;
+    flex: 1;
+    min-height: 0;
 }
 
 .lineup-players-panel {
@@ -8690,7 +8824,8 @@ body {
 .lineup-pitch-panel {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
+    min-height: 0;
 }
 
 .formation-selector {
@@ -8910,119 +9045,7 @@ body {
     color: var(--accent-green-dim);
 }
 
-/* Playstyle Options */
-.playstyle-options {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-}
-
-.playstyle-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 12px 8px;
-    border: 2px solid var(--border);
-    border-radius: var(--button-radius);
-    background: var(--bg-card);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.playstyle-btn:hover {
-    border-color: var(--accent-green-dim);
-}
-
-.playstyle-btn.active {
-    border-color: var(--accent-green-dim);
-    background: rgba(92, 224, 101, 0.08);
-}
-
-.ps-icon {
-    font-size: 1.5rem;
-}
-
-.ps-name {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-align: center;
-}
-
-/* Width Slider */
-.width-slider-container {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.width-label {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    min-width: 40px;
-}
-
-.width-slider {
-    flex: 1;
-}
-
-.tactic-info {
-    margin-top: 8px;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    font-style: italic;
-}
-
-/* Tactic Rows */
-.tactic-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.tactic-name {
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-.tactic-slider-wrap {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
-
-.tactic-slider-wrap input[type="range"] {
-    width: 100px;
-}
-
-.tactic-choice-btns {
-    display: flex;
-    gap: 4px;
-}
-
-.tactic-choice {
-    padding: 4px 12px;
-    font-size: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background: var(--bg-card);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.tactic-choice:hover {
-    border-color: var(--accent-green-dim);
-}
-
-.tactic-choice.active {
-    background: var(--accent-green-dim);
-    color: white;
-    border-color: var(--accent-green-dim);
-}
+/* Old playstyle/slider/tactic-row styles removed — replaced by tactics-options-grid */
 
 /* ================================================
    STAFF CENTER PAGE
@@ -10470,8 +10493,8 @@ body {
     display: grid !important;
     grid-template-columns: 240px 1fr !important;
     gap: 16px !important;
-    height: calc(100vh - 240px) !important;
-    min-height: 350px !important;
+    flex: 1 !important;
+    min-height: 0 !important;
 }
 
 /* Left panel - Available players (compact) */
@@ -10585,6 +10608,8 @@ body {
     display: flex !important;
     flex-direction: column !important;
     gap: 8px !important;
+    min-height: 0 !important;
+    flex: 1 !important;
 }
 
 /* Formation selector - compact */
@@ -10597,6 +10622,12 @@ body {
     border-radius: var(--button-radius);
     border: 2px solid var(--border);
     flex-shrink: 0;
+}
+
+.formation-drive {
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-left: auto;
 }
 
 .formation-label {
@@ -10616,13 +10647,13 @@ body {
     cursor: pointer;
 }
 
-/* THE PITCH - Landscape orientation, compact */
+/* THE PITCH - Landscape orientation, fills available space */
 #lineup-pitch,
 .lineup-pitch {
     flex: 1 !important;
-    min-height: 250px !important;
-    max-height: calc(100vh - 340px) !important;
-    aspect-ratio: 105 / 68 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: unset !important;
     background: linear-gradient(90deg,
         var(--accent-green) 0%, #3d9a4e 12.5%,
         var(--accent-green) 25%, #3d9a4e 37.5%,
@@ -11097,18 +11128,24 @@ body {
 .tactics-panel.active {
     display: flex !important;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 #tactiek-panel.active {
     display: flex !important;
     flex-direction: column;
-    gap: 20px;
-    overflow-y: auto;
-    padding-bottom: 20px;
+    gap: 12px;
+    overflow: hidden;
 }
 
-#activiteiten-panel.active {
-    display: block !important;
+/* Opstelling panel fills available space */
+#opstelling-panel.active {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
 .tactics-section {
@@ -11225,121 +11262,86 @@ body {
     margin-top: 4px;
 }
 
-/* Specialists Section */
+/* Specialists Section — 2x2 card grid with inline player buttons */
 .specialists-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-}
-
-.specialist-card {
-    background: var(--bg-primary);
-    border-radius: var(--button-radius);
-    padding: 14px;
-    border: 2px solid var(--border);
-}
-
-.specialist-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-}
-
-.specialist-icon {
-    font-size: 1.3rem;
-}
-
-.specialist-title {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--accent-green-dim);
-}
-
-.specialist-select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 2px solid var(--border);
-    border-radius: var(--button-radius);
-    font-family: var(--font-body);
-    font-size: 0.85rem;
-    background: var(--bg-card);
-    cursor: pointer;
-    transition: border-color var(--transition-fast);
-}
-
-.specialist-select:focus {
-    outline: none;
-    border-color: var(--accent-green-dim);
-}
-
-/* Specialisten Tab - 2x2 Layout */
-.specialists-2x2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    gap: 20px;
-    height: calc(100vh - 220px);
-    min-height: 400px;
-    padding: 16px;
-}
-
-.specialist-card-large {
-    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-card) 100%);
-    border-radius: 16px;
-    padding: 24px;
-    border: 3px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    transition: all 0.2s ease;
-}
-
-.specialist-card-large:hover {
-    border-color: var(--border-accent);
-    box-shadow: 0 0 20px rgba(92, 224, 101, 0.1);
-}
-
-.specialist-header-large {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     gap: 12px;
+    flex: 1;
+    min-height: 0;
+    padding: 8px;
 }
 
-.specialist-icon-large {
-    font-size: 3rem;
+.spec-card {
+    background: var(--bg-card);
+    border-radius: var(--card-radius);
+    border: 2px solid var(--border);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.spec-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+
+.spec-card-icon {
+    font-size: 1.4rem;
     line-height: 1;
 }
 
-.specialist-title-large {
-    font-size: 1.2rem;
+.spec-card-titles {
+    display: flex;
+    flex-direction: column;
+}
+
+.spec-card-title {
+    font-size: 0.9rem;
     font-weight: 700;
-    color: var(--accent-green-dim);
-    text-align: center;
+    color: var(--text-primary);
 }
 
-.specialist-select-large {
+.spec-card-hint {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.spec-select {
     width: 100%;
-    max-width: 280px;
-    padding: 14px 18px;
-    border: 3px solid var(--border);
-    border-radius: 12px;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
     font-family: var(--font-body);
-    font-size: 1rem;
+    font-size: 0.85rem;
     font-weight: 500;
-    background: var(--bg-card);
+    background: var(--bg-primary);
+    color: var(--text-primary);
     cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
+    transition: all var(--transition-fast);
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
 }
 
-.specialist-select-large:focus {
+.spec-select:hover {
+    border-color: var(--accent-green-dim);
+}
+
+.spec-select:focus {
     outline: none;
     border-color: var(--accent-green-dim);
-    box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.2);
+    box-shadow: 0 0 0 3px rgba(92, 224, 101, 0.15);
 }
 
 /* ================================================
@@ -19711,7 +19713,17 @@ body {
 }
 
 .msp-panel.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+#voortgang-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
 /* ================================================
@@ -20083,6 +20095,419 @@ body {
 }
 
 /* ================================================
+   VOORTGANG TAB — Speler XP + Manager XP
+   ================================================ */
+
+.vg-dual {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+}
+
+.vg-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Avatar hero row */
+.vg-hero-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.vg-avatar {
+    width: 72px;
+    height: 90px;
+    flex-shrink: 0;
+}
+
+.vg-avatar svg {
+    width: 100%;
+    height: 100%;
+}
+
+.vg-hero-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.vg-section-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 2px;
+}
+
+.vg-section-subtitle {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    margin: 0 0 6px;
+    font-style: italic;
+}
+
+.vg-level {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.vg-xp-bar-track {
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background: var(--bg-primary);
+    position: relative;
+    overflow: visible;
+    margin-bottom: 20px;
+}
+
+.vg-xp-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.6s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.vg-player-fill {
+    background: linear-gradient(90deg, #4caf50, #81c784);
+}
+
+.vg-manager-fill {
+    background: linear-gradient(90deg, var(--accent-amber), #ffe082);
+}
+
+.vg-xp-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+
+.vg-xp-info-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+}
+
+/* Skill Points Panel */
+.vg-skill-panel {
+    margin-top: 12px;
+    flex: 1;
+}
+
+.vg-skill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.vg-skill-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--accent-green);
+    text-transform: uppercase;
+}
+
+.vg-skill-available {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.vg-skill-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+}
+
+.vg-skill-tile {
+    background: var(--bg-primary);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.vg-skill-tile-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.vg-skill-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.vg-skill-value {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+
+.vg-skill-btn {
+    width: 100%;
+    padding: 6px 0;
+    border: none;
+    background: var(--accent-green-dim);
+    color: white;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    line-height: 1.3;
+}
+
+.vg-skill-btn:hover:not(:disabled) {
+    background: var(--accent-green);
+}
+
+.vg-skill-btn:disabled {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.vg-reward-hint {
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    margin-top: 12px;
+    margin-bottom: 0;
+}
+
+/* XP Bar with milestone markers */
+.vg-bar-wrap {
+    margin-bottom: 6px;
+}
+
+.vg-xp-bar-track {
+    position: relative;
+}
+
+.vg-bar-marker {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+}
+
+.vg-bar-marker-end {
+    transform: translate(-100%, -50%);
+    align-items: flex-end;
+}
+
+.vg-bar-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.vg-bar-marker-label {
+    position: absolute;
+    top: 22px;
+    font-size: 0.58rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.vg-xp-reward-hint {
+    font-size: 0.62rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Skill points badge in hero */
+.vg-skill-points-badge {
+    margin-top: 4px;
+}
+
+.vg-sp-active {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    background: rgba(76, 175, 80, 0.12);
+    padding: 2px 8px;
+    border-radius: 8px;
+}
+
+.vg-sp-none {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+}
+
+/* XP reward dropdown */
+.vg-xp-dropdown {
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+.vg-xp-dropdown-toggle {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 0;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.vg-xp-dropdown-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.vg-xp-dropdown-toggle::before {
+    content: '▸';
+    font-size: 0.6rem;
+    transition: transform 0.2s ease;
+}
+
+.vg-xp-dropdown[open] > .vg-xp-dropdown-toggle::before {
+    transform: rotate(90deg);
+}
+
+.vg-xp-dropdown-toggle:hover {
+    color: var(--text-secondary);
+}
+
+.vg-xp-tags {
+    padding-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+}
+
+.vg-xp-tag {
+    font-size: 0.62rem;
+    padding: 3px 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+/* Carriere stats grid in manager section */
+.vg-carriere {
+    margin-top: 14px;
+    flex: 1;
+}
+
+.vg-carriere-title {
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent-amber);
+    margin: 0 0 8px;
+    text-transform: uppercase;
+}
+
+.vg-carriere-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.vg-carriere-item {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.vg-carriere-value {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.vg-carriere-label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ================================================
+   PRESTATIES TAB — 2 kolommen
+   ================================================ */
+
+.prs-dual {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.prs-column {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Achievement XP Badge */
+.ach-xp-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: rgba(255, 193, 7, 0.15);
+    color: var(--accent-amber);
+    margin-left: 6px;
+    vertical-align: middle;
+    line-height: 1.4;
+}
+
+.ach-xp-badge.mgr {
+    background: rgba(255, 152, 0, 0.12);
+    color: #ff9800;
+}
+
+/* ================================================
    RESPONSIVE — MIJN SPELER PRESTATIES
    ================================================ */
 
@@ -20113,6 +20538,22 @@ body {
     }
     .xp-hero {
         padding: 20px 16px;
+    }
+    .prs-dual {
+        grid-template-columns: 1fr;
+    }
+    .vg-dual {
+        grid-template-columns: 1fr;
+    }
+    .vg-section {
+        padding: 14px;
+    }
+    .vg-skill-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+    .vg-avatar {
+        width: 56px;
+        height: 70px;
     }
 }
 

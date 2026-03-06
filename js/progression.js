@@ -26,29 +26,57 @@ const DAILY_REWARDS = [
     { day: 7, type: 'special', amount: 1000, description: 'Week voltooid! Bonus!' }
 ];
 
-// Manager levels and XP requirements
+// Manager levels and XP requirements (with cash reward on level-up)
 const MANAGER_LEVELS = [
-    { level: 1, xpRequired: 0, title: 'Beginnend Trainer' },
-    { level: 2, xpRequired: 100, title: 'Assistent Coach' },
-    { level: 3, xpRequired: 300, title: 'Jeugdtrainer' },
-    { level: 4, xpRequired: 600, title: 'Trainer B' },
-    { level: 5, xpRequired: 1000, title: 'Trainer A' },
-    { level: 6, xpRequired: 1500, title: 'Hoofdcoach' },
-    { level: 7, xpRequired: 2200, title: 'Ervaren Coach' },
-    { level: 8, xpRequired: 3000, title: 'Tacticus' },
-    { level: 9, xpRequired: 4000, title: 'Meestertrainer' },
-    { level: 10, xpRequired: 5500, title: 'Strategisch Genie' },
-    { level: 15, xpRequired: 10000, title: 'Legendarische Coach' },
-    { level: 20, xpRequired: 20000, title: 'Voetbalicoon' },
-    { level: 25, xpRequired: 35000, title: 'Hall of Famer' },
-    { level: 30, xpRequired: 50000, title: 'De Beste Aller Tijden' }
+    { level: 1, xpRequired: 0, title: 'Beginnend Trainer', cashReward: 0 },
+    { level: 2, xpRequired: 100, title: 'Assistent Coach', cashReward: 500 },
+    { level: 3, xpRequired: 300, title: 'Jeugdtrainer', cashReward: 750 },
+    { level: 4, xpRequired: 600, title: 'Trainer B', cashReward: 1000 },
+    { level: 5, xpRequired: 1000, title: 'Trainer A', cashReward: 1500 },
+    { level: 6, xpRequired: 1500, title: 'Hoofdcoach', cashReward: 2000 },
+    { level: 7, xpRequired: 2200, title: 'Ervaren Coach', cashReward: 3000 },
+    { level: 8, xpRequired: 3000, title: 'Tacticus', cashReward: 4000 },
+    { level: 9, xpRequired: 4000, title: 'Meestertrainer', cashReward: 5000 },
+    { level: 10, xpRequired: 5500, title: 'Strategisch Genie', cashReward: 7500 },
+    { level: 15, xpRequired: 10000, title: 'Legendarische Coach', cashReward: 15000 },
+    { level: 20, xpRequired: 20000, title: 'Voetbalicoon', cashReward: 30000 },
+    { level: 25, xpRequired: 35000, title: 'Hall of Famer', cashReward: 60000 },
+    { level: 30, xpRequired: 50000, title: 'De Beste Aller Tijden', cashReward: 100000 }
 ];
+
+// Player levels and XP requirements
+const PLAYER_LEVELS = [
+    { level: 1, xpRequired: 0, title: 'Debutant' },
+    { level: 2, xpRequired: 75, title: 'Invaller' },
+    { level: 3, xpRequired: 200, title: 'Basisspeler' },
+    { level: 4, xpRequired: 400, title: 'Vaste Waarde' },
+    { level: 5, xpRequired: 700, title: 'Sterspeler' },
+    { level: 6, xpRequired: 1100, title: 'Aanvoerder' },
+    { level: 7, xpRequired: 1600, title: 'Clubicoon' },
+    { level: 8, xpRequired: 2200, title: 'Eredivisionist' },
+    { level: 9, xpRequired: 3000, title: 'International' },
+    { level: 10, xpRequired: 4000, title: 'Topvoetballer' },
+    { level: 12, xpRequired: 6000, title: 'Wereldspeler' },
+    { level: 15, xpRequired: 10000, title: 'Legende' },
+    { level: 20, xpRequired: 20000, title: 'Onsterfelijk' },
+    { level: 25, xpRequired: 35000, title: 'GOAT' }
+];
+
+// Player XP rewards
+const PLAYER_XP_REWARDS = {
+    matchWin: 40,
+    matchDraw: 15,
+    goalScored: 10,
+    cleanSheet: 20,
+    hatTrick: 50,
+    promotion: 300,
+    title: 750
+};
 
 // XP rewards for various actions
 const XP_REWARDS = {
     matchWin: 50,
     matchDraw: 20,
-    matchLoss: 10,
     cleanSheet: 25,
     goalScored: 5,
     promotion: 500,
@@ -450,9 +478,70 @@ export function awardXP(gameState, action, amount = null) {
 
     const newLevel = getManagerLevel(gameState.manager.xp);
 
+    // Cash reward on level-up
+    if (newLevel.level > oldLevel.level) {
+        const newLevelData = MANAGER_LEVELS.find(l => l.level === newLevel.level);
+        if (newLevelData?.cashReward && gameState.club) {
+            gameState.club.budget += newLevelData.cashReward;
+        }
+    }
+
     return {
         xpGained: xpAmount,
         totalXP: gameState.manager.xp,
+        leveledUp: newLevel.level > oldLevel.level,
+        oldLevel: oldLevel.level,
+        newLevel: newLevel.level,
+        newTitle: newLevel.title
+    };
+}
+
+/**
+ * Get player level from XP
+ */
+export function getPlayerLevel(xp) {
+    let currentLevel = PLAYER_LEVELS[0];
+
+    for (const level of PLAYER_LEVELS) {
+        if (xp >= level.xpRequired) {
+            currentLevel = level;
+        } else {
+            break;
+        }
+    }
+
+    const nextLevel = PLAYER_LEVELS.find(l => l.xpRequired > xp);
+
+    return {
+        level: currentLevel.level,
+        title: currentLevel.title,
+        xp,
+        xpToNext: nextLevel ? nextLevel.xpRequired - xp : 0,
+        nextLevel: nextLevel?.level || currentLevel.level,
+        progress: nextLevel
+            ? (xp - currentLevel.xpRequired) / (nextLevel.xpRequired - currentLevel.xpRequired)
+            : 1,
+        skillPoints: currentLevel.level - 1
+    };
+}
+
+/**
+ * Award player XP for an action
+ */
+export function awardPlayerXP(gameState, action, amount = null) {
+    if (!gameState.myPlayer) return null;
+    if (gameState.myPlayer.xp === undefined) gameState.myPlayer.xp = 0;
+
+    const xpAmount = amount || PLAYER_XP_REWARDS[action] || 0;
+    const oldLevel = getPlayerLevel(gameState.myPlayer.xp);
+
+    gameState.myPlayer.xp += xpAmount;
+
+    const newLevel = getPlayerLevel(gameState.myPlayer.xp);
+
+    return {
+        xpGained: xpAmount,
+        totalXP: gameState.myPlayer.xp,
         leveledUp: newLevel.level > oldLevel.level,
         oldLevel: oldLevel.level,
         newLevel: newLevel.level,
@@ -536,4 +625,4 @@ export function getZoneInfo(position) {
     return { zone: 'safe', color: '#9e9e9e', label: '' };
 }
 
-export { DAILY_REWARDS, MANAGER_LEVELS, XP_REWARDS, SEASON_CONFIG };
+export { DAILY_REWARDS, MANAGER_LEVELS, XP_REWARDS, SEASON_CONFIG, PLAYER_LEVELS, PLAYER_XP_REWARDS };

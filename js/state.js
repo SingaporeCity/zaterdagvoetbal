@@ -93,19 +93,11 @@ export let gameState = {
     lineup: new Array(11).fill(null),
     formation: '4-4-2',
     tactics: {
-        mentality: 'balanced',
-        pressing: 'medium',
-        passingStyle: 'mixed',
-        tempo: 'normal',
-        width: 'normal'
-    },
-    advancedTactics: {
-        keeperPressure: false,
-        forceSetPieces: false,
-        fullbackRuns: 'outside',
-        marking: 'zone',
-        attackDefense: 50,
-        duelIntensity: 50
+        mentaliteit: 'normaal',
+        offensief: 'gebalanceerd',
+        speltempo: 'normaal',
+        veldbreedte: 'gebalanceerd',
+        dekking: 'zone'
     },
     // Specialists
     specialists: {

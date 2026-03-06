@@ -166,13 +166,21 @@ export function calculateTeamStrength(lineup, formation, tactics, players) {
     midfield = midfield / midfielderCount;
     attack = attack / attackerCount;
 
-    // Apply tactics modifiers
-    const mentalityMod = TACTICS.mentality.find(t => t.id === tactics.mentality)?.effect || {};
-    const pressingMod = TACTICS.pressing.find(t => t.id === tactics.pressing)?.effect || {};
+    // Apply tactics modifiers (5 dimensions)
+    const offensiefMod = TACTICS.offensief.find(t => t.id === tactics.offensief)?.effect || {};
+    const tempoMod = TACTICS.speltempo.find(t => t.id === tactics.speltempo)?.effect || {};
+    const breedteMod = TACTICS.veldbreedte.find(t => t.id === tactics.veldbreedte)?.effect || {};
+    const dekkingMod = TACTICS.dekking.find(t => t.id === tactics.dekking)?.effect || {};
 
-    attack += (mentalityMod.attack || 0) / 2;
-    defense += (mentalityMod.defense || 0) / 2;
-    midfield += (pressingMod.pressing || 0) / 4;
+    // Offensief → attack/defense balance
+    attack += (offensiefMod.attack || 0) / 2;
+    defense += (offensiefMod.defense || 0) / 2;
+    // Speltempo → midfield control
+    midfield += (tempoMod.control || 0) / 4;
+    // Veldbreedte → attack creativity
+    attack += (breedteMod.wide || 0) / 4;
+    // Dekking → defensive pressing
+    defense += (dekkingMod.pressing || 0) / 4;
 
     // Include goalkeeper in defense
     defense = (defense * 3 + goalkeeper) / 4;
@@ -246,7 +254,7 @@ export function generateOpponent(division, position = null) {
 /**
  * Simulate a single match event
  */
-function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore, players) {
+function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore, players, tactics) {
     const team = isHome ? 'home' : 'away';
     const strength = isHome ? homeStrength : awayStrength;
     const opposingStrength = isHome ? awayStrength : homeStrength;
@@ -307,8 +315,12 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
         }
     }
 
-    // Random events (fouls, cards)
-    if (Math.random() < 0.08) {
+    // Random events (fouls, cards) — influenced by mentaliteit
+    const mentaliteitMod = tactics ? (TACTICS.mentaliteit.find(t => t.id === tactics.mentaliteit)?.effect || {}) : {};
+    const foulChance = 0.08 + (mentaliteitMod.foulChance || 0);
+    const cardMultiplier = 1 + (mentaliteitMod.cardChance || 0);
+
+    if (Math.random() < foulChance) {
         const fouler = players ? randomFromArray(players.filter(p => p)) : null;
         events.push({
             minute,
@@ -319,8 +331,8 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
             commentary: formatCommentary('foul', { player: fouler?.name || 'Speler' })
         });
 
-        // Chance for card
-        if (Math.random() < 0.25) {
+        // Chance for card (scaled by mentaliteit)
+        if (Math.random() < 0.25 * cardMultiplier) {
             const isRed = Math.random() < 0.05;
             events.push({
                 minute,
@@ -485,7 +497,8 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
             awayStrength,
             isHomePossession,
             currentScore,
-            isHomePossession && isHomeGame ? homeLineup : null
+            isHomePossession && isHomeGame ? homeLineup : null,
+            isHomePossession && isHomeGame ? tactics : null
         );
 
         for (const event of events) {
@@ -662,6 +675,9 @@ export function applyMatchResults(players, matchResult, isHomeGame) {
 
         // Reduce energy
         player.energy = Math.max(30, (player.energy || 80) - random(10, 25));
+
+        // Team samenhang: increment matchesTogether for lineup players
+        player.matchesTogether = (player.matchesTogether || 0) + 1;
     });
 }
 
