@@ -4499,14 +4499,18 @@ function updateMatchTimer() {
     const minutesEl = document.getElementById('timer-minutes');
     const secondsEl = document.getElementById('timer-seconds');
 
+    const playBtn = document.getElementById('play-match-btn');
     if (hoursEl && minutesEl && secondsEl) {
         if (remaining <= 0) {
             hoursEl.textContent = '00';
             minutesEl.textContent = '00';
             secondsEl.textContent = '00';
-            // Add ready class to play button
-            const playBtn = document.getElementById('play-match-btn');
-            if (playBtn) playBtn.classList.add('match-ready');
+            // Match ready — show play button
+            if (playBtn) {
+                playBtn.classList.add('match-ready');
+                playBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg> SPEEL WEDSTRIJD';
+                playBtn.onclick = playMatch;
+            }
         } else {
             const hours = Math.floor(remaining / (1000 * 60 * 60));
             const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
@@ -4515,6 +4519,16 @@ function updateMatchTimer() {
             hoursEl.textContent = String(hours).padStart(2, '0');
             minutesEl.textContent = String(minutes).padStart(2, '0');
             secondsEl.textContent = String(seconds).padStart(2, '0');
+
+            // Match not ready — show "Bekijk vorige wedstrijd" if there is match history
+            if (playBtn && gameState.matchHistory && gameState.matchHistory.length > 0) {
+                playBtn.classList.remove('match-ready');
+                playBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7a6.97 6.97 0 0 1-4.95-2.05l-1.41 1.41A8.97 8.97 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg> BEKIJK VORIGE WEDSTRIJD';
+                playBtn.onclick = function() {
+                    navigateToPage('wedstrijden');
+                    setTimeout(() => activateTabOnPage('wedstrijden', 'verslag'), 50);
+                };
+            }
         }
     }
 
