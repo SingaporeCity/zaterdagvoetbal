@@ -46,14 +46,23 @@ import {
 import {
     saveGame,
     loadGame,
+    loadGameSync,
     hasSaveFile,
     getSaveInfo,
     startAutoSave,
     calculateOfflineProgress,
     applyOfflineProgress,
     exportSave,
-    importSave
+    importSave,
+    setStorageMode,
+    isMultiplayer,
+    forceSyncToSupabase
 } from './storage.js';
+
+// Import multiplayer systems
+import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays } from './multiplayer.js';
+import { subscribeToLeague, unsubscribeAll, fetchStandings, startCountdown, stopCountdown } from './realtime.js';
+import { supabase, isSupabaseAvailable } from './supabase.js';
 
 import {
     simulateMatch,
@@ -548,7 +557,8 @@ function scoutPlayers(position, minAge, maxAge, count = 8) {
     const scout = STADIUM_UPGRADES.scouting.find(s => s.id === scoutLevel);
 
     // Can scout slightly better players with better scout network
-    const divBonus = scoutLevel === 'scout_5' || scoutLevel === 'scout_6' ? -1 : 0;
+    const scoutNum = parseInt(scoutLevel.split('_')[1]) || 0;
+    const divBonus = scoutNum >= 5 ? -1 : 0;
     const targetDiv = Math.max(0, division + divBonus);
 
     for (let i = 0; i < count; i++) {
@@ -571,11 +581,12 @@ function scoutPlayers(position, minAge, maxAge, count = 8) {
         };
 
         // Hide info based on scout level
+        const scoutInfoNum = parseInt(scoutLevel.split('_')[1]) || 0;
         player.scoutInfo = {
             overall: true,
-            attributes: ['scout_3', 'scout_4', 'scout_5', 'scout_6'].includes(scoutLevel),
-            personality: ['scout_4', 'scout_5', 'scout_6'].includes(scoutLevel),
-            potential: ['scout_5', 'scout_6'].includes(scoutLevel)
+            attributes: scoutInfoNum >= 3,
+            personality: scoutInfoNum >= 4,
+            potential: scoutInfoNum >= 5
         };
 
         results.push(player);
@@ -859,11 +870,17 @@ function potentialToStarsGlobal(potential) {
 // Render stars as HTML (whole stars only)
 function renderStarsHTML(starCount) {
     let html = '';
-    const count = Math.round(Math.min(5, Math.max(1, starCount)));
-    for (let i = 0; i < count; i++) {
+    const clamped = Math.min(5, Math.max(0, starCount));
+    const full = Math.floor(clamped);
+    const hasHalf = (clamped - full) >= 0.25;
+    for (let i = 0; i < full; i++) {
         html += '<span class="star full">★</span>';
     }
-    for (let i = count; i < 5; i++) {
+    if (hasHalf) {
+        html += '<span class="star half">⯪</span>';
+    }
+    const filled = full + (hasHalf ? 1 : 0);
+    for (let i = filled; i < 5; i++) {
         html += '<span class="star empty">☆</span>';
     }
     return html;
@@ -976,11 +993,13 @@ function initMyPlayer() {
     if (a.SCH === undefined) a.SCH = 12;
     if (gameState.myPlayer.energy === undefined) gameState.myPlayer.energy = 100;
     // Migrate player XP fields
-    if (gameState.myPlayer.xp === undefined) gameState.myPlayer.xp = 0;
+    if (gameState.myPlayer.xp === undefined || gameState.myPlayer.xp < 1100) gameState.myPlayer.xp = 1100;
     if (gameState.myPlayer.spentSkillPoints === undefined) gameState.myPlayer.spentSkillPoints = 0;
-    // Migrate to ALG 12: clamp all attributes
-    const attrKeys = ['SNE', 'TEC', 'PAS', 'SCH', 'VER', 'FYS'];
-    attrKeys.forEach(k => { if (a[k] > 12) a[k] = 12; });
+    // Migrate old saves: cap initial attributes at 12 (only if no skill points spent yet)
+    if (!gameState.myPlayer.spentSkillPoints) {
+        const attrKeys = ['SNE', 'TEC', 'PAS', 'SCH', 'VER', 'FYS'];
+        attrKeys.forEach(k => { if (a[k] > 12) a[k] = 12; });
+    }
     return gameState.myPlayer;
 }
 
@@ -1159,33 +1178,6 @@ function renderMijnSpelerPage() {
 // MIJN SPELER — TABS & PRESTATIES
 // ================================================
 
-let mspTabsInitialized = false;
-function initMijnSpelerTabs() {
-    if (mspTabsInitialized) return;
-    mspTabsInitialized = true;
-
-    const tabs = document.querySelectorAll('.msp-tab');
-    const panels = document.querySelectorAll('.msp-panel');
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const targetTab = tab.dataset.mspTab;
-
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-
-            panels.forEach(panel => {
-                panel.classList.remove('active');
-                if (panel.id === `msp-${targetTab}`) {
-                    panel.classList.add('active');
-                }
-            });
-
-            if (targetTab === 'voortgang') renderVoortgang();
-            else if (targetTab === 'prestaties') renderPrestaties();
-        });
-    });
-}
 
 function renderAchievementCards(achievements, filterCategories) {
     const filtered = achievements.filter(a => filterCategories.includes(a.category));
@@ -1232,81 +1224,221 @@ function renderAchievementCards(achievements, filterCategories) {
 // VOORTGANG TAB — Speler XP + Manager XP samen
 // ================================================
 
+function renderClubDNA(divisionNames) {
+    const club = gameState.club;
+    const divName = divisionNames[club.division] || '6e Klasse';
+    const budget = club.budget.toLocaleString('nl-NL');
+    const playerCount = gameState.players?.length || 0;
+    const youthCount = gameState.youthPlayers?.length || 0;
+    const rep = club.reputation || 0;
+    const stars = Array.from({ length: 5 }, (_, i) => i < Math.round(rep / 20) ? '\u2605' : '\u2606').join('');
+    const clubStats = club.stats || {};
+    const totalGoals = clubStats.totalGoals || 0;
+    const titles = clubStats.titles || 0;
+    const highDiv = divisionNames[clubStats.highestDivision || 8] || '6e Klasse';
+    const formation = gameState.formation || '4-4-2';
+    const staffCount = Object.values(gameState.staff || {}).filter(s => s !== null).length;
+    const capacity = gameState.stadium?.capacity || 200;
+    const avgAge = playerCount > 0 ? Math.round(gameState.players.reduce((s, p) => s + (p.age || 0), 0) / playerCount) : 0;
+    const colors = club.colors || {};
+
+    return `
+        <div class="vg-club-dna">
+            <div class="vg-dna-header">
+                <span class="vg-dna-title">Club DNA</span>
+                <span class="vg-dna-season">Seizoen ${gameState.season} \u00B7 Week ${gameState.week}</span>
+            </div>
+
+            <div class="vg-dna-identity">
+                <div class="vg-dna-badge" style="background: ${colors.primary || '#1b5e20'}; border-color: ${colors.accent || '#ff9800'}">
+                    <span class="vg-dna-badge-letter">${club.name.charAt(0)}</span>
+                </div>
+                <div>
+                    <div class="vg-dna-name">${club.name}</div>
+                    <div class="vg-dna-div">${divName}</div>
+                    <div class="vg-dna-stars">${stars}</div>
+                </div>
+            </div>
+
+            <div class="vg-dna-grid">
+                <div class="vg-dna-item">
+                    <span class="vg-dna-item-val">\u20AC${budget}</span>
+                    <span class="vg-dna-item-lbl">Budget</span>
+                </div>
+                <div class="vg-dna-item">
+                    <span class="vg-dna-item-val">${capacity}</span>
+                    <span class="vg-dna-item-lbl">Capaciteit</span>
+                </div>
+                <div class="vg-dna-item">
+                    <span class="vg-dna-item-val">${playerCount}</span>
+                    <span class="vg-dna-item-lbl">Spelers</span>
+                </div>
+                <div class="vg-dna-item">
+                    <span class="vg-dna-item-val">${youthCount}</span>
+                    <span class="vg-dna-item-lbl">Jeugd</span>
+                </div>
+            </div>
+
+            <div class="vg-dna-details">
+                <div class="vg-dna-detail"><span class="vg-dna-detail-lbl">Formatie</span><span class="vg-dna-detail-val">${formation}</span></div>
+                <div class="vg-dna-detail"><span class="vg-dna-detail-lbl">Gem. leeftijd</span><span class="vg-dna-detail-val">${avgAge} jaar</span></div>
+                <div class="vg-dna-detail"><span class="vg-dna-detail-lbl">Stafleden</span><span class="vg-dna-detail-val">${staffCount} / 3</span></div>
+                <div class="vg-dna-detail"><span class="vg-dna-detail-lbl">Totaal goals</span><span class="vg-dna-detail-val">${totalGoals}</span></div>
+                <div class="vg-dna-detail"><span class="vg-dna-detail-lbl">Titels</span><span class="vg-dna-detail-val">${titles}</span></div>
+                <div class="vg-dna-detail"><span class="vg-dna-detail-lbl">Beste divisie</span><span class="vg-dna-detail-val">${highDiv}</span></div>
+                <div class="vg-dna-detail"><span class="vg-dna-detail-lbl">Opgericht</span><span class="vg-dna-detail-val">Seizoen ${clubStats.founded || 1}</span></div>
+            </div>
+        </div>`;
+}
+
+function renderSeasonHistory(divisionNames) {
+    const history = gameState.seasonHistory || [];
+
+    // Current season live
+    const currentMatches = (gameState.matchHistory || []).filter(m => m.season === gameState.season);
+    const currentWins = currentMatches.filter(m => m.resultType === 'win').length;
+    const currentDraws = currentMatches.filter(m => m.resultType === 'draw').length;
+    const currentLosses = currentMatches.filter(m => m.resultType === 'loss').length;
+    const currentGF = currentMatches.reduce((s, m) => s + m.playerScore, 0);
+    const currentGA = currentMatches.reduce((s, m) => s + m.opponentScore, 0);
+
+    const allSeasons = [
+        ...history,
+        {
+            season: gameState.season,
+            division: gameState.club.division,
+            position: gameState.club.position,
+            wins: currentWins,
+            draws: currentDraws,
+            losses: currentLosses,
+            goalsFor: currentGF,
+            goalsAgainst: currentGA,
+            result: 'current'
+        }
+    ];
+
+    const rows = allSeasons.map(s => {
+        const divName = divisionNames[s.division] || '?';
+        const gd = s.goalsFor - s.goalsAgainst;
+        const gdStr = gd >= 0 ? `+${gd}` : `${gd}`;
+        const badge = s.result === 'champion' ? '<span class="vg-szn-badge champ">\uD83C\uDFC6</span>'
+            : s.result === 'promoted' ? '<span class="vg-szn-badge prom">\u25B2</span>'
+            : s.result === 'relegated' ? '<span class="vg-szn-badge rel">\u25BC</span>'
+            : s.result === 'current' ? '<span class="vg-szn-badge curr">nu</span>'
+            : '';
+        return `<div class="vg-szn-row">
+            <span class="vg-szn-s">S${s.season}</span>
+            <span class="vg-szn-div">${divName}</span>
+            <span class="vg-szn-pos">#${s.position}</span>
+            <span class="vg-szn-wdl">${s.wins}W ${s.draws}G ${s.losses}V</span>
+            <span class="vg-szn-gd">${s.goalsFor}-${s.goalsAgainst} (${gdStr})</span>
+            ${badge}
+        </div>`;
+    }).join('');
+
+    return `
+        <div class="vg-seasons">
+            <div class="vg-szn-header">
+                <span class="vg-szn-title">Seizoensoverzicht</span>
+            </div>
+            ${rows}
+        </div>`;
+}
+
+function renderStatsAndRecords(cStats, clubStats, highestDiv) {
+    const s = cStats || {};
+    const statRows = [
+        { label: 'Wedstrijden', value: clubStats.totalMatches || 0 },
+        { label: 'Zeges', value: s.wins || 0 },
+        { label: 'Gelijk', value: s.draws || 0 },
+        { label: 'Verloren', value: s.losses || 0 },
+        { label: 'Promoties', value: s.promotions || 0 },
+        { label: 'Beste klasse', value: highestDiv }
+    ];
+    const recRows = [
+        { label: 'Grootste zege', value: s.highestScoreMatch ? `${s.highestScoreMatch}-0` : '-' },
+        { label: 'Winstreek', value: s.bestWinStreak || 0 },
+        { label: 'Clean sheets', value: s.cleanSheets || 0 },
+        { label: 'Ongeslagen reeks', value: s.bestUnbeaten || 0 },
+        { label: 'Thuiszeges', value: s.homeWins || 0 },
+        { label: 'Comebacks', value: s.comebacks || 0 }
+    ];
+
+    const statGrid = statRows.map(i => `<div class="vg-mc-stat"><span class="vg-mc-stat-val">${i.value}</span><span class="vg-mc-stat-lbl">${i.label}</span></div>`).join('');
+    const recGrid = recRows.map(i => `<div class="vg-mc-stat"><span class="vg-mc-stat-val">${i.value}</span><span class="vg-mc-stat-lbl">${i.label}</span></div>`).join('');
+
+    return `
+        <div class="vg-stats-records">
+            <div class="vg-sr-section">
+                <span class="vg-sr-title">Statistieken</span>
+                <div class="vg-mc-stats">${statGrid}</div>
+            </div>
+            <div class="vg-sr-section">
+                <span class="vg-sr-title">Records</span>
+                <div class="vg-mc-stats">${recGrid}</div>
+            </div>
+        </div>`;
+}
+
+function renderCompactStandings(divisionNames) {
+    const standings = gameState.standings || [];
+    if (standings.length === 0) return '';
+
+    const divName = divisionNames[gameState.club.division] || '6e Klasse';
+    const totalTeams = standings.length;
+    const promoZone = 2;
+    const relegZone = totalTeams - 2;
+
+    const rows = standings.map((team, i) => {
+        const pos = i + 1;
+        let cls = team.isPlayer ? 'vg-stand-player' : '';
+        if (pos <= promoZone) cls += ' vg-stand-promo';
+        else if (pos > relegZone) cls += ' vg-stand-releg';
+        const gf = team.goalsFor || 0;
+        const ga = team.goalsAgainst || 0;
+        return `<tr class="${cls}">
+            <td>${pos}</td>
+            <td>${team.name}</td>
+            <td>${team.played || 0}</td>
+            <td>${team.wins || 0}</td>
+            <td>${team.draws || 0}</td>
+            <td>${team.losses || 0}</td>
+            <td>${gf}-${ga}</td>
+            <td><strong>${team.points}</strong></td>
+        </tr>`;
+    }).join('');
+
+    return `
+        <div class="vg-standings-card">
+            <div class="vg-stand-header">
+                <span class="vg-stand-title">Ranglijst</span>
+                <span class="vg-stand-sub">${divName} — Seizoen ${gameState.season}</span>
+            </div>
+            <table class="vg-stand-table">
+                <thead><tr><th>#</th><th>Club</th><th>GW</th><th>W</th><th>G</th><th>V</th><th>DS</th><th>P</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+}
+
 function renderVoortgang() {
     const container = document.getElementById('voortgang-content');
     if (!container) return;
-
-    const mp = initMyPlayer();
-    const a = mp.attributes;
-
-    // --- Helper: build XP bar to next level ---
-    function buildXPBar(xp, levels, fillClass, accentColor, rewardHint) {
-        const currentIdx = levels.findIndex((l, i) => i + 1 < levels.length ? xp < levels[i + 1].xpRequired : true);
-        const currentLvl = levels[currentIdx];
-        const next = levels[currentIdx + 1];
-
-        // Bar range: from current level XP to next level XP
-        const barStart = currentLvl.xpRequired;
-        const barEnd = next ? next.xpRequired : barStart;
-        const barRange = barEnd - barStart;
-        const fillPct = barRange > 0 ? Math.min(100, ((xp - barStart) / barRange) * 100) : 100;
-
-        // Milestone marker at end of bar (next level)
-        let marker = '';
-        if (next) {
-            marker = `<div class="vg-bar-marker vg-bar-marker-end" style="left: 100%">
-                <div class="vg-bar-dot" style="border-color: ${accentColor}">${next.level}</div>
-                <span class="vg-bar-marker-label">${next.title}</span>
-            </div>`;
-        }
-
-        return `<div class="vg-bar-wrap">
-            <div class="vg-xp-bar-track">
-                <div class="vg-xp-bar-fill ${fillClass}" style="width: ${fillPct}%"></div>
-                ${marker}
-            </div>
-            <div class="vg-xp-info">
-                <span>${xp} XP</span>
-                <div class="vg-xp-info-right">
-                    <span>${next ? (next.xpRequired - xp) + ' tot Lv ' + next.level : 'Max!'}</span>
-                    ${next && rewardHint ? `<span class="vg-xp-reward-hint">${rewardHint}</span>` : ''}
-                </div>
-            </div>
-        </div>`;
-    }
-
-    // --- Speler XP ---
-    const playerXP = mp.xp || 0;
-    const pLevel = getPlayerLevel(playerXP);
-    const availableSkillPoints = Math.max(0, pLevel.skillPoints - (mp.spentSkillPoints || 0));
-
-    const attrLabels = { SNE: 'SNE', TEC: 'TEC', PAS: 'PAS', SCH: 'SCH', VER: 'VER', FYS: 'FYS' };
-    const attrColors = { SNE: '#ff9800', TEC: '#4caf50', PAS: '#29b6f6', SCH: '#ef5350', VER: '#7e57c2', FYS: '#8d6e63' };
-
-    const attrFullNames = { SNE: 'Snelheid', TEC: 'Techniek', PAS: 'Passen', SCH: 'Schieten', VER: 'Verdedigen', FYS: 'Fysiek' };
-    const skillTiles = Object.entries(attrLabels).map(([key, label]) => {
-        const val = a[key] || 0;
-        const disabled = availableSkillPoints <= 0 || val >= 99 ? 'disabled' : '';
-        return `<div class="vg-skill-tile" style="border-color: ${attrColors[key]}20">
-            <div class="vg-skill-tile-top">
-                <span class="vg-skill-label" style="color: ${attrColors[key]}">${attrFullNames[key]}</span>
-                <span class="vg-skill-value">${val}</span>
-            </div>
-            <button class="vg-skill-btn" onclick="window.spendSkillPoint('${key}')" ${disabled}>+1</button>
-        </div>`;
-    }).join('');
-
-    // Player XP rewards
-    const pRewards = Object.entries(PLAYER_XP_REWARDS).map(([k, v]) => {
-        const labels = { matchWin: 'Winst', matchDraw: 'Gelijk', goalScored: 'Doelpunt', cleanSheet: 'Clean sheet', hatTrick: 'Hattrick', promotion: 'Promotie', title: 'Titel' };
-        return `<span class="vg-xp-tag">${labels[k] || k} +${v}</span>`;
-    }).join('');
 
     // --- Manager XP ---
     const managerXP = gameState.manager?.xp || 0;
     const mLevel = getManagerLevel(managerXP);
     const nextManagerLevel = MANAGER_LEVELS.find(l => l.xpRequired > managerXP);
     const nextCashReward = nextManagerLevel?.cashReward || 0;
+
+    // XP bar calc
+    const currentIdx = MANAGER_LEVELS.findIndex((l, i) => i + 1 < MANAGER_LEVELS.length ? managerXP < MANAGER_LEVELS[i + 1].xpRequired : true);
+    const currentLvl = MANAGER_LEVELS[currentIdx];
+    const next = MANAGER_LEVELS[currentIdx + 1];
+    const barStart = currentLvl.xpRequired;
+    const barEnd = next ? next.xpRequired : barStart;
+    const barRange = barEnd - barStart;
+    const fillPct = barRange > 0 ? Math.min(100, ((managerXP - barStart) / barRange) * 100) : 100;
 
     // --- Carriere stats ---
     const clubStats = gameState.club?.stats || {};
@@ -1315,104 +1447,68 @@ function renderVoortgang() {
     const highestDiv = divisionNames[clubStats.highestDivision || 8] || '6e Klasse';
 
     // Manager XP rewards
-    const mRewards = Object.entries(XP_REWARDS).map(([k, v]) => {
-        const labels = { matchWin: 'Winst', matchDraw: 'Gelijk', cleanSheet: 'Clean sheet', goalScored: 'Doelpunt', promotion: 'Promotie', title: 'Titel', youthGraduate: 'Jeugd', playerSold: 'Verkoop', stadiumUpgrade: 'Stadion', achievementUnlocked: 'Achievement' };
+    const hideFromXP = ['youthGraduate', 'playerSold', 'stadiumUpgrade', 'achievementUnlocked'];
+    const mRewards = Object.entries(XP_REWARDS).filter(([k]) => !hideFromXP.includes(k)).map(([k, v]) => {
+        const labels = { matchWin: 'Winst', matchDraw: 'Gelijk', cleanSheet: 'Clean sheet', goalScored: 'Doelpunt', promotion: 'Promotie', title: 'Titel' };
         return `<span class="vg-xp-tag">${labels[k] || k} +${v}</span>`;
     }).join('');
 
+    const nextLevelNum = next ? next.level : mLevel.level;
+    const xpText = next ? `${managerXP} / ${next.xpRequired} XP` : `${managerXP} XP — Max!`;
+    const rewardText = nextCashReward > 0 ? `+\u20AC${nextCashReward.toLocaleString('nl-NL')}` : '';
+
+    const nextTitle = next ? next.title : 'Max';
+    const mp = initMyPlayer();
+
     container.innerHTML = `
-        <div class="vg-dual">
-            <div class="vg-section vg-player">
-                <div class="vg-hero-row">
-                    <div class="vg-avatar">
-                        <svg viewBox="0 0 80 100">
-                            <ellipse cx="40" cy="28" rx="18" ry="19" fill="#f5d0c5"/>
-                            <ellipse cx="40" cy="15" rx="16" ry="9" fill="#4a3728"/>
-                            <circle cx="33" cy="26" r="2.5" fill="white"/>
-                            <circle cx="47" cy="26" r="2.5" fill="white"/>
-                            <circle cx="33.5" cy="26.5" r="1.2" fill="#333"/>
-                            <circle cx="47.5" cy="26.5" r="1.2" fill="#333"/>
-                            <path d="M36 35 Q40 38 44 35" fill="none" stroke="#a0522d" stroke-width="1.2"/>
-                            <path d="M15 95 Q15 65 25 58 L40 62 L55 58 Q65 65 65 95 L65 100 L15 100 Z" fill="var(--accent-green-dim)"/>
-                            <text x="40" y="85" text-anchor="middle" fill="white" font-family="var(--font-display)" font-size="16" font-weight="bold">${mp.number}</text>
-                            <path d="M32 58 L40 62 L48 58" fill="none" stroke="white" stroke-width="1.5"/>
-                            <rect x="22" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
-                            <rect x="42" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
-                        </svg>
-                    </div>
-                    <div class="vg-hero-info">
-                        <h4 class="vg-section-title" style="color: #4caf50;">${mp.name}</h4>
-                        <p class="vg-section-subtitle">${mp.position} · #${mp.number} · ${mp.age} jaar</p>
-                        <div class="vg-level" style="color: #4caf50;">Level ${pLevel.level} — ${pLevel.title}</div>
-                        <div class="vg-skill-points-badge">${availableSkillPoints > 0 ? `<span class="vg-sp-active">${availableSkillPoints} skill ${availableSkillPoints === 1 ? 'punt' : 'punten'} beschikbaar</span>` : `<span class="vg-sp-none">${pLevel.skillPoints} punten besteed</span>`}</div>
-                    </div>
+        <div class="vg-manager-compact">
+            <div class="vg-mc-hero">
+                <div class="vg-mc-avatar">
+                    <svg viewBox="0 0 80 100">
+                        <ellipse cx="40" cy="28" rx="18" ry="19" fill="#f5d0c5"/>
+                        <ellipse cx="40" cy="14" rx="17" ry="10" fill="#2c2c2c"/>
+                        <circle cx="33" cy="26" r="2.5" fill="white"/>
+                        <circle cx="47" cy="26" r="2.5" fill="white"/>
+                        <circle cx="33.5" cy="26.5" r="1.2" fill="#333"/>
+                        <circle cx="47.5" cy="26.5" r="1.2" fill="#333"/>
+                        <path d="M36 35 Q40 38 44 35" fill="none" stroke="#a0522d" stroke-width="1.2"/>
+                        <path d="M15 95 Q15 65 25 58 L40 55 L55 58 Q65 65 65 95 L65 100 L15 100 Z" fill="#2c2c2c"/>
+                        <path d="M35 55 L40 55 L45 55 L43 75 L37 75 Z" fill="#333"/>
+                        <path d="M37 55 L40 60 L43 55" fill="none" stroke="#ff9800" stroke-width="1.5"/>
+                        <rect x="22" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                        <rect x="42" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                    </svg>
                 </div>
-
-                ${buildXPBar(playerXP, PLAYER_LEVELS, 'vg-player-fill', '#4caf50', '+1 skill punt')}
-
-                <div class="vg-skill-panel">
-                    <div class="vg-skill-header">
-                        <span class="vg-skill-title">Attributen</span>
-                        <span class="vg-skill-available">${availableSkillPoints > 0 ? availableSkillPoints + ' te besteden' : 'Level up voor punten'}</span>
-                    </div>
-                    <div class="vg-skill-grid">
-                        ${skillTiles}
-                    </div>
+                <div class="vg-mc-info">
+                    <h4 class="vg-mc-title">${mp.name || 'Trainer'}</h4>
+                    <div class="vg-mc-level">${mLevel.title}</div>
                 </div>
-
-                <details class="vg-xp-dropdown">
-                    <summary class="vg-xp-dropdown-toggle">Hoe verdien ik XP?</summary>
-                    <div class="vg-xp-tags">
-                        ${pRewards}
-                    </div>
-                </details>
             </div>
-
-            <div class="vg-section vg-manager">
-                <div class="vg-hero-row">
-                    <div class="vg-avatar vg-avatar-manager">
-                        <svg viewBox="0 0 80 100">
-                            <ellipse cx="40" cy="28" rx="18" ry="19" fill="#f5d0c5"/>
-                            <ellipse cx="40" cy="14" rx="17" ry="10" fill="#2c2c2c"/>
-                            <circle cx="33" cy="26" r="2.5" fill="white"/>
-                            <circle cx="47" cy="26" r="2.5" fill="white"/>
-                            <circle cx="33.5" cy="26.5" r="1.2" fill="#333"/>
-                            <circle cx="47.5" cy="26.5" r="1.2" fill="#333"/>
-                            <path d="M36 35 Q40 38 44 35" fill="none" stroke="#a0522d" stroke-width="1.2"/>
-                            <path d="M15 95 Q15 65 25 58 L40 55 L55 58 Q65 65 65 95 L65 100 L15 100 Z" fill="#2c2c2c"/>
-                            <path d="M35 55 L40 55 L45 55 L43 75 L37 75 Z" fill="#333"/>
-                            <path d="M37 55 L40 60 L43 55" fill="none" stroke="#ff9800" stroke-width="1.5"/>
-                            <rect x="22" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
-                            <rect x="42" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
-                        </svg>
-                    </div>
-                    <div class="vg-hero-info">
-                        <h4 class="vg-section-title" style="color: #ff9800;">Trainer</h4>
-                        <p class="vg-section-subtitle">Level up en verdien geld voor je club</p>
-                        <div class="vg-level" style="color: #ff9800;">Level ${mLevel.level} — ${mLevel.title}</div>
-                    </div>
+        </div>
+        <div class="txp-bar-card txp-manager">
+            <div class="txp-row">
+                <div class="txp-lvl current">
+                    <span class="txp-lvl-num">${mLevel.level}</span>
+                    <span class="txp-lvl-lbl">${mLevel.title}</span>
                 </div>
-
-                ${buildXPBar(managerXP, MANAGER_LEVELS, 'vg-manager-fill', '#ff9800', nextCashReward > 0 ? `+€${nextCashReward.toLocaleString('nl-NL')}` : '')}
-
-                <div class="vg-carriere">
-                    <h5 class="vg-carriere-title">Carriere</h5>
-                    <div class="vg-carriere-grid">
-                        <div class="vg-carriere-item"><span class="vg-carriere-value">${clubStats.totalMatches || 0}</span><span class="vg-carriere-label">Wedstrijden</span></div>
-                        <div class="vg-carriere-item"><span class="vg-carriere-value">${cStats.wins || 0}</span><span class="vg-carriere-label">Zeges</span></div>
-                        <div class="vg-carriere-item"><span class="vg-carriere-value">${cStats.draws || 0}</span><span class="vg-carriere-label">Gelijk</span></div>
-                        <div class="vg-carriere-item"><span class="vg-carriere-value">${cStats.losses || 0}</span><span class="vg-carriere-label">Verloren</span></div>
-                        <div class="vg-carriere-item"><span class="vg-carriere-value">${cStats.promotions || 0}</span><span class="vg-carriere-label">Promoties</span></div>
-                        <div class="vg-carriere-item"><span class="vg-carriere-value">${highestDiv}</span><span class="vg-carriere-label">Hoogste divisie</span></div>
+                <div class="txp-track">
+                    <div class="txp-fill" style="width: ${fillPct}%">
+                        <div class="txp-shimmer"></div>
                     </div>
+                    <span class="txp-text">${xpText}${rewardText ? '  ' + rewardText : ''}</span>
                 </div>
-
-                <details class="vg-xp-dropdown">
-                    <summary class="vg-xp-dropdown-toggle">Hoe verdien ik XP?</summary>
-                    <div class="vg-xp-tags">
-                        ${mRewards}
-                    </div>
-                </details>
+                <div class="txp-lvl next">
+                    <span class="txp-lvl-num">${nextLevelNum}</span>
+                    <span class="txp-lvl-lbl">${nextTitle}</span>
+                </div>
+            </div>
+        </div>
+        <div class="vg-mgr-columns">
+            <div class="vg-mgr-col-left">
+                ${renderClubDNA(divisionNames)}
+            </div>
+            <div class="vg-mgr-col-right">
+                ${renderStatsAndRecords(cStats, clubStats, highestDiv)}
             </div>
         </div>
     `;
@@ -1431,7 +1527,7 @@ window.spendSkillPoint = function(attr) {
     mp.spentSkillPoints = (mp.spentSkillPoints || 0) + 1;
 
     saveGame(gameState);
-    renderVoortgang();
+    renderTrainingPage();
 };
 
 // ================================================
@@ -1444,62 +1540,27 @@ function renderPrestaties() {
 
     const allAch = getAllAchievements(gameState);
 
-    // Speler achievements
-    const spelerCats = [CATEGORIES.MATCHES, CATEGORIES.GOALS, CATEGORIES.SEASON, CATEGORIES.SPECIAL];
-    const spelerAch = renderAchievementCards(allAch, spelerCats);
-
-    // Manager achievements
+    // Manager achievements only
     const mgrCats = [CATEGORIES.CLUB, CATEGORIES.PLAYERS, CATEGORIES.STADIUM];
     const mgrAch = renderAchievementCards(allAch, mgrCats);
 
     container.innerHTML = `
-        <div class="prs-dual">
-            <div class="prs-column">
-                <h4 class="mp-section-title">Spelersprestaties</h4>
-                <div class="ach-progress">
-                    <div class="ach-progress-bar">
-                        <div class="ach-progress-fill" style="width: ${spelerAch.progressPct}%"></div>
-                    </div>
-                    <span class="ach-progress-text">${spelerAch.stats.unlocked} / ${spelerAch.stats.total}</span>
-                </div>
-                <div class="ach-filters" id="speler-ach-filters">
-                    <button class="ach-filter-btn active" data-ach-cat="all">Alles</button>
-                    ${spelerAch.filterBtns}
-                </div>
-                <div class="ach-grid" id="speler-ach-grid">
-                    ${spelerAch.renderCards(null)}
+        <div class="prs-single">
+            <h4 class="mp-section-title">Managersprestaties <span class="ach-progress-text">${mgrAch.stats.unlocked} / ${mgrAch.stats.total}</span></h4>
+            <div class="ach-progress">
+                <div class="ach-progress-bar">
+                    <div class="ach-progress-fill" style="width: ${mgrAch.progressPct}%"></div>
                 </div>
             </div>
-
-            <div class="prs-column">
-                <h4 class="mp-section-title">Managersprestaties</h4>
-                <div class="ach-progress">
-                    <div class="ach-progress-bar">
-                        <div class="ach-progress-fill" style="width: ${mgrAch.progressPct}%"></div>
-                    </div>
-                    <span class="ach-progress-text">${mgrAch.stats.unlocked} / ${mgrAch.stats.total}</span>
-                </div>
-                <div class="ach-filters" id="manager-ach-filters">
-                    <button class="ach-filter-btn active" data-ach-cat="all">Alles</button>
-                    ${mgrAch.filterBtns}
-                </div>
-                <div class="ach-grid" id="manager-ach-grid">
-                    ${mgrAch.renderCards(null)}
-                </div>
+            <div class="ach-filters" id="manager-ach-filters">
+                <button class="ach-filter-btn active" data-ach-cat="all">Alles</button>
+                ${mgrAch.filterBtns}
+            </div>
+            <div class="ach-grid" id="manager-ach-grid">
+                ${mgrAch.renderCards(null)}
             </div>
         </div>
     `;
-
-    // Speler filter handlers
-    container.querySelectorAll('#speler-ach-filters .ach-filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            container.querySelectorAll('#speler-ach-filters .ach-filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const cat = btn.dataset.achCat;
-            const grid = document.getElementById('speler-ach-grid');
-            if (grid) grid.innerHTML = spelerAch.renderCards(cat === 'all' ? null : cat);
-        });
-    });
 
     // Manager filter handlers
     container.querySelectorAll('#manager-ach-filters .ach-filter-btn').forEach(btn => {
@@ -1708,7 +1769,7 @@ function renderLineupPitch() {
     formation.positions.forEach((pos, index) => {
         const player = gameState.lineup[index];
         const posData = POSITIONS[pos.role];
-        const posColor = posData?.color || '#666';
+        const slotColor = posData?.color || '#666';
 
         // Get nationality flag and chemistry bonus
         let nationalityFlag = '';
@@ -1740,14 +1801,14 @@ function renderLineupPitch() {
                     <div class="lineup-player ${chemistryBonus > 0 ? 'has-chemistry' : ''} ${isWrongPosition ? 'wrong-position' : ''}"
                          draggable="true"
                          data-player-id="${player.id}"
-                         style="background: ${posColor}">
+                         style="background: ${POSITIONS[player.position]?.color || slotColor}">
                         <span class="lp-flag">${nationalityFlag}</span>
                         <span class="lp-overall">${player.overall + chemistryBonus}${chemistryBonus > 0 ? '<span class="chemistry-boost">+' + chemistryBonus + '</span>' : ''}</span>
                         <span class="lp-name">${player.name.split(' ')[0]}</span>
                         <span class="lp-position">${POSITIONS[player.position]?.abbr || player.position}</span>
                     </div>
                 ` : `
-                    <div class="lineup-empty-slot" style="border-color: ${posColor}">
+                    <div class="lineup-empty-slot" style="border-color: ${slotColor}">
                         <span class="slot-pos">${posData?.abbr || pos.role}</span>
                     </div>
                 `}
@@ -1965,10 +2026,19 @@ function renderTacticsOptions() {
         dekking: 'Dekking'
     };
 
+    const categoryInfo = {
+        mentaliteit: 'Hoe agressief je speelt. Harder = meer kaarten en blessures. Kaarten kosten boetes.',
+        offensief: 'Balans aanval/verdediging. Meer aanval = meer kansen, maar kwetsbaarder achterop.',
+        speltempo: 'Rustig = meer controle, minder stamina-verlies. Snel = meer verrassingen, sneller moe.',
+        veldbreedte: 'Smal = sterker door het midden. Breed = meer dreiging over de vleugels.',
+        dekking: 'Man-dekking = hoge pressing, maar kwetsbaar voor counters. Zone = stabieler, minder druk.'
+    };
+
     let html = '';
     for (const [category, options] of Object.entries(TACTICS)) {
         html += `<div class="tactic-category-row">`;
-        html += `<span class="tactic-category-label tactic-label--${category}">${categoryLabels[category] || category}</span>`;
+        html += `<div class="tactic-label-wrap"><span class="tactic-category-label tactic-label--${category}">${categoryLabels[category] || category}</span>`;
+        html += `<button class="tactic-info-btn" data-info-category="${category}">?</button></div>`;
         html += `<div class="tactic-button-group">`;
 
         options.forEach((option, idx) => {
@@ -1976,12 +2046,14 @@ function renderTacticsOptions() {
             html += `<button class="tactic-btn tactic-btn--${category}-${idx} ${isActive}" data-category="${category}" data-option="${option.id}">${option.name}</button>`;
         });
 
-        html += `</div></div>`;
+        html += `</div>`;
+        html += `<div class="tactic-info-text" id="tactic-info-${category}">${categoryInfo[category] || ''}</div>`;
+        html += `</div>`;
     }
 
     container.innerHTML = html;
 
-    // Add click handlers
+    // Add click handlers for tactic buttons
     container.querySelectorAll('.tactic-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const category = btn.dataset.category;
@@ -1993,6 +2065,15 @@ function renderTacticsOptions() {
 
             gameState.tactics[category] = option;
             saveGame();
+        });
+    });
+
+    // Add click handlers for info buttons
+    container.querySelectorAll('.tactic-info-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const cat = btn.dataset.infoCategory;
+            const infoEl = document.getElementById(`tactic-info-${cat}`);
+            if (infoEl) infoEl.classList.toggle('show');
         });
     });
 }
@@ -2811,6 +2892,9 @@ function renderScoutPage() {
     const section = document.getElementById('scout-tip-section');
     if (!section) return;
 
+    // Check if scout mission completed
+    checkScoutMission();
+
     const hasScout = gameState.staff?.scout !== null && gameState.staff?.scout !== undefined;
     const scoutLevel = hasScout ? 1 : 0;
     const hasCentrum = gameState.club.division <= 5;
@@ -2832,6 +2916,39 @@ function renderScoutPage() {
     // Render sidebar: scout card
     const scoutCard = document.getElementById('scouting-scout-card');
     if (scoutCard) {
+        const mission = gameState.scoutMission;
+        const missionActive = mission.active && mission.startTime;
+        const usedToday = !missionActive && mission.lastScoutDate === getTodayString();
+
+        let missionHTML = '';
+        if (missionActive) {
+            const elapsed = Date.now() - mission.startTime;
+            const remaining = Math.max(0, mission.duration - elapsed);
+            const pct = ((elapsed / mission.duration) * 100).toFixed(1);
+            missionHTML = `
+                <div class="scout-mission-status">
+                    <div class="scout-mission-label">Scout is onderweg...</div>
+                    <div class="scout-mission-progress-track">
+                        <div class="scout-mission-progress-fill" id="scout-mission-progress" style="width: ${pct}%"></div>
+                    </div>
+                    <div class="scout-mission-countdown">Terug over <span id="scout-mission-timer">${formatScoutCountdown(remaining)}</span></div>
+                </div>`;
+            // Start the live countdown timer
+            startScoutMissionTimer();
+        } else if (usedToday) {
+            clearScoutMissionTimer();
+            missionHTML = `
+                <div class="scout-mission-status">
+                    <div class="scout-mission-cooldown">Morgen weer beschikbaar</div>
+                </div>`;
+        } else {
+            clearScoutMissionTimer();
+            missionHTML = `
+                <div class="scout-mission-status">
+                    <button class="btn btn-primary scout-mission-btn" onclick="startScoutMission()">Scout Versturen</button>
+                </div>`;
+        }
+
         scoutCard.innerHTML = `
             <div class="scouting-card-header">
                 <span class="scouting-card-icon">🔍</span>
@@ -2847,6 +2964,7 @@ function renderScoutPage() {
                 <span>👤 ${scoutLevel === 0 ? '1' : '1'} speler per tip</span>
                 ${hasCentrum ? '<span>🏟️ 2 spelers met scoutingscentrum</span>' : ''}
             </div>
+            ${missionHTML}
         `;
     }
 
@@ -3001,6 +3119,91 @@ window.declineScoutTip = function(playerId) {
     showNotification('Tip afgewezen.', 'info');
 };
 
+// Scout daily mission
+let scoutMissionInterval = null;
+
+window.startScoutMission = function() {
+    const mission = gameState.scoutMission;
+    if (mission.active) return;
+    if (mission.lastScoutDate === getTodayString()) return;
+
+    // Pick a random position (excluding keeper)
+    const positions = Object.keys(POSITIONS).filter(p => p !== 'keeper');
+    const pos = randomFromArray(positions);
+    const player = createZaterdagPlayer(pos);
+    player.tipSource = 'scout';
+
+    mission.active = true;
+    mission.startTime = Date.now();
+    mission.pendingPlayer = player;
+    mission.lastScoutDate = getTodayString();
+
+    saveGame();
+    renderScoutPage();
+};
+
+function checkScoutMission() {
+    const mission = gameState.scoutMission;
+    if (!mission.active || !mission.startTime) return;
+
+    if (Date.now() - mission.startTime >= mission.duration) {
+        if (!gameState.scoutTips) gameState.scoutTips = [];
+        gameState.scoutTips.push(mission.pendingPlayer);
+        mission.active = false;
+        mission.pendingPlayer = null;
+        saveGame();
+        showNotification('Je scout heeft een speler gevonden!', 'success');
+    }
+}
+
+function startScoutMissionTimer() {
+    clearScoutMissionTimer();
+    scoutMissionInterval = setInterval(() => {
+        const mission = gameState.scoutMission;
+        if (!mission.active) {
+            clearScoutMissionTimer();
+            renderScoutPage();
+            return;
+        }
+        const elapsed = Date.now() - mission.startTime;
+        const remaining = Math.max(0, mission.duration - elapsed);
+        if (remaining <= 0) {
+            checkScoutMission();
+            clearScoutMissionTimer();
+            renderScoutPage();
+            return;
+        }
+        // Update countdown display
+        const timerEl = document.getElementById('scout-mission-timer');
+        if (timerEl) {
+            timerEl.textContent = formatScoutCountdown(remaining);
+        }
+        const progressEl = document.getElementById('scout-mission-progress');
+        if (progressEl) {
+            const pct = ((elapsed / mission.duration) * 100).toFixed(1);
+            progressEl.style.width = pct + '%';
+        }
+    }, 1000);
+}
+
+function clearScoutMissionTimer() {
+    if (scoutMissionInterval) {
+        clearInterval(scoutMissionInterval);
+        scoutMissionInterval = null;
+    }
+}
+
+function formatScoutCountdown(ms) {
+    const totalSec = Math.ceil(ms / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    if (h > 0) {
+        return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+    return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 function startScouting() {
     if (isScoutingActive) return;
 
@@ -3120,13 +3323,7 @@ function hasTrainedToday(mp) {
 
 function renderTrainingPage() {
     const mp = initMyPlayer();
-    const a = mp.attributes;
     const trainedToday = hasTrainedToday(mp);
-
-    // Check if any trainer is hired
-    if (!gameState.hiredStaff) gameState.hiredStaff = { trainers: [], medisch: [] };
-    const hasTrainer = gameState.hiredStaff.trainers?.length > 0;
-    const hiredTrainerIds = gameState.hiredStaff.trainers || [];
 
     // Cooldown display
     const cooldownEl = document.getElementById('training-cooldown');
@@ -3136,200 +3333,225 @@ function renderTrainingPage() {
             : '<span class="cooldown-badge available">1 sessie beschikbaar</span>';
     }
 
-    // Trainer status card (like youth academy card)
-    const trainerCard = document.getElementById('trainer-status-card');
-    if (trainerCard) {
-        const trainerCount = hiredTrainerIds.length;
-        const trainerNames = hiredTrainerIds.map(id => {
-            const t = STAFF_TRAINERS.find(s => s.id === id);
-            return t ? `<div class="tsc-trainer-row"><span class="tsc-trainer-icon">${t.icon}</span> <span class="tsc-trainer-name">${t.name}</span></div>` : '';
-        }).join('');
-
-        trainerCard.innerHTML = `
-            <div class="tsc-header">
-                <span class="tsc-icon">🏋️</span>
-                <span class="tsc-title">Persoonlijke Trainer</span>
-            </div>
-            <div class="tsc-status ${hasTrainer ? 'has-trainer' : 'no-trainer'}">
-                ${hasTrainer
-                    ? `<span class="tsc-count">${trainerCount}/5 trainers</span>`
-                    : '<span class="tsc-none">Geen trainer</span>'
-                }
-            </div>
-            ${hasTrainer ? `<div class="tsc-trainers">${trainerNames}</div>` : `
-                <div class="tsc-warning">Je kunt geen vaardigheden trainen zonder trainer</div>
-            `}
-            <button class="btn btn-secondary tsc-link-btn" onclick="navigateTo('staff')">
-                ${hasTrainer ? 'Beheer staf' : 'Neem een trainer aan'}
-            </button>
-        `;
-    }
-
-    // Player bar (compact, sidebar)
-    const playerBar = document.getElementById('training-player-bar');
-    if (playerBar) {
-        playerBar.innerHTML = `
-            <div class="tp-avatar">
-                <svg viewBox="0 0 80 100">
-                    <ellipse cx="40" cy="28" rx="18" ry="19" fill="#f5d0c5"/>
-                    <ellipse cx="40" cy="15" rx="16" ry="9" fill="#4a3728"/>
-                    <circle cx="33" cy="26" r="2.5" fill="white"/>
-                    <circle cx="47" cy="26" r="2.5" fill="white"/>
-                    <circle cx="33.5" cy="26.5" r="1.2" fill="#333"/>
-                    <circle cx="47.5" cy="26.5" r="1.2" fill="#333"/>
-                    <path d="M36 35 Q40 38 44 35" fill="none" stroke="#a0522d" stroke-width="1.2"/>
-                    <path d="M15 95 Q15 65 25 58 L40 62 L55 58 Q65 65 65 95 L65 100 L15 100 Z" fill="var(--accent-green-dim)"/>
-                    <text x="40" y="85" text-anchor="middle" fill="white" font-family="var(--font-display)" font-size="16" font-weight="bold">${mp.number}</text>
-                    <path d="M32 58 L40 62 L48 58" fill="none" stroke="white" stroke-width="1.5"/>
-                    <rect x="22" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
-                    <rect x="42" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
-                </svg>
-            </div>
-            <div class="tp-info">
-                <div class="tp-name">${mp.name}</div>
-                <div class="tp-meta">${mp.position} · ${mp.age} jaar · #${mp.number}</div>
-                <div class="tp-alg"><span class="tp-alg-value">${getMyPlayerDerived(mp).gemiddeld}</span> ALG</div>
-            </div>
-        `;
-    }
-
-    // Attribute colors
-    const ATTR_COLORS = {
-        SNE: '#2196f3', TEC: '#9c27b0', PAS: '#4caf50',
-        SCH: '#f44336', VER: '#ff9800', FYS: '#795548', ENE: '#ff9800'
-    };
-
-    // Training rows (horizontal bars)
-    const rows = [
-        { key: 'SNE', name: 'Snelheid', icon: '⚡', desc: 'Sprint en versnelling', isSkill: true },
-        { key: 'TEC', name: 'Techniek', icon: '🎯', desc: 'Balcontrole en dribbels', isSkill: true },
-        { key: 'PAS', name: 'Passing', icon: '👟', desc: 'Korte en lange passes', isSkill: true },
-        { key: 'SCH', name: 'Schieten', icon: '⚽', desc: 'Afronding en schoten', isSkill: true },
-        { key: 'VER', name: 'Verdediging', icon: '🛡️', desc: 'Tackles en positionering', isSkill: true },
-        { key: 'FYS', name: 'Fysiek', icon: '💪', desc: 'Kracht en uithoudingsvermogen', isSkill: true },
-        { key: 'ENE', name: 'Massage', icon: '💆', desc: 'Herstel je energie', isEnergy: true },
-        { key: 'SPY', name: 'Bespioneer', icon: '🔭', desc: 'Analyseer de tegenstander', isSpy: true }
-    ];
-
-    const container = document.getElementById('training-rows');
+    const container = document.getElementById('training-content');
     if (!container) return;
 
-    container.innerHTML = rows.map(row => {
-        // Spy row
-        if (row.isSpy) {
-            const canSpy = !trainedToday;
-            const opponentName = gameState.nextMatch?.opponent || 'Onbekend';
-            return `
-                <div class="tr-row tr-spy">
-                    <div class="tr-left">
-                        <span class="tr-icon">${row.icon}</span>
-                        <div class="tr-info">
-                            <span class="tr-name">${row.name}</span>
-                            <span class="tr-desc">${row.desc}</span>
-                        </div>
-                    </div>
-                    <div class="tr-center">
-                        <div class="tr-spy-opponent">
-                            <span class="tr-spy-vs">VS</span>
-                            <span class="tr-spy-name">${opponentName}</span>
-                        </div>
-                    </div>
-                    <div class="tr-right">
-                        <button class="btn btn-sm ${canSpy ? 'btn-primary' : 'btn-secondary'} tr-train-btn"
-                                onclick="${canSpy ? "trainMyPlayer('spy')" : ''}" ${!canSpy ? 'disabled' : ''}>
-                            Spioneer
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
+    // Player XP info
+    const playerXP = mp.xp || 0;
+    const pLevel = getPlayerLevel(playerXP);
+    const availableSkillPoints = Math.max(0, pLevel.skillPoints - (mp.spentSkillPoints || 0));
+    const nextLevel = PLAYER_LEVELS.find(l => l.xpRequired > playerXP);
+    const xpProgress = pLevel.progress * 100;
 
-        // Energy/Massage row
-        if (row.isEnergy) {
-            const value = mp.energy;
-            const pct = Math.round(value);
-            const color = ATTR_COLORS.ENE;
-            const canTrain = mp.energy < 100 && !trainedToday;
-            return `
-                <div class="tr-row tr-massage">
-                    <div class="tr-left">
-                        <span class="tr-icon">${row.icon}</span>
-                        <div class="tr-info">
-                            <span class="tr-name">${row.name}</span>
-                            <span class="tr-desc">${row.desc}</span>
-                        </div>
-                    </div>
-                    <div class="tr-center">
-                        <div class="tr-bar-track">
-                            <div class="tr-bar-fill" style="width: ${pct}%; background: ${color}"></div>
-                        </div>
-                        <span class="tr-value" style="color: ${color}">${value}%</span>
-                    </div>
-                    <div class="tr-right">
-                        <button class="btn btn-sm ${canTrain ? 'btn-primary' : 'btn-secondary'} tr-train-btn"
-                                onclick="${canTrain ? "trainMyPlayer('massage')" : ''}" ${!canTrain ? 'disabled' : ''}>
-                            Massage
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
+    // All 6 attributes as horizontal bars
+    const a = mp.attributes;
+    const allAttrs = { SNE: 'Snelheid', TEC: 'Techniek', PAS: 'Passen', SCH: 'Schieten', VER: 'Verdedigen', FYS: 'Fysiek' };
+    const canUpgrade = availableSkillPoints > 0;
 
-        // Skill rows (locked if no trainer)
-        const value = a[row.key];
-        const pct = Math.round((value / 99) * 100);
-        const color = ATTR_COLORS[row.key];
-        const locked = row.isSkill && !hasTrainer;
-        const canTrain = !locked && !trainedToday;
+    const skillBars = Object.entries(allAttrs).map(([key, label]) => {
+        const val = a[key] || 0;
+        const pct = Math.min(100, val);
+        const disabled = !canUpgrade || val >= 99 ? 'disabled' : '';
+        return `<div class="hbar-row">
+            <span class="hbar-label">${label}</span>
+            <div class="hbar-track"><div class="hbar-fill" style="width: ${pct}%"><span class="hbar-val">${val}</span></div></div>
+            ${canUpgrade ? `<button class="hbar-btn" onclick="window.spendSkillPoint('${key}')" ${disabled}>+1</button>` : ''}
+        </div>`;
+    }).join('');
 
-        return `
-            <div class="tr-row ${locked ? 'tr-locked' : ''}">
-                <div class="tr-left">
-                    <span class="tr-icon">${row.icon}</span>
-                    <div class="tr-info">
-                        <span class="tr-name">${row.name}</span>
-                        <span class="tr-desc">${row.desc}</span>
+    // Player XP rewards
+    const pRewards = Object.entries(PLAYER_XP_REWARDS).map(([k, v]) => {
+        const labels = { matchWin: 'Winst', matchDraw: 'Gelijk', goalScored: 'Doelpunt', cleanSheet: 'Clean sheet', hatTrick: 'Hattrick', training: 'Training', promotion: 'Promotie', title: 'Titel' };
+        return `<span class="vg-xp-tag">${labels[k] || k} +${v}</span>`;
+    }).join('');
+
+    // Massage info
+    const canMassage = mp.energy < 100 && !trainedToday;
+    const canSpy = !trainedToday;
+    const canTrain = !trainedToday;
+    const opponentName = gameState.nextMatch?.opponent || 'Onbekend';
+
+    const nextLevelNum = nextLevel ? nextLevel.level : pLevel.level;
+    const xpText = nextLevel ? `${playerXP} / ${nextLevel.xpRequired} XP` : `${playerXP} XP — Max!`;
+    const nextSkillPoints = nextLevel ? nextLevel.level - 1 : pLevel.skillPoints;
+    const newPointsAtNext = nextSkillPoints - pLevel.skillPoints;
+    const rewardText = nextLevel && newPointsAtNext > 0 ? `+${newPointsAtNext} skill punt` : '';
+
+    const spText = availableSkillPoints > 0
+        ? `${availableSkillPoints} skill ${availableSkillPoints === 1 ? 'punt' : 'punten'} te besteden`
+        : `Geen skill punten`;
+    const derived = getMyPlayerDerived(mp);
+
+    container.innerHTML = `
+        <div class="training-page-content">
+            <!-- Player + XP card -->
+            <div class="training-hero-card">
+                <div class="training-hero-top">
+                    <div class="training-hero-avatar">
+                        <svg viewBox="0 0 80 100">
+                            <ellipse cx="40" cy="28" rx="18" ry="19" fill="#f5d0c5"/>
+                            <ellipse cx="40" cy="15" rx="16" ry="9" fill="#4a3728"/>
+                            <circle cx="33" cy="26" r="2.5" fill="white"/>
+                            <circle cx="47" cy="26" r="2.5" fill="white"/>
+                            <circle cx="33.5" cy="26.5" r="1.2" fill="#333"/>
+                            <circle cx="47.5" cy="26.5" r="1.2" fill="#333"/>
+                            <path d="M36 35 Q40 38 44 35" fill="none" stroke="#a0522d" stroke-width="1.2"/>
+                            <path d="M15 95 Q15 65 25 58 L40 62 L55 58 Q65 65 65 95 L65 100 L15 100 Z" fill="var(--accent-green-dim)"/>
+                            <text x="40" y="85" text-anchor="middle" fill="white" font-family="var(--font-display)" font-size="16" font-weight="bold">${mp.number}</text>
+                            <path d="M32 58 L40 62 L48 58" fill="none" stroke="white" stroke-width="1.5"/>
+                            <rect x="22" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                            <rect x="42" y="92" width="16" height="8" rx="2" fill="#1a1a1a"/>
+                        </svg>
                     </div>
-                </div>
-                <div class="tr-center">
-                    <div class="tr-bar-track">
-                        <div class="tr-bar-fill" style="width: ${pct}%; background: ${locked ? 'var(--text-muted)' : color}"></div>
+                    <div class="training-hero-info">
+                        <div class="training-hero-name">${mp.name}</div>
                     </div>
-                    <span class="tr-value" style="color: ${locked ? 'var(--text-muted)' : color}">${value}</span>
+                    <div class="training-hero-meta">${mp.position} · #${mp.number}</div>
                 </div>
-                <div class="tr-right">
-                    ${locked
-                        ? '<span class="tr-locked-label">🔒 Geen trainer</span>'
-                        : `<button class="btn btn-sm ${canTrain ? 'btn-primary' : 'btn-secondary'} tr-train-btn"
-                                onclick="${canTrain ? `trainMyPlayer('${row.key}')` : ''}" ${!canTrain ? 'disabled' : ''}>
-                            Train
-                        </button>`
-                    }
+                <div class="txp-row">
+                    <div class="txp-lvl current">
+                        <span class="txp-lvl-num">${pLevel.level}</span>
+                    </div>
+                    <div class="txp-track">
+                        <div class="txp-fill txp-gold" style="width: ${xpProgress}%">
+                            <div class="txp-shimmer"></div>
+                        </div>
+                        <span class="txp-text">${xpText}</span>
+                    </div>
+                    <div class="txp-lvl next">
+                        <span class="txp-lvl-num">${nextLevelNum}</span>
+                        ${rewardText ? `<span class="txp-lvl-reward txp-gold-reward">${rewardText}</span>` : ''}
+                    </div>
                 </div>
             </div>
-        `;
-    }).join('');
+
+            <!-- Kenmerken card -->
+            <div class="training-attrs-card">
+                <div class="training-attrs-header">
+                    <span class="training-attrs-title">Kenmerken</span>
+                    <span class="training-attrs-sp ${availableSkillPoints > 0 ? 'has-points' : 'no-points'}">${spText}</span>
+                </div>
+                <div class="training-attrs-body">
+                    <div class="training-hbars">
+                        ${skillBars}
+                    </div>
+                    <div class="training-attrs-rating">
+                        <span class="training-attrs-rating-num">${derived.gemiddeld}</span>
+                        <span class="training-attrs-rating-lbl">ALG</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3 training actions -->
+            <div class="training-actions-header">Kies 1 actie per dag</div>
+            <div class="training-actions-row">
+                <div class="training-action-card">
+                    <div class="training-sec-icon">&#127939;</div>
+                    <div class="training-sec-title">Trainen</div>
+                    <div class="training-sec-desc">Train je speler en verdien <strong>+25 XP</strong>. Eén sessie per dag.</div>
+                    <button class="btn btn-sm ${canTrain ? 'btn-primary' : 'btn-secondary'}" onclick="${canTrain ? "trainMyPlayer('vrije_tijd')" : ''}" ${!canTrain ? 'disabled' : ''}>
+                        ${canTrain ? 'Trainen' : 'Getraind \u2713'}
+                    </button>
+                </div>
+                <div class="training-action-card">
+                    <div class="training-sec-icon">&#128134;</div>
+                    <div class="training-sec-title">Massage</div>
+                    <div class="training-sec-desc">Herstel <strong>+50% energie</strong> zodat je fitter aan de wedstrijd begint.</div>
+                    <div class="training-sec-detail">Energie: ${Math.round(mp.energy)}%</div>
+                    <button class="btn btn-sm ${canMassage ? 'btn-primary' : 'btn-secondary'}" onclick="${canMassage ? "trainMyPlayer('massage')" : ''}" ${!canMassage ? 'disabled' : ''}>
+                        ${mp.energy >= 100 ? 'Vol' : (trainedToday ? 'Cooldown' : 'Massage')}
+                    </button>
+                </div>
+                <div class="training-action-card">
+                    <div class="training-sec-icon">&#128301;</div>
+                    <div class="training-sec-title">Bespioneer</div>
+                    <div class="training-sec-desc">Bekijk de tegenstander en krijg <strong>+3% bonus</strong> op je volgende wedstrijd.</div>
+                    <div class="training-sec-detail">VS ${opponentName}</div>
+                    <button class="btn btn-sm ${canSpy ? 'btn-primary' : 'btn-secondary'}" onclick="${canSpy ? "trainMyPlayer('spy')" : ''}" ${!canSpy ? 'disabled' : ''}>
+                        ${trainedToday ? 'Cooldown' : 'Spioneer'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
-// Training tabs switching
-function initTrainingTabs() {
-    const tabs = document.querySelectorAll('.training-tab');
-    const panels = document.querySelectorAll('.training-panel');
+// Render player achievements in training prestaties tab
+function renderTrainingPrestaties() {
+    const container = document.getElementById('training-prestaties-content');
+    if (!container) return;
+
+    const allAch = getAllAchievements(gameState);
+    const spelerCats = [CATEGORIES.MATCHES, CATEGORIES.GOALS, CATEGORIES.SEASON, CATEGORIES.SPECIAL];
+    const spelerAch = renderAchievementCards(allAch, spelerCats);
+
+    container.innerHTML = `
+        <div class="prs-single">
+            <h4 class="mp-section-title">Spelersprestaties <span class="ach-progress-text">${spelerAch.stats.unlocked} / ${spelerAch.stats.total}</span></h4>
+            <div class="ach-progress">
+                <div class="ach-progress-bar">
+                    <div class="ach-progress-fill" style="width: ${spelerAch.progressPct}%"></div>
+                </div>
+            </div>
+            <div class="ach-filters" id="training-ach-filters">
+                <button class="ach-filter-btn active" data-ach-cat="all">Alles</button>
+                ${spelerAch.filterBtns}
+            </div>
+            <div class="ach-grid" id="training-ach-grid">
+                ${spelerAch.renderCards(null)}
+            </div>
+        </div>
+    `;
+
+    // Filter click handlers
+    container.querySelectorAll('#training-ach-filters .ach-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.querySelectorAll('#training-ach-filters .ach-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const cat = btn.dataset.achCat;
+            const grid = document.getElementById('training-ach-grid');
+            if (grid) grid.innerHTML = spelerAch.renderCards(cat === 'all' ? null : cat);
+        });
+    });
+}
+
+// Generic page tabs switching
+function initPageTabs(containerId, onSwitch) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const section = container.closest('.page');
+    if (!section) return;
+    const tabs = container.querySelectorAll('.page-tab');
+    const panels = section.querySelectorAll(':scope > .page-panel');
 
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            const targetTab = tab.dataset.trainingTab;
+            const targetTab = tab.dataset.pageTab;
 
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
 
             panels.forEach(panel => {
                 panel.classList.remove('active');
-                if (panel.id === `${targetTab}-training-panel`) {
-                    panel.classList.add('active');
-                }
             });
+            // Find matching panel by id pattern
+            const matchingPanel = section.querySelector(`[id*="${targetTab}-page-panel"]`);
+            if (matchingPanel) matchingPanel.classList.add('active');
+
+            if (onSwitch) onSwitch(targetTab);
         });
+    });
+}
+
+function initTrainingTabs() {
+    initPageTabs('training-tabs', (tab) => {
+        if (tab === 'prestaties') renderTrainingPrestaties();
+    });
+}
+
+function initPrestatieTabs() {
+    initPageTabs('prestaties-tabs', (tab) => {
+        if (tab === 'prestaties') renderPrestaties();
     });
 }
 
@@ -4160,17 +4382,11 @@ window.trainMyPlayer = function(key) {
         return;
     }
 
-    // Block skill training without trainer (massage & spy always allowed)
-    const skillKeys = ['SNE', 'TEC', 'PAS', 'SCH', 'VER', 'FYS'];
-    if (skillKeys.includes(key)) {
-        if (!gameState.hiredStaff) gameState.hiredStaff = { trainers: [], medisch: [] };
-        if (!gameState.hiredStaff.trainers?.length) {
-            showNotification('Je hebt een trainer nodig om vaardigheden te trainen!', 'warning');
-            return;
-        }
-    }
-
-    if (key === 'massage') {
+    if (key === 'vrije_tijd') {
+        awardPlayerXP(gameState, 'training', 25);
+        mp.lastTrainingDate = getTodayString();
+        showNotification('Getraind! +25 XP', 'success');
+    } else if (key === 'massage') {
         mp.energy = Math.min(100, mp.energy + 50);
         mp.lastTrainingDate = getTodayString();
         showNotification('Massage voltooid! +50% energie', 'success');
@@ -4214,10 +4430,6 @@ window.trainMyPlayer = function(key) {
         document.body.appendChild(modal);
         requestAnimationFrame(() => modal.classList.add('active'));
         showNotification('Tegenstander bespioneerd! +3% wedstrijdbonus', 'success');
-    } else {
-        mp.attributes[key] = Math.min(99, mp.attributes[key] + 1);
-        mp.lastTrainingDate = getTodayString();
-        showNotification(`${key} getraind! Nu op ${mp.attributes[key]}`, 'success');
     }
 
     saveGame();
@@ -4243,7 +4455,31 @@ window.selectTrainingPlayer = selectTrainingPlayer;
 // MATCH SYSTEM
 // ================================================
 
+function updateConstructionTimer() {
+    const construction = gameState.stadium.construction;
+    if (!construction) return;
+
+    const remaining = construction.completesAt - Date.now();
+    const hours = Math.max(0, Math.floor(remaining / (1000 * 60 * 60)));
+    const minutes = Math.max(0, Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60)));
+    const seconds = Math.max(0, Math.floor((remaining % (1000 * 60)) / 1000));
+    const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+    // Update map timer
+    const mapTimer = document.getElementById('construction-timer-map');
+    if (mapTimer) mapTimer.textContent = timeStr;
+
+    // Update panel timer (if open)
+    const panelTimer = document.querySelector('.sup-building-timer');
+    if (panelTimer) {
+        const shortStr = hours > 0 ? `${hours}u ${String(minutes).padStart(2, '0')}m` : `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+        panelTimer.textContent = shortStr;
+    }
+}
+
 function updateMatchTimer() {
+    checkConstruction();
+    updateConstructionTimer();
     const remaining = gameState.nextMatch.time - Date.now();
 
     // Update new kantine board timer segments
@@ -4373,25 +4609,57 @@ function showPlayerDetail(playerId) {
     modal.classList.add('active');
 }
 
-function listPlayerOnTransferMarket(playerId, price) {
+async function listPlayerOnTransferMarket(playerId, price) {
     const playerIndex = gameState.players.findIndex(p => p.id === playerId);
     if (playerIndex === -1) return;
 
     const player = gameState.players[playerIndex];
 
     if (confirm(`Wil je ${player.name} op de transfermarkt zetten voor ${formatCurrency(price)}?`)) {
-        // Remove from squad
-        gameState.players.splice(playerIndex, 1);
+        if (isMultiplayer()) {
+            // Multiplayer: insert into shared transfer_market table
+            try {
+                const { error } = await supabase.from('transfer_market').insert({
+                    league_id: gameState.multiplayer.leagueId,
+                    player_name: player.name,
+                    player_data: {
+                        age: player.age,
+                        position: player.position,
+                        nationality: player.nationality || 'nl',
+                        overall: player.overall,
+                        potential: player.potential,
+                        attributes: player.attributes || {}
+                    },
+                    listed_by_club_id: gameState.multiplayer.clubId,
+                    price: price,
+                    salary: player.salary || 0,
+                    min_division: gameState.club.division,
+                    is_free_agent: price === 0
+                });
 
-        // Add to transfer market with set price
-        player.price = price;
-        player.listedByPlayer = true;
-        gameState.transferMarket.players.push(player);
+                if (error) throw error;
 
-        // Close modal and refresh
+                // Mark player as listed in DB
+                await supabase.from('players').update({ listed_for_sale: true }).eq('id', playerId);
+
+                // Remove from local squad
+                gameState.players.splice(playerIndex, 1);
+                showNotification(`${player.name} staat nu op de transfermarkt!`, 'success');
+            } catch (err) {
+                alert('Fout bij plaatsen op transfermarkt: ' + err.message);
+                return;
+            }
+        } else {
+            // Singleplayer: local transfer market
+            gameState.players.splice(playerIndex, 1);
+            player.price = price;
+            player.listedByPlayer = true;
+            gameState.transferMarket.players.push(player);
+            alert(`${player.name} staat nu op de transfermarkt voor ${formatCurrency(price)}!`);
+        }
+
         document.getElementById('player-modal').classList.remove('active');
         renderPlayerCards();
-        alert(`${player.name} staat nu op de transfermarkt voor ${formatCurrency(price)}!`);
     }
 }
 
@@ -4415,10 +4683,16 @@ function navigateToPage(page) {
     }
     window.scrollTo(0, 0);
 
+    // Clean up scout mission timer when leaving scout page
+    if (page !== 'scout') clearScoutMissionTimer();
+
     // Render page-specific content
     if (page === 'squad') renderPlayerCards();
     if (page === 'tactics') renderTacticsPage();
-    if (page === 'training') renderTrainingPage();
+    if (page === 'training') {
+        renderTrainingPage();
+        initTrainingTabs();
+    }
     if (page === 'stadium') renderStadiumPage();
     if (page === 'scout') renderScoutPage();
     if (page === 'transfers') renderTransferMarket();
@@ -4426,17 +4700,11 @@ function navigateToPage(page) {
     if (page === 'sponsors') renderSponsorsPage();
     // activities page removed
     if (page === 'staff') renderStaffCenterPage();
-    if (page === 'mijnspeler') {
-        initMijnSpelerTabs();
-        // Render active tab content
-        const activeTab = document.querySelector('.msp-tab.active');
-        if (activeTab) {
-            const tab = activeTab.dataset.mspTab;
-            if (tab === 'voortgang') renderVoortgang();
-            else if (tab === 'prestaties') renderPrestaties();
-        }
+    if (page === 'prestaties') {
+        renderVoortgang();
+        initPrestatieTabs();
     }
-    if (page === 'mijnteam') renderMijnTeamPage();
+    if (page === 'mijnteam') openClubIdentityModal();
     if (page === 'jeugdteam') renderJeugdteamPage();
     if (page === 'kantine') renderKantineDashboard();
     if (page === 'wedstrijden') renderMatchesPage();
@@ -4457,6 +4725,17 @@ function navigateToPage(page) {
 }
 
 function initNavigation() {
+    // Position fixed submenus on hover
+    document.querySelectorAll('.nav-item.has-submenu').forEach(item => {
+        item.addEventListener('mouseenter', () => {
+            const submenu = item.querySelector('.nav-submenu');
+            if (submenu) {
+                const rect = item.getBoundingClientRect();
+                submenu.style.top = rect.top + 'px';
+            }
+        });
+    });
+
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
             // Don't navigate if clicking on submenu
@@ -4488,6 +4767,13 @@ function initNavigation() {
         });
     });
 
+    // Club identity modal via sidebar header
+    const sidebarHeaderBtn = document.getElementById('sidebar-header-btn');
+    if (sidebarHeaderBtn) {
+        sidebarHeaderBtn.style.cursor = 'pointer';
+        sidebarHeaderBtn.addEventListener('click', () => openClubIdentityModal());
+    }
+
     // Mobile hamburger menu
     const hamburgerBtn = document.getElementById('hamburger-btn');
     const sidebar = document.querySelector('.sidebar');
@@ -4511,23 +4797,20 @@ function initNavigation() {
 }
 
 function activateTabOnPage(page, tab) {
-    let tabSelector, panelPrefix;
-
     if (page === 'tactics') {
-        tabSelector = '.tactics-tab';
-        panelPrefix = '';
-        // Find and click the tab
-        const tabBtn = document.querySelector(`${tabSelector}[data-tab="${tab}"]`);
+        const tabBtn = document.querySelector(`.tactics-tab[data-tab="${tab}"]`);
         if (tabBtn) tabBtn.click();
     } else if (page === 'training') {
-        tabSelector = '.training-tab';
-        // Find and click the tab
-        const tabBtn = document.querySelector(`${tabSelector}[data-training-tab="${tab}"]`);
+        const tabBtn = document.querySelector(`.training-tab[data-training-tab="${tab}"]`);
         if (tabBtn) tabBtn.click();
     } else if (page === 'staff') {
-        tabSelector = '.staff-tab';
-        // Find and click the tab
-        const tabBtn = document.querySelector(`${tabSelector}[data-staff-tab="${tab}"]`);
+        const tabBtn = document.querySelector(`.staff-tab[data-staff-tab="${tab}"]`);
+        if (tabBtn) tabBtn.click();
+    } else if (page === 'wedstrijden') {
+        const tabBtn = document.querySelector(`.matches-tab[data-matches-tab="${tab}"]`);
+        if (tabBtn) tabBtn.click();
+    } else if (page === 'prestaties') {
+        const tabBtn = document.querySelector(`.page-tab[data-page-tab="${tab}"]`);
         if (tabBtn) tabBtn.click();
     }
 }
@@ -4627,6 +4910,9 @@ function startTimers() {
 // ================================================
 
 function generateTransferMarket() {
+    // In multiplayer, transfer market comes from shared Supabase table
+    if (isMultiplayer()) return;
+
     const players = [];
     const division = gameState.club.division;
     const count = random(10, 20);
@@ -4720,9 +5006,33 @@ function getPotentialRange(potential, overall) {
     return `${min}-${max}`;
 }
 
+async function loadMultiplayerTransferMarket() {
+    if (!isMultiplayer() || !gameState.multiplayer.leagueId) return;
+    const listings = await fetchTransferMarket(gameState.multiplayer.leagueId);
+    gameState.transferMarket.players = listings.map(l => ({
+        id: l.id,
+        name: l.player_name,
+        ...l.player_data,
+        price: Number(l.price),
+        signingBonus: Number(l.signing_bonus),
+        salary: Number(l.salary),
+        minDivision: l.min_division,
+        isFreeAgent: l.is_free_agent,
+        listedByPlayer: l.listed_by_club_id !== null,
+        _listingId: l.id
+    }));
+    gameState.transferMarket.lastRefresh = Date.now();
+}
+
 function renderTransferMarket() {
     const container = document.getElementById('transfer-list');
     if (!container) return;
+
+    // In multiplayer, load from shared market
+    if (isMultiplayer() && (!gameState.transferMarket.lastRefresh || Date.now() - gameState.transferMarket.lastRefresh > 30000)) {
+        loadMultiplayerTransferMarket().then(() => renderTransferMarket());
+        return;
+    }
 
     // Get active filters
     const positionFilter = document.querySelector('.transfer-filter.active')?.dataset.filter || 'all';
@@ -4867,7 +5177,7 @@ function renderTransferMarket() {
     });
 }
 
-function handleTransferBuy(playerId, isPremium = false) {
+async function handleTransferBuy(playerId, isPremium = false) {
     const player = gameState.transferMarket.players.find(p => p.id === playerId);
     if (!player) return;
 
@@ -4889,13 +5199,40 @@ function handleTransferBuy(playerId, isPremium = false) {
     const premiumNote = isPremium ? ` (dubbel salaris: ${formatCurrency(player.salary)}/w)` : '';
 
     if (confirm(`Wil je ${player.name} contracteren voor ${costText}${premiumNote}?`)) {
-        gameState.club.budget -= totalCost;
-        gameState.players.push(player);
-        gameState.transferMarket.players = gameState.transferMarket.players.filter(p => p.id !== playerId);
+        if (isMultiplayer() && player._listingId) {
+            // Multiplayer: atomic transfer via Edge Function
+            try {
+                const { data, error } = await supabase.rpc('execute_transfer', {
+                    p_listing_id: player._listingId,
+                    p_buyer_club_id: gameState.multiplayer.clubId,
+                    p_buyer_user_id: gameState.multiplayer.userId
+                });
+
+                if (error) throw error;
+                if (!data.success) {
+                    alert(data.error || 'Transfer mislukt');
+                    return;
+                }
+
+                // Refresh from server
+                await loadMultiplayerTransferMarket();
+                gameState.club.budget -= data.total_cost;
+                // Player will appear after sync
+                showNotification(`${player.name} is gekocht!`, 'success');
+            } catch (err) {
+                alert('Transfer mislukt: ' + err.message);
+                return;
+            }
+        } else {
+            // Singleplayer: local transfer
+            gameState.club.budget -= totalCost;
+            gameState.players.push(player);
+            gameState.transferMarket.players = gameState.transferMarket.players.filter(p => p.id !== playerId);
+            alert(`${player.name} is toegevoegd aan je selectie!`);
+        }
 
         updateBudgetDisplays();
         renderTransferMarket();
-        alert(`${player.name} is toegevoegd aan je selectie!`);
     } else if (isPremium) {
         // Revert salary if cancelled
         player.salary = Math.round(player.salary / 2);
@@ -5501,53 +5838,175 @@ function updateClubDisplays() {
 }
 
 // ================================================
-// MIJN TEAM PAGE
+// CLUB IDENTITY MODAL
 // ================================================
 
-function renderMijnTeamPage() {
-    const nameInput = document.getElementById('team-name-input');
-    const primaryColor = document.getElementById('team-primary-color');
-    const secondaryColor = document.getElementById('team-secondary-color');
-    const accentColor = document.getElementById('team-accent-color');
-    const saveBtn = document.getElementById('save-team-btn');
-    const settingsNotice = document.getElementById('settings-notice');
-    const settingsLocked = document.getElementById('settings-locked');
+function openClubIdentityModal() {
+    // Remove existing modal if any
+    const existing = document.getElementById('club-identity-modal');
+    if (existing) existing.remove();
 
-    // Set current values
-    if (nameInput) nameInput.value = gameState.club.name;
-    if (primaryColor) primaryColor.value = gameState.club.colors.primary;
-    if (secondaryColor) secondaryColor.value = gameState.club.colors.secondary;
-    if (accentColor) accentColor.value = gameState.club.colors.accent;
-
-    // Check if settings are locked this season
     const isLocked = gameState.club.settingsChangedThisSeason;
-    if (settingsNotice) settingsNotice.style.display = isLocked ? 'none' : 'flex';
-    if (settingsLocked) settingsLocked.style.display = isLocked ? 'flex' : 'none';
-    if (nameInput) nameInput.disabled = isLocked;
-    if (primaryColor) primaryColor.disabled = isLocked;
-    if (secondaryColor) secondaryColor.disabled = isLocked;
-    if (accentColor) accentColor.disabled = isLocked;
-    if (saveBtn) saveBtn.disabled = isLocked;
+    const { primary, secondary, accent } = gameState.club.colors;
 
-    // Update badge preview
-    updateMijnTeamBadgePreview();
+    const modal = document.createElement('div');
+    modal.id = 'club-identity-modal';
+    modal.className = 'club-id-overlay';
+    modal.innerHTML = `
+        <div class="club-id-backdrop"></div>
+        <div class="club-id-modal">
+            <button class="club-id-close">&times;</button>
+            <div class="club-id-layout">
+                <div class="club-id-preview">
+                    <svg viewBox="0 0 100 120" class="club-id-badge" id="club-id-badge-svg">
+                        <path d="M50 5 L95 25 L95 70 Q95 100 50 115 Q5 100 5 70 L5 25 Z" fill="${primary}" stroke="${secondary}" stroke-width="3"/>
+                        <path d="M50 12 L88 28 L88 68 Q88 93 50 107 Q12 93 12 68 L12 28 Z" fill="none" stroke="${secondary}" stroke-width="1" opacity="0.3"/>
+                        <g transform="translate(35, 25)">
+                            <rect x="0" y="8" width="3" height="22" fill="${secondary}"/>
+                            <rect x="27" y="8" width="3" height="22" fill="${secondary}"/>
+                            <rect x="0" y="5" width="30" height="4" fill="${secondary}"/>
+                            <line x1="4" y1="9" x2="4" y2="30" stroke="${secondary}" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="10" y1="9" x2="10" y2="30" stroke="${secondary}" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="15" y1="9" x2="15" y2="30" stroke="${secondary}" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="20" y1="9" x2="20" y2="30" stroke="${secondary}" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="26" y1="9" x2="26" y2="30" stroke="${secondary}" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="3" y1="15" x2="27" y2="15" stroke="${secondary}" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="3" y1="22" x2="27" y2="22" stroke="${secondary}" stroke-width="0.5" opacity="0.6"/>
+                            <circle cx="15" cy="20" r="6" fill="${accent}" stroke="${secondary}" stroke-width="1"/>
+                            <path d="M12 17 L18 23 M18 17 L12 23" stroke="${secondary}" stroke-width="0.8" opacity="0.7"/>
+                        </g>
+                        <text x="50" y="70" text-anchor="middle" fill="${secondary}" font-family="Bebas Neue, sans-serif" font-size="11" letter-spacing="2">FC</text>
+                        <text x="50" y="85" text-anchor="middle" fill="${accent}" font-family="Bebas Neue, sans-serif" font-size="16" font-weight="bold" letter-spacing="1">GOALS</text>
+                        <text x="50" y="100" text-anchor="middle" fill="${secondary}" font-family="Bebas Neue, sans-serif" font-size="12" letter-spacing="2">MAKEN</text>
+                    </svg>
+                    <div class="club-id-kit">
+                        <svg viewBox="0 0 80 100" class="club-id-kit-svg">
+                            <path d="M20 25 L10 35 L10 50 L15 50 L15 85 L65 85 L65 50 L70 50 L70 35 L60 25 L55 15 L45 10 L35 10 L25 15 Z"
+                                  fill="${primary}" stroke="${secondary}" stroke-width="2"/>
+                            <path d="M35 10 Q40 15 45 10" fill="none" stroke="${accent}" stroke-width="3"/>
+                            <path d="M20 85 L20 95 L35 95 L40 85 L45 95 L60 95 L60 85"
+                                  fill="${secondary}" stroke="${primary}" stroke-width="1.5"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="club-id-form">
+                    <h3 class="club-id-title">Club Identiteit</h3>
+                    ${isLocked ? `
+                        <div class="club-id-locked">
+                            <span>Je hebt je club dit seizoen al aangepast. Wacht tot volgend seizoen.</span>
+                        </div>
+                    ` : `
+                        <div class="club-id-notice">
+                            <span>Je kunt je clubnaam en kleuren <strong>1x per seizoen</strong> wijzigen.</span>
+                        </div>
+                    `}
+                    <div class="club-id-field">
+                        <label for="club-id-name">Clubnaam</label>
+                        <input type="text" id="club-id-name" class="form-input" maxlength="25" value="${gameState.club.name}" ${isLocked ? 'disabled' : ''}>
+                    </div>
+                    <div class="club-id-colors">
+                        <div class="club-id-color">
+                            <label>Primair</label>
+                            <input type="color" id="club-id-primary" value="${primary}" ${isLocked ? 'disabled' : ''}>
+                        </div>
+                        <div class="club-id-color">
+                            <label>Secundair</label>
+                            <input type="color" id="club-id-secondary" value="${secondary}" ${isLocked ? 'disabled' : ''}>
+                        </div>
+                        <div class="club-id-color">
+                            <label>Accent</label>
+                            <input type="color" id="club-id-accent" value="${accent}" ${isLocked ? 'disabled' : ''}>
+                        </div>
+                    </div>
+                    ${!isLocked ? `
+                        <button class="btn btn-primary club-id-save">Opslaan</button>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `;
 
-    // Update kit preview
-    updateKitPreview();
+    document.body.appendChild(modal);
 
-    // Update club stats
-    updateClubStats();
+    // Close handlers
+    modal.querySelector('.club-id-backdrop').addEventListener('click', closeClubIdentityModal);
+    modal.querySelector('.club-id-close').addEventListener('click', closeClubIdentityModal);
 
-    // Render scouting network options
-    renderScoutingNetworkOptions();
+    // Save handler
+    const saveBtn = modal.querySelector('.club-id-save');
+    if (saveBtn) saveBtn.addEventListener('click', saveClubIdentity);
 
-    // Render achievements
-    renderAchievementsSection();
-
-    // Init event listeners
-    initMijnTeamListeners();
-    initAchievementsToggle();
+    // Live preview listeners
+    if (!isLocked) {
+        ['club-id-primary', 'club-id-secondary', 'club-id-accent'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', updateClubIdPreview);
+        });
+    }
 }
+
+function updateClubIdPreview() {
+    const p = document.getElementById('club-id-primary')?.value;
+    const s = document.getElementById('club-id-secondary')?.value;
+    const a = document.getElementById('club-id-accent')?.value;
+    if (!p || !s || !a) return;
+
+    const badge = document.getElementById('club-id-badge-svg');
+    if (badge) {
+        badge.querySelector('path').setAttribute('fill', p);
+        badge.querySelector('path').setAttribute('stroke', s);
+        badge.querySelectorAll('rect, line').forEach(el => {
+            if (el.getAttribute('fill') && el.getAttribute('fill') !== 'none') el.setAttribute('fill', s);
+            if (el.getAttribute('stroke')) el.setAttribute('stroke', s);
+        });
+        badge.querySelector('circle').setAttribute('fill', a);
+        badge.querySelector('circle').setAttribute('stroke', s);
+        const texts = badge.querySelectorAll('text');
+        if (texts[0]) texts[0].setAttribute('fill', s);
+        if (texts[1]) texts[1].setAttribute('fill', a);
+        if (texts[2]) texts[2].setAttribute('fill', s);
+    }
+
+    // Kit preview
+    const kitShirt = document.querySelector('.club-id-kit-svg path:first-child');
+    const kitCollar = document.querySelector('.club-id-kit-svg path:nth-child(2)');
+    const kitShorts = document.querySelector('.club-id-kit-svg path:nth-child(3)');
+    if (kitShirt) { kitShirt.setAttribute('fill', p); kitShirt.setAttribute('stroke', s); }
+    if (kitCollar) { kitCollar.setAttribute('stroke', a); }
+    if (kitShorts) { kitShorts.setAttribute('fill', s); kitShorts.setAttribute('stroke', p); }
+}
+
+function saveClubIdentity() {
+    if (gameState.club.settingsChangedThisSeason) return;
+
+    const name = document.getElementById('club-id-name')?.value?.trim();
+    const p = document.getElementById('club-id-primary')?.value;
+    const s = document.getElementById('club-id-secondary')?.value;
+    const a = document.getElementById('club-id-accent')?.value;
+
+    if (!name) { alert('Voer een geldige clubnaam in.'); return; }
+
+    gameState.club.name = name;
+    gameState.club.colors.primary = p || gameState.club.colors.primary;
+    gameState.club.colors.secondary = s || gameState.club.colors.secondary;
+    gameState.club.colors.accent = a || gameState.club.colors.accent;
+    gameState.club.settingsChangedThisSeason = true;
+
+    applyClubColors();
+    updateClubDisplays();
+    updateMainBadgeSVG();
+    saveGame(gameState);
+
+    closeClubIdentityModal();
+}
+
+function closeClubIdentityModal() {
+    const modal = document.getElementById('club-identity-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 200);
+    }
+}
+
 
 function updateMijnTeamBadgePreview() {
     const badgePreview = document.getElementById('badge-preview-svg');
@@ -5776,9 +6235,15 @@ function initAchievementsToggle() {
 
 let currentYouthAgeGroup = '12-13';
 
+function getAcademyMaxStars() {
+    const level = gameState.stadium?.academy || 'acad_1';
+    const config = STADIUM_TILE_CONFIG?.academy?.levels.find(l => l.id === level);
+    return config?.maxStars || 1;
+}
+
 function getYouthMaxPerCategory() {
     const level = gameState.stadium?.academy || 'acad_1';
-    const map = { acad_1: 3, acad_2: 4, acad_3: 5, acad_4: 7 };
+    const map = { acad_1: 3, acad_2: 4, acad_3: 5, acad_4: 7, acad_5: 9, acad_6: 11, acad_7: 13, acad_8: 15, acad_9: 18, acad_10: 20 };
     return map[level] || 3;
 }
 
@@ -5851,27 +6316,21 @@ function updateYouthTabBadges() {
 }
 
 function generateInitialYouthPlayers() {
-    // Generate 3-5 players per age group
-    // Star allocation: pupillen 1x3★, junioren 1x2★, aspiranten 1x2★, rest 1★
+    const maxStars = getAcademyMaxStars();
     const ageGroups = [
-        { min: 12, max: 13, count: random(3, 5), topStars: 3 },
-        { min: 14, max: 15, count: random(3, 5), topStars: 2 },
-        { min: 16, max: 17, count: random(2, 4), topStars: 2 }
+        { min: 12, max: 13, count: random(3, 5) },
+        { min: 14, max: 15, count: random(3, 5) },
+        { min: 16, max: 17, count: random(2, 4) }
     ];
 
     ageGroups.forEach(group => {
-        const groupPlayers = [];
         for (let i = 0; i < group.count; i++) {
             const player = generateYouthPlayer(group.min, group.max);
-            player.potentialStars = 1;
-            groupPlayers.push(player);
+            // Random stars from 0.5 to maxStars, in 0.5 steps
+            const steps = Math.floor(maxStars / 0.5);
+            player.potentialStars = (random(1, steps) * 0.5);
+            gameState.youthPlayers.push(player);
         }
-        // Assign top stars to the best player in this group
-        groupPlayers.sort((a, b) => b.potential - a.potential);
-        if (groupPlayers.length > 0) {
-            groupPlayers[0].potentialStars = group.topStars;
-        }
-        groupPlayers.forEach(p => gameState.youthPlayers.push(p));
     });
 }
 
@@ -6143,188 +6602,158 @@ function dismissYouthPlayer(playerId) {
 // DAILY FINANCES
 // ================================================
 
-function calculateDailyFinances() {
-    // === INCOME ===
-    // Shirt + bord sponsor income (weekly divided by 7)
-    const shirtSponsor = gameState.sponsor;
-    const shirtWeekly = shirtSponsor?.weeklyPay || 0;
-    const bordWeekly = gameState.sponsorSlots?.bord?.weeklyIncome || 0;
-    const sponsorWeeklyIncome = shirtWeekly + bordWeekly;
-    const sponsorDailyIncome = Math.round(sponsorWeeklyIncome / 7);
 
-    // Sponsoring level bonus
-    const sponsoringLevelIncome = STADIUM_UPGRADES.sponsoring.find(s => s.id === gameState.stadium.sponsoring)?.dailyIncome || 0;
+function calculateWeeklyFinances() {
+    // === INCOME (per week / per match) ===
 
-    // Merchandise
-    const merchIncome = gameState.stadium.fanshop.reduce((total, shopId) => {
-        const shop = STADIUM_UPGRADES.fanshop.find(s => s.id === shopId);
-        return total + (shop?.dailyIncome || 0);
-    }, 0);
+    // Kaartverkoop: capacity × €8 ticket price × ~75% attendance
+    const capacity = gameState.stadium.capacity || 200;
+    const ticketPrice = 8;
+    const attendance = Math.round(capacity * 0.75);
+    const ticketIncome = attendance * ticketPrice;
 
-    // Kantine income
+    // Shirt sponsor (matchIncome = per match = per week)
+    const shirtIncome = gameState.sponsor?.matchIncome || 0;
+
+    // Win bonus (potential, not guaranteed)
+    const winBonus = gameState.sponsor?.winBonus || 0;
+
+    // Board sponsor (weekly income)
+    const bordIncome = gameState.sponsorSlots?.bord?.weeklyIncome || 0;
+
+    // Kantine income per match
     const kantineConfig = STADIUM_TILE_CONFIG?.kantine?.levels.find(l => l.id === gameState.stadium.kantine);
     const kantineMatch = kantineConfig?.effect?.match(/€(\d+)/);
-    const kantinePerMatch = kantineMatch ? parseInt(kantineMatch[1]) : 50;
-    const kantineDaily = Math.round(kantinePerMatch / 7); // Average per day
+    const kantineIncome = kantineMatch ? parseInt(kantineMatch[1]) : 0;
 
-    // === EXPENSES ===
-    // Player salaries (weekly divided by 7)
+    // === EXPENSES (per week) ===
+
+    // Player salaries
     const playerSalaries = gameState.players.reduce((total, p) => total + (p.salary || 0), 0);
-    const playerSalaryDaily = Math.round(playerSalaries / 7);
 
     // Staff salaries
     let staffSalaries = 0;
+    const hiredIds = [
+        ...(gameState.hiredStaff?.medisch || []),
+        ...(gameState.hiredStaff?.trainers || [])
+    ];
+    STAFF_MEMBERS.forEach(staff => {
+        if (hiredIds.includes(staff.id)) {
+            staffSalaries += staff.salary;
+        }
+    });
+    // Legacy fallback
     if (gameState.staff?.fysio) staffSalaries += 100;
     if (gameState.staff?.scout) staffSalaries += 150;
     if (gameState.staff?.dokter) staffSalaries += 200;
     Object.values(gameState.assistantTrainers || {}).forEach(trainer => {
         if (trainer) staffSalaries += 75;
     });
-    const staffSalaryDaily = Math.round(staffSalaries / 7);
 
     // Maintenance
-    const maintenanceExpense = Math.round((STADIUM_UPGRADES.tribunes.find(t => t.id === gameState.stadium.tribune)?.maintenance || 0) / 7);
+    const maintenance = STADIUM_UPGRADES.tribunes.find(t => t.id === gameState.stadium.tribune)?.maintenance || 0;
 
-    // Totals
-    const totalIncome = sponsorDailyIncome + sponsoringLevelIncome + merchIncome + kantineDaily;
-    const totalExpense = playerSalaryDaily + staffSalaryDaily + maintenanceExpense;
-    const dailyBalance = totalIncome - totalExpense;
+    // Youth scouting network
+    const scoutingCost = SCOUTING_NETWORKS[gameState.scoutingNetwork || 'none']?.weeklyCost || 0;
+
+    const totalIncome = ticketIncome + shirtIncome + bordIncome + kantineIncome;
+    const totalExpense = playerSalaries + staffSalaries + maintenance + scoutingCost;
+    const weeklyResult = totalIncome - totalExpense;
 
     return {
-        income: {
-            sponsor: sponsorDailyIncome,
-            sponsoringBonus: sponsoringLevelIncome,
-            merch: merchIncome,
-            kantine: kantineDaily
-        },
-        expense: {
-            playerSalary: playerSalaryDaily,
-            staffSalary: staffSalaryDaily,
-            maintenance: maintenanceExpense
-        },
+        income: [
+            { label: 'Kaartverkoop', value: ticketIncome, detail: `${attendance} toeschouwers` },
+            { label: 'Shirtsponsor', value: shirtIncome },
+            { label: 'Bordsponsor', value: bordIncome },
+            { label: 'Kantine', value: kantineIncome }
+        ],
+        expense: [
+            { label: 'Spelerssalarissen', value: playerSalaries },
+            { label: 'Stafsalarissen', value: staffSalaries },
+            { label: 'Stadiononderhoud', value: maintenance },
+            { label: 'Jeugdscouting', value: scoutingCost }
+        ],
+        winBonus,
         totalIncome,
         totalExpense,
-        dailyBalance,
-        tomorrowBalance: gameState.club.budget + dailyBalance,
-        // Raw weekly values for display
-        weeklyPlayerSalary: playerSalaries,
-        weeklyStaffSalary: staffSalaries,
-        weeklySponsor: sponsorWeeklyIncome
+        weeklyResult
     };
 }
 
 function renderDailyFinances() {
-    const finances = calculateDailyFinances();
+    const fin = calculateWeeklyFinances();
 
-    // Update current balance
-    const currentBalanceEl = document.getElementById('current-balance');
-    if (currentBalanceEl) {
-        currentBalanceEl.textContent = formatCurrency(gameState.club.budget);
+    // Header balance
+    const balEl = document.getElementById('fin-balance');
+    if (balEl) balEl.textContent = formatCurrency(gameState.club.budget);
+
+    // Income list
+    const incList = document.getElementById('fin-income-list');
+    if (incList) {
+        let html = fin.income
+            .filter(i => i.value > 0)
+            .map(i => `<li><span class="fin-item-label">${i.label}${i.detail ? ` <small>(${i.detail})</small>` : ''}</span><span class="fin-item-val income">+${formatCurrency(i.value)}</span></li>`)
+            .join('');
+        if (fin.winBonus > 0) {
+            html += `<li class="fin-item-bonus"><span class="fin-item-label">Winbonus <small>(bij winst)</small></span><span class="fin-item-val bonus">+${formatCurrency(fin.winBonus)}</span></li>`;
+        }
+        incList.innerHTML = html || '<li class="fin-empty">Geen inkomsten</li>';
     }
 
-    // Update tomorrow balance
-    const tomorrowEl = document.getElementById('tomorrow-balance');
-    if (tomorrowEl) {
-        tomorrowEl.textContent = formatCurrency(finances.tomorrowBalance);
+    // Income total
+    const incTotal = document.getElementById('fin-total-income');
+    if (incTotal) incTotal.textContent = `+${formatCurrency(fin.totalIncome)}`;
+
+    // Expense list
+    const expList = document.getElementById('fin-expense-list');
+    if (expList) {
+        expList.innerHTML = fin.expense
+            .filter(e => e.value > 0)
+            .map(e => `<li><span class="fin-item-label">${e.label}</span><span class="fin-item-val expense">-${formatCurrency(e.value)}</span></li>`)
+            .join('') || '<li class="fin-empty">Geen uitgaven</li>';
     }
 
-    // Update income column
-    const totalIncomeEl = document.getElementById('total-income');
-    if (totalIncomeEl) {
-        totalIncomeEl.textContent = `+${formatCurrency(finances.totalIncome)}`;
-    }
+    // Expense total
+    const expTotal = document.getElementById('fin-total-expense');
+    if (expTotal) expTotal.textContent = `-${formatCurrency(fin.totalExpense)}`;
 
-    const incomeBreakdown = document.getElementById('income-breakdown');
-    if (incomeBreakdown) {
-        incomeBreakdown.innerHTML = `
-            <li><span>Shirtsponsor</span><span>+${formatCurrency(finances.income.sponsor)}</span></li>
-            <li><span>Sponsoring Niveau</span><span>+${formatCurrency(finances.income.sponsoringBonus)}</span></li>
-            <li><span>Merchandise</span><span>+${formatCurrency(finances.income.merch)}</span></li>
-            <li><span>Kantine</span><span>+${formatCurrency(finances.income.kantine)}</span></li>
-        `;
+    // Result
+    const resAmount = document.getElementById('fin-result-amount');
+    const resEl = document.getElementById('fin-result');
+    if (resAmount) {
+        const sign = fin.weeklyResult >= 0 ? '+' : '';
+        resAmount.textContent = `${sign}${formatCurrency(fin.weeklyResult)}`;
+        resAmount.className = fin.weeklyResult >= 0 ? 'fin-result-positive' : 'fin-result-negative';
     }
+    if (resEl) {
+        resEl.className = `fin-result ${fin.weeklyResult >= 0 ? 'positive' : 'negative'}`;
+    }
+}
 
-    // Update expense column
-    const totalExpenseEl = document.getElementById('total-expense');
-    if (totalExpenseEl) {
-        totalExpenseEl.textContent = `-${formatCurrency(finances.totalExpense)}`;
-    }
-
-    const expenseBreakdown = document.getElementById('expense-breakdown');
-    if (expenseBreakdown) {
-        expenseBreakdown.innerHTML = `
-            <li><span>Spelerssalarissen</span><span>-${formatCurrency(finances.expense.playerSalary)}</span></li>
-            <li><span>Stafsalarissen</span><span>-${formatCurrency(finances.expense.staffSalary)}</span></li>
-            <li><span>Onderhoud</span><span>-${formatCurrency(finances.expense.maintenance)}</span></li>
-        `;
-    }
-
-    // Update profit column
-    const totalProfitEl = document.getElementById('total-profit');
-    if (totalProfitEl) {
-        const profitClass = finances.dailyBalance >= 0 ? 'profit' : 'loss';
-        totalProfitEl.textContent = (finances.dailyBalance >= 0 ? '+' : '') + formatCurrency(finances.dailyBalance);
-        totalProfitEl.className = `finance-total ${profitClass}`;
-    }
-
-    const dailyProfitEl = document.getElementById('daily-profit');
-    const weeklyProfitEl = document.getElementById('weekly-profit');
-    const monthlyProfitEl = document.getElementById('monthly-profit');
-
-    if (dailyProfitEl) {
-        dailyProfitEl.textContent = (finances.dailyBalance >= 0 ? '+' : '') + formatCurrency(finances.dailyBalance);
-        dailyProfitEl.className = `period-value ${finances.dailyBalance >= 0 ? 'positive' : 'negative'}`;
-    }
-    if (weeklyProfitEl) {
-        const weeklyProfit = finances.dailyBalance * 7;
-        weeklyProfitEl.textContent = (weeklyProfit >= 0 ? '+' : '') + formatCurrency(weeklyProfit);
-        weeklyProfitEl.className = `period-value ${weeklyProfit >= 0 ? 'positive' : 'negative'}`;
-    }
-    if (monthlyProfitEl) {
-        const monthlyProfit = finances.dailyBalance * 30;
-        monthlyProfitEl.textContent = (monthlyProfit >= 0 ? '+' : '') + formatCurrency(monthlyProfit);
-        monthlyProfitEl.className = `period-value ${monthlyProfit >= 0 ? 'positive' : 'negative'}`;
-    }
-
-    // Update bottom balance
-    const balanceBottomEl = document.getElementById('current-balance-bottom');
-    if (balanceBottomEl) {
-        balanceBottomEl.textContent = formatCurrency(gameState.club.budget);
-    }
-
-    const balanceChangeEl = document.getElementById('balance-change');
-    if (balanceChangeEl) {
-        const changeText = (finances.dailyBalance >= 0 ? '+' : '') + formatCurrency(finances.dailyBalance) + ' vandaag';
-        balanceChangeEl.textContent = changeText;
-        balanceChangeEl.className = `balance-change ${finances.dailyBalance >= 0 ? 'positive' : 'negative'}`;
-    }
-
-    // Update season prediction (34 weeks remaining - simplified calculation)
-    const weeksRemaining = 34 - gameState.week;
-    const weeklyBalance = finances.dailyBalance * 7;
-    const seasonIncome = finances.totalIncome * 7 * weeksRemaining;
-    const seasonExpense = finances.totalExpense * 7 * weeksRemaining;
-    const seasonEndBalance = gameState.club.budget + (weeklyBalance * weeksRemaining);
-
-    const seasonEndEl = document.getElementById('season-end-estimate');
-    if (seasonEndEl) {
-        seasonEndEl.textContent = formatCurrency(Math.round(seasonEndBalance));
-    }
-
-    const seasonIncomeEl = document.getElementById('season-income');
-    if (seasonIncomeEl) {
-        seasonIncomeEl.textContent = '+' + formatCurrency(Math.round(seasonIncome));
-    }
-
-    const seasonExpenseEl = document.getElementById('season-expense');
-    if (seasonExpenseEl) {
-        seasonExpenseEl.textContent = '-' + formatCurrency(Math.round(seasonExpense));
-    }
-
-    const predSubtitleEl = document.querySelector('.prediction-subtitle');
-    if (predSubtitleEl) {
-        predSubtitleEl.textContent = `Over ${weeksRemaining} weken`;
-    }
+// Keep backward compatibility for dashboard
+function calculateDailyFinances() {
+    const weekly = calculateWeeklyFinances();
+    const dailyBalance = Math.round(weekly.weeklyResult / 7);
+    return {
+        income: {
+            sponsor: Math.round((weekly.income[1]?.value || 0) / 7),
+            sponsoringBonus: 0,
+            merch: 0,
+            kantine: Math.round((weekly.income[3]?.value || 0) / 7)
+        },
+        expense: {
+            playerSalary: Math.round((weekly.expense[0]?.value || 0) / 7),
+            staffSalary: Math.round((weekly.expense[1]?.value || 0) / 7),
+            maintenance: Math.round((weekly.expense[2]?.value || 0) / 7)
+        },
+        totalIncome: Math.round(weekly.totalIncome / 7),
+        totalExpense: Math.round(weekly.totalExpense / 7),
+        dailyBalance,
+        tomorrowBalance: gameState.club.budget + dailyBalance,
+        weeklyPlayerSalary: weekly.expense[0]?.value || 0,
+        weeklyStaffSalary: weekly.expense[1]?.value || 0,
+        weeklySponsor: (weekly.income[1]?.value || 0) + (weekly.income[2]?.value || 0)
+    };
 }
 
 // ================================================
@@ -6745,20 +7174,23 @@ function generateFakeMatchHistory() {
     gameState.week = 5;
 }
 
-function initGame() {
-    // Check for existing save
-    const savedState = loadGame();
+function initGame(mode = 'local') {
+    // Check for existing save (singleplayer uses sync load)
+    const savedState = loadGameSync();
 
     if (savedState) {
         // Load saved game
         replaceGameState(savedState);
-        console.log('📂 Save file loaded!');
+        console.log('Save file loaded!');
 
         // Calculate and apply offline progress (silently)
         const offlineProgress = calculateOfflineProgress(gameState);
         if (offlineProgress && offlineProgress.hoursAway >= 1) {
             applyOfflineProgress(gameState, offlineProgress);
         }
+
+        // Check if construction completed while offline
+        checkConstruction();
     } else {
         // New game - generate initial data
         gameState.players = generateSquad(gameState.club.division);
@@ -6790,19 +7222,11 @@ function initGame() {
     if (gameState.youthPlayers && gameState.youthPlayers.length > 0) {
         const needsMigration = gameState.youthPlayers.some(p => p.potentialStars === undefined);
         if (needsMigration) {
-            // Group by age category and assign stars
-            const groups = { '12-13': [], '14-15': [], '16-17': [] };
+            const maxStars = getAcademyMaxStars();
+            const steps = Math.floor(maxStars / 0.5);
             gameState.youthPlayers.forEach(p => {
-                p.potentialStars = p.potentialStars || 1;
-                if (p.age <= 13) groups['12-13'].push(p);
-                else if (p.age <= 15) groups['14-15'].push(p);
-                else groups['16-17'].push(p);
-            });
-            const starAlloc = { '12-13': 3, '14-15': 2, '16-17': 2 };
-            Object.entries(groups).forEach(([key, players]) => {
-                if (players.length > 0) {
-                    players.sort((a, b) => b.potential - a.potential);
-                    players[0].potentialStars = starAlloc[key];
+                if (p.potentialStars === undefined) {
+                    p.potentialStars = (random(1, steps) * 0.5);
                 }
             });
         }
@@ -6919,8 +7343,12 @@ function renderDashboardExtras() {
     // Update global top bar manager info
     const globalManagerTitle = document.getElementById('global-manager-title');
     const globalManagerLevel = document.getElementById('global-manager-level');
+    const globalXpFill = document.getElementById('global-xp-fill');
     if (globalManagerTitle) globalManagerTitle.textContent = managerInfo.title;
     if (globalManagerLevel) globalManagerLevel.textContent = managerInfo.level;
+    if (globalXpFill) globalXpFill.style.width = `${progressPercent}%`;
+    const globalXpLabel = document.getElementById('global-xp-label');
+    if (globalXpLabel) globalXpLabel.textContent = managerInfo.xpToNext > 0 ? `${currentXp} / ${xpForNextLevel} XP` : `${currentXp} XP — Max!`;
 
     // Render streak (new kantine board sticker)
     const streak = gameState.dailyRewards?.streak || 0;
@@ -6999,30 +7427,26 @@ function renderDashboardFinances() {
     if (!container) return;
 
     const budget = gameState.club.budget || 0;
-    const finances = calculateDailyFinances();
-    const daily = finances.dailyBalance;
-    const dailySign = daily >= 0 ? '+' : '';
-    const dailyColor = daily >= 0 ? 'var(--accent-green)' : '#c62828';
-    const trendArrow = daily >= 0 ? '↑' : '↓';
-
-    // Weekly totals
-    const weeklyIn = finances.totalIncome * 7;
-    const weeklyOut = finances.totalExpense * 7;
+    const fin = calculateWeeklyFinances();
+    const weekly = fin.weeklyResult;
+    const sign = weekly >= 0 ? '+' : '';
+    const color = weekly >= 0 ? 'var(--accent-green)' : '#c62828';
+    const trendArrow = weekly >= 0 ? '↑' : '↓';
 
     container.innerHTML = `
         <div class="fin-budget">
             <span class="fin-label">Saldo</span>
             <span class="fin-amount">${formatCurrency(budget)}</span>
-            <span class="fin-daily" style="color: ${dailyColor}">${trendArrow} ${dailySign}${formatCurrency(daily)}/dag</span>
+            <span class="fin-daily" style="color: ${color}">${trendArrow} ${sign}${formatCurrency(weekly)}/wk</span>
         </div>
         <div class="fin-breakdown">
             <div class="fin-row fin-income">
                 <span class="fin-row-label">Inkomsten /wk</span>
-                <span class="fin-row-val" style="color: var(--accent-green)">+${formatCurrency(weeklyIn)}</span>
+                <span class="fin-row-val" style="color: var(--accent-green)">+${formatCurrency(fin.totalIncome)}</span>
             </div>
             <div class="fin-row fin-expense">
                 <span class="fin-row-label">Uitgaven /wk</span>
-                <span class="fin-row-val" style="color: #c62828">-${formatCurrency(weeklyOut)}</span>
+                <span class="fin-row-val" style="color: #c62828">-${formatCurrency(fin.totalExpense)}</span>
             </div>
         </div>
     `;
@@ -7043,19 +7467,20 @@ function renderDashboardTopPlayers() {
     }
 
     container.innerHTML = topTalents.map((player) => {
-        const starCount = player.isMyPlayer
-            ? potentialToStarsGlobal(99)
-            : (player.overall >= 25 ? 2 : 1);
-        const starsHtml = renderStarsHTML(starCount);
+        const stars = player.potentialStars || 1;
+        const starsHtml = renderStarsHTML(stars);
         const posData = POSITIONS[player.position] || { color: '#1a5f2a', abbr: '?' };
+        const maxLevel = getYouthMaxLevel(player.age);
+        const level = getYouthLevel(player.overall, maxLevel);
         return `
             <div class="tt-item">
+                <span class="tt-pos" style="background: ${posData.color}">${posData.abbr}</span>
                 <span class="tt-flag">${player.nationality?.flag || '🇳🇱'}</span>
                 <div class="tt-info">
                     <span class="tt-name">${player.name}</span>
                     <span class="tt-age">${player.age} jaar</span>
                 </div>
-                <span class="tt-pos" style="background: ${posData.color}">${posData.abbr}</span>
+                <div class="tt-ovr" style="background: ${posData.color}"><span class="tt-ovr-value">${level}</span><span class="tt-ovr-label">ALG</span></div>
                 <span class="tt-stars">${starsHtml}</span>
             </div>
         `;
@@ -7312,6 +7737,12 @@ function initPlayMatchButton() {
 }
 
 function playMatch() {
+    // Block manual match play in multiplayer mode
+    if (isMultiplayer()) {
+        showNotification('Wedstrijden worden automatisch gesimuleerd om 20:00!', 'info');
+        return;
+    }
+
     // Check if match is available
     const now = Date.now();
     if (gameState.nextMatch.time > now) {
@@ -7380,6 +7811,10 @@ function playMatch() {
         gameState.stats.currentUnbeaten = 0;
         gameState.stats.currentWinStreak = 0;
     }
+
+    // Update all-time records
+    gameState.stats.bestWinStreak = Math.max(gameState.stats.bestWinStreak || 0, gameState.stats.currentWinStreak);
+    gameState.stats.bestUnbeaten = Math.max(gameState.stats.bestUnbeaten || 0, gameState.stats.currentUnbeaten);
 
     if (opponentScore === 0) {
         gameState.stats.cleanSheets++;
@@ -7697,8 +8132,9 @@ function renderMatchReport() {
         </div>
     ` : '';
 
-    // Player ratings (compact, sorted by rating)
-    const sortedRatings = [...ratings].sort((a, b) => b.rating - a.rating);
+    // Player ratings (sorted by position: keeper → defenders → midfielders → attackers)
+    const posOrder = ['keeper', 'linksback', 'centraleVerdediger', 'rechtsback', 'linksMid', 'centraleMid', 'rechtsMid', 'linksbuiten', 'rechtsbuiten', 'spits'];
+    const sortedRatings = [...ratings].sort((a, b) => posOrder.indexOf(a.position) - posOrder.indexOf(b.position));
     const ratingsHtml = sortedRatings.length > 0 ? `
         <table class="match-ratings-table">
             <thead>
@@ -7867,11 +8303,16 @@ function renderPlayerRatingsTab() {
 }
 
 function renderMatchProgram() {
-    const container = document.getElementById('matches-programma');
+    const container = document.getElementById('programma-schedule');
     if (!container || !gameState.standings || gameState.standings.length === 0) {
         if (container) container.innerHTML = '<p>Geen competitieschema beschikbaar.</p>';
         return;
     }
+
+    // Render standings next to program
+    const divisionNames = ['Eredivisie', 'Eerste Divisie', 'Tweede Divisie', '1e Klasse', '2e Klasse', '3e Klasse', '4e Klasse', '5e Klasse', '6e Klasse'];
+    const standContainer = document.getElementById('programma-standings');
+    if (standContainer) standContainer.innerHTML = renderCompactStandings(divisionNames);
 
     const schedule = getSeasonSchedule(gameState.standings, gameState.week);
     const playerTeam = gameState.standings.find(t => t.isPlayer)?.name || gameState.club.name;
@@ -8430,7 +8871,8 @@ const SPONSORS = {
         description: 'Betrouwbaar als roggebrood. Geen verrassingen, gewoon elke week je geld.',
         matchIncome: 500,
         winBonus: 0,
-        icon: '🥖'
+        icon: '🥖',
+        duration: 8
     },
     balanced: {
         name: 'Café Het Gouden Paard',
@@ -8438,15 +8880,18 @@ const SPONSORS = {
         description: 'Gezellig kroegje met een gokkast achter. Winnen levert bonusrondes op.',
         matchIncome: 300,
         winBonus: 250,
-        icon: '🍺'
+        icon: '🍺',
+        duration: 10
     },
-    risky: {
-        name: 'Casino Jackpot Jansen',
-        tagline: 'Alles of niks, net als roulette',
-        description: 'Betaalt bijna niks, tenzij je wint. Dan regent het munten.',
-        matchIncome: 100,
-        winBonus: 600,
-        icon: '🎰'
+    intimico: {
+        name: 'intimico.nl',
+        tagline: 'Ontdek Je Sensualiteit',
+        description: 'Chique lingerielabel. Betaalt bescheiden, maar bij winst gaat de champagne open.',
+        matchIncome: 150,
+        winBonus: 750,
+        icon: '♥',
+        shirtName: 'Intimico ♥',
+        duration: 8
     }
 };
 
@@ -8532,38 +8977,28 @@ function selectSponsor(sponsorId) {
     const sponsor = SPONSORS[sponsorId];
     if (!sponsor) return;
 
-    // Store full sponsor object with weeklyPay calculated
+    // Block switching during active contract
+    if (gameState.sponsor && gameState.sponsor.weeksRemaining > 0) {
+        showNotification(`Je hebt nog een contract met ${gameState.sponsor.name} (${gameState.sponsor.weeksRemaining} weken)!`, 'warning');
+        return;
+    }
+
+    // Store full sponsor object with contract duration
     gameState.sponsor = {
         id: sponsorId,
         name: sponsor.name,
         matchIncome: sponsor.matchIncome,
         winBonus: sponsor.winBonus,
-        weeklyPay: sponsor.matchIncome, // One match per week
-        icon: sponsor.icon
+        weeklyPay: sponsor.matchIncome,
+        icon: sponsor.icon,
+        weeksRemaining: sponsor.duration
     };
 
     // Update UI
     updateSponsorKitDisplay();
+    renderShirtSponsorGrid();
 
-    // Mark selected block (v2 layout)
-    document.querySelectorAll('.sponsor-block').forEach(block => {
-        block.classList.remove('active');
-    });
-    const selectedBlock = document.querySelector(`.sponsor-block[data-sponsor="${sponsorId}"]`);
-    if (selectedBlock) {
-        selectedBlock.classList.add('active');
-    }
-
-    // Also support old layout
-    document.querySelectorAll('.sponsor-card-compact').forEach(card => {
-        card.classList.remove('active');
-    });
-    const selectedCard = document.querySelector(`.sponsor-card-compact[data-sponsor="${sponsorId}"]`);
-    if (selectedCard) {
-        selectedCard.classList.add('active');
-    }
-
-    showNotification(`${sponsor.name} is nu je shirtsponsor!`, 'success');
+    showNotification(`${sponsor.name} is nu je shirtsponsor voor ${sponsor.duration} weken!`, 'success');
     renderSponsorOverview();
     saveGame();
 }
@@ -8586,8 +9021,12 @@ function updateSponsorKitDisplay() {
     }
 
     if (gameState.sponsor) {
+        // Use shirtName from config if available, otherwise sponsor name
+        const sponsorConfig = SPONSORS[gameState.sponsor.id];
+        const displayName = (sponsorConfig && sponsorConfig.shirtName) || gameState.sponsor.name;
+
         // Split sponsor name across two lines
-        const words = gameState.sponsor.name.split(' ');
+        const words = displayName.split(' ');
         let line1 = '';
         let line2 = '';
 
@@ -8640,6 +9079,13 @@ function selectStadiumSponsor(sponsorId) {
 }
 
 function expireSponsorContracts() {
+    // Shirt sponsor
+    if (gameState.sponsor && gameState.sponsor.weeksRemaining != null && gameState.sponsor.weeksRemaining <= 0) {
+        showNotification(`Contract met shirtsponsor ${gameState.sponsor.name} is afgelopen.`, 'info');
+        gameState.sponsor = null;
+        saveGame();
+    }
+    // Board sponsor
     const bord = gameState.sponsorSlots?.bord;
     if (bord && bord.weeksRemaining != null && bord.weeksRemaining <= 0) {
         showNotification(`Contract met ${bord.name} is afgelopen.`, 'info');
@@ -8649,6 +9095,15 @@ function expireSponsorContracts() {
 }
 
 function tickSponsorContracts() {
+    // Shirt sponsor
+    if (gameState.sponsor && gameState.sponsor.weeksRemaining != null) {
+        gameState.sponsor.weeksRemaining--;
+        if (gameState.sponsor.weeksRemaining <= 0) {
+            showNotification(`Contract met shirtsponsor ${gameState.sponsor.name} is afgelopen.`, 'info');
+            gameState.sponsor = null;
+        }
+    }
+    // Board sponsor
     const bord = gameState.sponsorSlots?.bord;
     if (bord && bord.weeksRemaining != null) {
         bord.weeksRemaining--;
@@ -8678,16 +9133,28 @@ function renderShirtSponsorGrid() {
     const container = document.getElementById('shirt-sponsor-grid');
     if (!container) return;
 
-    container.innerHTML = Object.entries(SPONSORS).map(([id, s]) => `
-        <div class="sponsor-block ${gameState.sponsor?.id === id ? 'active' : ''}" data-sponsor="${id}" onclick="selectSponsor('${id}')">
+    const hasContract = gameState.sponsor && gameState.sponsor.weeksRemaining > 0;
+
+    container.innerHTML = Object.entries(SPONSORS).map(([id, s]) => {
+        const isActive = gameState.sponsor?.id === id;
+        const isLocked = hasContract && !isActive;
+        const weeksLeft = isActive && gameState.sponsor.weeksRemaining ? `${gameState.sponsor.weeksRemaining}w` : '';
+
+        return `
+        <div class="sponsor-block ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}" data-sponsor="${id}" onclick="selectSponsor('${id}')">
             <div class="sb-icon">${s.icon}</div>
-            <div class="sb-name">${s.name}</div>
+            <div class="sb-info">
+                <div class="sb-name">${s.name}</div>
+                <div class="sb-tagline">${s.tagline}</div>
+                <div class="sb-duration">${s.duration} weken contract</div>
+            </div>
             <div class="sb-stats">
                 <span class="sb-pay">€${s.matchIncome}/wed</span>
-                <span class="sb-bonus">+€${s.winBonus} win</span>
+                ${s.winBonus > 0 ? `<span class="sb-bonus">+€${s.winBonus} win</span>` : ''}
+                ${weeksLeft ? `<span class="sb-weeks">${weeksLeft}</span>` : ''}
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 function generateSponsorMarket() {
@@ -8726,11 +9193,10 @@ function renderSponsorMarket() {
 
     container.innerHTML = offers.map(offer => `
         <div class="sponsor-market-offer" onclick="selectMarketSponsor('${offer.id}')">
-            <span class="smo-slot-badge smo-slot-bord">📋 Bordsponsor</span>
             <div class="smo-icon">${offer.icon}</div>
             <div class="smo-name">${offer.name}</div>
             <div class="smo-details">
-                <span class="smo-income">€${offer.weeklyIncome}/week</span>
+                <span class="smo-income">€${offer.weeklyIncome}/wk</span>
                 <span class="smo-duration">${offer.duration} weken</span>
             </div>
         </div>
@@ -8783,17 +9249,28 @@ function renderSponsorOverview() {
     // Update kit display
     updateSponsorKitDisplay();
 
-    const shirtData = gameState.sponsor ? { name: gameState.sponsor.name, weeklyIncome: gameState.sponsor.weeklyPay } : null;
+    const shirtData = gameState.sponsor ? { name: gameState.sponsor.name, weeklyIncome: gameState.sponsor.weeklyPay, weeksRemaining: gameState.sponsor.weeksRemaining } : null;
     const bordData = gameState.sponsorSlots?.bord || null;
+
+    // Update reclamebord
+    const bordIcon = document.getElementById('bord-sponsor-icon');
+    const bordName = document.getElementById('bord-sponsor-name');
+    if (bordIcon && bordName) {
+        if (bordData) {
+            bordIcon.textContent = bordData.icon || '';
+            bordName.textContent = bordData.name;
+        } else {
+            bordIcon.textContent = '';
+            bordName.textContent = 'Geen sponsor';
+        }
+    }
 
     function slotTile(label, data, key) {
         if (data) {
             const weeksInfo = data.weeksRemaining != null ? `<span class="spo-weeks">${data.weeksRemaining}w resterend</span>` : '';
-            const clearBtn = key !== 'shirt' ? `<button class="spo-clear" onclick="clearSponsorSlot('${key}')" title="Verwijderen">✕</button>` : '';
             return `<div class="spo-tile filled">
                 <div class="spo-tile-header">
                     <span class="spo-label">${label}</span>
-                    ${clearBtn}
                 </div>
                 <span class="spo-name">${data.name}</span>
                 <div class="spo-tile-footer">
@@ -8813,18 +9290,15 @@ function renderSponsorOverview() {
     const bordWeekly = bordData?.weeklyIncome || 0;
     const totalWeekly = shirtWeekly + bordWeekly;
 
-    const overviewContent = document.getElementById('sponsor-overview-content');
-    if (overviewContent) {
-        overviewContent.innerHTML = `
-            <div class="spo-tiles">
-                ${slotTile('👕 Shirtsponsor', shirtData, 'shirt')}
-                ${slotTile('📋 Bordsponsor', bordData, 'bord')}
-            </div>
-            <div class="spo-total">
-                <span>Totaal per week</span>
-                <span>€${totalWeekly}</span>
-            </div>
-        `;
+    const tileShirt = document.getElementById('spo-tile-shirt');
+    if (tileShirt) tileShirt.innerHTML = slotTile('👕 Shirtsponsor', shirtData, 'shirt');
+
+    const tileBord = document.getElementById('spo-tile-bord');
+    if (tileBord) tileBord.innerHTML = slotTile('📋 Bordsponsor', bordData, 'bord');
+
+    const totalEl = document.getElementById('sponsor-overview-total');
+    if (totalEl) {
+        totalEl.innerHTML = `<div class="spo-total"><span>Totaal per week</span><span>€${totalWeekly}</span></div>`;
     }
 }
 
@@ -8893,19 +9367,11 @@ window.selectScoutingNetwork = selectScoutingNetwork;
 // STAFF CENTER PAGE
 // ================================================
 
-const STAFF_TRAINERS = [
-    { id: 'tr_keeper', name: 'Keeperstrainer', icon: '🧤', cost: 3000, salary: 200, effect: 'Train keepers', position: 'keeper' },
-    { id: 'tr_verdediging', name: 'Verdedigingstrainer', icon: '🛡️', cost: 3000, salary: 200, effect: 'Train verdedigers', position: 'verdediging' },
-    { id: 'tr_middenveld', name: 'Middenveldtrainer', icon: '⚙️', cost: 3000, salary: 200, effect: 'Train middenvelders', position: 'middenveld' },
-    { id: 'tr_aanval', name: 'Aanvalstrainer', icon: '⚽', cost: 3000, salary: 200, effect: 'Train aanvallers', position: 'aanval' },
-    { id: 'tr_conditie', name: 'Conditietrainer', icon: '💪', cost: 4000, salary: 300, effect: '+10% fitness hele team', position: 'conditie' }
-];
-
-const STAFF_MEDISCH = [
-    { id: 'st_assistent', name: 'Assistent Manager', icon: '👔', cost: 5000, salary: 400, effect: '+5% team prestatie' },
-    { id: 'st_fysio', name: 'Fysiotherapeut', icon: '🏥', cost: 4000, salary: 300, effect: 'Sneller blessure herstel' },
-    { id: 'st_arts', name: 'Clubarts', icon: '⚕️', cost: 8000, salary: 500, effect: 'Minder blessures' },
-    { id: 'st_mascotte', name: 'Mascotte', icon: '🦁', cost: 2000, salary: 100, effect: '+5% thuisvoordeel' }
+const STAFF_MEMBERS = [
+    { id: 'st_scout', name: 'Talentscout', icon: '🔭', cost: 500, salary: 150, effect: 'Betere spelers op de transfermarkt' },
+    { id: 'st_trainer', name: 'Individuele Trainer', icon: '🎯', cost: 400, salary: 120, effect: '+20% individuele training' },
+    { id: 'st_fysio', name: 'Fysiotherapeut', icon: '🏥', cost: 750, salary: 200, effect: 'Sneller blessure herstel', requiresMedical: 1 },
+    { id: 'st_jurist', name: 'Jurist', icon: '⚖️', cost: 1000, salary: 250, effect: '-10% transferkosten', requiresDivision: 6 }
 ];
 
 // Direct hire scout from scout page
@@ -8918,12 +9384,13 @@ window.hireScoutDirect = function() {
         return;
     }
 
-    if (gameState.club.budget < 1) {
+    const scoutCost = STAFF_MEMBERS.find(s => s.id === 'st_scout')?.cost || 500;
+    if (gameState.club.budget < scoutCost) {
         showNotification('Niet genoeg budget!', 'error');
         return;
     }
 
-    gameState.club.budget -= 1;
+    gameState.club.budget -= scoutCost;
     gameState.hiredStaff.medisch.push('st_scout');
     updateBudgetDisplays();
     renderScoutPage();
@@ -8932,56 +9399,70 @@ window.hireScoutDirect = function() {
 };
 
 function renderStaffPage() {
-    // Unified staff view - no tabs needed
-    renderTrainersStaff();
-    renderMedischStaff();
-}
-
-function renderTrainersStaff() {
-    const container = document.getElementById('trainers-staff-grid');
+    const container = document.getElementById('staff-hire-grid');
     if (!container) return;
 
     if (!gameState.hiredStaff) gameState.hiredStaff = { trainers: [], medisch: [] };
 
-    let html = '';
-    STAFF_TRAINERS.forEach(staff => {
-        const isHired = gameState.hiredStaff.trainers?.includes(staff.id);
-        html += createStaffCard(staff, isHired, 'trainers');
-    });
-    container.innerHTML = html;
-}
+    // Get medical building level for fysio check
+    const medConfig = STADIUM_TILE_CONFIG.medical;
+    const medId = gameState.stadium[medConfig.stateKey];
+    const medLevel = medConfig.levels.findIndex(l => l.id === medId);
 
-function renderMedischStaff() {
-    const container = document.getElementById('medisch-staff-grid');
-    if (!container) return;
-
-    if (!gameState.hiredStaff) gameState.hiredStaff = { trainers: [], medisch: [] };
+    const division = gameState.club.division;
 
     let html = '';
-    STAFF_MEDISCH.forEach(staff => {
-        const isHired = gameState.hiredStaff.medisch?.includes(staff.id);
-        html += createStaffCard(staff, isHired, 'medisch');
+    STAFF_MEMBERS.forEach(staff => {
+        const isHired = gameState.hiredStaff.medisch?.includes(staff.id) || gameState.hiredStaff.trainers?.includes(staff.id);
+
+        // Check lock conditions
+        let lockReason = null;
+        if (staff.requiresMedical !== undefined && medLevel < staff.requiresMedical) {
+            lockReason = 'Bouw eerst een Fysiogebouw (Medisch Niv. 1)';
+        }
+        if (staff.requiresDivision !== undefined && division > staff.requiresDivision) {
+            lockReason = 'Vrijgespeeld in de 4e Klasse';
+        }
+
+        const canAfford = gameState.club.budget >= staff.cost;
+
+        if (isHired) {
+            html += `
+                <div class="staff-hire-card hired">
+                    <div class="shc-icon">${staff.icon}</div>
+                    <div class="shc-name">${staff.name}</div>
+                    <div class="shc-desc">${staff.effect}</div>
+                    <div class="shc-status">✓ In dienst</div>
+                    <div class="shc-cost">${formatCurrency(staff.salary)}/week</div>
+                </div>
+            `;
+        } else if (lockReason) {
+            html += `
+                <div class="staff-hire-card locked">
+                    <div class="shc-icon">${staff.icon}</div>
+                    <div class="shc-name">${staff.name}</div>
+                    <div class="shc-desc">${staff.effect}</div>
+                    <div class="shc-lock">🔒 ${lockReason}</div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="staff-hire-card ${!canAfford ? 'cant-afford' : ''}">
+                    <div class="shc-icon">${staff.icon}</div>
+                    <div class="shc-name">${staff.name}</div>
+                    <div class="shc-desc">${staff.effect}</div>
+                    <div class="shc-cost-row">
+                        <span class="shc-cost">${formatCurrency(staff.cost)} eenmalig</span>
+                        <span class="shc-salary">+ ${formatCurrency(staff.salary)}/week</span>
+                    </div>
+                    <button class="btn btn-sm btn-primary" ${!canAfford ? 'disabled' : ''} onclick="hireStaffMember('${staff.id}', ${staff.cost})">
+                        ${canAfford ? 'Aannemen' : 'Te duur'}
+                    </button>
+                </div>
+            `;
+        }
     });
     container.innerHTML = html;
-}
-
-function createStaffCard(staff, isHired, category) {
-    return `
-        <div class="staff-hire-card ${isHired ? 'hired' : ''}">
-            <div class="shc-icon">${staff.icon}</div>
-            <div class="shc-name">${staff.name}</div>
-            <div class="shc-desc">${staff.effect}</div>
-            ${isHired ? `
-                <div class="shc-status">✓ In dienst</div>
-                <div class="shc-cost">€${staff.salary}/week</div>
-            ` : `
-                <div class="shc-cost">€${staff.cost}</div>
-                <button class="btn btn-sm btn-primary" onclick="hireStaff('${category}', '${staff.id}', ${staff.cost})">
-                    Aannemen
-                </button>
-            `}
-        </div>
-    `;
 }
 
 function renderScoutingContent() {
@@ -9021,22 +9502,50 @@ function renderScoutingContent() {
 }
 
 window.hireStaff = function(category, staffId, cost) {
+    // Legacy compatibility — redirect to new system
+    window.hireStaffMember(staffId, cost);
+};
+
+window.hireStaffMember = function(staffId, cost) {
     if (gameState.club.budget < cost) {
         showNotification('Niet genoeg budget!', 'error');
         return;
     }
 
     if (!gameState.hiredStaff) gameState.hiredStaff = { trainers: [], medisch: [] };
-    if (!gameState.hiredStaff[category]) gameState.hiredStaff[category] = [];
+    if (!gameState.hiredStaff.medisch) gameState.hiredStaff.medisch = [];
 
-    if (!gameState.hiredStaff[category].includes(staffId)) {
-        gameState.hiredStaff[category].push(staffId);
-        gameState.club.budget -= cost;
-        updateBudgetDisplays();
-        renderStaffPage();
-        saveGame();
-        showNotification('Stafmedewerker aangenomen!', 'success');
+    if (gameState.hiredStaff.medisch.includes(staffId)) {
+        showNotification('Al in dienst!', 'info');
+        return;
     }
+
+    // Check lock conditions
+    const staff = STAFF_MEMBERS.find(s => s.id === staffId);
+    if (staff) {
+        if (staff.requiresMedical !== undefined) {
+            const medConfig = STADIUM_TILE_CONFIG.medical;
+            const medId = gameState.stadium[medConfig.stateKey];
+            const medLevel = medConfig.levels.findIndex(l => l.id === medId);
+            if (medLevel < staff.requiresMedical) {
+                showNotification('Bouw eerst een Fysiogebouw!', 'error');
+                return;
+            }
+        }
+        if (staff.requiresDivision !== undefined && gameState.club.division > staff.requiresDivision) {
+            showNotification('Nog niet vrijgespeeld!', 'error');
+            return;
+        }
+    }
+
+    gameState.hiredStaff.medisch.push(staffId);
+    gameState.club.budget -= cost;
+    updateBudgetDisplays();
+    renderStaffPage();
+    saveGame();
+
+    const staffName = staff?.name || 'Stafmedewerker';
+    showNotification(`${staffName} aangenomen!`, 'success');
 };
 
 window.startScoutSearchFromStaff = function() {
@@ -9297,6 +9806,8 @@ function renderStadiumMap() {
     const trainX = cx - trainW - 8, trainY = 290;
     const acadX = cx + 8, acadY = 290;
 
+    const constructionData = gameState.stadium.construction;
+
     let svg = `<svg viewBox="0 0 620 400" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Inter', system-ui, sans-serif;">`;
 
     // ===== DEFS =====
@@ -9312,7 +9823,25 @@ function renderStadiumMap() {
             <stop offset="50%" stop-color="#5a5a5a"/>
             <stop offset="100%" stop-color="#4a4a4a"/>
         </linearGradient>
+        <pattern id="construction-stripes" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="4" height="8" fill="rgba(255,165,0,0.3)"/>
+            <rect x="4" width="4" height="8" fill="rgba(0,0,0,0.15)"/>
+        </pattern>
     </defs>`;
+
+    // Helper: render construction overlay on a building area
+    function renderConstructionOverlay(x, y, w, h, rx) {
+        let overlay = '';
+        overlay += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#construction-stripes)" rx="${rx || 8}" class="construction-stripes-anim"/>`;
+        overlay += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="rgba(255,165,0,0.08)" rx="${rx || 8}"/>`;
+        // Crane icon
+        const iconX = x + w/2, iconY = y + h/2 - 6;
+        overlay += `<text x="${iconX}" y="${iconY}" text-anchor="middle" font-size="14" fill="rgba(255,165,0,0.9)">🏗️</text>`;
+        // Timer badge
+        overlay += `<rect x="${x + w/2 - 22}" y="${y + h/2 + 2}" width="44" height="14" fill="rgba(0,0,0,0.7)" rx="7"/>`;
+        overlay += `<text id="construction-timer-map" x="${x + w/2}" y="${y + h/2 + 12}" text-anchor="middle" fill="#ffa500" font-size="8" font-weight="bold">--:--</text>`;
+        return overlay;
+    }
 
     // ===== BACKGROUND =====
     svg += `<rect width="620" height="400" fill="url(#grass-pattern)" rx="12"/>`;
@@ -9376,6 +9905,11 @@ function renderStadiumMap() {
     svg += `<text x="${cx - 16}" y="${labelY}" text-anchor="middle" fill="white" font-size="8" font-weight="bold">Stadion</text>`;
     svg += `<rect x="${cx + 8}" y="${labelY - 10}" width="22" height="12" fill="${tColors[1]}" rx="6"/>`;
     svg += `<text x="${cx + 19}" y="${labelY - 1}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${tribuneLevel + 1}</text>`;
+    // Construction overlay for tribune
+    if (constructionData && constructionData.category === 'tribune') {
+        const ox = cx - stadW/2, oy = cy - stadH/2;
+        svg += renderConstructionOverlay(ox, oy, stadW, stadH, 6);
+    }
     svg += `</g>`;
 
     // ===== GRASS (field) =====
@@ -9405,6 +9939,10 @@ function renderStadiumMap() {
     svg += `<text x="${cx - 16}" y="${cy+fieldH/2-5}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7" font-weight="600" letter-spacing="1">Wedstrijdveld</text>`;
     svg += `<rect x="${cx + 22}" y="${cy+fieldH/2-13}" width="22" height="12" fill="${gColors[1]}" rx="6"/>`;
     svg += `<text x="${cx + 33}" y="${cy+fieldH/2-4}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${grassLevel+1}</text>`;
+    // Construction overlay for grass
+    if (constructionData && constructionData.category === 'grass') {
+        svg += renderConstructionOverlay(cx-fieldW/2, cy-fieldH/2, fieldW, fieldH, 2);
+    }
     svg += `</g>`;
 
     // ===== TRAINING FIELD =====
@@ -9433,6 +9971,10 @@ function renderStadiumMap() {
         svg += `<text x="${x+w/2 - 14}" y="${y-6}" text-anchor="middle" fill="${lc[1]}" font-size="8" font-weight="bold">${icon} ${label}</text>`;
         svg += `<rect x="${x+w/2 + 6}" y="${y-16}" width="22" height="12" fill="${lc[1]}" rx="6"/>`;
         svg += `<text x="${x+w/2 + 17}" y="${y-7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level+1}</text>`;
+        // Construction overlay for training/academy fields
+        if (constructionData && constructionData.category === key) {
+            svg += renderConstructionOverlay(x, y, w, h, 6);
+        }
         svg += `</g>`;
     }
 
@@ -9480,6 +10022,11 @@ function renderStadiumMap() {
     svg += `<text x="${acadCenterX - 10}" y="${f1y-6}" text-anchor="middle" fill="${acColors[1]}" font-size="8" font-weight="bold">Jeugdacademie</text>`;
     svg += `<rect x="${acadCenterX + 30}" y="${f1y-16}" width="22" height="12" fill="${acColors[1]}" rx="6"/>`;
     svg += `<text x="${acadCenterX + 41}" y="${f1y-7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${acadLevel+1}</text>`;
+    // Construction overlay for academy
+    if (constructionData && constructionData.category === 'academy') {
+        const totalAcadW = acadSmallW * 2 + acadGap;
+        svg += renderConstructionOverlay(acadX, acadY, totalAcadW, acadSmallH, 4);
+    }
     svg += `</g>`;
 
     // ===== BUILDINGS (left & right columns) =====
@@ -9556,6 +10103,12 @@ function renderStadiumMap() {
             svg += `<rect x="${bx+cbw-24}" y="${by-2}" width="24" height="12" fill="${meta.accent}" rx="6"/>`;
             svg += `<text x="${bx+cbw-12}" y="${by+7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level}</text>`;
         }
+
+        // Construction overlay
+        if (constructionData && constructionData.category === key) {
+            svg += renderConstructionOverlay(bx, by, cbw, cbh, 8);
+        }
+
         svg += `</g>`;
     });
 
@@ -9635,7 +10188,12 @@ const STADIUM_TILE_CONFIG = {
             { id: 'tribune_2', name: 'Stenen Tribune', capacity: 500, cost: 5000, effect: '500 toeschouwers' },
             { id: 'tribune_3', name: 'Overdekte Tribune', capacity: 1000, cost: 15000, effect: '1.000 toeschouwers' },
             { id: 'tribune_4', name: 'Moderne Tribune', capacity: 2500, cost: 40000, effect: '2.500 toeschouwers', reqCapacity: 500 },
-            { id: 'tribune_5', name: 'Stadion Tribune', capacity: 5000, cost: 100000, effect: '5.000 toeschouwers', reqCapacity: 1000 }
+            { id: 'tribune_5', name: 'Stadion Tribune', capacity: 5000, cost: 100000, effect: '5.000 toeschouwers', reqCapacity: 1000, reqDivision: 6 },
+            { id: 'tribune_6', name: 'Hoefijzer Stadion', capacity: 8000, cost: 250000, effect: '8.000 toeschouwers', reqDivision: 5 },
+            { id: 'tribune_7', name: 'Gesloten Stadion', capacity: 12000, cost: 500000, effect: '12.000 toeschouwers', reqDivision: 4 },
+            { id: 'tribune_8', name: 'Professioneel Stadion', capacity: 18000, cost: 1000000, effect: '18.000 toeschouwers', reqDivision: 3 },
+            { id: 'tribune_9', name: 'Groot Stadion', capacity: 28000, cost: 2500000, effect: '28.000 toeschouwers', reqDivision: 2 },
+            { id: 'tribune_10', name: 'Arena', capacity: 40000, cost: 6000000, effect: '40.000 toeschouwers', reqDivision: 1 }
         ],
         stateKey: 'tribune'
     },
@@ -9645,7 +10203,13 @@ const STADIUM_TILE_CONFIG = {
             { id: 'grass_0', name: 'Basis Gras', cost: 0, effect: 'Geen bonus' },
             { id: 'grass_1', name: 'Onderhouden Gras', cost: 3000, effect: '+5% thuisvoordeel' },
             { id: 'grass_2', name: 'Professioneel Gras', cost: 8000, effect: '+10% thuisvoordeel', reqCapacity: 500 },
-            { id: 'grass_3', name: 'Kunstgras', cost: 20000, effect: '+15% thuisvoordeel', reqCapacity: 1000 }
+            { id: 'grass_3', name: 'Kunstgras', cost: 20000, effect: '+15% thuisvoordeel', reqCapacity: 1000 },
+            { id: 'grass_4', name: 'Hybride Gras', cost: 50000, effect: '+20% thuisvoordeel', reqDivision: 6 },
+            { id: 'grass_5', name: 'Verwarmd Veld', cost: 120000, effect: '+25% thuisvoordeel', reqDivision: 5 },
+            { id: 'grass_6', name: 'Premium Turf', cost: 250000, effect: '+30% thuisvoordeel', reqDivision: 4 },
+            { id: 'grass_7', name: 'Drainage Systeem', cost: 500000, effect: '+35% thuisvoordeel', reqDivision: 3 },
+            { id: 'grass_8', name: 'Topgras met Groeilicht', cost: 1000000, effect: '+40% thuisvoordeel', reqDivision: 2 },
+            { id: 'grass_9', name: 'Eredivisie Veld', cost: 2500000, effect: '+50% thuisvoordeel', reqDivision: 1 }
         ],
         stateKey: 'grass'
     },
@@ -9655,7 +10219,13 @@ const STADIUM_TILE_CONFIG = {
             { id: 'train_1', name: 'Basisveld', cost: 0, effect: '+5% trainingssnelheid' },
             { id: 'train_2', name: 'Trainingsveld', cost: 5000, effect: '+10% trainingssnelheid' },
             { id: 'train_3', name: 'Modern Complex', cost: 15000, effect: '+20% trainingssnelheid', reqCapacity: 500 },
-            { id: 'train_4', name: 'Elite Complex', cost: 40000, effect: '+30% trainingssnelheid', reqCapacity: 1000 }
+            { id: 'train_4', name: 'Elite Complex', cost: 40000, effect: '+30% trainingssnelheid', reqCapacity: 1000 },
+            { id: 'train_5', name: 'Professioneel Complex', cost: 100000, effect: '+40% trainingssnelheid', reqDivision: 6 },
+            { id: 'train_6', name: 'Meerdere Velden', cost: 250000, effect: '+50% trainingssnelheid', reqDivision: 5 },
+            { id: 'train_7', name: 'Indoor Hal', cost: 500000, effect: '+65% trainingssnelheid', reqDivision: 4 },
+            { id: 'train_8', name: 'Wetenschappelijk Lab', cost: 1000000, effect: '+80% trainingssnelheid', reqDivision: 3 },
+            { id: 'train_9', name: 'Topsport Centrum', cost: 2000000, effect: '+100% trainingssnelheid', reqDivision: 2 },
+            { id: 'train_10', name: 'Wereldklasse Complex', cost: 5000000, effect: '+125% trainingssnelheid', reqDivision: 1 }
         ],
         stateKey: 'training'
     },
@@ -9666,17 +10236,28 @@ const STADIUM_TILE_CONFIG = {
             { id: 'med_1', name: 'EHBO Kist', cost: 2000, effect: '-10% blessureduur' },
             { id: 'med_2', name: 'Medische Kamer', cost: 4000, effect: '-20% blessureduur' },
             { id: 'med_3', name: 'Fysiotherapie', cost: 12000, effect: '-35% blessureduur', reqCapacity: 500 },
-            { id: 'med_4', name: 'Medisch Centrum', cost: 30000, effect: '-50% blessureduur', reqCapacity: 1000 }
+            { id: 'med_4', name: 'Medisch Centrum', cost: 30000, effect: '-50% blessureduur', reqCapacity: 1000 },
+            { id: 'med_5', name: 'Sportmedische Kliniek', cost: 75000, effect: '-60% blessureduur', reqDivision: 6 },
+            { id: 'med_6', name: 'Revalidatiecentrum', cost: 180000, effect: '-65% blessureduur', reqDivision: 5 },
+            { id: 'med_7', name: 'Hydrotherapie', cost: 400000, effect: '-70% blessureduur', reqDivision: 4 },
+            { id: 'med_8', name: 'Cryokamer', cost: 800000, effect: '-75% blessureduur', reqDivision: 3 },
+            { id: 'med_9', name: 'Medisch Instituut', cost: 2000000, effect: '-85% blessureduur', reqDivision: 2 }
         ],
         stateKey: 'medical'
     },
     academy: {
         description: 'Een betere jeugdopleiding produceert talentvoller spelers.',
         levels: [
-            { id: 'acad_1', name: 'Jeugdelftal', cost: 0, effect: 'Basistalent (40-55)' },
-            { id: 'acad_2', name: 'Jeugdopleiding', cost: 6000, effect: 'Beter talent (45-60)' },
-            { id: 'acad_3', name: 'Voetbalschool', cost: 18000, effect: 'Goed talent (50-65)', reqCapacity: 500 },
-            { id: 'acad_4', name: 'Topacademie', cost: 50000, effect: 'Toptalent (55-75)', reqCapacity: 1000 }
+            { id: 'acad_1', name: 'Jeugdelftal', cost: 0, effect: 'Max ★ potentieel', maxStars: 1 },
+            { id: 'acad_2', name: 'Jeugdopleiding', cost: 6000, effect: 'Max ★⯪ potentieel', maxStars: 1.5 },
+            { id: 'acad_3', name: 'Voetbalschool', cost: 18000, effect: 'Max ★★ potentieel', maxStars: 2, reqCapacity: 500 },
+            { id: 'acad_4', name: 'Topacademie', cost: 50000, effect: 'Max ★★⯪ potentieel', maxStars: 2.5, reqCapacity: 1000 },
+            { id: 'acad_5', name: 'Talentcentrum', cost: 130000, effect: 'Max ★★★ potentieel', maxStars: 3, reqDivision: 6 },
+            { id: 'acad_6', name: 'Regionale Academie', cost: 300000, effect: 'Max ★★★⯪ potentieel', maxStars: 3.5, reqDivision: 5 },
+            { id: 'acad_7', name: 'Nationale Academie', cost: 600000, effect: 'Max ★★★★ potentieel', maxStars: 4, reqDivision: 4 },
+            { id: 'acad_8', name: 'Elite Academie', cost: 1200000, effect: 'Max ★★★★⯪ potentieel', maxStars: 4.5, reqDivision: 3 },
+            { id: 'acad_9', name: 'Topinstituut', cost: 2500000, effect: 'Max ★★★★★ potentieel', maxStars: 5, reqDivision: 2 },
+            { id: 'acad_10', name: 'Wereldacademie', cost: 5000000, effect: 'Max ★★★★★ potentieel', maxStars: 5, reqDivision: 1 }
         ],
         stateKey: 'academy'
     },
@@ -9687,7 +10268,12 @@ const STADIUM_TILE_CONFIG = {
             { id: 'scout_1', name: 'Basisnetwerk', cost: 2000, effect: 'Lokaal scouten' },
             { id: 'scout_2', name: 'Regionaal Netwerk', cost: 4000, effect: 'Regionaal scouten' },
             { id: 'scout_3', name: 'Nationaal Netwerk', cost: 12000, effect: 'Nationaal scouten', reqCapacity: 500 },
-            { id: 'scout_4', name: 'Internationaal', cost: 35000, effect: 'Internationaal scouten', reqCapacity: 1000 }
+            { id: 'scout_4', name: 'Internationaal', cost: 35000, effect: 'Internationaal scouten', reqCapacity: 1000 },
+            { id: 'scout_5', name: 'Europees Netwerk', cost: 80000, effect: 'Europa + potentieel', reqDivision: 6 },
+            { id: 'scout_6', name: 'Wereldwijd Netwerk', cost: 200000, effect: 'Wereld + potentieel', reqDivision: 5 },
+            { id: 'scout_7', name: 'Data-Analyse', cost: 450000, effect: 'Data-scouting + stats', reqDivision: 4 },
+            { id: 'scout_8', name: 'AI Scouting', cost: 1000000, effect: 'AI-analyse + verborgen parels', reqDivision: 3 },
+            { id: 'scout_9', name: 'Globaal Netwerk', cost: 2500000, effect: 'Volledige transparantie', reqDivision: 2 }
         ],
         stateKey: 'scouting'
     },
@@ -9698,7 +10284,12 @@ const STADIUM_TILE_CONFIG = {
             { id: 'ysct_1', name: 'Lokale Scouts', cost: 2500, effect: 'Basis jeugdtalent' },
             { id: 'ysct_2', name: 'Regionale Scouts', cost: 5000, effect: 'Beter jeugdtalent' },
             { id: 'ysct_3', name: 'Nationale Scouts', cost: 15000, effect: 'Goed jeugdtalent', reqCapacity: 500 },
-            { id: 'ysct_4', name: 'Elite Scouts', cost: 40000, effect: 'Top jeugdtalent', reqCapacity: 1000 }
+            { id: 'ysct_4', name: 'Elite Scouts', cost: 40000, effect: 'Top jeugdtalent', reqCapacity: 1000 },
+            { id: 'ysct_5', name: 'Europese Scouts', cost: 100000, effect: 'Europees jeugdtalent', reqDivision: 6 },
+            { id: 'ysct_6', name: 'Wereldwijde Scouts', cost: 250000, effect: 'Wereldwijd talent', reqDivision: 5 },
+            { id: 'ysct_7', name: 'Jeugd Data-Lab', cost: 500000, effect: 'Data-gestuurde selectie', reqDivision: 4 },
+            { id: 'ysct_8', name: 'Expertnetwerk', cost: 1000000, effect: 'Expert scouts + wonderkids', reqDivision: 3 },
+            { id: 'ysct_9', name: 'Wereldklasse Scouting', cost: 2500000, effect: 'Beste jeugd ter wereld', reqDivision: 2 }
         ],
         stateKey: 'youthscouting'
     },
@@ -9709,7 +10300,12 @@ const STADIUM_TILE_CONFIG = {
             { id: 'kantine_1', name: 'Koffiehoek', cost: 1500, effect: '€50 per wedstrijd' },
             { id: 'kantine_2', name: 'Clubkantine', cost: 3000, effect: '€150 per wedstrijd' },
             { id: 'kantine_3', name: 'Restaurant', cost: 10000, effect: '€400 per wedstrijd', reqCapacity: 500 },
-            { id: 'kantine_4', name: 'Horeca Complex', cost: 25000, effect: '€800 per wedstrijd', reqCapacity: 1000 }
+            { id: 'kantine_4', name: 'Horeca Complex', cost: 25000, effect: '€800 per wedstrijd', reqCapacity: 1000 },
+            { id: 'kantine_5', name: 'Brasserie', cost: 60000, effect: '€1500 per wedstrijd', reqDivision: 6 },
+            { id: 'kantine_6', name: 'Grand Cafe', cost: 150000, effect: '€3000 per wedstrijd', reqDivision: 5 },
+            { id: 'kantine_7', name: 'Food Court', cost: 350000, effect: '€5000 per wedstrijd', reqDivision: 4 },
+            { id: 'kantine_8', name: 'Premium Restaurant', cost: 750000, effect: '€8000 per wedstrijd', reqDivision: 3 },
+            { id: 'kantine_9', name: 'VIP Hospitality', cost: 2000000, effect: '€15000 per wedstrijd', reqDivision: 2 }
         ],
         stateKey: 'kantine'
     },
@@ -9720,7 +10316,12 @@ const STADIUM_TILE_CONFIG = {
             { id: 'sponsor_1', name: 'Lokale Sponsors', cost: 2500, effect: 'Basis sponsordeals' },
             { id: 'sponsor_2', name: 'Regionale Sponsors', cost: 5000, effect: 'Betere deals' },
             { id: 'sponsor_3', name: 'Grote Sponsors', cost: 15000, effect: 'Premium deals', reqCapacity: 500 },
-            { id: 'sponsor_4', name: 'Hoofdsponsors', cost: 40000, effect: 'Top sponsordeals', reqCapacity: 1000 }
+            { id: 'sponsor_4', name: 'Hoofdsponsors', cost: 40000, effect: 'Top sponsordeals', reqCapacity: 1000 },
+            { id: 'sponsor_5', name: 'Bedrijfslounge', cost: 100000, effect: 'Bedrijfssponsoring', reqDivision: 6 },
+            { id: 'sponsor_6', name: 'Business Club', cost: 250000, effect: 'Business partnerships', reqDivision: 5 },
+            { id: 'sponsor_7', name: 'Corporate Partners', cost: 500000, effect: 'Corporate sponsoring', reqDivision: 4 },
+            { id: 'sponsor_8', name: 'Naamrechten', cost: 1500000, effect: 'Stadion naamrechten', reqDivision: 3 },
+            { id: 'sponsor_9', name: 'Internationaal Merk', cost: 4000000, effect: 'Internationaal sponsormerk', reqDivision: 2 }
         ],
         stateKey: 'sponsoring'
     },
@@ -9731,7 +10332,12 @@ const STADIUM_TILE_CONFIG = {
             { id: 'pers_1', name: 'Interview Hoek', cost: 2000, effect: '+5% reputatie' },
             { id: 'pers_2', name: 'Perszaal', cost: 4000, effect: '+10% reputatie' },
             { id: 'pers_3', name: 'Mediacentrum', cost: 12000, effect: '+20% reputatie', reqCapacity: 500 },
-            { id: 'pers_4', name: 'Perscomplex', cost: 30000, effect: '+35% reputatie', reqCapacity: 1000 }
+            { id: 'pers_4', name: 'Perscomplex', cost: 30000, effect: '+35% reputatie', reqCapacity: 1000 },
+            { id: 'pers_5', name: 'Broadcast Studio', cost: 75000, effect: '+50% reputatie', reqDivision: 6 },
+            { id: 'pers_6', name: 'TV Studio', cost: 180000, effect: '+65% reputatie', reqDivision: 5 },
+            { id: 'pers_7', name: 'Digitaal Platform', cost: 400000, effect: '+80% reputatie', reqDivision: 4 },
+            { id: 'pers_8', name: 'Streaming Studio', cost: 1000000, effect: '+100% reputatie', reqDivision: 3 },
+            { id: 'pers_9', name: 'Mediacomplex', cost: 2500000, effect: '+150% reputatie', reqDivision: 2 }
         ],
         stateKey: 'perszaal'
     }
@@ -9889,6 +10495,18 @@ function closeStadiumPanel() {
     currentStadiumCategory = null;
 }
 
+function getDivisionUnlockLabel(reqDivision) {
+    const labels = {
+        6: 'Vrijgespeeld in de 4e Klasse',
+        5: 'Vrijgespeeld in de 3e Klasse',
+        4: 'Vrijgespeeld in de 2e Klasse',
+        3: 'Vrijgespeeld in de 1e Klasse',
+        2: 'Vrijgespeeld in de Tweede Divisie',
+        1: 'Vrijgespeeld in de Eerste Divisie'
+    };
+    return labels[reqDivision] || '';
+}
+
 function updateStadiumUpgradePanel(category) {
     const panel = document.getElementById('stadium-upgrade-panel');
     if (!panel) return;
@@ -9914,61 +10532,139 @@ function updateStadiumUpgradePanel(category) {
     const currentId = gameState.stadium[config.stateKey];
     const currentIndex = config.levels.findIndex(l => l.id === currentId);
     const currentLevel = config.levels[currentIndex] || config.levels[0];
-    const nextLevel = config.levels[currentIndex + 1];
-    const isMaxed = !nextLevel;
     const totalLevels = config.levels.length;
+    const levelOffset = config.levels[0].id.match(/_0$/) ? 0 : 1;
 
     const currentCapacity = STADIUM_TILE_CONFIG.tribune.levels.find(
         l => l.id === gameState.stadium.tribune
     )?.capacity || 200;
-    const hasRequirement = nextLevel?.reqCapacity && currentCapacity < nextLevel.reqCapacity;
+
+    const clubDivision = gameState.club.division;
 
     // Header
     document.getElementById('sup-icon').textContent = categoryIcons[category] || '🏟️';
     document.getElementById('sup-title').textContent = categoryNames[category] || category;
-    document.getElementById('sup-level').textContent = `Niveau ${currentIndex + 1} van ${totalLevels} — ${currentLevel.name}`;
+    document.getElementById('sup-level').textContent = `Niveau ${currentIndex + levelOffset} van ${totalLevels}`;
+    document.getElementById('sup-description').textContent = config.description || '';
 
-    // Current benefit
-    document.getElementById('sup-current').innerHTML = `<strong>Nu:</strong> ${currentLevel.effect}`;
+    // Build level cards
+    const listEl = document.getElementById('sup-levels-list');
+    let cardsHTML = '';
 
-    // Next upgrade info
-    const nextEl = document.getElementById('sup-next');
-    const actionEl = document.getElementById('sup-action');
+    const construction = gameState.stadium.construction;
 
-    if (isMaxed) {
-        nextEl.innerHTML = '✅ Maximaal niveau bereikt!';
-        nextEl.style.borderColor = 'rgba(76, 175, 80, 0.25)';
-        nextEl.style.background = 'rgba(76, 175, 80, 0.1)';
-        actionEl.innerHTML = '';
-    } else {
-        nextEl.style.borderColor = '';
-        nextEl.style.background = '';
-        nextEl.innerHTML = `<span class="sup-next-name">${nextLevel.name}</span> — ${nextLevel.effect}`;
+    config.levels.forEach((level, idx) => {
+        const isPast = idx < currentIndex;
+        const isCurrent = idx === currentIndex;
+        const isBuilding = construction && construction.targetId === level.id;
+        const isNext = !isBuilding && idx === currentIndex + 1;
+        const isDivLocked = level.reqDivision !== undefined && clubDivision > level.reqDivision;
+        const hasCapReq = level.reqCapacity && currentCapacity < level.reqCapacity;
 
-        const canAfford = gameState.club.budget >= nextLevel.cost;
-        let btnHtml = '';
-        if (hasRequirement) {
-            btnHtml = `<span class="sup-cost">${formatCurrency(nextLevel.cost)}</span>
-                <button class="btn btn-primary btn-upgrade-stadium" disabled>
-                    <span class="btn-icon">🔒</span><span class="btn-text">Stadion te klein</span>
-                </button>`;
-        } else if (!canAfford) {
-            btnHtml = `<span class="sup-cost">${formatCurrency(nextLevel.cost)}</span>
-                <button class="btn btn-primary btn-upgrade-stadium" disabled>
-                    <span class="btn-icon">💸</span><span class="btn-text">Te duur</span>
-                </button>`;
+        let cardClass = 'sup-level-card';
+        let contentHTML = '';
+
+        if (isPast) {
+            cardClass += ' past';
+            contentHTML = `
+                <span class="sup-level-num">✓</span>
+                <div class="sup-level-info">
+                    <span class="sup-level-name">${level.name}</span>
+                </div>`;
+        } else if (isCurrent) {
+            cardClass += ' current';
+            contentHTML = `
+                <span class="sup-level-num">Niv. ${idx + levelOffset}</span>
+                <div class="sup-level-info">
+                    <span class="sup-level-name">${level.name}</span>
+                    <span class="sup-level-effect">${level.effect}</span>
+                </div>
+                <span class="sup-badge current-badge">Huidig</span>`;
+        } else if (isBuilding) {
+            cardClass += ' building';
+            const remaining = construction.completesAt - Date.now();
+            const hours = Math.max(0, Math.floor(remaining / (1000 * 60 * 60)));
+            const minutes = Math.max(0, Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60)));
+            const timeStr = hours > 0 ? `${hours}u ${String(minutes).padStart(2, '0')}m` : `${minutes}m`;
+            contentHTML = `
+                <span class="sup-level-num">Niv. ${idx + levelOffset}</span>
+                <div class="sup-level-info">
+                    <span class="sup-level-name">${level.name}</span>
+                    <span class="sup-level-effect">${level.effect}</span>
+                </div>
+                <div class="sup-building-status">
+                    <span class="sup-badge building-badge">In aanbouw...</span>
+                    <span class="sup-building-timer">${timeStr}</span>
+                </div>`;
+        } else if (isDivLocked) {
+            cardClass += ' division-locked';
+            contentHTML = `
+                <div class="sup-level-blur">
+                    <span class="sup-level-num">Niv. ${idx + levelOffset}</span>
+                    <div class="sup-level-info">
+                        <span class="sup-level-name">${level.name}</span>
+                        <span class="sup-level-effect">${level.effect}</span>
+                    </div>
+                    <span class="sup-level-cost">${formatCurrency(level.cost)}</span>
+                </div>
+                <div class="sup-lock-overlay">
+                    <span class="sup-lock-icon">🔒</span>
+                    <span class="sup-lock-text">${getDivisionUnlockLabel(level.reqDivision)}</span>
+                </div>`;
+        } else if (isNext) {
+            cardClass += ' next';
+            const canAfford = gameState.club.budget >= level.cost;
+            const constructionActive = gameState.stadium.construction !== null;
+            let btnHTML = '';
+            let overlayHTML = '';
+            if (constructionActive) {
+                overlayHTML = `<span class="sup-construction-notice">🚧 Er wordt al gebouwd</span>`;
+            } else if (hasCapReq) {
+                btnHTML = `<button class="btn btn-sm btn-upgrade-stadium" disabled>🔒 Stadion te klein</button>`;
+            } else if (!canAfford) {
+                btnHTML = `<button class="btn btn-sm btn-upgrade-stadium" disabled>💸 Te duur</button>`;
+            } else {
+                btnHTML = `<button class="btn btn-sm btn-primary btn-upgrade-stadium" onclick="upgradeStadiumCategory()">🔨 Bouwen</button>`;
+            }
+            contentHTML = `
+                ${overlayHTML}
+                <span class="sup-level-num">Niv. ${idx + levelOffset}</span>
+                <div class="sup-level-info">
+                    <span class="sup-level-name">${level.name}</span>
+                    <span class="sup-level-effect">${level.effect}</span>
+                </div>
+                <div class="sup-level-action">
+                    <span class="sup-level-cost">${formatCurrency(level.cost)}</span>
+                    ${btnHTML}
+                </div>`;
         } else {
-            btnHtml = `<span class="sup-cost">${formatCurrency(nextLevel.cost)}</span>
-                <button class="btn btn-primary btn-upgrade-stadium" onclick="upgradeStadiumCategory()">
-                    <span class="btn-icon">🔨</span><span class="btn-text">Bouwen</span>
-                </button>`;
+            // Future but unlocked (not next, not div-locked)
+            cardClass += ' future';
+            contentHTML = `
+                <span class="sup-level-num">Niv. ${idx + levelOffset}</span>
+                <div class="sup-level-info">
+                    <span class="sup-level-name">${level.name}</span>
+                    <span class="sup-level-effect">${level.effect}</span>
+                </div>
+                <span class="sup-level-cost">${formatCurrency(level.cost)}</span>`;
         }
-        actionEl.innerHTML = btnHtml;
-    }
+
+        cardsHTML += `<div class="${cardClass}">${contentHTML}</div>`;
+    });
+
+    listEl.innerHTML = cardsHTML;
 
     panel.style.display = 'flex';
     const backdrop = document.getElementById('stadium-panel-backdrop');
     if (backdrop) backdrop.style.display = 'block';
+
+    // Auto-scroll to current level
+    requestAnimationFrame(() => {
+        const currentCard = listEl.querySelector('.sup-level-card.current');
+        if (currentCard) {
+            currentCard.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+    });
 }
 
 window.closeStadiumPanel = closeStadiumPanel;
@@ -10068,6 +10764,70 @@ function getStadiumIllustration(category, level) {
                 <circle cx="80" cy="130" r="5" fill="#fff176"/><circle cx="110" cy="130" r="5" fill="#fff176"/>
                 <circle cx="290" cy="130" r="5" fill="#fff176"/><circle cx="320" cy="130" r="5" fill="#fff176"/>
                 <circle cx="350" cy="130" r="5" fill="#fff176"/><circle cx="380" cy="130" r="5" fill="#fff176"/>
+            </svg>`,
+            // Level 6: Hoefijzer Stadion
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="150" width="400" height="30" fill="#2e7d32"/>
+                <rect x="0" y="0" width="400" height="150" fill="#1a237e"/>
+                <rect x="0" y="0" width="400" height="12" fill="#0d47a1"/>
+                <path d="M0,15 L0,145 Q200,170 400,145 L400,15 Z" fill="#283593"/>
+                <rect x="5" y="18" width="28" height="16" fill="#1565c0"/><rect x="38" y="18" width="28" height="16" fill="#1565c0"/>
+                <rect x="71" y="18" width="28" height="16" fill="#ff6f00"/><rect x="104" y="18" width="28" height="16" fill="#1565c0"/>
+                <rect x="137" y="18" width="28" height="16" fill="#1565c0"/><rect x="170" y="18" width="28" height="16" fill="#ff6f00"/>
+                <rect x="203" y="18" width="28" height="16" fill="#ff6f00"/><rect x="236" y="18" width="28" height="16" fill="#1565c0"/>
+                <rect x="269" y="18" width="28" height="16" fill="#1565c0"/><rect x="302" y="18" width="28" height="16" fill="#ff6f00"/>
+                <rect x="335" y="18" width="28" height="16" fill="#1565c0"/><rect x="368" y="18" width="28" height="16" fill="#1565c0"/>
+                <rect x="5" y="40" width="28" height="16" fill="#1e88e5"/><rect x="38" y="40" width="28" height="16" fill="#1e88e5"/>
+                <rect x="71" y="40" width="28" height="16" fill="#1e88e5"/><rect x="104" y="40" width="28" height="16" fill="#1e88e5"/>
+                <rect x="137" y="40" width="28" height="16" fill="#1e88e5"/><rect x="170" y="40" width="28" height="16" fill="#1e88e5"/>
+                <rect x="203" y="40" width="28" height="16" fill="#1e88e5"/><rect x="236" y="40" width="28" height="16" fill="#1e88e5"/>
+                <rect x="269" y="40" width="28" height="16" fill="#1e88e5"/><rect x="302" y="40" width="28" height="16" fill="#1e88e5"/>
+                <rect x="335" y="40" width="28" height="16" fill="#1e88e5"/><rect x="368" y="40" width="28" height="16" fill="#1e88e5"/>
+                <rect x="5" y="62" width="28" height="16" fill="#42a5f5"/><rect x="38" y="62" width="28" height="16" fill="#42a5f5"/>
+                <rect x="71" y="62" width="28" height="16" fill="#42a5f5"/><rect x="104" y="62" width="28" height="16" fill="#42a5f5"/>
+                <rect x="137" y="62" width="28" height="16" fill="#42a5f5"/><rect x="170" y="62" width="28" height="16" fill="#42a5f5"/>
+                <rect x="203" y="62" width="28" height="16" fill="#42a5f5"/><rect x="236" y="62" width="28" height="16" fill="#42a5f5"/>
+                <rect x="269" y="62" width="28" height="16" fill="#42a5f5"/><rect x="302" y="62" width="28" height="16" fill="#42a5f5"/>
+                <rect x="335" y="62" width="28" height="16" fill="#42a5f5"/><rect x="368" y="62" width="28" height="16" fill="#42a5f5"/>
+                <rect x="130" y="95" width="140" height="50" fill="#0d47a1" rx="4"/>
+                <text x="200" y="125" text-anchor="middle" fill="#ffd700" font-size="14" font-weight="bold">BUSINESSCLUB</text>
+                <line x1="0" y1="145" x2="140" y2="145" stroke="#ffd700" stroke-width="2"/>
+                <line x1="260" y1="145" x2="400" y2="145" stroke="#ffd700" stroke-width="2"/>
+            </svg>`,
+            // Level 7: Gesloten Stadion
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="155" width="400" height="25" fill="#1b5e20"/>
+                <rect x="0" y="0" width="400" height="155" fill="#212121"/>
+                <rect x="0" y="0" width="400" height="8" fill="#424242"/>
+                <path d="M0,8 Q200,-10 400,8 L400,12 Q200,-6 0,12 Z" fill="#616161"/>
+                <rect x="3" y="16" width="24" height="13" fill="#1b5e20"/><rect x="30" y="16" width="24" height="13" fill="#1b5e20"/>
+                <rect x="57" y="16" width="24" height="13" fill="#ff6f00"/><rect x="84" y="16" width="24" height="13" fill="#1b5e20"/>
+                <rect x="111" y="16" width="24" height="13" fill="#1b5e20"/><rect x="138" y="16" width="24" height="13" fill="#1b5e20"/>
+                <rect x="165" y="16" width="24" height="13" fill="#ff6f00"/><rect x="192" y="16" width="24" height="13" fill="#ff6f00"/>
+                <rect x="219" y="16" width="24" height="13" fill="#1b5e20"/><rect x="246" y="16" width="24" height="13" fill="#1b5e20"/>
+                <rect x="273" y="16" width="24" height="13" fill="#1b5e20"/><rect x="300" y="16" width="24" height="13" fill="#ff6f00"/>
+                <rect x="327" y="16" width="24" height="13" fill="#1b5e20"/><rect x="354" y="16" width="24" height="13" fill="#1b5e20"/>
+                <rect x="3" y="33" width="24" height="13" fill="#2e7d32"/><rect x="30" y="33" width="24" height="13" fill="#2e7d32"/>
+                <rect x="57" y="33" width="24" height="13" fill="#2e7d32"/><rect x="84" y="33" width="24" height="13" fill="#2e7d32"/>
+                <rect x="111" y="33" width="24" height="13" fill="#2e7d32"/><rect x="138" y="33" width="24" height="13" fill="#2e7d32"/>
+                <rect x="165" y="33" width="24" height="13" fill="#2e7d32"/><rect x="192" y="33" width="24" height="13" fill="#2e7d32"/>
+                <rect x="219" y="33" width="24" height="13" fill="#2e7d32"/><rect x="246" y="33" width="24" height="13" fill="#2e7d32"/>
+                <rect x="273" y="33" width="24" height="13" fill="#2e7d32"/><rect x="300" y="33" width="24" height="13" fill="#2e7d32"/>
+                <rect x="327" y="33" width="24" height="13" fill="#2e7d32"/><rect x="354" y="33" width="24" height="13" fill="#2e7d32"/>
+                <rect x="3" y="50" width="24" height="13" fill="#388e3c"/><rect x="30" y="50" width="24" height="13" fill="#388e3c"/>
+                <rect x="57" y="50" width="24" height="13" fill="#388e3c"/><rect x="84" y="50" width="24" height="13" fill="#388e3c"/>
+                <rect x="111" y="50" width="24" height="13" fill="#388e3c"/><rect x="138" y="50" width="24" height="13" fill="#388e3c"/>
+                <rect x="165" y="50" width="24" height="13" fill="#388e3c"/><rect x="192" y="50" width="24" height="13" fill="#388e3c"/>
+                <rect x="219" y="50" width="24" height="13" fill="#388e3c"/><rect x="246" y="50" width="24" height="13" fill="#388e3c"/>
+                <rect x="273" y="50" width="24" height="13" fill="#388e3c"/><rect x="300" y="50" width="24" height="13" fill="#388e3c"/>
+                <rect x="327" y="50" width="24" height="13" fill="#388e3c"/><rect x="354" y="50" width="24" height="13" fill="#388e3c"/>
+                <rect x="0" y="68" width="400" height="4" fill="#616161"/>
+                <rect x="70" y="80" width="260" height="65" fill="#263238" rx="4"/>
+                <text x="200" y="100" text-anchor="middle" fill="#e0e0e0" font-size="10">GESLOTEN STADION</text>
+                <rect x="90" y="108" width="220" height="30" fill="#37474f" rx="3"/>
+                <text x="200" y="128" text-anchor="middle" fill="#ffd700" font-size="12" font-weight="bold">12.000 PLAATSEN</text>
+                <circle cx="10" cy="155" r="4" fill="#fff176"/><circle cx="30" cy="155" r="4" fill="#fff176"/>
+                <circle cx="370" cy="155" r="4" fill="#fff176"/><circle cx="390" cy="155" r="4" fill="#fff176"/>
             </svg>`
         ],
         grass: [
@@ -10133,6 +10893,44 @@ function getStadiumIllustration(category, level) {
                 <rect x="0" y="50" width="38" height="80" fill="none" stroke="white" stroke-width="4"/>
                 <rect x="362" y="50" width="38" height="80" fill="none" stroke="white" stroke-width="4"/>
                 <circle cx="38" cy="90" r="4" fill="white"/><circle cx="362" cy="90" r="4" fill="white"/>
+            </svg>`,
+            // Level 5: Hybride Gras
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="400" height="180" fill="#2e7d32"/>
+                <rect x="0" y="0" width="30" height="180" fill="#388e3c"/><rect x="60" y="0" width="30" height="180" fill="#388e3c"/>
+                <rect x="120" y="0" width="30" height="180" fill="#388e3c"/><rect x="180" y="0" width="30" height="180" fill="#388e3c"/>
+                <rect x="240" y="0" width="30" height="180" fill="#388e3c"/><rect x="300" y="0" width="30" height="180" fill="#388e3c"/>
+                <rect x="360" y="0" width="40" height="180" fill="#388e3c"/>
+                <circle cx="200" cy="90" r="55" fill="none" stroke="white" stroke-width="5"/>
+                <circle cx="200" cy="90" r="7" fill="white"/>
+                <line x1="200" y1="0" x2="200" y2="180" stroke="white" stroke-width="5"/>
+                <rect x="0" y="25" width="80" height="130" fill="none" stroke="white" stroke-width="5"/>
+                <rect x="320" y="25" width="80" height="130" fill="none" stroke="white" stroke-width="5"/>
+                <rect x="0" y="45" width="42" height="90" fill="none" stroke="white" stroke-width="4"/>
+                <rect x="358" y="45" width="42" height="90" fill="none" stroke="white" stroke-width="4"/>
+                <rect x="150" y="170" width="100" height="10" fill="#ffa000" rx="2"/>
+                <text x="200" y="178" text-anchor="middle" fill="white" font-size="6" font-weight="bold">VERWARMING</text>
+                <line x1="20" y1="170" x2="100" y2="170" stroke="#ffa000" stroke-width="1.5" stroke-dasharray="4 2"/>
+                <line x1="300" y1="170" x2="380" y2="170" stroke="#ffa000" stroke-width="1.5" stroke-dasharray="4 2"/>
+            </svg>`,
+            // Level 6: Verwarmd Veld
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="400" height="180" fill="#1b5e20"/>
+                <rect x="0" y="0" width="28" height="180" fill="#2e7d32"/><rect x="56" y="0" width="28" height="180" fill="#2e7d32"/>
+                <rect x="112" y="0" width="28" height="180" fill="#2e7d32"/><rect x="168" y="0" width="28" height="180" fill="#2e7d32"/>
+                <rect x="224" y="0" width="28" height="180" fill="#2e7d32"/><rect x="280" y="0" width="28" height="180" fill="#2e7d32"/>
+                <rect x="336" y="0" width="28" height="180" fill="#2e7d32"/><rect x="364" y="0" width="36" height="180" fill="#2e7d32"/>
+                <circle cx="200" cy="90" r="60" fill="none" stroke="white" stroke-width="6"/>
+                <circle cx="200" cy="90" r="8" fill="white"/>
+                <line x1="200" y1="0" x2="200" y2="180" stroke="white" stroke-width="6"/>
+                <rect x="0" y="20" width="85" height="140" fill="none" stroke="white" stroke-width="6"/>
+                <rect x="315" y="20" width="85" height="140" fill="none" stroke="white" stroke-width="6"/>
+                <rect x="0" y="40" width="45" height="100" fill="none" stroke="white" stroke-width="5"/>
+                <rect x="355" y="40" width="45" height="100" fill="none" stroke="white" stroke-width="5"/>
+                <rect x="0" y="0" width="400" height="6" fill="#ffd700" opacity="0.3"/>
+                <rect x="0" y="174" width="400" height="6" fill="#ffd700" opacity="0.3"/>
+                <circle cx="50" cy="5" r="8" fill="#ffd700" opacity="0.15"/><circle cx="150" cy="5" r="8" fill="#ffd700" opacity="0.15"/>
+                <circle cx="250" cy="5" r="8" fill="#ffd700" opacity="0.15"/><circle cx="350" cy="5" r="8" fill="#ffd700" opacity="0.15"/>
             </svg>`
         ],
         training: [
@@ -10188,6 +10986,41 @@ function getStadiumIllustration(category, level) {
                 <text x="200" y="158" text-anchor="middle" fill="#ffcc80" font-size="11" font-family="sans-serif">SAUNA</text>
                 <rect x="267" y="125" width="133" height="55" fill="#1b5e20"/>
                 <text x="333" y="158" text-anchor="middle" fill="white" font-size="11" font-family="sans-serif">RECOVERY</text>
+            </svg>`,
+            // Level 5: Professioneel Complex
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="400" height="180" fill="#1b5e20"/>
+                <rect x="0" y="0" width="130" height="50" fill="#388e3c" stroke="#ffd700" stroke-width="2"/>
+                <rect x="135" y="0" width="130" height="50" fill="#388e3c" stroke="#ffd700" stroke-width="2"/>
+                <rect x="270" y="0" width="130" height="50" fill="#388e3c" stroke="#ffd700" stroke-width="2"/>
+                <rect x="0" y="55" width="195" height="50" fill="#263238" rx="3"/>
+                <text x="97" y="85" text-anchor="middle" fill="#4fc3f7" font-size="12" font-weight="bold">INDOOR TRAINING</text>
+                <rect x="205" y="55" width="195" height="50" fill="#1565c0" rx="3"/>
+                <text x="302" y="85" text-anchor="middle" fill="white" font-size="12" font-weight="bold">TACTIEKRUIMTE</text>
+                <rect x="0" y="110" width="100" height="70" fill="#37474f" rx="3"/>
+                <text x="50" y="150" text-anchor="middle" fill="#81c784" font-size="10">KRACHTHAL</text>
+                <rect x="105" y="110" width="95" height="70" fill="#455a64" rx="3"/>
+                <text x="152" y="150" text-anchor="middle" fill="#4fc3f7" font-size="10">IJSBAD</text>
+                <rect x="205" y="110" width="95" height="70" fill="#37474f" rx="3"/>
+                <text x="252" y="150" text-anchor="middle" fill="#ffcc80" font-size="10">SAUNA</text>
+                <rect x="305" y="110" width="95" height="70" fill="#0d47a1" rx="3"/>
+                <text x="352" y="150" text-anchor="middle" fill="white" font-size="10">VIDEO LAB</text>
+            </svg>`,
+            // Level 6: Meerdere Velden
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="400" height="180" fill="#0d4710"/>
+                <rect x="5" y="5" width="120" height="70" fill="#2e7d32" stroke="#ffd700" stroke-width="2" rx="3"/>
+                <rect x="140" y="5" width="120" height="70" fill="#2e7d32" stroke="#ffd700" stroke-width="2" rx="3"/>
+                <rect x="275" y="5" width="120" height="70" fill="#2e7d32" stroke="#ffd700" stroke-width="2" rx="3"/>
+                <line x1="65" y1="5" x2="65" y2="75" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                <line x1="200" y1="5" x2="200" y2="75" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                <line x1="335" y1="5" x2="335" y2="75" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                <rect x="0" y="85" width="200" height="45" fill="#1a237e" rx="3"/>
+                <text x="100" y="112" text-anchor="middle" fill="#ffd700" font-size="13" font-weight="bold">INDOOR HAL</text>
+                <rect x="210" y="85" width="190" height="45" fill="#004d40" rx="3"/>
+                <text x="305" y="112" text-anchor="middle" fill="#80cbc4" font-size="13" font-weight="bold">HYDROTERAPIE</text>
+                <rect x="0" y="140" width="400" height="40" fill="#263238" rx="3"/>
+                <text x="200" y="165" text-anchor="middle" fill="white" font-size="12" font-weight="bold">SPORTWETENSCHAPPELIJK CENTRUM</text>
             </svg>`
         ],
         medical: [
@@ -10225,6 +11058,27 @@ function getStadiumIllustration(category, level) {
                 <text x="105" y="140" text-anchor="middle" fill="white" font-size="13" font-weight="bold">MRI SCANNER</text>
                 <rect x="200" y="95" width="190" height="75" fill="#1a237e"/>
                 <text x="295" y="140" text-anchor="middle" fill="white" font-size="13" font-weight="bold">OPERATIEKAMER</text>
+            </svg>`,
+            // Level 5: Sportmedisch Centrum
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="400" height="180" fill="#e0f2f1"/>
+                <rect x="0" y="0" width="400" height="180" fill="#fff" stroke="#00695c" stroke-width="5"/>
+                <rect x="0" y="0" width="400" height="25" fill="#00695c"/>
+                <text x="200" y="18" text-anchor="middle" fill="white" font-size="13" font-weight="bold">SPORTMEDISCH CENTRUM</text>
+                <rect x="10" y="35" width="90" height="55" fill="#e0f2f1" rx="3"/>
+                <rect x="28" y="48" width="14" height="28" fill="#e53935" rx="2"/>
+                <rect x="21" y="55" width="28" height="14" fill="#e53935" rx="2"/>
+                <text x="55" y="72" text-anchor="middle" fill="#00695c" font-size="8">EHBO</text>
+                <rect x="110" y="35" width="90" height="55" fill="#b2dfdb" rx="3"/>
+                <text x="155" y="67" text-anchor="middle" fill="#00695c" font-size="9" font-weight="bold">FYSIO</text>
+                <rect x="210" y="35" width="90" height="55" fill="#80cbc4" rx="3"/>
+                <text x="255" y="67" text-anchor="middle" fill="#004d40" font-size="9" font-weight="bold">CRYO</text>
+                <rect x="310" y="35" width="80" height="55" fill="#4db6ac" rx="3"/>
+                <text x="350" y="67" text-anchor="middle" fill="white" font-size="9" font-weight="bold">SCAN</text>
+                <rect x="10" y="100" width="185" height="70" fill="#00897b" rx="4"/>
+                <text x="102" y="140" text-anchor="middle" fill="white" font-size="14" font-weight="bold">MRI + CT SCAN</text>
+                <rect x="205" y="100" width="185" height="70" fill="#004d40" rx="4"/>
+                <text x="297" y="140" text-anchor="middle" fill="#80cbc4" font-size="14" font-weight="bold">OPERATIEZAAL</text>
             </svg>`
         ],
         academy: [
@@ -10268,6 +11122,24 @@ function getStadiumIllustration(category, level) {
                 <text x="50" y="145" text-anchor="middle" fill="#ffd700" font-size="20">★</text>
                 <text x="200" y="145" text-anchor="middle" fill="#ffd700" font-size="20">★</text>
                 <text x="350" y="145" text-anchor="middle" fill="#ffd700" font-size="20">★</text>
+            </svg>`,
+            // Level 5: Professionele Academie
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="400" height="180" fill="#1b5e20"/>
+                <rect x="0" y="0" width="400" height="30" fill="#ffd700"/>
+                <text x="200" y="22" text-anchor="middle" fill="#1b5e20" font-size="16" font-weight="bold">PROFESSIONELE ACADEMIE</text>
+                <rect x="5" y="38" width="125" height="55" fill="#388e3c" stroke="white" stroke-width="2" rx="3"/>
+                <rect x="138" y="38" width="125" height="55" fill="#388e3c" stroke="white" stroke-width="2" rx="3"/>
+                <rect x="271" y="38" width="124" height="55" fill="#388e3c" stroke="white" stroke-width="2" rx="3"/>
+                <text x="67" y="62" text-anchor="middle" fill="white" font-size="7">O13</text>
+                <text x="200" y="62" text-anchor="middle" fill="white" font-size="7">O15</text>
+                <text x="333" y="62" text-anchor="middle" fill="white" font-size="7">O17</text>
+                <rect x="5" y="100" width="195" height="35" fill="#263238" rx="3"/>
+                <text x="102" y="122" text-anchor="middle" fill="#4fc3f7" font-size="11" font-weight="bold">ANALYSE LAB</text>
+                <rect x="210" y="100" width="185" height="35" fill="#0d47a1" rx="3"/>
+                <text x="302" y="122" text-anchor="middle" fill="white" font-size="11" font-weight="bold">KLASLOKAAL</text>
+                <rect x="5" y="142" width="390" height="32" fill="#004d40" rx="3"/>
+                <text x="200" y="163" text-anchor="middle" fill="#ffd700" font-size="12" font-weight="bold">INTERNAATCOMPLEX</text>
             </svg>`
         ],
         scouting: [
@@ -10310,6 +11182,27 @@ function getStadiumIllustration(category, level) {
                 <circle cx="260" cy="155" r="5" fill="#ffeb3b"/>
                 <rect x="360" y="10" width="35" height="25" fill="#78909c"/>
                 <rect x="367" y="0" width="6" height="12" fill="#90a4ae"/><rect x="382" y="0" width="6" height="12" fill="#90a4ae"/>
+            </svg>`,
+            // Level 5: Wereldwijd Scoutingsnetwerk
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="400" height="180" fill="#0d1b2a"/>
+                <circle cx="200" cy="90" r="75" fill="#1b2838" stroke="#1e88e5" stroke-width="2"/>
+                <ellipse cx="200" cy="90" rx="75" ry="30" fill="none" stroke="#1565c0" stroke-width="1"/>
+                <ellipse cx="200" cy="90" rx="50" ry="75" fill="none" stroke="#1565c0" stroke-width="1"/>
+                <ellipse cx="200" cy="90" rx="30" ry="75" fill="none" stroke="#0d47a1" stroke-width="0.7"/>
+                <line x1="125" y1="90" x2="275" y2="90" stroke="#1565c0" stroke-width="0.7"/>
+                <circle cx="160" cy="60" r="6" fill="#f44336"/><circle cx="240" cy="70" r="5" fill="#4caf50"/>
+                <circle cx="180" cy="110" r="7" fill="#ffc107"/><circle cx="220" cy="50" r="5" fill="#9c27b0"/>
+                <circle cx="250" cy="110" r="6" fill="#ff5722"/><circle cx="150" cy="95" r="4" fill="#03a9f4"/>
+                <line x1="160" y1="60" x2="240" y2="70" stroke="#1e88e5" stroke-width="0.5" opacity="0.5"/>
+                <line x1="180" y1="110" x2="220" y2="50" stroke="#1e88e5" stroke-width="0.5" opacity="0.5"/>
+                <line x1="250" y1="110" x2="160" y2="60" stroke="#1e88e5" stroke-width="0.5" opacity="0.5"/>
+                <rect x="300" y="10" width="90" height="50" fill="#1a237e" rx="4"/>
+                <text x="345" y="30" text-anchor="middle" fill="#64b5f6" font-size="8" font-weight="bold">SCOUTS</text>
+                <text x="345" y="48" text-anchor="middle" fill="#ffd700" font-size="16" font-weight="bold">24</text>
+                <rect x="10" y="130" width="90" height="40" fill="#1a237e" rx="4"/>
+                <text x="55" y="148" text-anchor="middle" fill="#64b5f6" font-size="8" font-weight="bold">LANDEN</text>
+                <text x="55" y="164" text-anchor="middle" fill="#ffd700" font-size="14" font-weight="bold">12</text>
             </svg>`
         ],
         youthscouting: [
@@ -10354,6 +11247,25 @@ function getStadiumIllustration(category, level) {
                 <text x="140" y="145" text-anchor="middle" fill="#ff6f00" font-size="18">★</text>
                 <text x="260" y="145" text-anchor="middle" fill="#ff6f00" font-size="18">★</text>
                 <text x="350" y="145" text-anchor="middle" fill="#ff6f00" font-size="18">★</text>
+            </svg>`,
+            // Level 5: Talentencentrum
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="400" height="180" fill="#1a237e"/>
+                <rect x="0" y="0" width="400" height="28" fill="#ffd700"/>
+                <text x="200" y="20" text-anchor="middle" fill="#1a237e" font-size="14" font-weight="bold">TALENTENCENTRUM</text>
+                <rect x="10" y="38" width="120" height="55" fill="#283593" rx="4"/>
+                <circle cx="50" cy="58" r="14" fill="#ffcc80"/><rect x="42" y="70" width="16" height="18" fill="#1565c0" rx="2"/>
+                <text x="95" y="64" text-anchor="middle" fill="#ffd700" font-size="16">★★</text>
+                <rect x="140" y="38" width="120" height="55" fill="#283593" rx="4"/>
+                <circle cx="180" cy="58" r="14" fill="#ffcc80"/><rect x="172" y="70" width="16" height="18" fill="#388e3c" rx="2"/>
+                <text x="225" y="64" text-anchor="middle" fill="#ffd700" font-size="16">★★★</text>
+                <rect x="270" y="38" width="120" height="55" fill="#283593" rx="4"/>
+                <circle cx="310" cy="58" r="14" fill="#ffcc80"/><rect x="302" y="70" width="16" height="18" fill="#c62828" rx="2"/>
+                <text x="355" y="64" text-anchor="middle" fill="#ffd700" font-size="16">★★★</text>
+                <rect x="10" y="100" width="185" height="70" fill="#0d47a1" rx="4"/>
+                <text x="102" y="140" text-anchor="middle" fill="white" font-size="12" font-weight="bold">TESTLABORATORIUM</text>
+                <rect x="205" y="100" width="185" height="70" fill="#004d40" rx="4"/>
+                <text x="297" y="140" text-anchor="middle" fill="#80cbc4" font-size="12" font-weight="bold">DATACENTRUM</text>
             </svg>`
         ],
         kantine: [
@@ -10397,6 +11309,24 @@ function getStadiumIllustration(category, level) {
                 <text x="107" y="138" text-anchor="middle" fill="#ffd700" font-size="14" font-weight="bold">⭐ VIP LOUNGE ⭐</text>
                 <rect x="210" y="100" width="180" height="60" fill="#283593"/>
                 <text x="300" y="138" text-anchor="middle" fill="white" font-size="14" font-weight="bold">SKYBOX</text>
+            </svg>`,
+            // Level 5: Restaurant
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="400" height="180" fill="#1a1a2e"/>
+                <rect x="0" y="0" width="400" height="180" fill="#16213e" stroke="#ffd700" stroke-width="5"/>
+                <rect x="0" y="0" width="400" height="30" fill="#0f3460"/>
+                <text x="200" y="22" text-anchor="middle" fill="#ffd700" font-size="15" font-weight="bold">STADIONRESTAURANT</text>
+                <rect x="15" y="40" width="170" height="65" fill="#1a1a2e" rx="4"/>
+                <circle cx="50" cy="70" r="14" fill="#3e2723"/><circle cx="90" cy="70" r="14" fill="#3e2723"/>
+                <circle cx="130" cy="70" r="14" fill="#3e2723"/><circle cx="160" cy="70" r="10" fill="#3e2723"/>
+                <rect x="215" y="40" width="170" height="65" fill="#1a1a2e" rx="4"/>
+                <rect x="225" y="52" width="50" height="40" fill="#4a148c" rx="3"/>
+                <rect x="285" y="52" width="50" height="40" fill="#4a148c" rx="3"/>
+                <rect x="345" y="52" width="30" height="40" fill="#4a148c" rx="3"/>
+                <rect x="15" y="115" width="175" height="55" fill="#b71c1c" rx="4"/>
+                <text x="102" y="148" text-anchor="middle" fill="white" font-size="13" font-weight="bold">BRASSERIE</text>
+                <rect x="200" y="115" width="185" height="55" fill="#004d40" rx="4"/>
+                <text x="292" y="148" text-anchor="middle" fill="#ffd700" font-size="13" font-weight="bold">CHAMPAGNEBAR</text>
             </svg>`
         ],
         sponsoring: [
@@ -10434,6 +11364,24 @@ function getStadiumIllustration(category, level) {
                 <rect x="290" y="40" width="100" height="60" fill="#fff" stroke="#ff8f00" stroke-width="3"/>
                 <text x="60" y="78" text-anchor="middle" fill="#ff6f00" font-size="12" font-weight="bold">PLATINUM</text>
                 <text x="340" y="78" text-anchor="middle" fill="#ff6f00" font-size="12" font-weight="bold">PLATINUM</text>
+            </svg>`,
+            // Level 5: Bedrijfslounge
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="400" height="180" fill="#0d1b2a"/>
+                <rect x="0" y="0" width="400" height="25" fill="#ffd700"/>
+                <text x="200" y="18" text-anchor="middle" fill="#0d1b2a" font-size="13" font-weight="bold">BEDRIJFSLOUNGE</text>
+                <rect x="10" y="35" width="185" height="60" fill="#1b2838" stroke="#ffd700" stroke-width="2" rx="4"/>
+                <text x="102" y="72" text-anchor="middle" fill="#ffd700" font-size="14" font-weight="bold">MAIN SPONSOR</text>
+                <rect x="205" y="35" width="90" height="60" fill="#1b2838" stroke="#64b5f6" stroke-width="2" rx="4"/>
+                <text x="250" y="72" text-anchor="middle" fill="#64b5f6" font-size="10" font-weight="bold">PREMIUM</text>
+                <rect x="305" y="35" width="85" height="60" fill="#1b2838" stroke="#64b5f6" stroke-width="2" rx="4"/>
+                <text x="347" y="72" text-anchor="middle" fill="#64b5f6" font-size="10" font-weight="bold">PREMIUM</text>
+                <rect x="10" y="105" width="120" height="65" fill="#263238" rx="4"/>
+                <text x="70" y="143" text-anchor="middle" fill="#ffa000" font-size="10" font-weight="bold">BOARDROOM</text>
+                <rect x="140" y="105" width="120" height="65" fill="#263238" rx="4"/>
+                <text x="200" y="143" text-anchor="middle" fill="#ffa000" font-size="10" font-weight="bold">NETWERK</text>
+                <rect x="270" y="105" width="120" height="65" fill="#263238" rx="4"/>
+                <text x="330" y="143" text-anchor="middle" fill="#ffa000" font-size="10" font-weight="bold">HOSPITALITY</text>
             </svg>`
         ],
         perszaal: [
@@ -10471,6 +11419,27 @@ function getStadiumIllustration(category, level) {
                 <rect x="15" y="130" width="110" height="40" fill="#6a1b9a"/>
                 <rect x="145" y="130" width="110" height="40" fill="#4a148c"/>
                 <rect x="275" y="130" width="110" height="40" fill="#6a1b9a"/>
+            </svg>`,
+            // Level 5: Broadcasting Centrum
+            `<svg viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="400" height="180" fill="#0d1b2a"/>
+                <rect x="0" y="0" width="400" height="180" fill="#1a1a2e" stroke="#e53935" stroke-width="4"/>
+                <rect x="0" y="0" width="400" height="28" fill="#b71c1c"/>
+                <circle cx="18" cy="14" r="6" fill="#ff1744"/><text x="50" y="19" fill="white" font-size="11" font-weight="bold">LIVE</text>
+                <text x="200" y="19" text-anchor="middle" fill="white" font-size="12" font-weight="bold">BROADCASTING CENTRUM</text>
+                <rect x="10" y="38" width="180" height="90" fill="#212121" rx="5"/>
+                <rect x="18" y="44" width="164" height="78" fill="#1565c0" rx="3"/>
+                <text x="100" y="88" text-anchor="middle" fill="white" font-size="14" font-weight="bold">STUDIO A</text>
+                <rect x="200" y="38" width="90" height="42" fill="#212121" rx="4"/>
+                <rect x="208" y="44" width="74" height="30" fill="#263238"/>
+                <text x="245" y="64" text-anchor="middle" fill="#64b5f6" font-size="8">CAM 1</text>
+                <rect x="300" y="38" width="90" height="42" fill="#212121" rx="4"/>
+                <rect x="308" y="44" width="74" height="30" fill="#263238"/>
+                <text x="345" y="64" text-anchor="middle" fill="#64b5f6" font-size="8">CAM 2</text>
+                <rect x="200" y="86" width="190" height="42" fill="#212121" rx="4"/>
+                <text x="295" y="112" text-anchor="middle" fill="#ff9800" font-size="11" font-weight="bold">REGIEPANEEL</text>
+                <rect x="10" y="138" width="380" height="32" fill="#1a237e" rx="4"/>
+                <text x="200" y="159" text-anchor="middle" fill="white" font-size="11" font-weight="bold">PERSCONFERENTIE + MIXED ZONE</text>
             </svg>`
         ]
     };
@@ -10706,21 +11675,68 @@ function upgradeStadiumCategory() {
         }
     }
 
-    // Deduct cost and apply upgrade
-    gameState.club.budget -= nextLevel.cost;
-    gameState.stadium[config.stateKey] = nextLevel.id;
-
-    // Update capacity if tribune
-    if (category === 'tribune' && nextLevel.capacity) {
-        gameState.stadium.capacity = nextLevel.capacity;
+    // Check division requirement
+    if (nextLevel.reqDivision !== undefined) {
+        if (gameState.club.division > nextLevel.reqDivision) {
+            showNotification('Nog niet vrijgespeeld in deze divisie!', 'error');
+            return;
+        }
     }
+
+    // Check if already building
+    if (gameState.stadium.construction) {
+        showNotification('Er wordt al gebouwd! Wacht tot het huidige project klaar is.', 'error');
+        return;
+    }
+
+    // Deduct cost and start construction
+    gameState.club.budget -= nextLevel.cost;
+    gameState.stadium.construction = {
+        category: category,
+        targetId: nextLevel.id,
+        completesAt: getNextMidnight()
+    };
 
     // Update UI
     renderStadiumMap();
     updateStadiumUpgradePanel(category);
     updateBudgetDisplays();
-    showNotification(`${nextLevel.name} gebouwd!`, 'success');
+    showNotification(`Bouw gestart: ${nextLevel.name}! Klaar morgen om 00:00.`, 'success');
     saveGame();
+}
+
+function checkConstruction() {
+    const construction = gameState.stadium.construction;
+    if (!construction) return;
+
+    if (Date.now() < construction.completesAt) return;
+
+    // Construction complete — apply upgrade
+    const config = STADIUM_TILE_CONFIG[construction.category];
+    if (config) {
+        gameState.stadium[config.stateKey] = construction.targetId;
+
+        // Update capacity if tribune
+        if (construction.category === 'tribune') {
+            const level = config.levels.find(l => l.id === construction.targetId);
+            if (level && level.capacity) {
+                gameState.stadium.capacity = level.capacity;
+            }
+        }
+
+        const level = config.levels.find(l => l.id === construction.targetId);
+        showNotification(`${level?.name || 'Upgrade'} is voltooid!`, 'success');
+    }
+
+    gameState.stadium.construction = null;
+    saveGame();
+
+    // Refresh UI if on stadium page
+    renderStadiumMap();
+    if (currentStadiumCategory) {
+        updateStadiumUpgradePanel(currentStadiumCategory);
+    }
+    updateBudgetDisplays();
 }
 
 function updateStadiumCategoryLevels() {
@@ -10936,7 +11952,98 @@ function renderKantineToptalents() {}
 function renderKantineChairman() {}
 function renderKantineTopscorers() {}
 
+// ============================================
+// MULTIPLAYER INTEGRATION
+// ============================================
+
+/**
+ * Initialize game in multiplayer mode (called after Supabase load)
+ */
+async function initMultiplayerGame(detail) {
+    const { leagueId, clubId, userId, league } = detail;
+
+    // Load game state from Supabase
+    setStorageMode('multiplayer', leagueId, clubId);
+    const mpState = await loadGame();
+
+    if (mpState) {
+        replaceGameState(mpState);
+        gameState.multiplayer.userId = userId;
+        gameState.multiplayer.isHost = league.created_by === userId;
+    }
+
+    // Render everything
+    renderStandings();
+    renderTopScorers();
+    renderPlayerCards();
+    updateBudgetDisplays();
+    renderDashboardExtras();
+
+    // Subscribe to realtime updates
+    subscribeToLeague(leagueId, {
+        onStandingsChange: async () => {
+            const standings = await fetchStandings(leagueId);
+            if (standings.length > 0) {
+                gameState.standings = standings;
+                renderStandings();
+            }
+        },
+        onMatchResult: (result) => {
+            showNotification(`Uitslag: ${result.home_score}-${result.away_score}`, 'info');
+        },
+        onTransferChange: () => {
+            if (typeof renderTransferMarket === 'function') renderTransferMarket();
+        },
+        onFeedItem: (item) => {
+            if (item.type === 'result') {
+                showNotification('Nieuwe wedstrijduitslagen beschikbaar!', 'info');
+            }
+        },
+        onLeagueUpdate: (league) => {
+            if (league.week !== gameState.week || league.season !== gameState.season) {
+                gameState.week = league.week;
+                gameState.season = league.season;
+                renderDashboardExtras();
+            }
+        }
+    });
+
+    // Show league overlay bar
+    showLeagueOverlay(league.name || 'Competitie');
+    startCountdown(league.match_time || '20:00');
+
+    // Start auto-save to sync
+    startAutoSave(gameState);
+
+    console.log(`Multiplayer game loaded: league=${leagueId}, club=${clubId}`);
+}
+
+/**
+ * Callback for mode selection — starts the game
+ */
+function onStartGame(mode) {
+    if (mode === 'local') {
+        setStorageMode('local');
+        initGame('local');
+    }
+    // multiplayer mode is handled by the 'multiplayer-start' event
+}
+
+// Listen for multiplayer game start
+window.addEventListener('multiplayer-start', (e) => {
+    initMultiplayerGame(e.detail);
+});
+
 // Start when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    initGame();
+    // Initialize multiplayer UI listeners
+    initMultiplayerUI(onStartGame);
+
+    if (isSupabaseAvailable()) {
+        // Supabase is configured: show auth/mode screen
+        checkAuthAndRoute(onStartGame);
+    } else {
+        // No Supabase: go straight to singleplayer
+        initGame('local');
+    }
 });

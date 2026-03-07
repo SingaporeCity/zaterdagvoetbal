@@ -64,11 +64,12 @@ const PLAYER_LEVELS = [
 
 // Player XP rewards
 const PLAYER_XP_REWARDS = {
-    matchWin: 40,
-    matchDraw: 15,
-    goalScored: 10,
+    matchWin: 50,
+    matchDraw: 20,
+    goalScored: 100,
     cleanSheet: 20,
     hatTrick: 50,
+    training: 25,
     promotion: 300,
     title: 750
 };
@@ -321,6 +322,21 @@ export function calculateSeasonResults(standings, currentDivision) {
  */
 export function startNewSeason(gameState) {
     const seasonResult = calculateSeasonResults(gameState.standings, gameState.club.division);
+
+    // Archive current season to history
+    const seasonMatches = (gameState.matchHistory || []).filter(m => m.season === gameState.season);
+    gameState.seasonHistory = gameState.seasonHistory || [];
+    gameState.seasonHistory.push({
+        season: gameState.season,
+        division: gameState.club.division,
+        position: seasonResult?.position || gameState.club.position,
+        wins: seasonMatches.filter(m => m.resultType === 'win').length,
+        draws: seasonMatches.filter(m => m.resultType === 'draw').length,
+        losses: seasonMatches.filter(m => m.resultType === 'loss').length,
+        goalsFor: seasonMatches.reduce((s, m) => s + m.playerScore, 0),
+        goalsAgainst: seasonMatches.reduce((s, m) => s + m.opponentScore, 0),
+        result: seasonResult?.isChampion ? 'champion' : seasonResult?.promoted ? 'promoted' : seasonResult?.relegated ? 'relegated' : 'normal'
+    });
 
     // Update division if promoted/relegated
     if (seasonResult) {

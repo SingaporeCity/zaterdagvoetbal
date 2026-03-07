@@ -7,9 +7,156 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- ============================================ -->
+    <!-- MULTIPLAYER SCREENS (overlays above game)    -->
+    <!-- ============================================ -->
+
+    <!-- Auth Screen: Login / Signup -->
+    <div id="auth-screen" class="mp-overlay" style="display:none;">
+        <div class="mp-card">
+            <div class="mp-logo">
+                <h1>Zaterdagvoetbal</h1>
+                <p class="mp-subtitle">Dutch Amateur Football Manager</p>
+            </div>
+
+            <!-- Login Form -->
+            <div id="auth-login-form" class="mp-form">
+                <h2>Inloggen</h2>
+                <div class="mp-field">
+                    <label for="login-email">E-mail</label>
+                    <input type="email" id="login-email" placeholder="je@email.nl" autocomplete="email">
+                </div>
+                <div class="mp-field">
+                    <label for="login-password">Wachtwoord</label>
+                    <input type="password" id="login-password" placeholder="Wachtwoord" autocomplete="current-password">
+                </div>
+                <div id="login-error" class="mp-error"></div>
+                <button id="login-btn" class="mp-btn mp-btn-primary">Inloggen</button>
+                <p class="mp-switch">Nog geen account? <a href="#" id="show-signup">Registreer</a></p>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="auth-signup-form" class="mp-form" style="display:none;">
+                <h2>Account aanmaken</h2>
+                <div class="mp-field">
+                    <label for="signup-name">Managernaam</label>
+                    <input type="text" id="signup-name" placeholder="Jouw naam" autocomplete="name">
+                </div>
+                <div class="mp-field">
+                    <label for="signup-email">E-mail</label>
+                    <input type="email" id="signup-email" placeholder="je@email.nl" autocomplete="email">
+                </div>
+                <div class="mp-field">
+                    <label for="signup-password">Wachtwoord</label>
+                    <input type="password" id="signup-password" placeholder="Min. 6 tekens" autocomplete="new-password">
+                </div>
+                <div id="signup-error" class="mp-error"></div>
+                <button id="signup-btn" class="mp-btn mp-btn-primary">Registreer</button>
+                <p class="mp-switch">Al een account? <a href="#" id="show-login">Inloggen</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mode Selection Screen -->
+    <div id="mode-screen" class="mp-overlay" style="display:none;">
+        <div class="mp-card mp-card-wide">
+            <h2>Kies je modus</h2>
+            <p class="mp-subtitle" id="mode-welcome-msg">Welkom, Manager!</p>
+            <div class="mp-mode-grid">
+                <button id="mode-singleplayer" class="mp-mode-card">
+                    <div class="mp-mode-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <h3>Singleplayer</h3>
+                    <p>Speel alleen tegen AI-teams. Alles lokaal opgeslagen.</p>
+                </button>
+                <button id="mode-multiplayer" class="mp-mode-card">
+                    <div class="mp-mode-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 010 7.75"/>
+                        </svg>
+                    </div>
+                    <h3>Multiplayer</h3>
+                    <p>Speel met vrienden. Wedstrijden elke dag om 20:00.</p>
+                </button>
+            </div>
+            <button id="mode-logout" class="mp-btn mp-btn-text">Uitloggen</button>
+        </div>
+    </div>
+
+    <!-- League Lobby Screen -->
+    <div id="lobby-screen" class="mp-overlay" style="display:none;">
+        <div class="mp-card">
+            <button id="lobby-back" class="mp-back-btn">&larr; Terug</button>
+            <h2>Multiplayer Lobby</h2>
+
+            <!-- Create or Join -->
+            <div id="lobby-choice" class="mp-lobby-choice">
+                <button id="lobby-create-btn" class="mp-btn mp-btn-primary mp-btn-block">Nieuwe competitie aanmaken</button>
+                <div class="mp-divider"><span>of</span></div>
+                <div class="mp-field">
+                    <label for="lobby-join-code">Invite code</label>
+                    <input type="text" id="lobby-join-code" placeholder="ABC123" maxlength="6" style="text-transform:uppercase;">
+                </div>
+                <button id="lobby-join-btn" class="mp-btn mp-btn-secondary mp-btn-block">Deelnemen</button>
+                <div id="lobby-error" class="mp-error"></div>
+            </div>
+
+            <!-- My Leagues List -->
+            <div id="lobby-my-leagues" class="mp-my-leagues">
+                <h3>Mijn competities</h3>
+                <div id="lobby-leagues-list" class="mp-leagues-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Waiting Room Screen -->
+    <div id="waiting-screen" class="mp-overlay" style="display:none;">
+        <div class="mp-card">
+            <button id="waiting-back" class="mp-back-btn">&larr; Terug</button>
+            <h2 id="waiting-league-name">Competitie</h2>
+            <div class="mp-invite-code-box">
+                <span>Invite code:</span>
+                <strong id="waiting-invite-code">------</strong>
+                <button id="waiting-copy-code" class="mp-btn mp-btn-small">Kopieer</button>
+            </div>
+            <div id="waiting-players" class="mp-waiting-players">
+                <!-- Player slots populated by JS -->
+            </div>
+            <div class="mp-waiting-info">
+                <p><span id="waiting-count">0</span>/8 spelers &mdash; AI-teams vullen de rest aan</p>
+            </div>
+            <div id="waiting-club-setup" class="mp-club-setup">
+                <div class="mp-field">
+                    <label for="waiting-club-name">Jouw clubnaam</label>
+                    <input type="text" id="waiting-club-name" placeholder="FC Mijn Team" maxlength="30">
+                </div>
+            </div>
+            <button id="waiting-start-btn" class="mp-btn mp-btn-primary mp-btn-block" style="display:none;">Start competitie</button>
+            <p id="waiting-start-info" class="mp-info">Wacht tot de host de competitie start...</p>
+        </div>
+    </div>
+
+    <!-- League Dashboard Overlay (in-game) -->
+    <div id="league-overlay" class="mp-league-overlay" style="display:none;">
+        <div class="mp-league-bar">
+            <span class="mp-league-name" id="league-bar-name">Competitie</span>
+            <span class="mp-league-countdown" id="league-bar-countdown">Volgende wedstrijd: --:--:--</span>
+            <button id="league-bar-toggle" class="mp-btn mp-btn-small">Standings</button>
+        </div>
+    </div>
+
     <!-- Main App Container -->
     <div id="app">
         <!-- Mobile Header -->
@@ -24,7 +171,7 @@
 
         <!-- Sidebar Navigation -->
         <nav class="sidebar">
-            <div class="sidebar-header">
+            <div class="sidebar-header" id="sidebar-header-btn">
                 <div class="club-badge">
                     <svg viewBox="0 0 100 120" class="badge-svg" id="club-badge-svg">
                         <!-- Shield background -->
@@ -78,24 +225,23 @@
                     </span>
                     <span>Dashboard</span>
                 </li>
-                <li class="nav-item" data-page="mijnspeler">
+                <li class="nav-item has-submenu" data-page="wedstrijden">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                            <circle cx="12" cy="7" r="4"/>
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2a10 10 0 010 20"/>
+                            <path d="M9.5 4.5L12 8l2.5-3.5"/>
+                            <path d="M4.5 9.5L8 12l-3.5 2.5"/>
+                            <path d="M14.5 19.5L12 16l-2.5 3.5"/>
+                            <path d="M19.5 14.5L16 12l3.5-2.5"/>
                         </svg>
                     </span>
-                    <span>Mijn Speler</span>
-                </li>
-                <li class="nav-item" data-page="mijnteam">
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                            <path d="M2 17l10 5 10-5"/>
-                            <path d="M2 12l10 5 10-5"/>
-                        </svg>
-                    </span>
-                    <span>Mijn Club</span>
+                    <span>Wedstrijden</span>
+                    <ul class="nav-submenu">
+                        <li data-tab="verslag">Laatste Wedstrijd</li>
+                        <li data-tab="waardering">Ratings</li>
+                        <li data-tab="programma">Competitie</li>
+                    </ul>
                 </li>
                 <li class="nav-item" data-page="squad">
                     <span class="nav-icon">
@@ -117,27 +263,39 @@
                         </svg>
                     </span>
                     <span>Tactiek</span>
+                    <ul class="nav-submenu">
+                        <li data-tab="opstelling">Opstelling</li>
+                        <li data-tab="tactiek">Tactiek</li>
+                        <li data-tab="specialisten">Specialisten</li>
+                    </ul>
                 </li>
-                <li class="nav-item" data-page="training">
+                <li class="nav-item has-submenu" data-page="training">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12,6 12,12 16,14"/>
+                            <path d="M6 5v14"/>
+                            <path d="M18 5v14"/>
+                            <path d="M6 12h12"/>
+                            <rect x="3" y="7" width="6" height="10" rx="1"/>
+                            <rect x="15" y="7" width="6" height="10" rx="1"/>
                         </svg>
                     </span>
                     <span>Training</span>
                     <span class="nav-badge training-badge">!</span>
+                    <ul class="nav-submenu">
+                        <li data-tab="speler">Individueel</li>
+                        <li data-tab="prestaties">Statistieken</li>
+                    </ul>
                 </li>
-                <li class="nav-item" data-page="wedstrijden">
+                <li class="nav-item" data-page="transfers">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
+                            <polyline points="17,1 21,5 17,9"/>
+                            <path d="M3 11V9a4 4 0 014-4h14"/>
+                            <polyline points="7,23 3,19 7,15"/>
+                            <path d="M21 13v2a4 4 0 01-4 4H3"/>
                         </svg>
                     </span>
-                    <span>Wedstrijden</span>
+                    <span>Transfers</span>
                 </li>
                 <li class="nav-item" data-page="scout">
                     <span class="nav-icon">
@@ -151,45 +309,44 @@
                 <li class="nav-item" data-page="jeugdteam">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2a3 3 0 100 6 3 3 0 000-6z"/>
-                            <path d="M19 8a2 2 0 100 4 2 2 0 000-4z"/>
-                            <path d="M5 8a2 2 0 100 4 2 2 0 000-4z"/>
-                            <path d="M12 10v10"/>
-                            <path d="M7 20l5-5 5 5"/>
-                            <path d="M19 14v4"/>
-                            <path d="M5 14v4"/>
+                            <path d="M12 3l1.5 4.5h4.5l-3.5 2.8 1.3 4.2L12 11.8l-3.8 2.7 1.3-4.2L6 7.5h4.5z"/>
+                            <path d="M12 17v5"/>
+                            <path d="M8 22h8"/>
                         </svg>
                     </span>
-                    <span>Jeugdteam</span>
+                    <span>Jeugd</span>
                 </li>
                 <li class="nav-item" data-page="stadium">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M4 22V4c0-1.1.9-2 2-2h12a2 2 0 012 2v18"/>
-                            <path d="M2 22h20"/>
-                            <path d="M8 6h8"/>
-                            <path d="M8 10h8"/>
-                            <path d="M8 14h4"/>
+                            <path d="M2 20h20"/>
+                            <path d="M4 20v-8l8-6 8 6v8"/>
+                            <path d="M2 12l10-8 10 8"/>
+                            <rect x="8" y="14" width="8" height="6"/>
                         </svg>
                     </span>
                     <span>Stadion</span>
                 </li>
-                <li class="nav-item" data-page="transfers">
+                <li class="nav-item" data-page="staff">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="17,1 21,5 17,9"/>
-                            <path d="M3 11V9a4 4 0 014-4h14"/>
-                            <polyline points="7,23 3,19 7,15"/>
-                            <path d="M21 13v2a4 4 0 01-4 4H3"/>
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                            <rect x="9" y="3" width="6" height="4" rx="1"/>
+                            <path d="M9 14l2 2 4-4"/>
                         </svg>
                     </span>
-                    <span>Spelerwerving</span>
+                    <span>Staf</span>
                 </li>
                 <li class="nav-item" data-page="sponsors">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2"/>
-                            <path d="M9 12h6M12 9v6"/>
+                            <path d="M20 6L9 17l-5-5"/>
+                            <path d="M4 12a8 8 0 0116 0"/>
+                            <path d="M12 2v2"/>
+                            <path d="M4.93 4.93l1.41 1.41"/>
+                            <path d="M20 12h-2"/>
+                            <path d="M17.66 6.34l1.41-1.41"/>
+                            <path d="M4 12H2"/>
                         </svg>
                     </span>
                     <span>Sponsors</span>
@@ -197,22 +354,29 @@
                 <li class="nav-item" data-page="finances">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="1" x2="12" y2="23"/>
-                            <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M15 9h-4.5a2 2 0 000 4h3a2 2 0 010 4H9"/>
+                            <path d="M12 5v2"/>
+                            <path d="M12 17v2"/>
                         </svg>
                     </span>
                     <span>Financiën</span>
                 </li>
-                <li class="nav-item" data-page="staff">
+                <li class="nav-item has-submenu" data-page="prestaties">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M22 21v-2a4 4 0 00-3-3.87"/>
-                            <path d="M16 3.13a4 4 0 010 7.75"/>
+                            <path d="M6 9H3V4h3"/>
+                            <path d="M18 9h3V4h-3"/>
+                            <path d="M6 4h12v7a6 6 0 01-12 0V4z"/>
+                            <path d="M12 17v4"/>
+                            <path d="M8 21h8"/>
                         </svg>
                     </span>
-                    <span>Stafcentrum</span>
+                    <span>Prestaties</span>
+                    <ul class="nav-submenu">
+                        <li data-tab="manager">Voortgang</li>
+                        <li data-tab="prestaties">Achievements</li>
+                    </ul>
                 </li>
             </ul>
 
@@ -226,14 +390,20 @@
         <main class="main-content">
             <!-- Global Top Bar - Budget & Manager -->
             <div class="global-top-bar" id="global-top-bar">
-                <div class="gtb-budget">
-                    <span class="gtb-icon">💰</span>
-                    <span class="gtb-value" id="global-budget-amount">€5.000</span>
+                <div class="gtb-top">
+                    <div class="gtb-budget">
+                        <span class="gtb-icon">💰</span>
+                        <span class="gtb-value" id="global-budget-amount">€5.000</span>
+                    </div>
+                    <div class="gtb-divider"></div>
+                    <div class="gtb-manager">
+                        <span class="gtb-title" id="global-manager-title">Beginnende Coach</span>
+                        <span class="gtb-level">Niv. <span id="global-manager-level">1</span></span>
+                    </div>
                 </div>
-                <div class="gtb-divider"></div>
-                <div class="gtb-manager">
-                    <span class="gtb-title" id="global-manager-title">Beginnende Coach</span>
-                    <span class="gtb-level">Niv. <span id="global-manager-level">1</span></span>
+                <div class="gtb-xp-track">
+                    <div class="gtb-xp-fill" id="global-xp-fill"></div>
+                    <span class="gtb-xp-label" id="global-xp-label">0 / 0 XP</span>
                 </div>
             </div>
 
@@ -398,24 +568,23 @@
                 <div id="daily-streak" style="display:none;"></div>
             </section>
 
-            <!-- Mijn Speler Page -->
-            <section id="mijnspeler" class="page">
+            <!-- Prestaties Page -->
+            <section id="prestaties" class="page">
                 <header class="page-header">
                     <div class="header-left">
-                        <h2 class="page-title">Mijn Speler</h2>
-                        <p class="page-subtitle handwritten">Speel wedstrijden, verdien XP en maak je speler beter</p>
+                        <h2 class="page-title">Prestaties</h2>
+                        <p class="page-subtitle handwritten">Achievements, carriere en manager voortgang</p>
                     </div>
                 </header>
 
-                <div class="msp-tabs">
-                    <button class="msp-tab active" data-msp-tab="voortgang">Voortgang</button>
-                    <button class="msp-tab" data-msp-tab="prestaties">Prestaties</button>
+                <div class="page-tabs" id="prestaties-tabs">
+                    <button class="page-tab active" data-page-tab="manager">Voortgang</button>
+                    <button class="page-tab" data-page-tab="prestaties">Achievements</button>
                 </div>
-
-                <div class="msp-panel active" id="msp-voortgang">
+                <div id="manager-page-panel" class="page-panel active">
                     <div id="voortgang-content"></div>
                 </div>
-                <div class="msp-panel" id="msp-prestaties">
+                <div id="prestaties-page-panel" class="page-panel">
                     <div id="prestaties-content"></div>
                 </div>
             </section>
@@ -565,6 +734,13 @@
                     </div>
                 </header>
 
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"De jeugd is de toekomst, trainer. Elke dag is er een kans dat nieuwe jeugdspelers instromen, zolang er plek is. Spelers worden elk seizoen een jaar ouder — vanaf 16 jaar kun je ze overhevelen naar de A-selectie."</p>
+                </div>
+
                 <div class="jeugdteam-layout">
                     <!-- Left sidebar: Academy + Scouting -->
                     <div class="youth-sidebar">
@@ -583,7 +759,6 @@
                                 <!-- Filled by JS -->
                             </div>
                             <div class="academy-benefits" id="academy-benefits">
-                                <div class="benefit-item">⭐ Hogere kans toptalent</div>
                             </div>
                         </div>
 
@@ -591,9 +766,6 @@
 
                     <!-- Main content: Players -->
                     <div class="youth-main">
-                        <div class="youth-info-box" id="youth-info-box">
-                            <p>Elke dag is er een kans dat nieuwe jeugdspelers instromen, zolang er plek is. Spelers worden elk seizoen een jaar ouder — vanaf 16 jaar kun je ze overhevelen naar de A-selectie.</p>
-                        </div>
                         <div class="youth-tabs">
                             <button class="youth-tab active" data-age="12-13">Pupillen</button>
                             <button class="youth-tab" data-age="14-15">Junioren</button>
@@ -620,18 +792,6 @@
                         <h2 class="page-title">Selectie</h2>
                         <p class="page-subtitle handwritten">Jouw spelers, jouw team</p>
                     </div>
-                    <div class="header-right">
-                        <div class="squad-stats">
-                            <div class="squad-stat">
-                                <span class="stat-number" id="squad-count">18</span>
-                                <span class="stat-label">Spelers</span>
-                            </div>
-                            <div class="squad-stat">
-                                <span class="stat-number" id="squad-avg">32</span>
-                                <span class="stat-label">Gem. Algemeen</span>
-                            </div>
-                        </div>
-                    </div>
                 </header>
 
                 <div class="squad-container" id="player-cards">
@@ -647,6 +807,13 @@
                         <p class="page-subtitle handwritten">Stel op, train en bepaal de speelwijze</p>
                     </div>
                 </header>
+
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Hier bepaal jij hoe we spelen, trainer. Kies je opstelling, stel de tactiek in en wijs specialisten aan. Een goed plan is het halve werk op zaterdag."</p>
+                </div>
 
                 <!-- Subtabs -->
                 <div class="tactics-tabs">
@@ -855,33 +1022,22 @@
                 <header class="page-header">
                     <div class="header-left">
                         <h2 class="page-title">Training</h2>
-                        <p class="page-subtitle handwritten">Verbeter je speler en bereid je voor op de wedstrijd</p>
+                        <p class="page-subtitle handwritten">Train in je vrije tijd en verdien XP om je speler te upgraden</p>
                     </div>
                     <div class="header-right">
                         <div class="training-cooldown" id="training-cooldown"></div>
                     </div>
                 </header>
 
-                <div class="training-layout">
-                    <!-- Left sidebar: Trainer status + Player info -->
-                    <div class="training-sidebar">
-                        <div class="training-player-bar" id="training-player-bar">
-                            <!-- Filled by JS -->
-                        </div>
-                        <div class="trainer-status-card" id="trainer-status-card">
-                            <!-- Filled by JS -->
-                        </div>
-                    </div>
-
-                    <!-- Main content: Horizontal attribute bars -->
-                    <div class="training-main">
-                        <div class="training-info-box">
-                            <p>Train in je vrije tijd om je speler te verbeteren. Je mag één sessie per dag doen — kies een vaardigheid, neem een massage of bespioneer de tegenstander.</p>
-                        </div>
-                        <div class="training-rows" id="training-rows">
-                            <!-- Filled by JS: horizontal bar rows -->
-                        </div>
-                    </div>
+                <div class="page-tabs" id="training-tabs">
+                    <button class="page-tab active" data-page-tab="speler">Individueel</button>
+                    <button class="page-tab" data-page-tab="prestaties">Statistieken</button>
+                </div>
+                <div id="speler-page-panel" class="page-panel active">
+                    <div id="training-content"></div>
+                </div>
+                <div id="prestaties-page-panel-training" class="page-panel">
+                    <div id="training-prestaties-content"></div>
                 </div>
             </section>
 
@@ -895,9 +1051,9 @@
                 </header>
 
                 <div class="matches-tabs">
-                    <button class="matches-tab active" data-matches-tab="verslag">Verslag</button>
-                    <button class="matches-tab" data-matches-tab="waardering">Spelerswaardering</button>
-                    <button class="matches-tab" data-matches-tab="programma">Programma</button>
+                    <button class="matches-tab active" data-matches-tab="verslag">Laatste Wedstrijd</button>
+                    <button class="matches-tab" data-matches-tab="waardering">Ratings</button>
+                    <button class="matches-tab" data-matches-tab="programma">Competitie</button>
                 </div>
 
                 <div class="matches-panel active" id="matches-verslag">
@@ -907,7 +1063,14 @@
                     <!-- Filled by JS -->
                 </div>
                 <div class="matches-panel" id="matches-programma">
-                    <!-- Filled by JS -->
+                    <div class="programma-layout">
+                        <div class="programma-schedule" id="programma-schedule">
+                            <!-- Filled by JS -->
+                        </div>
+                        <div class="programma-standings" id="programma-standings">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -926,12 +1089,20 @@
                     </div>
                 </header>
 
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Dit is ons complex, trainer. Klik op een gebouw om te upgraden. Grotere tribune, beter gras, een echte kantine... het kost wat, maar de supporters en de inkomsten groeien mee."</p>
+                </div>
+
                 <div class="stadium-map-container">
                     <div class="stadium-map" id="stadium-map">
                         <!-- SVG map rendered by JavaScript -->
                     </div>
                     <div class="stadium-panel-backdrop" id="stadium-panel-backdrop" style="display: none;" onclick="closeStadiumPanel()"></div>
                     <div class="stadium-upgrade-panel" id="stadium-upgrade-panel" style="display: none;">
+                        <button class="sup-close" onclick="closeStadiumPanel()">&times;</button>
                         <div class="sup-header">
                             <span class="sup-icon" id="sup-icon"></span>
                             <div class="sup-title-wrap">
@@ -939,9 +1110,8 @@
                                 <span class="sup-level" id="sup-level"></span>
                             </div>
                         </div>
-                        <div class="sup-current" id="sup-current"></div>
-                        <div class="sup-next" id="sup-next"></div>
-                        <div class="sup-action" id="sup-action"></div>
+                        <div class="sup-description" id="sup-description"></div>
+                        <div class="sup-levels-list" id="sup-levels-list"></div>
                     </div>
                 </div>
             </section>
@@ -954,9 +1124,6 @@
                         <p class="page-subtitle handwritten" id="scout-level-label">Scout: Lvl 0 · Aanbevelingen van de voorzitter</p>
                     </div>
                     <div class="header-right">
-                        <div class="scout-header-hint" id="scout-header-hint">
-                            Neem een scout aan voor betere suggesties
-                        </div>
                     </div>
                 </header>
 
@@ -989,10 +1156,6 @@
                         <p class="page-subtitle handwritten">Versterk je selectie</p>
                     </div>
                     <div class="header-right">
-                        <div class="transfer-budget">
-                            <span class="budget-label">Beschikbaar:</span>
-                            <span class="budget-value">€5.000</span>
-                        </div>
                         <button class="btn btn-secondary btn-sm" id="refresh-market-btn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                                 <polyline points="23 4 23 10 17 10"/>
@@ -1002,6 +1165,13 @@
                         </button>
                     </div>
                 </header>
+
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Overtuig spelers om voor jouw club te tekenen. Goede talenten sluiten vaak pas aan bij hogere klassen — maar proberen kan altijd. Spelers verwachten meestal een salaris en soms een tekenbonus."</p>
+                </div>
 
                 <div class="transfer-filters-panel">
                     <!-- Position Filter -->
@@ -1047,10 +1217,6 @@
                     </div>
                 </div>
 
-                <div class="youth-info-box">
-                    <p>Overtuig spelers om voor jouw club te tekenen. Goede talenten sluiten vaak pas aan bij hogere klassen — maar proberen kan altijd. Spelers verwachten meestal een salaris en soms een tekenbonus.</p>
-                </div>
-
                 <div class="transfer-list" id="transfer-list">
                     <!-- Transfer cards filled by JS -->
                 </div>
@@ -1065,49 +1231,73 @@
                     </div>
                 </header>
 
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Sponsors, trainer, dat is het smeermiddel van de club. Kies een shirtsponsor die bij ons past en houd de sponsormarkt in de gaten voor bordsponsors. Hoe beter we presteren, hoe groter de namen die aankloppen."</p>
+                </div>
+
                 <div class="sponsors-page-layout">
-                    <!-- Top: Shirtsponsor -->
-                    <div class="shirt-sponsor-section">
-                        <h3 class="sponsor-section-title">👕 Shirtsponsor</h3>
-                        <div class="shirt-sponsor-row" id="shirt-sponsor-grid">
-                            <!-- Dynamically rendered -->
+                    <!-- Left: Kit + Reclamebord side by side, tiles beneath each -->
+                    <div class="sponsor-overview-panel" id="sponsor-overview-panel">
+                        <div class="spo-visuals">
+                            <!-- Shirt column -->
+                            <div class="spo-column">
+                                <div class="spo-kit-mini">
+                                    <div class="kit-display" id="kit-display">
+                                        <div class="kit-wrapper">
+                                            <svg viewBox="0 0 100 100" class="kit-shirt-svg" id="sponsor-shirt-svg">
+                                                <path d="M20 20 L32 12 L32 5 L68 5 L68 12 L80 20 L85 38 L75 42 L75 95 L25 95 L25 42 L15 38 Z"
+                                                      fill="var(--shirt-primary, #1b5e20)" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2"/>
+                                                <path d="M32 5 Q50 12 68 5" fill="none" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2.5"/>
+                                                <rect x="26" y="36" width="48" height="26" rx="2" fill="var(--shirt-secondary, #f5f0e1)" opacity="0.9"/>
+                                                <text x="50" y="47" text-anchor="middle" fill="var(--shirt-primary, #1b5e20)"
+                                                      font-family="var(--font-display)" font-size="5.5" font-weight="bold" id="shirt-sponsor-line1"></text>
+                                                <text x="50" y="56" text-anchor="middle" fill="var(--shirt-primary, #1b5e20)"
+                                                      font-family="var(--font-display)" font-size="5.5" font-weight="bold" id="shirt-sponsor-line2"></text>
+                                            </svg>
+                                            <svg viewBox="0 0 100 55" class="kit-shorts-svg" id="sponsor-shorts-svg">
+                                                <path d="M25 5 L75 5 L75 10 L78 50 L55 50 L50 35 L45 50 L22 50 L25 10 Z"
+                                                      fill="var(--shirt-primary, #1b5e20)" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2"/>
+                                                <line x1="50" y1="5" x2="50" y2="35" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="1.5" opacity="0.6"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="spo-tile-shirt"><!-- Dynamically rendered --></div>
+                            </div>
+                            <!-- Reclamebord column -->
+                            <div class="spo-column">
+                                <div class="spo-reclamebord" id="spo-reclamebord">
+                                    <svg viewBox="0 0 140 90" class="reclamebord-svg">
+                                        <rect x="10" y="0" width="4" height="90" rx="2" fill="#666"/>
+                                        <rect x="126" y="0" width="4" height="90" rx="2" fill="#666"/>
+                                        <rect x="6" y="8" width="128" height="52" rx="4" fill="#fff" stroke="#999" stroke-width="1.5"/>
+                                        <rect x="10" y="12" width="120" height="44" rx="2" fill="#1a365d"/>
+                                        <text x="70" y="32" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold" id="bord-sponsor-icon"></text>
+                                        <text x="70" y="48" text-anchor="middle" fill="#fff" font-size="8" font-weight="600" id="bord-sponsor-name">Geen sponsor</text>
+                                        <rect x="0" y="78" width="140" height="12" rx="1" fill="#2e7d32" opacity="0.5"/>
+                                    </svg>
+                                </div>
+                                <div id="spo-tile-bord"><!-- Dynamically rendered --></div>
+                            </div>
                         </div>
+                        <div id="sponsor-overview-total"><!-- Dynamically rendered --></div>
                     </div>
 
-                    <!-- Bottom: Market + Overview side by side -->
-                    <div class="sponsors-bottom-row">
-                        <!-- Market -->
-                        <div class="sponsor-market-section">
-                            <h3 class="sponsor-section-title">🏪 Sponsormarkt <span class="slot-week-badge" id="sponsor-market-week"></span></h3>
-                            <div class="sponsor-market-grid" id="sponsor-market-grid">
+                    <!-- Right: Shirt sponsors + Board sponsors -->
+                    <div class="sponsor-choices-column">
+                        <div class="shirt-sponsor-section">
+                            <h3 class="sponsor-section-title">👕 Shirtsponsor</h3>
+                            <div class="shirt-sponsor-row" id="shirt-sponsor-grid">
                                 <!-- Dynamically rendered -->
                             </div>
                         </div>
 
-                        <!-- Overview panel -->
-                        <div class="sponsor-overview-panel" id="sponsor-overview-panel">
-                            <div class="spo-kit-mini">
-                                <div class="kit-display" id="kit-display">
-                                    <div class="kit-wrapper">
-                                        <svg viewBox="0 0 100 100" class="kit-shirt-svg" id="sponsor-shirt-svg">
-                                            <path d="M20 20 L32 12 L32 5 L68 5 L68 12 L80 20 L85 38 L75 42 L75 95 L25 95 L25 42 L15 38 Z"
-                                                  fill="var(--shirt-primary, #1b5e20)" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2"/>
-                                            <path d="M32 5 Q50 12 68 5" fill="none" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2.5"/>
-                                            <rect x="26" y="36" width="48" height="26" rx="2" fill="var(--shirt-secondary, #f5f0e1)" opacity="0.9"/>
-                                            <text x="50" y="47" text-anchor="middle" fill="var(--shirt-primary, #1b5e20)"
-                                                  font-family="var(--font-display)" font-size="5.5" font-weight="bold" id="shirt-sponsor-line1"></text>
-                                            <text x="50" y="56" text-anchor="middle" fill="var(--shirt-primary, #1b5e20)"
-                                                  font-family="var(--font-display)" font-size="5.5" font-weight="bold" id="shirt-sponsor-line2"></text>
-                                        </svg>
-                                        <svg viewBox="0 0 100 55" class="kit-shorts-svg" id="sponsor-shorts-svg">
-                                            <path d="M25 5 L75 5 L75 10 L78 50 L55 50 L50 35 L45 50 L22 50 L25 10 Z"
-                                                  fill="var(--shirt-primary, #1b5e20)" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2"/>
-                                            <line x1="50" y1="5" x2="50" y2="35" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="1.5" opacity="0.6"/>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="sponsor-overview-content">
+                        <div class="sponsor-market-section">
+                            <h3 class="sponsor-section-title">📋 Bordsponsors <span class="slot-week-badge" id="sponsor-market-week"></span></h3>
+                            <div class="sponsor-market-grid" id="sponsor-market-grid">
                                 <!-- Dynamically rendered -->
                             </div>
                         </div>
@@ -1122,87 +1312,51 @@
                 <header class="page-header">
                     <div class="header-left">
                         <h2 class="page-title">Financiën</h2>
-                        <p class="page-subtitle handwritten">Inkomsten, uitgaven en je dagelijkse balans</p>
+                        <p class="page-subtitle handwritten">Weekoverzicht van je clubkas</p>
+                    </div>
+                    <div class="header-right">
+                        <div class="fin-header-balance">
+                            <span class="fin-header-label">Saldo</span>
+                            <span class="fin-header-amount" id="fin-balance">€5.000</span>
+                        </div>
                     </div>
                 </header>
 
-                <div class="finances-container">
-                    <!-- Three Column Split View -->
-                    <div class="finances-split-view">
-                        <!-- Income Column -->
-                        <div class="finance-column income-col">
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"De centen, trainer. Elke week komt er geld binnen van kaartverkoop en sponsors, maar salarissen en onderhoud vreten er ook aan. Zorg dat we in de plus blijven."</p>
+                </div>
+
+                <div class="fin-week-view">
+                    <!-- Inkomsten -->
+                    <div class="fin-col fin-col-income">
+                        <div class="fin-col-header">
                             <h4>Inkomsten</h4>
-                            <div class="finance-total income" id="total-income">+€252</div>
-                            <ul class="finance-breakdown" id="income-breakdown">
-                                <li><span>Wedstrijden</span><span>+€82</span></li>
-                                <li><span>Sponsoring</span><span>+€17</span></li>
-                                <li><span>Merchandise</span><span>+€19</span></li>
-                                <li><span>Horeca</span><span>+€0</span></li>
-                                <li><span>Fanshop</span><span>+€0</span></li>
-                                <li><span>VIP</span><span>+€0</span></li>
-                                <li><span>Parking</span><span>+€0</span></li>
-                            </ul>
+                            <span class="fin-col-total" id="fin-total-income">+€0</span>
                         </div>
+                        <ul class="fin-list" id="fin-income-list">
+                            <!-- Dynamically rendered -->
+                        </ul>
+                    </div>
 
-                        <!-- Expenses Column -->
-                        <div class="finance-column expense-col">
+                    <!-- Uitgaven -->
+                    <div class="fin-col fin-col-expense">
+                        <div class="fin-col-header">
                             <h4>Uitgaven</h4>
-                            <div class="finance-total expense" id="total-expense">-€89</div>
-                            <ul class="finance-breakdown" id="expense-breakdown">
-                                <li><span>Salarissen</span><span>-€79</span></li>
-                                <li><span>Onderhoud</span><span>-€10</span></li>
-                                <li><span>Training</span><span>-€0</span></li>
-                                <li><span>Medisch</span><span>-€0</span></li>
-                                <li><span>Transfers</span><span>-€0</span></li>
-                            </ul>
+                            <span class="fin-col-total" id="fin-total-expense">-€0</span>
                         </div>
-
-                        <!-- Profit Column -->
-                        <div class="finance-column profit-col">
-                            <h4>Winst/Verlies</h4>
-                            <div class="finance-total profit" id="total-profit">+€163</div>
-                            <div class="profit-details">
-                                <div class="profit-period">
-                                    <span class="period-label">Dagelijks</span>
-                                    <span class="period-value" id="daily-profit">+€163</span>
-                                </div>
-                                <div class="profit-period">
-                                    <span class="period-label">Wekelijks</span>
-                                    <span class="period-value" id="weekly-profit">+€1.141</span>
-                                </div>
-                                <div class="profit-period">
-                                    <span class="period-label">Maandelijks</span>
-                                    <span class="period-value" id="monthly-profit">+€4.890</span>
-                                </div>
-                            </div>
-                        </div>
+                        <ul class="fin-list" id="fin-expense-list">
+                            <!-- Dynamically rendered -->
+                        </ul>
                     </div>
+                </div>
 
-                    <!-- Balance & Season Prediction (Bottom) -->
-                    <div class="finance-summary-bottom">
-                        <div class="current-balance-card">
-                            <h4>Huidige Balans</h4>
-                            <div class="balance-big" id="current-balance-bottom">€5.000</div>
-                            <div class="balance-change positive" id="balance-change">+€163 vandaag</div>
-                        </div>
-
-                        <div class="season-prediction-card">
-                            <h4>Seizoenseinde Voorspelling</h4>
-                            <p class="prediction-subtitle">Over 34 weken</p>
-                            <div class="prediction-estimate" id="season-end-estimate">€55.542</div>
-                            <div class="prediction-details">
-                                <div class="pred-detail">
-                                    <span class="pred-label">Verwachte inkomsten</span>
-                                    <span class="pred-value income" id="season-income">+€68.000</span>
-                                </div>
-                                <div class="pred-detail">
-                                    <span class="pred-label">Verwachte uitgaven</span>
-                                    <span class="pred-value expense" id="season-expense">-€17.458</span>
-                                </div>
-                            </div>
-                            <p class="prediction-note">* Gebaseerd op huidige cashflow</p>
-                        </div>
-                    </div>
+                <!-- Resultaat -->
+                <div class="fin-result" id="fin-result">
+                    <span>Resultaat per week</span>
+                    <span id="fin-result-amount">+€0</span>
                 </div>
             </section>
 
@@ -1215,26 +1369,17 @@
                     </div>
                 </header>
 
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Hier regel je de staf, trainer. Een scout en een individuele trainer kun je meteen aannemen. Voor een fysio moet je eerst wat bouwen, en een jurist... tja, die is pas nodig als we wat hoger spelen. Ze kosten je wel elke week geld, dus denk er goed over na."</p>
+                </div>
+
                 <!-- Unified Staff View -->
                 <div class="staff-unified-view">
-                    <!-- Trainers Section -->
                     <div class="staff-section">
-                        <h3 class="staff-section-title">
-                            <span class="section-icon">🏃</span>
-                            Trainers
-                        </h3>
-                        <div class="staff-grid" id="trainers-staff-grid">
-                            <!-- Filled by JS -->
-                        </div>
-                    </div>
-
-                    <!-- Medische Staf Section -->
-                    <div class="staff-section">
-                        <h3 class="staff-section-title">
-                            <span class="section-icon">🏥</span>
-                            Medische & Overige Staf
-                        </h3>
-                        <div class="staff-grid" id="medisch-staff-grid">
+                        <div class="staff-grid" id="staff-hire-grid">
                             <!-- Filled by JS -->
                         </div>
                     </div>

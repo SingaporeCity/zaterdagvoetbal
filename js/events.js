@@ -478,7 +478,7 @@ const EVENTS = {
         getMessage: (data) => `De gemeente overweegt om kunstgras aan te leggen. De oudere spelers zijn tegen, de jongeren zijn voor.`,
         icon: '🏟️',
         probability: 0.01,
-        condition: (state) => state.stadium.grass !== 'grass_3',
+        condition: (state) => state.stadium.grass !== 'grass_9',
         choices: [
             {
                 text: 'Steun kunstgras',

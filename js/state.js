@@ -61,8 +61,12 @@ export let gameState = {
         highestSale: 0,
         sellouts: 0,
         homeWins: 0,
-        saturdayMatches: 0
+        saturdayMatches: 0,
+        bestWinStreak: 0,
+        bestUnbeaten: 0
     },
+    // Season history archive
+    seasonHistory: [],
     // Current active event (if any)
     activeEvent: null,
     // Last match result
@@ -86,7 +90,8 @@ export let gameState = {
         kantine: 'kantine_0',
         perszaal: 'pers_0',
         youthscouting: 'ysct_0',
-        hotel: 'hotel_1'
+        hotel: 'hotel_1',
+        construction: null
     },
     players: [],
     youthPlayers: [],
@@ -156,8 +161,9 @@ export let gameState = {
     scoutMission: {
         active: false,
         startTime: null,
-        duration: 60 * 1000, // 1 minute (versneld voor testing)
-        pendingPlayer: null
+        duration: 60 * 60 * 1000, // 1 uur
+        pendingPlayer: null,
+        lastScoutDate: null
     },
     finances: {
         history: [4500, 4600, 4800, 4700, 4900, 5100, 5000]
@@ -187,6 +193,16 @@ export let gameState = {
         transfersVisited: false,
         stadiumVisited: false,
         staffVisited: false
+    },
+    // Multiplayer state
+    multiplayer: {
+        enabled: false,
+        leagueId: null,
+        clubId: null,
+        userId: null,
+        isHost: false,
+        leagueName: null,
+        inviteCode: null
     }
 };
 
