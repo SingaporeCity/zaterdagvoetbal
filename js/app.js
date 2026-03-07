@@ -101,7 +101,8 @@ import {
     getAchievementStats,
     getRecentAchievements,
     initAchievements,
-    CATEGORIES
+    CATEGORIES,
+    DIVISION_NAMES
 } from './achievements.js';
 
 import {
@@ -125,7 +126,7 @@ import {
 // NOTIFICATION SYSTEM
 // ================================================
 
-const CHAIRMAN_SVG = `<svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>`;
+const CHAIRMAN_SVG = `<svg viewBox="0 0 55 60"><!-- Head --><ellipse cx="27" cy="30" rx="14" ry="15" fill="#f5d0c5"/><!-- Ears --><ellipse cx="13" cy="29" rx="3" ry="4" fill="#e8bfb0"/><ellipse cx="41" cy="29" rx="3" ry="4" fill="#e8bfb0"/><!-- Hat crown (covers top of head) --><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="#777"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="none" stroke="#666" stroke-width="0.8"/><!-- Hat band --><rect x="14" y="17" width="26" height="3.5" rx="0.5" fill="#555"/><!-- Hat brim (over forehead) --><ellipse cx="27" cy="20" rx="22" ry="5" fill="#888"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="none" stroke="#666" stroke-width="0.8"/><!-- Eyebrows --><path d="M18 26 Q21 24 24 26" fill="none" stroke="#555" stroke-width="1.2"/><path d="M30 26 Q33 24 36 26" fill="none" stroke="#555" stroke-width="1.2"/><!-- Eyes whites --><circle cx="21" cy="29" r="2.5" fill="white"/><circle cx="33" cy="29" r="2.5" fill="white"/><!-- Eyes pupils --><circle cx="21.5" cy="29.3" r="1.2" fill="#333"/><circle cx="33.5" cy="29.3" r="1.2" fill="#333"/><!-- Glasses --><circle cx="21" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="33" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="26" y1="29" x2="28" y2="29" stroke="#333" stroke-width="1"/><!-- Nose --><path d="M27 32 L25.5 36 L28.5 36" fill="none" stroke="#d4a88a" stroke-width="1"/><!-- Mouth with cigar --><path d="M23 39 Q27 41 31 39" fill="none" stroke="#a0522d" stroke-width="1.3"/><!-- Cigar --><rect x="31" y="37.5" width="12" height="3" rx="1.5" fill="#8B4513"/><rect x="31" y="37.5" width="3" height="3" rx="1" fill="#cd853f"/><!-- Cigar glow --><circle cx="43" cy="39" r="1.2" fill="#e65100" opacity="0.7"/><!-- Cigar smoke --><path d="M44 37 Q46 33 44 29" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="0.8"/><path d="M45 38 Q48 32 45 27" fill="none" stroke="rgba(200,200,200,0.35)" stroke-width="0.6"/><!-- Suit --><path d="M10 57 Q10 49 18 47 L27 50 L36 47 Q44 49 44 57 L44 60 L10 60 Z" fill="#1a365d"/><!-- Tie --><path d="M26 50 L27 58 L28 50 Z" fill="#c62828"/><!-- Collar --><path d="M22 49 L27 52 L32 49" fill="none" stroke="white" stroke-width="1.5"/></svg>`;
 
 function showNotification(message, type = 'info') {
     // Remove existing notification if any
@@ -430,22 +431,19 @@ function generateSquad(division) {
         squad.push(createZaterdagPlayer(position));
     });
 
-    // Make 3 random players young talents with high stars
+    // Make 1 random player a talent with 0.5 stars
     const shuffled = squad.sort(() => Math.random() - 0.5);
-    for (let i = 0; i < Math.min(3, shuffled.length); i++) {
-        shuffled[i].age = random(18, 23);
-        shuffled[i].stars = randomFromArray([1.5, 2, 2, 2.5, 3]);
+    if (shuffled.length > 0) {
+        shuffled[0].age = random(18, 23);
+        shuffled[0].stars = 0.5;
     }
 
     return squad;
 }
 
 function assignPlayerStars(age) {
-    if (age >= 30) return 0.5;
-    if (age >= 27) return randomFromArray([0.5, 0.5, 1]);
-    if (age >= 24) return randomFromArray([0.5, 1, 1, 1.5, 1.5, 2]);
-    if (age >= 21) return randomFromArray([1, 1.5, 1.5, 2, 2, 2.5, 3]);
-    return randomFromArray([1.5, 2, 2, 2.5, 3, 3, 3.5, 4, 4.5]);
+    // Most players start at 0, occasionally 0.5
+    return randomFromArray([0, 0, 0, 0, 0, 0, 0, 0.5]);
 }
 
 function createZaterdagPlayer(position) {
@@ -482,7 +480,7 @@ function createZaterdagPlayer(position) {
         fitness: random(80, 100),
         condition: random(70, 100),
         energy: random(60, 100),
-        stars: 0.5,
+        stars: 0,
         fixedMarketValue: 0,
         photo: generatePlayerPhoto(playerName, position)
     };
@@ -728,7 +726,7 @@ function calculatePlayerValue(player, division, forTransfer = true) {
     };
 
     const overall = player.overall || 50;
-    const stars = player.stars || 0.5;
+    const stars = player.stars || 0;
     const age = player.age || 25;
 
     // Base value from overall rating
@@ -838,6 +836,7 @@ function renderPlayerCards() {
     // Add "Mijn Speler" to the squad list
     const mp = initMyPlayer();
     const mpOverall = Math.round((mp.attributes.SNE + mp.attributes.TEC + mp.attributes.PAS + mp.attributes.SCH + mp.attributes.VER + mp.attributes.FYS) / 6);
+    const mpSquadStars = gameState.players.find(p => p && p.id === 'myplayer');
     const myPlayerEntry = {
         id: 'myplayer',
         name: mp.name,
@@ -845,6 +844,7 @@ function renderPlayerCards() {
         position: mp.position,
         overall: mpOverall,
         potential: 99,
+        stars: mpSquadStars ? mpSquadStars.stars : (mp.stars || 1),
         isMyPlayer: true,
         nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
         salary: 0,
@@ -894,13 +894,22 @@ function renderPlayerCards() {
     // Add click handlers
     document.querySelectorAll('#player-cards .player-card').forEach(card => {
         card.addEventListener('click', (e) => {
-            if (e.target.closest('.pc-buyout-btn')) return;
+            if (e.target.closest('.pc-buyout-btn') || e.target.closest('.pc-transfer-btn')) return;
             const playerId = parsePlayerId(card.dataset.playerId);
             showPlayerDetail(playerId);
         });
     });
 
-    // Buyout buttons
+    // Transfer list buttons (players with market value > 0)
+    document.querySelectorAll('#player-cards .pc-transfer-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const playerId = parseFloat(btn.dataset.transferId);
+            showTransferListPopup(playerId);
+        });
+    });
+
+    // Buyout buttons (players with market value 0)
     document.querySelectorAll('#player-cards .pc-buyout-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1008,7 +1017,7 @@ function createPlayerCardHTML(player, mini = false) {
     const myPlayerClass = player.isMyPlayer ? ' my-player-card' : '';
 
     // Stars rating (fixed property)
-    const potentialStars = player.isMyPlayer ? 5 : (player.stars || 0.5);
+    const potentialStars = player.stars || 0;
 
     // Compact horizontal card - flat grid layout for equal column alignment
     return `
@@ -1045,7 +1054,7 @@ function createPlayerCardHTML(player, mini = false) {
                     <span class="pc-potential-label">POT</span>
                 </div>
             </div>
-            ${!player.isMyPlayer ? `<button class="pc-buyout-btn" data-buyout-id="${player.id}" title="Contract afkopen (${formatCurrency((player.salary || 0) * 10)})">✕</button>` : '<span class="pc-buyout-placeholder"></span>'}
+            ${!player.isMyPlayer ? (getPlayerMarketValue(player) > 0 ? `<button class="pc-transfer-btn" data-transfer-id="${player.id}" title="Zet op transfermarkt">💰</button>` : `<button class="pc-buyout-btn" data-buyout-id="${player.id}" title="Contract afkopen (${formatCurrency((player.salary || 0) * 10)})">✕</button>`) : '<span class="pc-buyout-placeholder"></span>'}
         </div>
     `;
 }
@@ -1087,6 +1096,8 @@ function initMyPlayer() {
         const attrKeys = ['SNE', 'TEC', 'PAS', 'SCH', 'VER', 'FYS'];
         attrKeys.forEach(k => { if (a[k] > 12) a[k] = 12; });
     }
+    // Sync overall from attributes
+    gameState.myPlayer.overall = Math.round((a.SNE + a.TEC + a.PAS + a.SCH + a.VER + a.FYS) / 6);
     return gameState.myPlayer;
 }
 
@@ -1282,10 +1293,24 @@ function renderAchievementCards(achievements, filterCategories) {
     ).join('');
 
     function renderCards(category) {
+        const currentDiv = gameState.club?.division ?? 8;
         const cards = filtered
             .filter(a => !category || a.category === category)
             .map(a => {
+                const isLocked = a.minDivision !== undefined && !a.unlocked && currentDiv > a.minDivision;
                 const isHidden = a.hidden && !a.unlocked;
+
+                if (isLocked) {
+                    const divName = DIVISION_NAMES[a.minDivision] || '?';
+                    return `<div class="ach-card locked">
+                        <span class="ach-icon">🔒</span>
+                        <div class="ach-info">
+                            <span class="ach-name">${a.name}</span>
+                            <span class="ach-desc">Bereikbaar vanaf ${divName}</span>
+                        </div>
+                    </div>`;
+                }
+
                 const name = isHidden ? '???' : a.name;
                 const desc = isHidden ? 'Nog niet ontdekt...' : a.description;
                 const icon = isHidden ? '❓' : a.icon;
@@ -1611,6 +1636,10 @@ window.spendSkillPoint = function(attr) {
     mp.attributes[attr]++;
     mp.spentSkillPoints = (mp.spentSkillPoints || 0) + 1;
 
+    // Sync overall from attributes
+    const a = mp.attributes;
+    mp.overall = Math.round((a.SNE + a.TEC + a.PAS + a.SCH + a.VER + a.FYS) / 6);
+
     saveGame(gameState);
     renderTrainingPage();
     renderDashboardExtras();
@@ -1914,8 +1943,7 @@ function renderAvailablePlayers() {
     const container = document.getElementById('lineup-available-players');
     if (!container) return;
 
-    const lineupIds = gameState.lineup.filter(p => p).map(p => p.id);
-    const available = gameState.players.filter(p => !lineupIds.includes(p.id));
+    const lineupIds = new Set(gameState.lineup.filter(p => p).map(p => p.id));
 
     const groups = {
         attacker: { name: 'Aanvallers', icon: '⚽', players: [] },
@@ -1924,7 +1952,7 @@ function renderAvailablePlayers() {
         goalkeeper: { name: 'Keepers', icon: '🧤', players: [] }
     };
 
-    available.forEach(player => {
+    gameState.players.forEach(player => {
         const group = getPositionGroup(player.position);
         if (groups[group]) groups[group].players.push(player);
     });
@@ -1944,14 +1972,20 @@ function renderAvailablePlayers() {
 
         group.players.forEach(player => {
             const posData = POSITIONS[player.position];
+            const energy = player.energy || 75;
+            const energyColor = energy > 70 ? '#4caf50' : energy >= 40 ? '#ff9800' : '#ef5350';
+            const stars = player.stars || 0;
+            const inLineup = lineupIds.has(player.id);
             html += `
-                <div class="available-player"
+                <div class="available-player${inLineup ? ' in-lineup' : ''}"
                      draggable="true"
                      data-player-id="${player.id}">
-                    <span class="ap-overall" style="background: ${posData?.color || '#666'}">${player.overall}</span>
-                    <span class="ap-name">${player.name}</span>
+                    <span class="ap-pos" style="background:${posData?.color || '#666'};color:#fff">${posData?.abbr || '??'}</span>
                     <span class="ap-age">${player.age}j</span>
-                    <span class="ap-pos">${posData?.abbr || '??'}</span>
+                    <span class="ap-name">${player.name}</span>
+                    <span class="ap-energy"><span class="ap-energy-bar" style="width:${energy}%;background:${energyColor}"></span></span>
+                    <span class="ap-overall" style="background: ${posData?.color || '#666'}">${player.overall}</span>
+                    <span class="ap-stars">${renderStarsHTML(stars)}</span>
                 </div>
             `;
         });
@@ -2985,7 +3019,7 @@ function renderScoutPage() {
     // Voorzitter quote bovenaan
     const chairmanIntro = document.getElementById('scout-chairman-intro');
     if (chairmanIntro) {
-        const chairmanSvg = `<svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>`;
+        const chairmanSvg = CHAIRMAN_SVG;
         const quoteText = scoutLevel === 0
             ? '"We hebben nog geen scout in dienst. Bij de Staf kun je er een aannemen. Maar bij gebrek daaraan ken ik zelf ook wel een paar mensen die misschien voor ons zouden willen spelen. Je mag elke dag één keer zoeken!"'
             : '"Onze scout is actief op zoek naar versterking. Stuur hem erop uit en hij komt terug met een rapport!"';
@@ -3570,7 +3604,7 @@ function renderTrainingPage() {
                             <span class="training-tile-lbl">ALG</span>
                         </div>
                         <div class="training-tile training-tile-pot" style="cursor: pointer;" onclick="showTileTooltip(this, 'pot')">
-                            <span class="training-tile-stars">${renderStarsHTML(mp.stars || 5)}</span>
+                            <span class="training-tile-stars">${renderStarsHTML(mp.stars || 0)}</span>
                             <span class="training-tile-lbl">Potentie</span>
                         </div>
                     </div>
@@ -4189,7 +4223,7 @@ function openTrainerPlayerSelect(trainerId) {
         const posData = POSITIONS[player.position] || { abbr: '??', color: '#666' };
         const photo = player.photo || generatePlayerPhoto(player.name, player.position);
         const statValue = player.attributes[stat] || 0;
-        const starsHTML = renderStarsHTML(player.stars || 0.5);
+        const starsHTML = renderStarsHTML(player.stars || 0);
 
         html += `
             <div class="training-player-card" onclick="selectTrainingPlayer(${player.id})">
@@ -4529,7 +4563,7 @@ function selectTeamTraining(type) {
     // Set bonus for next match
     const bonuses = {
         defense: { type: 'defense', value: 10 },
-        setpiece: { type: 'setpiece', value: 10 },
+        tactics: { type: 'tactics', value: 10 },
         attack: { type: 'attack', value: 10 }
     };
 
@@ -4722,7 +4756,7 @@ function showPlayerDetail(playerId) {
                     <span>${player.age} jaar</span>
                     <span>${POSITIONS[player.position].name}</span>
                     <span>ALG: ${player.overall}</span>
-                    <span>${renderStarsHTML(player.stars || 0.5)}</span>
+                    <span>${renderStarsHTML(player.stars || 0)}</span>
                 </div>
             </div>
         </div>
@@ -4840,13 +4874,74 @@ async function buyoutPlayer(playerId) {
     saveGame();
 }
 
-async function listPlayerOnTransferMarket(playerId, price) {
+function showTransferListPopup(playerId) {
+    const player = gameState.players.find(p => p.id === playerId);
+    if (!player) return;
+
+    const marketValue = getPlayerMarketValue(player);
+    const minPrice = Math.round(marketValue * 0.5 / 100) * 100;
+    const maxPrice = Math.round(marketValue * 3 / 100) * 100;
+    const defaultPrice = Math.round(marketValue / 100) * 100;
+    const posData = POSITIONS[player.position] || { abbr: '??', color: '#666' };
+
+    const overlay = document.createElement('div');
+    overlay.className = 'transfer-list-overlay';
+    overlay.innerHTML = `
+        <div class="transfer-list-popup">
+            <h3>Op transfermarkt zetten</h3>
+            <div class="tlp-player">
+                <span class="tlp-name">${player.name}</span>
+                <span class="tlp-pos" style="background:${posData.color}">${posData.abbr}</span>
+            </div>
+            <div class="tlp-market-value">Marktwaarde: <strong>${formatCurrency(marketValue)}</strong></div>
+            <div class="tlp-slider-section">
+                <label class="tlp-price-label">Vraagprijs: <strong class="tlp-price-display">${formatCurrency(defaultPrice)}</strong></label>
+                <input type="range" class="tlp-slider" min="${minPrice}" max="${maxPrice}" value="${defaultPrice}" step="100">
+                <div class="tlp-slider-labels">
+                    <span>Min (0.5x)</span>
+                    <span>Marktwaarde</span>
+                    <span>Max (3x)</span>
+                </div>
+            </div>
+            <div class="tlp-buttons">
+                <button class="btn tlp-confirm">Zet op Transfermarkt</button>
+                <button class="btn tlp-cancel">Annuleren</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const slider = overlay.querySelector('.tlp-slider');
+    const priceDisplay = overlay.querySelector('.tlp-price-display');
+
+    slider.addEventListener('input', () => {
+        priceDisplay.textContent = formatCurrency(parseInt(slider.value));
+    });
+
+    overlay.querySelector('.tlp-confirm').addEventListener('click', () => {
+        const price = parseInt(slider.value);
+        overlay.remove();
+        listPlayerOnTransferMarket(playerId, price, true);
+    });
+
+    overlay.querySelector('.tlp-cancel').addEventListener('click', () => {
+        overlay.remove();
+    });
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+    });
+}
+
+async function listPlayerOnTransferMarket(playerId, price, skipConfirm = false) {
     const playerIndex = gameState.players.findIndex(p => p.id === playerId);
     if (playerIndex === -1) return;
 
     const player = gameState.players[playerIndex];
 
-    if (await showConfirm(`Wil je ${player.name} op de transfermarkt zetten voor ${formatCurrency(price)}?`)) {
+    const confirmed = skipConfirm || await showConfirm(`Wil je ${player.name} op de transfermarkt zetten voor ${formatCurrency(price)}?`);
+    if (confirmed) {
         if (isMultiplayer()) {
             // Multiplayer: insert into shared transfer_market table
             try {
@@ -4858,7 +4953,7 @@ async function listPlayerOnTransferMarket(playerId, price) {
                         position: player.position,
                         nationality: player.nationality || 'nl',
                         overall: player.overall,
-                        stars: player.stars || 0.5,
+                        stars: player.stars || 0,
                         attributes: player.attributes || {}
                     },
                     listed_by_club_id: gameState.multiplayer.clubId,
@@ -4913,6 +5008,9 @@ function navigateToPage(page) {
     if (tiles && pageHeader) {
         pageHeader.appendChild(tiles);
     }
+
+    // Close any open modals
+    document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
 
     // Scroll to top of the main content area
     const activePage = document.getElementById(page);
@@ -5373,8 +5471,8 @@ function renderTransferMarket() {
             const minDivInfo = getDivision(minDiv);
 
             // Stars rating (fixed property)
-            const realStars = player.stars || 0.5;
-            const knownStars = Math.max(0.5, realStars - 1); // 1 star uncertainty
+            const realStars = player.stars || 0;
+            const knownStars = Math.max(0, realStars - 1); // 1 star uncertainty
             const uncertainStars = realStars - knownStars; // the uncertain part
 
             html += `
@@ -7427,7 +7525,7 @@ function migratePlayersToZaterdag() {
                 }
             });
             player.overall = calculateOverall(player.attributes, player.position);
-            player.stars = 0.5;
+            player.stars = 0;
         }
     });
 }
@@ -7606,7 +7704,7 @@ function initGame(mode = 'local') {
             age: mp.age,
             position: mp.position,
             overall: mpOverall,
-            stars: 5,
+            stars: 1,
             isMyPlayer: true,
             nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
             salary: 0,
@@ -7617,14 +7715,18 @@ function initGame(mode = 'local') {
         // Sync overall with current attributes
         mpInSquad.overall = mpOverall;
         mpInSquad.energy = mp.energy || 100;
+        if (!mpInSquad.stars) mpInSquad.stars = 1;
     }
+    // Sync stars back to myPlayer so the global top bar shows the correct value
+    const mpSquadRef = gameState.players.find(p => p && p.id === 'myplayer');
+    if (mpSquadRef) mp.stars = mpSquadRef.stars;
 
     // Migrate: convert potential to fixed stars property
     if (gameState.players && gameState.players.length > 0) {
         gameState.players.forEach(p => {
             if (p && p.stars === undefined) {
                 if (p.isMyPlayer) {
-                    p.stars = 5;
+                    p.stars = 1;
                 } else if (p.potential !== undefined) {
                     p.stars = getPotentialStars(p.overall, p.potential);
                 } else {
@@ -7632,16 +7734,7 @@ function initGame(mode = 'local') {
                 }
             }
         });
-        // Ensure at least 3 players have >= 1.5 stars
-        const highStarCount = gameState.players.filter(p => p && !p.isMyPlayer && (p.stars || 0) >= 1.5).length;
-        if (highStarCount < 3) {
-            const lowStarPlayers = gameState.players.filter(p => p && !p.isMyPlayer && (p.stars || 0) < 1.5)
-                .sort(() => Math.random() - 0.5).slice(0, 3 - highStarCount);
-            lowStarPlayers.forEach(p => {
-                p.age = random(18, 23);
-                p.stars = randomFromArray([1.5, 2, 2, 2.5, 3]);
-            });
-        }
+        // No longer ensure high star players — stars grow via promotions
     }
 
     // Migrate youth players: assign potentialStars if missing
@@ -7706,6 +7799,11 @@ function initGame(mode = 'local') {
 
     // Reset match timer so match is always playable on refresh
     gameState.nextMatch.time = Date.now() - 1000;
+
+    // Move global tiles into dashboard header on init
+    const tiles = document.querySelector('.global-top-tiles');
+    const dashHeader = document.getElementById('dashboard')?.querySelector('.page-header');
+    if (tiles && dashHeader) dashHeader.appendChild(tiles);
 
     // Render initial content
     renderStandings();
@@ -7808,7 +7906,7 @@ function renderDashboardExtras() {
         if (gpOverall) gpOverall.textContent = mpCalcOverall || mp.overall || 50;
         const gpRatingBadge = document.querySelector('.gtb-player-rating');
         if (gpRatingBadge) gpRatingBadge.style.background = POSITIONS[mp.position]?.color || '#666';
-        if (gpTitle) gpTitle.innerHTML = `<span class="gtb-stars-wrap"><span class="gtb-stars-row">${renderStarsHTML(mp.stars || 5)}</span><span class="gtb-pot-label">POT</span></span>`;
+        if (gpTitle) gpTitle.innerHTML = `<span class="gtb-stars-wrap"><span class="gtb-stars-row">${renderStarsHTML(mp.stars || 0)}</span><span class="gtb-pot-label">POT</span></span>`;
         if (gpLevel) gpLevel.textContent = pLevel.level;
         if (gpFill) gpFill.style.width = `${pProgress}%`;
         if (gpLabel) gpLabel.textContent = pLevel.xpToNext > 0 ? `${pXp} / ${pNextXp} XP` : `${pXp} XP — Max!`;
@@ -8296,7 +8394,8 @@ function playMatch() {
     else if (resultType === 'draw') { awardXP(gameState, 'matchDraw'); xpReasons.push({ reason: 'Gelijkspel', amount: 20 }); }
     if (opponentScore === 0) { awardXP(gameState, 'cleanSheet'); xpReasons.push({ reason: 'Clean sheet', amount: 25 }); }
     if (playerScore > 0) { awardXP(gameState, 'goalScored', playerScore * 5); xpReasons.push({ reason: `${playerScore} doelpunt${playerScore > 1 ? 'en' : ''} gescoord`, amount: playerScore * 5 }); }
-    if (xpReasons.length > 0) showManagerXPPopup(xpReasons);
+    // Store XP reasons — popups shown after modal close
+    gameState._pendingManagerXP = xpReasons.length > 0 ? xpReasons : null;
 
     // Award Player XP
     const pxpReasons = [];
@@ -8304,7 +8403,7 @@ function playMatch() {
     else if (resultType === 'draw') { awardPlayerXP(gameState, 'matchDraw'); pxpReasons.push({ reason: 'Gelijkspel', amount: 20 }); }
     if (opponentScore === 0) { awardPlayerXP(gameState, 'cleanSheet'); pxpReasons.push({ reason: 'Clean sheet', amount: 20 }); }
     if (playerScore > 0) { awardPlayerXP(gameState, 'goalScored', playerScore * 10); pxpReasons.push({ reason: `${playerScore} doelpunt${playerScore > 1 ? 'en' : ''} gescoord`, amount: playerScore * 10 }); }
-    if (pxpReasons.length > 0) showPlayerXPPopup(pxpReasons);
+    gameState._pendingPlayerXP = pxpReasons.length > 0 ? pxpReasons : null;
 
     // Player improvement: only lineup players with >= 1.5 stars improve
     // Growth works via progress bar: each match adds %, at 100% → +1 ALG (max 99)
@@ -8313,9 +8412,9 @@ function playMatch() {
     gameState.players.forEach(player => {
         if (!player) return;
         if (!lineupIds.has(player.id)) return; // Only lineup players
-        const stars = player.isMyPlayer ? 5 : (player.stars || 0.5);
-        if (stars >= 1.5 && player.overall < 99) {
-            // Growth per match: stars determine speed (1.5★ = slow, 5★ = fast)
+        const stars = player.stars || 0;
+        if (stars >= 0.5 && player.overall < 99) {
+            // Growth per match: stars determine speed (0.5★ = slow, 5★ = fast)
             const growthGain = Math.round(15 + stars * 4 + Math.random() * 10);
             if (!player.growthProgress) player.growthProgress = 0;
             player.growthProgress += growthGain;
@@ -8393,7 +8492,11 @@ function playMatch() {
 
     // Increase formation drive for the formation used this match (+15-20%)
     if (!gameState.formationDrives) gameState.formationDrives = {};
-    const driveGain = 15 + Math.random() * 5;
+    let driveGain = 15 + Math.random() * 5;
+    // Tactische bespreking bonus: +10% extra bedrevenheid
+    if (gameState.training?.teamTraining?.bonus?.type === 'tactics') {
+        driveGain += 10;
+    }
     gameState.formationDrives[gameState.formation] = Math.min(100, (gameState.formationDrives[gameState.formation] || 0) + driveGain);
 
     // Push to match history
@@ -8437,15 +8540,6 @@ function playMatch() {
         setNextMatch();
     }
 
-    // Show match result modal
-    showMatchResultModal(result, isHome, opponent.name);
-
-    // Check achievements
-    const newAchievements = checkAchievements(gameState);
-    if (newAchievements.length > 0) {
-        setTimeout(() => queueAchievements(newAchievements), 3000);
-    }
-
     // Reset wedstrijdvoorbereiding for next match
     if (gameState.training && gameState.training.teamTraining) {
         gameState.training.teamTraining.selected = null;
@@ -8461,6 +8555,30 @@ function playMatch() {
 
     // Save game
     saveGame(gameState);
+
+    // Show live match simulation, then navigate to Resultaat tab
+    showLiveMatch(result, isHome, opponent.name, () => {
+        navigateToPage('wedstrijden');
+        setTimeout(() => activateTabOnPage('wedstrijden', 'verslag'), 50);
+
+        // Show pending XP popups after navigating
+        setTimeout(() => {
+            if (gameState._pendingManagerXP) {
+                showManagerXPPopup(gameState._pendingManagerXP);
+                gameState._pendingManagerXP = null;
+            }
+            if (gameState._pendingPlayerXP) {
+                showPlayerXPPopup(gameState._pendingPlayerXP);
+                gameState._pendingPlayerXP = null;
+            }
+        }, 500);
+
+        // Check achievements
+        const newAchievements = checkAchievements(gameState);
+        if (newAchievements.length > 0) {
+            setTimeout(() => queueAchievements(newAchievements), 3000);
+        }
+    });
 }
 
 function setNextMatch() {
@@ -8491,6 +8609,24 @@ function handleEndOfSeason() {
         awardPlayerXP(gameState, 'promotion');
         showManagerXPPopup([{ reason: 'Promotie!', amount: 500 }]);
         showPlayerXPPopup([{ reason: 'Promotie!', amount: 300 }]);
+
+        // Promotie bonus: +0.5 ster potentie voor spelers die minstens helft gespeeld hebben
+        const seasonMatches = (gameState.matchHistory || []).filter(m => m.season === gameState.season);
+        const totalMatches = seasonMatches.length;
+        const halfMatches = Math.ceil(totalMatches / 2);
+        const matchCounts = {};
+        seasonMatches.forEach(m => {
+            (m.playerRatings || []).forEach(r => {
+                const pid = String(r.id);
+                matchCounts[pid] = (matchCounts[pid] || 0) + 1;
+            });
+        });
+        gameState.players.forEach(p => {
+            const played = matchCounts[String(p.id)] || 0;
+            if (played >= halfMatches) {
+                p.stars = Math.min(5, (p.stars || 0) + 0.5);
+            }
+        });
     }
     if (result.position === 6) {
         gameState.stats.relegationEscapes++;
@@ -8652,7 +8788,7 @@ function renderMatchReport() {
                     const icons = (p.goals ? '⚽'.repeat(p.goals) : '') + (p.assists ? '🅰️'.repeat(p.assists) : '') + (p.yellowCards ? '🟨'.repeat(p.yellowCards) : '') + (p.redCards ? '🟥'.repeat(p.redCards) : '');
                     const actualPlayer = gameState.players.find(pl => pl && pl.id === p.id);
                     const isMyPlayer = actualPlayer && actualPlayer.isMyPlayer;
-                    const stars = isMyPlayer ? 5 : (actualPlayer ? (actualPlayer.stars || 0.5) : (p.potStars || 0));
+                    const stars = actualPlayer ? (actualPlayer.stars || 0) : (p.potStars || 0);
                     let growthHTML;
                     if (isMyPlayer) {
                         growthHTML = `<a class="rating-myplayer-link" onclick="navigateTo('training')">Check voortgang</a>`;
@@ -8662,7 +8798,7 @@ function renderMatchReport() {
                             <div class="rating-growth-bar"><div class="rating-growth-fill" style="width: ${p.progressPct}%"></div></div>
                             <span class="rating-growth-label-positive">+${p.gainPct}%</span>${levelUpIcon}
                         </div>`;
-                    } else if (stars < 1.5) {
+                    } else if (stars < 0.5) {
                         growthHTML = `<span class="rating-no-growth">-</span>`;
                     } else {
                         growthHTML = `<span class="rating-no-growth">-</span>`;
@@ -8884,6 +9020,567 @@ function renderMatchProgram() {
 }
 
 // ================================================
+// LIVE MATCH SIMULATION
+// ================================================
+
+function showLiveMatch(result, isHome, opponentName, onComplete) {
+    const playerTeam = gameState.club.name;
+
+    // Build events timeline: map events to minutes, track running score
+    const eventsByMinute = {};
+    let runningHome = 0;
+    let runningAway = 0;
+
+    result.events.forEach(ev => {
+        if (ev.type === 'half_time' || ev.type === 'full_time') return;
+        const m = ev.minute;
+        if (!eventsByMinute[m]) eventsByMinute[m] = [];
+
+        let scoreAfter = null;
+        if (ev.type === 'goal' || ev.type === 'penalty') {
+            if (ev.team === 'home') runningHome++;
+            else runningAway++;
+            scoreAfter = { home: runningHome, away: runningAway };
+        }
+
+        eventsByMinute[m].push({ ...ev, scoreAfter });
+    });
+
+    // Check if event is a shot-type (gets suspense buildup)
+    const shotTypes = new Set(['goal', 'shot_saved', 'shot_missed', 'penalty', 'penalty_miss']);
+    function isShotEvent(ev) { return shotTypes.has(ev.type); }
+
+    // Determine which half the play is on (for field highlight)
+    function getFieldSide(ev) {
+        const isPlayerTeam = (isHome && ev.team === 'home') || (!isHome && ev.team === 'away');
+        switch (ev.type) {
+            case 'goal': case 'shot': case 'shot_saved': case 'shot_missed':
+            case 'penalty': case 'penalty_miss': case 'chance': case 'corner': case 'free_kick':
+                return isPlayerTeam ? 'right' : 'left';
+            default:
+                return null; // no highlight
+        }
+    }
+
+    function isOwnTeamEvent(ev) {
+        return (isHome && ev.team === 'home') || (!isHome && ev.team === 'away');
+    }
+
+    // Buildup commentary templates (voorzitter is partijdig!)
+    const buildupOwn = [
+        `Kans voor ${playerTeam}! {player} haalt uit...`,
+        `Ja! ${playerTeam} komt gevaarlijk opzetten! {player} staat vrij...`,
+        `Mooie aanval van ${playerTeam}! {player} krijgt de bal...`,
+        `${playerTeam} ruikt bloed! {player} zoekt de hoek...`,
+        `Daar is de kans! {player} van ${playerTeam} schiet...`,
+        `Kom op! {player} neemt 'm op de slof...`,
+        `Grote kans voor ${playerTeam}! {player} staat oog in oog met de keeper...`,
+        `${playerTeam} met een snelle counter! {player} is door...`
+    ];
+    const buildupOpp = [
+        `Nee hè... ${opponentName} komt gevaarlijk opzetten. {player} staat vrij...`,
+        `Oppassen! ${opponentName} via {player}...`,
+        `Gevaar! {player} van ${opponentName} haalt uit...`,
+        `${opponentName} dreigt... {player} staat alleen voor de keeper...`,
+        `Ik hoop dat dit goed gaat... {player} van ${opponentName} schiet...`,
+        `Verdedigen! ${opponentName} via {player}...`,
+        `Oh nee, {player} van ${opponentName} is door...`,
+        `${opponentName} met een snelle uitbraak! {player} is gevaarlijk...`
+    ];
+
+    // Voorzitter reacties na uitslag (partijdig)
+    const reactionsOwnGoal = [
+        `JAAAA! {player} scoort voor ${playerTeam}! Wat een held!`,
+        `GOAL!! Geweldig van {player}! Daar word ik blij van!`,
+        `{player} doet het! Fantastisch! Kom op ${playerTeam}!`,
+        `WAT EEN GOAL van {player}! De club mag trots zijn!`
+    ];
+    const reactionsOppGoal = [
+        `Nee... {player} van ${opponentName} scoort. Dat doet pijn.`,
+        `Tegendoelpunt via {player}. Balen. Kom op jongens!`,
+        `{player} maakt 'm voor ${opponentName}... We moeten terugvechten!`,
+        `Ach nee, {player} scoort voor ${opponentName}. Dat had niet gemogen.`
+    ];
+    const reactionsOwnSaved = [
+        `Jammer! De keeper houdt het schot van {player} tegen.`,
+        `Bijna! {player} dicht bij een goal, maar de keeper redt.`,
+        `Ohh, {player} schiet goed, maar de doelman pakt 'm.`
+    ];
+    const reactionsOppSaved = [
+        `Gelukkig! Onze keeper houdt {player} van ${opponentName} tegen!`,
+        `Goed zo keeper! {player} van ${opponentName} komt niet langs!`,
+        `Pfoe, dat was gevaarlijk. Maar {player} wordt gestopt!`
+    ];
+    const reactionsOwnMiss = [
+        `Nee! {player} schiet 'm naast! Die had erin gemoeten!`,
+        `Ach, {player} mist het doel. Volgende keer beter!`,
+        `{player} schiet over... Jammer, dat was een goede kans.`
+    ];
+    const reactionsOppMiss = [
+        `Ha! {player} van ${opponentName} mist! Mazzel voor ons.`,
+        `Gelukkig naast! {player} mist voor ${opponentName}.`,
+        `Die gaat gelukkig over. {player} van ${opponentName} schiet wild.`
+    ];
+
+    // Event icons
+    const eventIcons = {
+        'goal': '\u26BD', 'own_goal': '\u26BD', 'yellow_card': '\uD83D\uDFE8',
+        'red_card': '\uD83D\uDFE5', 'substitution': '\uD83D\uDD04', 'injury': '\uD83E\uDD15',
+        'shot': '\uD83D\uDCA8', 'shot_saved': '\uD83E\uDDE4', 'shot_missed': '\uD83D\uDCA8',
+        'save': '\uD83E\uDDE4', 'foul': '\u26A0\uFE0F', 'corner': '\uD83D\uDCD0',
+        'free_kick': '\uD83C\uDFAF', 'penalty': '\u26BD', 'penalty_miss': '\u274C',
+        'chance': '\uD83D\uDCA5'
+    };
+
+    // Live stats counters
+    const liveStats = {
+        shotsHome: 0, shotsAway: 0,
+        sotHome: 0, sotAway: 0,
+        foulsHome: 0, foulsAway: 0,
+        yellowsHome: 0, yellowsAway: 0,
+        redsHome: 0, redsAway: 0
+    };
+
+    // Build overlay HTML
+    const overlay = document.createElement('div');
+    overlay.className = 'live-match-overlay';
+
+    const finalPossHome = isHome ? (result.possession?.home || 50) : (result.possession?.away || 50);
+    const finalPossAway = 100 - finalPossHome;
+
+    overlay.innerHTML = `
+        <div class="live-match-body">
+            <div class="live-match-left">
+                <div class="live-match-field">
+                    <div class="live-match-field-penalty-left"></div>
+                    <div class="live-match-field-goal-left"></div>
+                    <div class="live-match-field-penalty-right"></div>
+                    <div class="live-match-field-goal-right"></div>
+                    <div class="live-match-field-highlight" id="lm-highlight"></div>
+                    <div class="live-match-field-ball" id="lm-ball"></div>
+                </div>
+                <div class="live-match-minute" id="lm-minute">0'</div>
+                <div class="live-match-scoreboard">
+                    <div class="live-match-scoreboard-inner">
+                        <span class="live-match-team-name home">${playerTeam}</span>
+                        <div class="live-match-score">
+                            <span class="live-match-score-num" id="lm-score-home">0</span>
+                            <span class="live-match-score-sep">-</span>
+                            <span class="live-match-score-num" id="lm-score-away">0</span>
+                        </div>
+                        <span class="live-match-team-name away">${opponentName}</span>
+                    </div>
+                </div>
+                <div class="live-match-fans">Fans: ${gameState.club.fans || 50}</div>
+                <div class="live-match-stats" id="lm-stats">
+                    <div class="live-match-stat">
+                        <span class="live-match-stat-value home" id="lm-poss-home">50%</span>
+                        <span class="live-match-stat-label">Balbezit</span>
+                        <span class="live-match-stat-value away" id="lm-poss-away">50%</span>
+                    </div>
+                    <div class="live-match-stat">
+                        <span class="live-match-stat-value home" id="lm-shots-home">0</span>
+                        <span class="live-match-stat-label">Schoten</span>
+                        <span class="live-match-stat-value away" id="lm-shots-away">0</span>
+                    </div>
+                    <div class="live-match-stat">
+                        <span class="live-match-stat-value home" id="lm-sot-home">0</span>
+                        <span class="live-match-stat-label">Op doel</span>
+                        <span class="live-match-stat-value away" id="lm-sot-away">0</span>
+                    </div>
+                    <div class="live-match-stat">
+                        <span class="live-match-stat-value home" id="lm-fouls-home">0</span>
+                        <span class="live-match-stat-label">Overtredingen</span>
+                        <span class="live-match-stat-value away" id="lm-fouls-away">0</span>
+                    </div>
+                    <div class="live-match-stat">
+                        <span class="live-match-stat-value home" id="lm-yellows-home">0</span>
+                        <span class="live-match-stat-label">Gele kaarten</span>
+                        <span class="live-match-stat-value away" id="lm-yellows-away">0</span>
+                    </div>
+                    <div class="live-match-stat">
+                        <span class="live-match-stat-value home" id="lm-reds-home">0</span>
+                        <span class="live-match-stat-label">Rode kaarten</span>
+                        <span class="live-match-stat-value away" id="lm-reds-away">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="live-match-right">
+                <div class="live-match-commentary" id="lm-commentary">
+                    <div class="live-match-commentary-avatar">${CHAIRMAN_SVG}</div>
+                    <div class="live-match-commentary-text">
+                        <span class="speaker">De voorzitter</span>
+                        <span id="lm-commentary-msg">De wedstrijd gaat zo beginnen...</span>
+                    </div>
+                </div>
+                <div class="live-match-log" id="lm-log"></div>
+            </div>
+        </div>
+        <button class="live-match-skip" id="lm-skip">Sla over</button>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // References
+    const scoreHomeEl = document.getElementById('lm-score-home');
+    const scoreAwayEl = document.getElementById('lm-score-away');
+    const minuteEl = document.getElementById('lm-minute');
+    const highlightEl = document.getElementById('lm-highlight');
+    const ballEl = document.getElementById('lm-ball');
+    const commentaryEl = document.getElementById('lm-commentary');
+    const commentaryMsg = document.getElementById('lm-commentary-msg');
+    const logEl = document.getElementById('lm-log');
+    const skipBtn = document.getElementById('lm-skip');
+
+    // Stats elements
+    const statEls = {
+        shotsHome: document.getElementById('lm-shots-home'),
+        shotsAway: document.getElementById('lm-shots-away'),
+        sotHome: document.getElementById('lm-sot-home'),
+        sotAway: document.getElementById('lm-sot-away'),
+        foulsHome: document.getElementById('lm-fouls-home'),
+        foulsAway: document.getElementById('lm-fouls-away'),
+        yellowsHome: document.getElementById('lm-yellows-home'),
+        yellowsAway: document.getElementById('lm-yellows-away'),
+        redsHome: document.getElementById('lm-reds-home'),
+        redsAway: document.getElementById('lm-reds-away'),
+        possHome: document.getElementById('lm-poss-home'),
+        possAway: document.getElementById('lm-poss-away')
+    };
+
+    let currentMinute = 0;
+    let displayHome = 0;
+    let displayAway = 0;
+    let timer = null;
+    let stopped = false;
+
+    function highlightField(side) {
+        if (!side) return;
+        highlightEl.style.top = side === 'left' ? '0' : '50%';
+        highlightEl.classList.add('active');
+        setTimeout(() => highlightEl.classList.remove('active'), 2000);
+    }
+
+    function showBall(ev) {
+        // Only show ball for own team shot events
+        const isOwn = isOwnTeamEvent(ev);
+        if (!isOwn) { hideBall(); return; }
+
+        // Position near opponent goal (bottom of field = attacking end)
+        // Random position within penalty area zone: bottom 20%, center 60%
+        const top = 75 + Math.random() * 18; // 75-93% from top
+        const left = 20 + Math.random() * 60; // 20-80% from left
+        ballEl.style.top = top + '%';
+        ballEl.style.left = left + '%';
+        ballEl.classList.add('visible');
+    }
+
+    function hideBall() {
+        ballEl.classList.remove('visible');
+    }
+
+    function updatePossession(minute) {
+        // Interpolate from 50/50 toward final possession, with slight random jitter
+        const progress = Math.min(minute / 90, 1);
+        const jitter = (Math.random() - 0.5) * 6; // ±3%
+        let currHome = Math.round(50 + (finalPossHome - 50) * progress + jitter);
+        currHome = Math.max(15, Math.min(85, currHome));
+        statEls.possHome.textContent = currHome + '%';
+        statEls.possAway.textContent = (100 - currHome) + '%';
+    }
+
+    function showCommentary(text, accent) {
+        commentaryEl.classList.remove('visible', 'accent-own', 'accent-opponent');
+        void commentaryEl.offsetWidth;
+        commentaryMsg.textContent = text;
+        if (accent) commentaryEl.classList.add('accent-' + accent);
+        commentaryEl.classList.add('visible');
+    }
+
+    function updateStats(ev) {
+        // Map to display side: left = player team, right = opponent
+        const isPlayerTeam = (isHome && ev.team === 'home') || (!isHome && ev.team === 'away');
+        const side = isPlayerTeam ? 'Home' : 'Away';
+
+        // Count shots
+        if (['goal', 'shot', 'shot_saved', 'shot_missed', 'penalty', 'penalty_miss', 'chance'].includes(ev.type)) {
+            liveStats['shots' + side]++;
+            statEls['shots' + side].textContent = liveStats['shots' + side];
+        }
+
+        // Shots on target
+        if (['goal', 'shot_saved', 'penalty'].includes(ev.type)) {
+            liveStats['sot' + side]++;
+            statEls['sot' + side].textContent = liveStats['sot' + side];
+        }
+
+        // Fouls
+        if (ev.type === 'foul' || ev.type === 'yellow_card' || ev.type === 'red_card') {
+            liveStats['fouls' + side]++;
+            statEls['fouls' + side].textContent = liveStats['fouls' + side];
+        }
+
+        // Yellow cards
+        if (ev.type === 'yellow_card') {
+            liveStats['yellows' + side]++;
+            statEls['yellows' + side].textContent = liveStats['yellows' + side];
+        }
+
+        // Red cards
+        if (ev.type === 'red_card') {
+            liveStats['reds' + side]++;
+            statEls['reds' + side].textContent = liveStats['reds' + side];
+        }
+    }
+
+    function addLogEntry(ev) {
+        const entry = document.createElement('div');
+        let cls = 'live-match-log-entry';
+        if (ev.type === 'goal' || ev.type === 'penalty') cls += ' is-goal';
+        else if (ev.type === 'yellow_card') cls += ' is-card';
+        else if (ev.type === 'red_card') cls += ' is-red-card';
+
+        // Team color indicator
+        cls += isOwnTeamEvent(ev) ? ' team-own' : ' team-opponent';
+        entry.className = cls;
+
+        const icon = eventIcons[ev.type] || '\uD83D\uDCCB';
+        const teamLabel = isOwnTeamEvent(ev) ? playerTeam : opponentName;
+        let text = ev.commentary || ev.description || ev.type;
+
+        entry.innerHTML = `
+            <span class="live-match-log-minute">${ev.minute}'</span>
+            <span class="live-match-log-icon">${icon}</span>
+            <span class="live-match-log-text">${text}</span>
+        `;
+
+        logEl.insertBefore(entry, logEl.firstChild);
+    }
+
+    function flashScore(el) {
+        el.classList.add('goal-flash');
+        setTimeout(() => el.classList.remove('goal-flash'), 600);
+    }
+
+    function showGoalOverlay(isOwn) {
+        const goalOv = document.createElement('div');
+        goalOv.className = 'live-match-goal-overlay';
+        goalOv.innerHTML = `<span class="live-match-goal-text${isOwn ? '' : ' opponent'}">GOAL!</span>`;
+        overlay.appendChild(goalOv);
+        setTimeout(() => goalOv.remove(), 1500);
+    }
+
+    function showHalftime() {
+        const ht = document.createElement('div');
+        ht.className = 'live-match-halftime-overlay';
+        ht.innerHTML = '<span class="live-match-halftime-text">RUST</span>';
+        overlay.appendChild(ht);
+        setTimeout(() => ht.remove(), 1500);
+    }
+
+    function showFulltime() {
+        const ft = document.createElement('div');
+        ft.className = 'live-match-halftime-overlay';
+        ft.innerHTML = '<span class="live-match-halftime-text">EINDE</span>';
+        overlay.appendChild(ft);
+        setTimeout(() => {
+            ft.remove();
+            finish();
+        }, 1800);
+    }
+
+    function finish() {
+        if (stopped) return;
+        stopped = true;
+        if (timer) clearTimeout(timer);
+        overlay.remove();
+        onComplete();
+    }
+
+    // Get biased voorzitter reaction for shot outcomes
+    function getVoorzitterReaction(ev) {
+        const own = isOwnTeamEvent(ev);
+        const name = ev.player || 'Speler';
+        let templates;
+        if (ev.type === 'goal' || ev.type === 'penalty') {
+            templates = own ? reactionsOwnGoal : reactionsOppGoal;
+        } else if (ev.type === 'shot_saved') {
+            templates = own ? reactionsOwnSaved : reactionsOppSaved;
+        } else if (ev.type === 'shot_missed' || ev.type === 'penalty_miss') {
+            templates = own ? reactionsOwnMiss : reactionsOppMiss;
+        }
+        if (templates) {
+            return templates[Math.floor(Math.random() * templates.length)].replace(/\{player\}/g, name);
+        }
+        return null;
+    }
+
+    // Process a single event: update score, stats, log, field
+    function revealEvent(ev) {
+        // Highlight field side
+        highlightField(getFieldSide(ev));
+
+        // Update live stats
+        updateStats(ev);
+
+        // Show voorzitter reaction for shot events, otherwise regular commentary
+        const reaction = getVoorzitterReaction(ev);
+        const accent = isShotEvent(ev) ? (isOwnTeamEvent(ev) ? 'own' : 'opponent') : null;
+        if (reaction) {
+            showCommentary(reaction, accent);
+        } else if (ev.commentary) {
+            showCommentary(ev.commentary);
+        }
+
+        // Add log entry
+        addLogEntry(ev);
+
+        // Handle goals
+        if (ev.scoreAfter) {
+            const playerHomeScore = isHome ? ev.scoreAfter.home : ev.scoreAfter.away;
+            const playerAwayScore = isHome ? ev.scoreAfter.away : ev.scoreAfter.home;
+
+            if (playerHomeScore !== displayHome) {
+                displayHome = playerHomeScore;
+                scoreHomeEl.textContent = displayHome;
+                flashScore(scoreHomeEl);
+            }
+            if (playerAwayScore !== displayAway) {
+                displayAway = playerAwayScore;
+                scoreAwayEl.textContent = displayAway;
+                flashScore(scoreAwayEl);
+            }
+
+            showGoalOverlay(isOwnTeamEvent(ev));
+        }
+    }
+
+    // Process events at a given minute with suspense for shot events
+    function processMinuteEvents(events, callback) {
+        if (stopped) return;
+
+        // Split events into shot events (get suspense) and instant events
+        const shotEvents = events.filter(isShotEvent);
+        const instantEvents = events.filter(ev => !isShotEvent(ev));
+
+        // Show instant events immediately
+        instantEvents.forEach(ev => revealEvent(ev));
+
+        // Process shot events sequentially with suspense
+        function processNextShot(index) {
+            if (stopped || index >= shotEvents.length) {
+                callback();
+                return;
+            }
+
+            const ev = shotEvents[index];
+            const playerName = ev.player || 'Een speler';
+            const isOwn = isOwnTeamEvent(ev);
+
+            // Highlight field + show ball for own chances
+            highlightField(getFieldSide(ev));
+            showBall(ev);
+
+            // 1. Show buildup commentary
+            const templates = isOwn ? buildupOwn : buildupOpp;
+            const buildupText = templates[Math.floor(Math.random() * templates.length)].replace('{player}', playerName);
+            showCommentary(buildupText, isOwn ? 'own' : 'opponent');
+
+            // 2. Wait 5 seconds for suspense, then reveal outcome
+            timer = setTimeout(() => {
+                if (stopped) return;
+                hideBall();
+                revealEvent(ev);
+                // Small pause after reveal before next shot
+                timer = setTimeout(() => processNextShot(index + 1), 800);
+            }, 5000);
+        }
+
+        if (shotEvents.length > 0) {
+            processNextShot(0);
+        } else {
+            callback();
+        }
+    }
+
+    // Skip button
+    skipBtn.addEventListener('click', finish);
+
+    // Start simulation
+    commentaryEl.classList.add('visible');
+
+    function tick() {
+        if (stopped) return;
+        currentMinute++;
+
+        minuteEl.textContent = currentMinute + "'";
+        updatePossession(currentMinute);
+
+        // Check for events at this minute
+        const eventsThisMinute = eventsByMinute[currentMinute];
+        let delay = 400; // Fast default for no-event minutes
+
+        if (eventsThisMinute && eventsThisMinute.length > 0) {
+            // Minute pulse
+            minuteEl.classList.add('pulse');
+            setTimeout(() => minuteEl.classList.remove('pulse'), 500);
+
+            const hasShotEvents = eventsThisMinute.some(isShotEvent);
+
+            if (hasShotEvents) {
+                // Timer pauses — suspense handles its own timing
+                processMinuteEvents(eventsThisMinute, () => {
+                    if (stopped) return;
+                    // Halftime check
+                    if (currentMinute === 45) {
+                        showHalftime();
+                        timer = setTimeout(tick, 1800);
+                    } else if (currentMinute >= 90) {
+                        showFulltime();
+                    } else {
+                        timer = setTimeout(tick, 600);
+                    }
+                });
+                return; // Don't schedule next tick — processMinuteEvents handles it
+            }
+
+            // Non-shot events: show instantly
+            eventsThisMinute.forEach(ev => revealEvent(ev));
+            delay = 650;
+        } else {
+            // Random field highlight on some empty minutes
+            if (Math.random() < 0.3) {
+                const side = Math.random() < 0.5 ? 'left' : 'right';
+                highlightField(side);
+            }
+        }
+
+        // Halftime
+        if (currentMinute === 45) {
+            showHalftime();
+            delay = 1800;
+        }
+
+        // Full time
+        if (currentMinute >= 90) {
+            showFulltime();
+            return;
+        }
+
+        // Minute pulse on event minutes
+        if (eventsThisMinute) {
+            minuteEl.classList.add('pulse');
+            setTimeout(() => minuteEl.classList.remove('pulse'), 500);
+        }
+
+        timer = setTimeout(tick, delay);
+    }
+
+    // Start after a brief pause
+    timer = setTimeout(tick, 800);
+}
+
+// ================================================
 // MATCH RESULT MODAL
 // ================================================
 
@@ -9028,6 +9725,16 @@ function createMatchResultModal() {
 function closeMatchResultModal() {
     const modal = document.getElementById('match-result-modal');
     if (modal) modal.style.display = 'none';
+
+    // Show pending XP popups after modal is closed
+    if (gameState._pendingManagerXP) {
+        showManagerXPPopup(gameState._pendingManagerXP);
+        gameState._pendingManagerXP = null;
+    }
+    if (gameState._pendingPlayerXP) {
+        showPlayerXPPopup(gameState._pendingPlayerXP);
+        gameState._pendingPlayerXP = null;
+    }
 }
 window.closeMatchResultModal = closeMatchResultModal;
 
@@ -9171,13 +9878,13 @@ function showAchievementModal(achievement) {
 
     const overlay = document.createElement('div');
     overlay.className = 'achievement-modal-overlay';
+    overlay._achievementReward = reward;
     overlay.innerHTML = `
         <div class="achievement-modal">
             <div class="achievement-modal-icon">${achievement.icon}</div>
             <div class="achievement-modal-label">Prestatie ontgrendeld!</div>
             <div class="achievement-modal-name">${achievement.name}</div>
             <div class="achievement-modal-desc">${achievement.description}</div>
-            ${reward.cash ? `<div class="achievement-modal-reward">+${formatCurrency(reward.cash)}</div>` : ''}
             <button class="achievement-modal-claim-btn" onclick="claimAchievement(this)">
                 Claim${totalXP > 0 ? ` ${totalXP} XP` : ''}
             </button>
@@ -9192,13 +9899,122 @@ function showAchievementModal(achievement) {
 
 function claimAchievement(btn) {
     const overlay = btn.closest('.achievement-modal-overlay');
-    overlay.classList.remove('show');
+    const reward = overlay._achievementReward || {};
+    const playerXP = reward.playerXP || 0;
+    const managerXP = (reward.managerXP || 0) + (reward.xp || 0);
+
+    // Apply XP to game state now
+    if (managerXP > 0 && gameState.manager) {
+        gameState.manager.xp = (gameState.manager.xp || 0) + managerXP;
+    }
+    if (playerXP > 0 && gameState.myPlayer) {
+        gameState.myPlayer.xp = (gameState.myPlayer.xp || 0) + playerXP;
+    }
+
+    // Animate XP flying to tiles
+    const btnRect = btn.getBoundingClientRect();
+    let animationsLeft = 0;
+
+    if (playerXP > 0) {
+        const target = document.getElementById('global-player-bar');
+        if (target) {
+            animationsLeft++;
+            animateXPToTile(btnRect, target, `+${playerXP} XP`, () => {
+                updateGlobalPlayerTile();
+                animationsLeft--;
+                if (animationsLeft === 0) finishClaim(overlay);
+            });
+        }
+    }
+
+    if (managerXP > 0) {
+        const target = document.getElementById('global-top-bar');
+        if (target) {
+            animationsLeft++;
+            animateXPToTile(btnRect, target, `+${managerXP} XP`, () => {
+                updateGlobalManagerTile();
+                animationsLeft--;
+                if (animationsLeft === 0) finishClaim(overlay);
+            });
+        }
+    }
+
+    // If no XP to animate, just close
+    if (animationsLeft === 0) {
+        finishClaim(overlay);
+    } else {
+        // Hide modal content while XP flies
+        overlay.querySelector('.achievement-modal').style.opacity = '0';
+        overlay.querySelector('.achievement-modal').style.transition = 'opacity 0.2s ease';
+    }
+
+    saveGame();
+}
+window.claimAchievement = claimAchievement;
+
+function animateXPToTile(fromRect, targetEl, label, onDone) {
+    const targetRect = targetEl.getBoundingClientRect();
+
+    const floater = document.createElement('div');
+    floater.className = 'xp-claim-floater';
+    floater.textContent = label;
+    floater.style.left = `${fromRect.left + fromRect.width / 2}px`;
+    floater.style.top = `${fromRect.top}px`;
+    document.body.appendChild(floater);
+
+    // Force reflow
+    floater.offsetHeight;
+
+    // Animate to target tile center
+    const targetX = targetRect.left + targetRect.width / 2;
+    const targetY = targetRect.top + targetRect.height / 2;
+    floater.style.left = `${targetX}px`;
+    floater.style.top = `${targetY}px`;
+    floater.style.opacity = '0';
+    floater.style.transform = 'translate(-50%, -50%) scale(0.5)';
+
+    floater.addEventListener('transitionend', () => {
+        floater.remove();
+        // Flash the target tile
+        targetEl.classList.add('xp-tile-flash');
+        setTimeout(() => targetEl.classList.remove('xp-tile-flash'), 600);
+        onDone();
+    }, { once: true });
+}
+
+function updateGlobalManagerTile() {
+    const managerInfo = getManagerLevel(gameState.manager?.xp || 0);
+    const currentXp = managerInfo.xp;
+    const xpForNextLevel = currentXp + managerInfo.xpToNext;
+    const progressPercent = Math.round(managerInfo.progress * 100);
+
+    const el = (id) => document.getElementById(id);
+    if (el('global-manager-title')) el('global-manager-title').textContent = managerInfo.title;
+    if (el('global-manager-level')) el('global-manager-level').textContent = managerInfo.level;
+    if (el('global-xp-fill')) el('global-xp-fill').style.width = `${progressPercent}%`;
+    if (el('global-xp-label')) el('global-xp-label').textContent = managerInfo.xpToNext > 0 ? `${currentXp} / ${xpForNextLevel} XP` : `${currentXp} XP — Max!`;
+}
+
+function updateGlobalPlayerTile() {
+    const mp = gameState.myPlayer;
+    if (!mp) return;
+    const pLevel = getPlayerLevel(mp.xp || 0);
+    const pXp = mp.xp || 0;
+    const pNextXp = pXp + (pLevel.xpToNext || 0);
+    const pProgress = Math.round(pLevel.progress * 100);
+
+    const el = (id) => document.getElementById(id);
+    if (el('global-player-level')) el('global-player-level').textContent = pLevel.level;
+    if (el('global-player-xp-fill')) el('global-player-xp-fill').style.width = `${pProgress}%`;
+    if (el('global-player-xp-label')) el('global-player-xp-label').textContent = pLevel.xpToNext > 0 ? `${pXp} / ${pNextXp} XP` : `${pXp} XP — Max!`;
+}
+
+function finishClaim(overlay) {
     setTimeout(() => {
         overlay.remove();
         showNextAchievement();
-    }, 300);
+    }, 200);
 }
-window.claimAchievement = claimAchievement;
 
 // ================================================
 // MANAGER XP POPUP
@@ -9212,18 +10028,24 @@ function showTileTooltip(el, type) {
         alg: `<strong>Algemene Rating (ALG)</strong><br>Het gemiddelde van al je zes kenmerken. Hoe hoger je ALG, hoe beter je overall als speler presteert.`,
         alg_other: `<strong>Algemene Rating (ALG)</strong><br>De overall kwaliteit van deze speler. Hoe hoger de ALG, hoe beter de speler presteert.`,
         pot: `<strong>Potentie</strong><br>
-            <span class="tt-star">★</span> Zal niks meer worden<br>
-            <span class="tt-star">★★</span> Lichte verbetering is mogelijk<br>
-            <span class="tt-star">★★★</span> Kan op termijn een stapje hogerop<br>
-            <span class="tt-star">★★★★</span> Pareltje<br>
-            <span class="tt-star">★★★★★</span> Wordt een wereldster met de juiste coaching`
+            <span class="tt-star">☆</span> Geen groeipotentie<br>
+            <span class="tt-star">★</span> Lichte verbetering is mogelijk<br>
+            <span class="tt-star">★★</span> Kan op termijn een stapje hogerop<br>
+            <span class="tt-star">★★★</span> Pareltje<br>
+            <span class="tt-star">★★★★</span> Toptalent<br>
+            <span class="tt-star">★★★★★</span> Wereldster in wording<br><br>
+            <em style="color:var(--text-muted);font-size:0.65rem">Bij promotie: +0.5★ voor spelers die minstens de helft van de wedstrijden speelden</em>`
     };
 
     const tooltip = document.createElement('div');
     tooltip.className = 'tile-tooltip';
     tooltip.innerHTML = tooltips[type];
-    el.style.position = 'relative';
-    el.appendChild(tooltip);
+    document.body.appendChild(tooltip);
+
+    // Position fixed relative to viewport
+    const rect = el.getBoundingClientRect();
+    tooltip.style.left = rect.left + rect.width / 2 + 'px';
+    tooltip.style.top = rect.bottom + 8 + 'px';
 
     setTimeout(() => tooltip.classList.add('visible'), 10);
 
@@ -10249,8 +11071,9 @@ function populateSpecialistSelects() {
         gameState.specialists = { cornerTaker: null, penaltyTaker: null, freekickTaker: null, captain: null };
     }
 
-    const inLineup = gameState.lineup.filter(p => p != null);
-    const lineupPlayers = (inLineup.length > 0 ? inLineup : gameState.players || [])
+    const lineupIds = new Set(gameState.lineup.filter(p => p != null).map(p => p.id));
+    const lineupPlayers = gameState.players
+        .filter(p => lineupIds.has(p.id))
         .sort((a, b) => (b.overall || 0) - (a.overall || 0));
     const posAbbr = (pos) => POSITIONS[pos]?.abbr || pos;
     const posColor = (pos) => POSITIONS[pos]?.color || '#666';
@@ -10275,12 +11098,17 @@ function populateSpecialistSelects() {
 
     function renderPlayerRow(p, isSelected) {
         const color = posColor(p.position);
+        const energy = p.energy || 75;
+        const energyColor = energy > 70 ? '#4caf50' : energy >= 40 ? '#ff9800' : '#ef5350';
+        const stars = p.stars || 0;
         return `
-            <div class="spec-player-row ${isSelected ? 'selected' : ''}" data-player-id="${p.id}">
-                <span class="spec-player-badge" style="background: ${color}">${p.overall}</span>
-                <span class="spec-player-name">${p.name}</span>
-                <span class="spec-player-age">${p.age}j</span>
-                <span class="spec-player-pos">${posAbbr(p.position)}</span>
+            <div class="spec-player-row available-player ${isSelected ? 'selected' : ''}" data-player-id="${p.id}">
+                <span class="ap-pos" style="background:${color};color:#fff">${posAbbr(p.position)}</span>
+                <span class="ap-age">${p.age}j</span>
+                <span class="ap-name">${p.name}</span>
+                <span class="ap-energy"><span class="ap-energy-bar" style="width:${energy}%;background:${energyColor}"></span></span>
+                <span class="ap-overall" style="background:${color}">${p.overall}</span>
+                <span class="ap-stars">${renderStarsHTML(stars)}</span>
             </div>
         `;
     }
