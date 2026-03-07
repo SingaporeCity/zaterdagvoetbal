@@ -17,6 +17,15 @@ const CATEGORIES = {
 // All achievements in the game
 const ACHIEVEMENTS = {
     // Match achievements
+    firstMatch: {
+        id: 'firstMatch',
+        name: 'Debuut',
+        description: 'Speel je eerste wedstrijd',
+        category: CATEGORIES.MATCHES,
+        icon: '⚽',
+        reward: { cash: 250, playerXP: 15 },
+        check: (state) => (state.club?.stats?.totalMatches || 0) >= 1
+    },
     firstWin: {
         id: 'firstWin',
         name: 'Eerste Overwinning',

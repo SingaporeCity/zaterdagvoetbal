@@ -9563,8 +9563,8 @@ body {
 /* Lineup Slots */
 .lineup-slot {
     position: absolute;
-    width: 70px;
-    height: 55px;
+    width: 90px;
+    height: 70px;
     transform: translate(-50%, -50%);
     transition: all var(--transition-fast);
 }
@@ -10297,55 +10297,91 @@ body {
     font-size: 1.5rem;
 }
 
-/* Achievement Toast */
-.achievement-toast {
+/* Achievement Modal */
+.achievement-modal-overlay {
     position: fixed;
-    top: 100px;
-    right: -400px;
-    width: 350px;
-    padding: 20px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.achievement-modal-overlay.show {
+    opacity: 1;
+}
+
+.achievement-modal {
     background: linear-gradient(135deg, var(--accent-green-dim) 0%, var(--dark-green) 100%);
     border-radius: var(--card-radius);
     box-shadow: var(--shadow-lg);
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    z-index: 10001;
-    transition: right 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    padding: 32px 40px;
+    text-align: center;
     color: white;
+    max-width: 340px;
+    width: 90%;
+    transform: scale(0.5);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.achievement-toast.show {
-    right: 20px;
+.achievement-modal-overlay.show .achievement-modal {
+    transform: scale(1);
 }
 
-.achievement-icon {
-    font-size: 2.5rem;
-    flex-shrink: 0;
+.achievement-modal-icon {
+    font-size: 3.5rem;
+    margin-bottom: 12px;
 }
 
-.achievement-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.achievement-label {
-    font-size: 0.8rem;
-    opacity: 0.9;
+.achievement-modal-label {
+    font-size: 0.75rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    opacity: 0.85;
+    margin-bottom: 8px;
 }
 
-.achievement-name {
-    font-size: 1.2rem;
+.achievement-modal-name {
+    font-size: 1.4rem;
     font-weight: 700;
+    margin-bottom: 6px;
 }
 
-.achievement-reward {
-    font-size: 0.95rem;
+.achievement-modal-desc {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-bottom: 16px;
+}
+
+.achievement-modal-reward {
+    font-size: 1rem;
     color: var(--accent-orange);
     font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.achievement-modal-claim-btn {
+    background: var(--accent-orange);
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.achievement-modal-claim-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* Season End Modal */
@@ -10471,17 +10507,15 @@ body {
         max-width: none;
     }
 
-    .achievement-toast {
+    .achievement-modal {
+        max-width: none;
         width: calc(100% - 40px);
-        left: 20px;
-        right: 20px !important;
-        top: auto;
-        bottom: -100px;
+        padding: 24px 20px;
     }
 
-    .achievement-toast.show {
-        bottom: 20px;
-        right: 20px !important;
+    .achievement-modal-claim-btn {
+        padding: 14px 32px;
+        font-size: 1.05rem;
     }
 
     .season-stats {
@@ -13375,6 +13409,7 @@ body {
     position: relative;
     display: flex;
     flex-direction: column;
+    padding-left: 120px;
 }
 
 .stadium-map {
@@ -13430,7 +13465,7 @@ body {
     top: 0;
     left: 0;
     bottom: 0;
-    width: 260px;
+    width: 340px;
     background: var(--bg-card);
     border-right: 2px solid var(--accent-green-dim);
     border-radius: 0 12px 12px 0;
@@ -13445,6 +13480,11 @@ body {
 
 @keyframes slideLeftPanel {
     from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideRightPanel {
+    from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
 }
 
@@ -13506,7 +13546,7 @@ body {
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     padding-right: 4px;
 }
 
@@ -13523,12 +13563,13 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 10px;
+    padding: 10px 12px;
     border-radius: 8px;
     border: 1px solid rgba(0,0,0,0.08);
     background: rgba(0,0,0,0.03);
     font-size: 0.8rem;
     position: relative;
+    min-height: 52px;
 }
 
 .sup-level-card.past {
@@ -13627,6 +13668,21 @@ body {
 .sup-level-effect {
     font-size: 0.7rem;
     color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.sup-level-effect .star.full {
+    color: #ffd600;
+    font-size: 0.7rem;
+}
+
+.sup-level-effect .star.half {
+    font-size: 0.7rem;
+}
+
+.sup-level-effect .star.empty {
+    color: rgba(255, 255, 255, 0.15);
+    font-size: 0.7rem;
 }
 
 .sup-badge {
@@ -13727,7 +13783,7 @@ body {
 /* Mobile: stack panel vertically */
 @media (max-width: 600px) {
     .stadium-upgrade-panel {
-        width: 220px;
+        width: 280px;
         padding: 12px;
         gap: 8px;
     }
@@ -15452,7 +15508,7 @@ body {
 
 .chairman-intro {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 14px;
     padding: 14px 18px;
     margin-bottom: 12px;
@@ -15480,6 +15536,14 @@ body {
     line-height: 1.5;
     font-style: normal;
     margin: 0;
+    flex: 1;
+}
+
+.stadium-intro-stats {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-left: auto;
 }
 
 .staff-hire-card.locked {
@@ -22223,7 +22287,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
-    align-items: start;
+    align-items: stretch;
 }
 
 .report-col-left {
@@ -22633,7 +22697,7 @@ body {
 .match-ratings-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
 }
 
 .match-ratings-table th,
@@ -22688,6 +22752,115 @@ body {
 .match-rating-badge.poor {
     background: rgba(244, 67, 54, 0.25);
     color: #ef5350;
+}
+
+/* Rating stars in table */
+.rating-stars-cell {
+    font-size: 0.7rem;
+    white-space: nowrap;
+}
+
+.rating-stars-cell .star {
+    font-size: 0.65rem;
+}
+
+.rating-stars-cell .star.full {
+    color: #ffd600;
+}
+
+.rating-stars-cell .star.empty {
+    color: rgba(255, 255, 255, 0.15);
+}
+
+.rating-stars-cell .star.half .star-half-filled {
+    color: #ffd600;
+}
+
+.rating-stars-cell .star.half .star-half-empty {
+    color: rgba(255, 255, 255, 0.15);
+}
+
+/* Position & overall badges in match ratings */
+.mr-pos-badge,
+.mr-ovr-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.7rem;
+    color: white;
+    text-align: center;
+    min-width: 28px;
+}
+
+/* Growth bar */
+.rating-growth-cell {
+    min-width: 80px;
+}
+
+.rating-growth-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.rating-growth-bar {
+    flex: 1;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    overflow: hidden;
+    min-width: 40px;
+}
+
+.rating-growth-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #66bb6a);
+    border-radius: 5px;
+    transition: width 0.3s;
+}
+
+.rating-growth-label-positive {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #66bb6a;
+    white-space: nowrap;
+}
+
+.rating-growth-label-zero {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.rating-no-growth {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    font-style: italic;
+    white-space: nowrap;
+}
+
+.rating-levelup {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #ffd600;
+    white-space: nowrap;
+}
+
+.rating-myplayer-link {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--accent-green);
+    background: rgba(46, 125, 50, 0.15);
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.rating-myplayer-link:hover {
+    background: rgba(46, 125, 50, 0.3);
 }
 
 /* Chairman Comments */

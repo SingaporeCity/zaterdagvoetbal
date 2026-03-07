@@ -27,7 +27,6 @@ import {
     formatCurrency,
     getInitials,
     getDivision,
-    calculatePotential,
     getNextMidnight,
     formatTimeRemaining,
     getPotentialStars
@@ -331,7 +330,7 @@ function generatePlayer(division, position = null, minAge = 17, maxAge = 35) {
         fitness: random(80, 100),
         condition: random(70, 100),
         energy: random(60, 100),
-        potential: calculatePotential(overall, playerAge),
+        stars: assignPlayerStars(playerAge),
         photo: generatePlayerPhoto(playerName, position)
     };
 }
@@ -366,7 +365,22 @@ function generateSquad(division) {
         squad.push(createZaterdagPlayer(position));
     });
 
+    // Make 3 random players young talents with high stars
+    const shuffled = squad.sort(() => Math.random() - 0.5);
+    for (let i = 0; i < Math.min(3, shuffled.length); i++) {
+        shuffled[i].age = random(18, 23);
+        shuffled[i].stars = randomFromArray([1.5, 2, 2, 2.5, 3]);
+    }
+
     return squad;
+}
+
+function assignPlayerStars(age) {
+    if (age >= 30) return 0.5;
+    if (age >= 27) return randomFromArray([0.5, 0.5, 1]);
+    if (age >= 24) return randomFromArray([0.5, 1, 1, 1.5, 1.5, 2]);
+    if (age >= 21) return randomFromArray([1, 1.5, 1.5, 2, 2, 2.5, 3]);
+    return randomFromArray([1.5, 2, 2, 2.5, 3, 3, 3.5, 4, 4.5]);
 }
 
 function createZaterdagPlayer(position) {
@@ -403,7 +417,7 @@ function createZaterdagPlayer(position) {
         fitness: random(80, 100),
         condition: random(70, 100),
         energy: random(60, 100),
-        potential: overall + random(0, 2),
+        stars: 0.5,
         fixedMarketValue: 0,
         photo: generatePlayerPhoto(playerName, position)
     };
@@ -573,7 +587,6 @@ function scoutPlayers(position, minAge, maxAge, count = 8) {
         // Calculate ranges based on scout count
         player.scoutRanges = {
             overall: calculateScoutRanges(player.overall, player.scoutCount),
-            potential: calculateScoutRanges(player.potential, player.scoutCount),
             attack: calculateScoutRanges(player.attack, player.scoutCount),
             defense: calculateScoutRanges(player.defense, player.scoutCount),
             speed: calculateScoutRanges(player.speed, player.scoutCount),
@@ -586,7 +599,7 @@ function scoutPlayers(position, minAge, maxAge, count = 8) {
             overall: true,
             attributes: scoutInfoNum >= 3,
             personality: scoutInfoNum >= 4,
-            potential: scoutInfoNum >= 5
+            stars: scoutInfoNum >= 5
         };
 
         results.push(player);
@@ -614,7 +627,6 @@ function rescoutPlayer(playerId) {
     // Recalculate ranges (narrower now)
     player.scoutRanges = {
         overall: calculateScoutRanges(player.overall, player.scoutCount),
-        potential: calculateScoutRanges(player.potential, player.scoutCount),
         attack: calculateScoutRanges(player.attack, player.scoutCount),
         defense: calculateScoutRanges(player.defense, player.scoutCount),
         speed: calculateScoutRanges(player.speed, player.scoutCount),
@@ -651,15 +663,15 @@ function calculatePlayerValue(player, division, forTransfer = true) {
     };
 
     const overall = player.overall || 50;
-    const potential = player.potential || overall;
+    const stars = player.stars || 0.5;
     const age = player.age || 25;
 
     // Base value from overall rating
     let baseValue = Math.pow(overall, 2) * (divMultipliers[div] || 0.4) * 100;
 
-    // Potential bonus (higher potential = higher value)
-    const potentialBonus = 1 + ((potential - overall) / 100);
-    baseValue *= potentialBonus;
+    // Stars bonus (higher stars = higher value)
+    const starsBonus = 1 + (stars / 10);
+    baseValue *= starsBonus;
 
     // Age factor - young players with potential worth more
     if (age < 19) baseValue *= 1.8;
@@ -818,7 +830,7 @@ function renderPlayerCards() {
     document.querySelectorAll('#player-cards .player-card').forEach(card => {
         card.addEventListener('click', (e) => {
             if (e.target.closest('.pc-buyout-btn')) return;
-            const playerId = parseFloat(card.dataset.playerId);
+            const playerId = parsePlayerId(card.dataset.playerId);
             showPlayerDetail(playerId);
         });
     });
@@ -930,10 +942,8 @@ function createPlayerCardHTML(player, mini = false) {
     const energy = player.energy || 75;
     const myPlayerClass = player.isMyPlayer ? ' my-player-card' : '';
 
-    // Potential as stars: own player = real rating, others = 1 or 2
-    const potentialStars = player.isMyPlayer
-        ? potentialToStarsGlobal(99)
-        : (player.overall >= 25 ? 2 : 1);
+    // Stars rating (fixed property)
+    const potentialStars = player.isMyPlayer ? 5 : (player.stars || 0.5);
 
     // Compact horizontal card - flat grid layout for equal column alignment
     return `
@@ -984,7 +994,7 @@ function initMyPlayer() {
         gameState.myPlayer = {
             name: 'Patrick',
             age: 45,
-            position: 'CM',
+            position: 'spits',
             number: 10,
             energy: 100,
             attributes: {
@@ -1002,6 +1012,8 @@ function initMyPlayer() {
     if (a.PAS === undefined) a.PAS = 12;
     if (a.SCH === undefined) a.SCH = 12;
     if (gameState.myPlayer.energy === undefined) gameState.myPlayer.energy = 100;
+    // Migrate position to valid POSITIONS key
+    if (gameState.myPlayer.position === 'CM') gameState.myPlayer.position = 'spits';
     // Migrate player XP fields
     if (gameState.myPlayer.xp === undefined || gameState.myPlayer.xp < 1100) gameState.myPlayer.xp = 1100;
     if (gameState.myPlayer.spentSkillPoints === undefined) gameState.myPlayer.spentSkillPoints = 0;
@@ -1924,7 +1936,7 @@ function initLineupDragDrop() {
     // Existing players in lineup can be dragged
     document.querySelectorAll('.lineup-player').forEach(el => {
         el.addEventListener('dragstart', (e) => {
-            const playerId = parseFloat(el.dataset.playerId);
+            const playerId = parsePlayerId(el.dataset.playerId);
             const slotIndex = parseInt(el.closest('.lineup-slot').dataset.slotIndex);
             lineupDragData = {
                 player: gameState.players.find(p => p.id === playerId),
@@ -1968,8 +1980,13 @@ function initLineupDragDrop() {
     }
 }
 
+function parsePlayerId(raw) {
+    const num = parseFloat(raw);
+    return isNaN(num) ? raw : num;
+}
+
 function handleAvailablePlayerDragStart(e) {
-    const playerId = parseFloat(e.target.dataset.playerId);
+    const playerId = parsePlayerId(e.target.dataset.playerId);
     const player = gameState.players.find(p => p.id === playerId);
     lineupDragData = {
         player: player,
@@ -2994,7 +3011,7 @@ function renderScoutPage() {
         chairmanSon.name = `${randomFromArray(DUTCH_FIRST_NAMES)} Bakker`;
         chairmanSon.age = 18;
         chairmanSon.overall = 2;
-        chairmanSon.potential = 40;
+        chairmanSon.stars = 2;
         chairmanSon.salary = 0;
         chairmanSon.fixedMarketValue = 0;
         chairmanSon.nationality = NATIONALITIES[0]; // NL
@@ -4020,19 +4037,16 @@ function openTrainerPlayerSelect(trainerId) {
         const posData = POSITIONS[player.position] || { abbr: '??', color: '#666' };
         const photo = player.photo || generatePlayerPhoto(player.name, player.position);
         const statValue = player.attributes[stat] || 0;
-        const potentialDisplay = getPotentialDisplay(player.potential, player.age);
+        const starsHTML = renderStarsHTML(player.stars || 0.5);
 
         html += `
             <div class="training-player-card" onclick="selectTrainingPlayer(${player.id})">
                 <div class="tpc-ratings">
                     <div class="tpc-overall" style="background: ${posData.color}">
                         <span class="tpc-overall-val">${player.overall}</span>
-                        <span class="tpc-overall-lbl">OVR</span>
+                        <span class="tpc-overall-lbl">ALG</span>
                     </div>
-                    <div class="tpc-potential" style="background: ${posData.color}; opacity: 0.85">
-                        <span class="tpc-potential-val">${potentialDisplay}</span>
-                        <span class="tpc-potential-lbl">POT</span>
-                    </div>
+                    <div class="tpc-stars-row">${starsHTML}</div>
                 </div>
                 <div class="tpc-info">
                     <span class="tpc-name">${player.name}</span>
@@ -4538,8 +4552,8 @@ function showPlayerDetail(playerId) {
                 <div class="player-detail-meta">
                     <span>${player.age} jaar</span>
                     <span>${POSITIONS[player.position].name}</span>
-                    <span>Overall: ${player.overall}</span>
-                    <span>Potentieel: ${player.potential}</span>
+                    <span>ALG: ${player.overall}</span>
+                    <span>${renderStarsHTML(player.stars || 0.5)}</span>
                 </div>
             </div>
         </div>
@@ -4675,7 +4689,7 @@ async function listPlayerOnTransferMarket(playerId, price) {
                         position: player.position,
                         nationality: player.nationality || 'nl',
                         overall: player.overall,
-                        potential: player.potential,
+                        stars: player.stars || 0.5,
                         attributes: player.attributes || {}
                     },
                     listed_by_club_id: gameState.multiplayer.clubId,
@@ -5152,9 +5166,9 @@ function renderTransferMarket() {
             const isOneAbove = !isInterested && minDiv === clubDiv - 1;
             const minDivInfo = getDivision(minDiv);
 
-            // Potential stars with uncertainty: known (yellow) + uncertain (dark)
-            const realStars = potentialToStarsGlobal(player.potential || player.overall);
-            const knownStars = Math.max(1, realStars - 1); // 1 star uncertainty
+            // Stars rating (fixed property)
+            const realStars = player.stars || 0.5;
+            const knownStars = Math.max(0.5, realStars - 1); // 1 star uncertainty
             const uncertainStars = realStars - knownStars; // the uncertain part
 
             html += `
@@ -5210,7 +5224,7 @@ function renderTransferMarket() {
     document.querySelectorAll('.btn-transfer-buy').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const playerId = parseFloat(btn.dataset.playerId);
+            const playerId = parsePlayerId(btn.dataset.playerId);
             handleTransferBuy(playerId, false);
         });
     });
@@ -5219,7 +5233,7 @@ function renderTransferMarket() {
     document.querySelectorAll('.pc-min-premium').forEach(el => {
         el.addEventListener('click', (e) => {
             e.stopPropagation();
-            const playerId = parseFloat(el.dataset.playerId);
+            const playerId = parsePlayerId(el.dataset.playerId);
             handleTransferBuy(playerId, true);
         });
     });
@@ -5729,7 +5743,7 @@ function handleDrop(event) {
     slot.classList.remove('drag-over');
 
     const positionIndex = parseInt(slot.dataset.index);
-    const player = gameState.players.find(p => p.id === parseFloat(draggedPlayerId));
+    const player = gameState.players.find(p => p.id === parsePlayerId(draggedPlayerId));
 
     if (player && !isNaN(positionIndex)) {
         // Remove player from any existing position
@@ -6446,6 +6460,28 @@ function updateYouthTabBadges() {
     });
 }
 
+function ageYouthPlayersDaily() {
+    const today = new Date().toDateString();
+    if (gameState._lastYouthAgingDate === today) return; // Already aged today
+    gameState._lastYouthAgingDate = today;
+
+    if (!gameState.youthPlayers || gameState.youthPlayers.length === 0) return;
+
+    // Age all youth players by 1 year
+    gameState.youthPlayers.forEach(player => {
+        player.age++;
+    });
+
+    // Remove players who turned 18+ (they leave the academy)
+    const leavers = gameState.youthPlayers.filter(p => p.age >= 18);
+    if (leavers.length > 0) {
+        gameState.youthPlayers = gameState.youthPlayers.filter(p => p.age < 18);
+        leavers.forEach(p => {
+            showNotification(`${p.name} (${p.age}) heeft de jeugdopleiding verlaten.`, 'info');
+        });
+    }
+}
+
 function generateInitialYouthPlayers() {
     const maxStars = getAcademyMaxStars();
     const ageGroups = [
@@ -6552,8 +6588,8 @@ function renderYouthPlayers(ageGroup) {
 
     if (emptyState) emptyState.style.display = 'none';
 
-    // Sort by potential descending
-    players.sort((a, b) => b.potential - a.potential);
+    // Sort by stars descending
+    players.sort((a, b) => (b.potentialStars || 1) - (a.potentialStars || 1));
 
     // Check if category is full
     const max = getYouthMaxPerCategory();
@@ -6569,7 +6605,7 @@ function renderYouthPlayers(ageGroup) {
     // Add contract button listeners
     grid.querySelectorAll('.btn-sign-contract').forEach(btn => {
         btn.addEventListener('click', () => {
-            const playerId = parseFloat(btn.dataset.playerId);
+            const playerId = parsePlayerId(btn.dataset.playerId);
             signYouthContract(playerId);
         });
     });
@@ -6577,7 +6613,7 @@ function renderYouthPlayers(ageGroup) {
     // Add dismiss button listeners
     grid.querySelectorAll('.btn-dismiss-youth').forEach(btn => {
         btn.addEventListener('click', () => {
-            const playerId = parseFloat(btn.dataset.playerId);
+            const playerId = parsePlayerId(btn.dataset.playerId);
             dismissYouthPlayer(playerId);
         });
     });
@@ -6614,7 +6650,7 @@ function createYouthPlayerCard(player) {
             <span class="pc-name">${player.name}</span>
             <div class="pc-overall" style="background: ${posData.color}">
                 <span class="pc-overall-value">${level}</span>
-                <span class="pc-overall-label">Niv.</span>
+                <span class="pc-overall-label">ALG</span>
             </div>
             <div class="pc-potential-stars">
                 <span class="pc-stars">${renderStarsHTML(stars)}</span>
@@ -6664,10 +6700,10 @@ function signYouthContract(playerId) {
     const division = gameState.club.division;
     const divData = getDivision(division);
 
-    // Calculate salary based on potential and division
+    // Calculate salary based on stars and division
     const baseSalary = divData ? divData.salary.avg : 50;
-    const potentialBonus = (youthPlayer.potential - 50) * 2;
-    const salary = Math.max(divData?.salary.min || 25, Math.round(baseSalary * 0.5 + potentialBonus));
+    const starsBonus = ((youthPlayer.potentialStars || 1) - 1) * 20;
+    const salary = Math.max(divData?.salary.min || 25, Math.round(baseSalary * 0.5 + starsBonus));
 
     // Determine personality
     const personalityPool = [...PERSONALITIES.good, ...PERSONALITIES.neutral, ...PERSONALITIES.bad];
@@ -6688,7 +6724,7 @@ function signYouthContract(playerId) {
         position: youthPlayer.position,
         attributes: { ...youthPlayer.attributes },
         overall: youthPlayer.overall,
-        potential: youthPlayer.potential,
+        stars: youthPlayer.potentialStars || 1,
         salary,
         personality,
         tag,
@@ -6760,10 +6796,10 @@ function calculateWeeklyFinances() {
     // Board sponsor (alleen bij thuiswedstrijden)
     const bordIncome = wasHome ? (gameState.sponsorSlots?.bord?.weeklyIncome || 0) : 0;
 
-    // Kantine income per match
+    // Kantine income (alleen bij thuiswedstrijden)
     const kantineConfig = STADIUM_TILE_CONFIG?.kantine?.levels.find(l => l.id === gameState.stadium.kantine);
     const kantineMatch = kantineConfig?.effect?.match(/€(\d+)/);
-    const kantineIncome = kantineMatch ? parseInt(kantineMatch[1]) : 0;
+    const kantineIncome = wasHome ? (kantineMatch ? parseInt(kantineMatch[1]) : 0) : 0;
 
     // === EXPENSES (per week) ===
 
@@ -6804,7 +6840,7 @@ function calculateWeeklyFinances() {
             { label: 'Kaartverkoop', value: ticketIncome, detail: wasHome ? `${attendance} toeschouwers` : 'Uitwedstrijd' },
             { label: 'Shirtsponsor', value: shirtIncome },
             { label: 'Bordsponsor', value: bordIncome, detail: wasHome ? '' : 'Uitwedstrijd' },
-            { label: 'Kantine', value: kantineIncome }
+            { label: 'Kantine', value: kantineIncome, detail: wasHome ? '' : 'Uitwedstrijd' }
         ],
         expense: [
             { label: 'Spelerssalarissen', value: playerSalaries },
@@ -7189,7 +7225,7 @@ function migratePlayersToZaterdag() {
                 }
             });
             player.overall = calculateOverall(player.attributes, player.position);
-            player.potential = player.overall + random(0, 2);
+            player.stars = 0.5;
         }
     });
 }
@@ -7357,6 +7393,51 @@ function initGame(mode = 'local') {
     // Migrate existing players: ensure 90% Dutch nationality + zaterdagvoetbal stats
     migratePlayersToZaterdag();
 
+    // Ensure myPlayer is in gameState.players so they can be in the lineup
+    const mp = initMyPlayer();
+    const mpInSquad = gameState.players.some(p => p && p.id === 'myplayer');
+    if (!mpInSquad) {
+        const mpOverall = Math.round((mp.attributes.SNE + mp.attributes.TEC + mp.attributes.PAS + mp.attributes.SCH + mp.attributes.VER + mp.attributes.FYS) / 6);
+        gameState.players.unshift({
+            id: 'myplayer',
+            name: mp.name,
+            age: mp.age,
+            position: mp.position,
+            overall: mpOverall,
+            stars: 5,
+            isMyPlayer: true,
+            nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
+            salary: 0,
+            energy: mp.energy || 100,
+            attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
+        });
+    }
+
+    // Migrate: convert potential to fixed stars property
+    if (gameState.players && gameState.players.length > 0) {
+        gameState.players.forEach(p => {
+            if (p && p.stars === undefined) {
+                if (p.isMyPlayer) {
+                    p.stars = 5;
+                } else if (p.potential !== undefined) {
+                    p.stars = getPotentialStars(p.overall, p.potential);
+                } else {
+                    p.stars = 0.5;
+                }
+            }
+        });
+        // Ensure at least 3 players have >= 1.5 stars
+        const highStarCount = gameState.players.filter(p => p && !p.isMyPlayer && (p.stars || 0) >= 1.5).length;
+        if (highStarCount < 3) {
+            const lowStarPlayers = gameState.players.filter(p => p && !p.isMyPlayer && (p.stars || 0) < 1.5)
+                .sort(() => Math.random() - 0.5).slice(0, 3 - highStarCount);
+            lowStarPlayers.forEach(p => {
+                p.age = random(18, 23);
+                p.stars = randomFromArray([1.5, 2, 2, 2.5, 3]);
+            });
+        }
+    }
+
     // Migrate youth players: assign potentialStars if missing
     if (gameState.youthPlayers && gameState.youthPlayers.length > 0) {
         const needsMigration = gameState.youthPlayers.some(p => p.potentialStars === undefined);
@@ -7401,10 +7482,16 @@ function initGame(mode = 'local') {
     const dailyRewardResult = checkDailyReward(gameState);
     // Reward is claimed but no modal shown
 
+    // Age youth players daily
+    ageYouthPlayersDaily();
+
     // Generate fake match history for testing (only on first load with no history)
     if ((!gameState.matchHistory || gameState.matchHistory.length === 0) && gameState.players.length > 0) {
         generateFakeMatchHistory();
     }
+
+    // Reset match timer so match is always playable on refresh
+    gameState.nextMatch.time = Date.now() - 1000;
 
     // Render initial content
     renderStandings();
@@ -7440,13 +7527,7 @@ function initGame(mode = 'local') {
     // Check achievements
     const newAchievements = checkAchievements(gameState);
     if (newAchievements.length > 0) {
-        setTimeout(() => {
-            newAchievements.forEach((achievement, index) => {
-                setTimeout(() => {
-                    showAchievementUnlocked(achievement);
-                }, index * 1500);
-            });
-        }, 2000);
+        setTimeout(() => queueAchievements(newAchievements), 2000);
     }
 
     console.log('🎮 Zaterdagvoetbal v2.0 initialized!');
@@ -7597,7 +7678,7 @@ function renderDashboardTopPlayers() {
 
     // Get youth players sorted by potential
     const topTalents = [...(gameState.youthPlayers || [])]
-        .sort((a, b) => (b.potential || 0) - (a.potential || 0))
+        .sort((a, b) => (b.potentialStars || 1) - (a.potentialStars || 1))
         .slice(0, 3);
 
     if (topTalents.length === 0) {
@@ -7980,31 +8061,52 @@ function playMatch() {
     if (opponentScore === 0) awardPlayerXP(gameState, 'cleanSheet');
     awardPlayerXP(gameState, 'goalScored', playerScore * 10);
 
-    // Player improvement: players with potential > 1 star get +1 overall
+    // Player improvement: only lineup players with >= 1.5 stars improve
+    // Growth works via progress bar: each match adds %, at 100% → +1 ALG (max 99)
     const improvements = [];
+    const lineupIds = new Set((gameState.lineup || []).filter(p => p).map(p => p.id));
     gameState.players.forEach(player => {
         if (!player) return;
-        const stars = getPotentialStars(player.overall, player.potential);
-        if (stars > 1 && player.overall < player.potential) {
-            const weights = POSITIONS[player.position].weights;
-            const primaryAttr = Object.entries(weights).sort((a, b) => b[1] - a[1])[0][0];
-            player.attributes[primaryAttr] = Math.min(99, player.attributes[primaryAttr] + 1);
-            player.overall = calculateOverall(player.attributes, player.position);
-            improvements.push({ name: player.name, newOverall: player.overall, stars });
+        if (!lineupIds.has(player.id)) return; // Only lineup players
+        const stars = player.isMyPlayer ? 5 : (player.stars || 0.5);
+        if (stars >= 1.5 && player.overall < 99) {
+            // Growth per match: stars determine speed (1.5★ = slow, 5★ = fast)
+            const growthGain = Math.round(15 + stars * 4 + Math.random() * 10);
+            if (!player.growthProgress) player.growthProgress = 0;
+            player.growthProgress += growthGain;
+            let leveled = false;
+            if (player.growthProgress >= 100) {
+                player.growthProgress -= 100;
+                player.overall = Math.min(99, player.overall + 1);
+                leveled = true;
+            }
+            improvements.push({ id: player.id, name: player.name, stars, gainPct: growthGain, progressPct: player.growthProgress, leveled, newOverall: player.overall });
+        } else {
+            improvements.push({ id: player.id, name: player.name, stars, gainPct: 0, progressPct: 0, leveled: false, newOverall: player.overall });
         }
     });
 
-    // Compact playerRatings for storage
-    const compactRatings = result.playerRatings ? Object.entries(result.playerRatings).map(([id, data]) => ({
-        id: Number(id),
-        name: data.player.name,
-        position: data.player.position,
-        rating: Math.round(data.rating * 10) / 10,
-        goals: data.goals,
-        assists: data.assists,
-        yellowCards: data.yellowCards,
-        redCards: data.redCards
-    })) : [];
+    // Compact playerRatings for storage (embed growth data directly)
+    const improvById = {};
+    improvements.forEach(imp => { improvById[String(imp.id)] = imp; });
+    const compactRatings = result.playerRatings ? Object.entries(result.playerRatings).map(([id, data]) => {
+        const pid = isNaN(Number(id)) ? id : Number(id);
+        const imp = improvById[String(pid)];
+        return {
+            id: pid,
+            name: data.player.name,
+            position: data.player.position,
+            rating: Math.round(data.rating * 10) / 10,
+            goals: data.goals,
+            assists: data.assists,
+            yellowCards: data.yellowCards,
+            redCards: data.redCards,
+            gainPct: imp ? imp.gainPct : 0,
+            progressPct: imp ? imp.progressPct : 0,
+            leveled: imp ? imp.leveled : false,
+            potStars: imp ? imp.stars : 0
+        };
+    }) : [];
 
     // Count corners from events
     const cornersHome = result.events.filter(e => e.type === 'corner' && e.team === 'home').length;
@@ -8096,13 +8198,7 @@ function playMatch() {
     // Check achievements
     const newAchievements = checkAchievements(gameState);
     if (newAchievements.length > 0) {
-        setTimeout(() => {
-            newAchievements.forEach((achievement, index) => {
-                setTimeout(() => {
-                    showAchievementUnlocked(achievement);
-                }, index * 1500);
-            });
-        }, 3000);
+        setTimeout(() => queueAchievements(newAchievements), 3000);
     }
 
     // Re-render UI
@@ -8292,18 +8388,37 @@ function renderMatchReport() {
     const ratingsHtml = sortedRatings.length > 0 ? `
         <table class="match-ratings-table">
             <thead>
-                <tr><th>Pos</th><th>Speler</th><th>Cijfer</th><th></th></tr>
+                <tr><th>Pos</th><th>Speler</th><th>ALG</th><th>Cijfer</th><th>Groei</th></tr>
             </thead>
             <tbody>
                 ${sortedRatings.map(p => {
                     const ratingClass = p.rating >= 8.0 ? 'good' : p.rating >= 6.5 ? 'okay' : 'poor';
                     const posAbbr = POSITIONS[p.position]?.abbr || p.position;
                     const icons = (p.goals ? '⚽'.repeat(p.goals) : '') + (p.assists ? '🅰️'.repeat(p.assists) : '') + (p.yellowCards ? '🟨'.repeat(p.yellowCards) : '') + (p.redCards ? '🟥'.repeat(p.redCards) : '');
+                    const actualPlayer = gameState.players.find(pl => pl && pl.id === p.id);
+                    const isMyPlayer = actualPlayer && actualPlayer.isMyPlayer;
+                    const stars = isMyPlayer ? 5 : (actualPlayer ? (actualPlayer.stars || 0.5) : (p.potStars || 0));
+                    let growthHTML;
+                    if (isMyPlayer) {
+                        growthHTML = `<a class="rating-myplayer-link" onclick="navigateTo('training')">Check voortgang</a>`;
+                    } else if (p.gainPct > 0) {
+                        const levelUpIcon = p.leveled ? ' <span class="rating-levelup">+1 ALG!</span>' : '';
+                        growthHTML = `<div class="rating-growth-wrap">
+                            <div class="rating-growth-bar"><div class="rating-growth-fill" style="width: ${p.progressPct}%"></div></div>
+                            <span class="rating-growth-label-positive">+${p.gainPct}%</span>${levelUpIcon}
+                        </div>`;
+                    } else if (stars < 1.5) {
+                        growthHTML = `<span class="rating-no-growth">-</span>`;
+                    } else {
+                        growthHTML = `<span class="rating-no-growth">-</span>`;
+                    }
+                    const posData2 = POSITIONS[p.position] || { color: '#666' };
                     return `<tr>
-                        <td>${posAbbr}</td>
-                        <td>${p.name}</td>
+                        <td><span class="mr-pos-badge" style="background: ${posData2.color}">${posAbbr}</span></td>
+                        <td>${p.name} ${icons}</td>
+                        <td><span class="mr-ovr-badge" style="background: ${posData2.color}">${actualPlayer ? actualPlayer.overall : '?'}</span></td>
                         <td><span class="match-rating-badge ${ratingClass}">${p.rating.toFixed(1)}</span></td>
-                        <td class="rating-icons">${icons}</td>
+                        <td class="rating-growth-cell">${growthHTML}</td>
                     </tr>`;
                 }).join('')}
             </tbody>
@@ -8368,14 +8483,6 @@ function renderMatchReport() {
                         </div>
                     ` : ''}
 
-                    ${improvements.length > 0 ? `
-                        <div class="improvement-list">
-                            ${improvements.map(imp => {
-                                const starsStr = '★'.repeat(imp.stars) + '☆'.repeat(5 - imp.stars);
-                                return `<div class="improvement-item">${imp.name} ↑ ${imp.newOverall} <span class="improvement-stars">(${starsStr})</span></div>`;
-                            }).join('')}
-                        </div>
-                    ` : ''}
                 </div>
 
                 <div class="report-col-right">
@@ -8781,29 +8888,62 @@ window.closeOfflineModal = closeOfflineModal;
 // ACHIEVEMENT UNLOCKED
 // ================================================
 
-function showAchievementUnlocked(achievement) {
-    const toast = document.createElement('div');
-    toast.className = 'achievement-toast';
-    toast.innerHTML = `
-        <span class="achievement-icon">${achievement.icon}</span>
-        <div class="achievement-info">
-            <span class="achievement-label">Prestatie ontgrendeld!</span>
-            <span class="achievement-name">${achievement.name}</span>
-            ${achievement.reward?.cash ? `<span class="achievement-reward">+${formatCurrency(achievement.reward.cash)}</span>` : ''}
+// Achievement queue system
+let achievementQueue = [];
+let achievementModalOpen = false;
+
+function queueAchievements(achievements) {
+    achievementQueue.push(...achievements);
+    if (!achievementModalOpen) {
+        showNextAchievement();
+    }
+}
+
+function showNextAchievement() {
+    if (achievementQueue.length === 0) {
+        achievementModalOpen = false;
+        return;
+    }
+    achievementModalOpen = true;
+    const achievement = achievementQueue.shift();
+    showAchievementModal(achievement);
+}
+
+function showAchievementModal(achievement) {
+    // Calculate total XP
+    const reward = achievement.reward || {};
+    const totalXP = (reward.playerXP || 0) + (reward.managerXP || 0) + (reward.xp || 0);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'achievement-modal-overlay';
+    overlay.innerHTML = `
+        <div class="achievement-modal">
+            <div class="achievement-modal-icon">${achievement.icon}</div>
+            <div class="achievement-modal-label">Prestatie ontgrendeld!</div>
+            <div class="achievement-modal-name">${achievement.name}</div>
+            <div class="achievement-modal-desc">${achievement.description}</div>
+            ${reward.cash ? `<div class="achievement-modal-reward">+${formatCurrency(reward.cash)}</div>` : ''}
+            <button class="achievement-modal-claim-btn" onclick="claimAchievement(this)">
+                Claim${totalXP > 0 ? ` ${totalXP} XP` : ''}
+            </button>
         </div>
     `;
 
-    document.body.appendChild(toast);
+    document.body.appendChild(overlay);
 
-    // Trigger animation
-    setTimeout(() => toast.classList.add('show'), 100);
-
-    // Remove after animation
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 500);
-    }, 4000);
+    // Trigger scale-in animation
+    requestAnimationFrame(() => overlay.classList.add('show'));
 }
+
+function claimAchievement(btn) {
+    const overlay = btn.closest('.achievement-modal-overlay');
+    overlay.classList.remove('show');
+    setTimeout(() => {
+        overlay.remove();
+        showNextAchievement();
+    }, 300);
+}
+window.claimAchievement = claimAchievement;
 
 // ================================================
 // SEASON END MODAL
@@ -8958,9 +9098,9 @@ function handleEventChoice(choiceIndex) {
 
     // Check achievements
     const newAchievements = checkAchievements(gameState);
-    newAchievements.forEach((achievement, index) => {
-        setTimeout(() => showAchievementUnlocked(achievement), index * 1500);
-    });
+    if (newAchievements.length > 0) {
+        queueAchievements(newAchievements);
+    }
 
     // Save
     saveGame(gameState);
@@ -10726,23 +10866,24 @@ function updateStadiumUpgradePanel(category) {
         const isDivLocked = level.reqDivision !== undefined && clubDivision > level.reqDivision;
         const hasCapReq = level.reqCapacity && currentCapacity < level.reqCapacity;
 
+        // Skip past levels - don't show them
+        if (isPast) return;
+
+        // For academy levels, render stars properly instead of raw text
+        const effectHTML = (category === 'academy' && level.maxStars)
+            ? `Max ${renderStarsHTML(level.maxStars)} potentieel`
+            : level.effect;
+
         let cardClass = 'sup-level-card';
         let contentHTML = '';
 
-        if (isPast) {
-            cardClass += ' past';
-            contentHTML = `
-                <span class="sup-level-num">✓</span>
-                <div class="sup-level-info">
-                    <span class="sup-level-name">${level.name}</span>
-                </div>`;
-        } else if (isCurrent) {
+        if (isCurrent) {
             cardClass += ' current';
             contentHTML = `
                 <span class="sup-level-num">Niv. ${idx + levelOffset}</span>
                 <div class="sup-level-info">
                     <span class="sup-level-name">${level.name}</span>
-                    <span class="sup-level-effect">${level.effect}</span>
+                    <span class="sup-level-effect">${effectHTML}</span>
                 </div>
                 <span class="sup-badge current-badge">Huidig</span>`;
         } else if (isBuilding) {
@@ -10755,7 +10896,7 @@ function updateStadiumUpgradePanel(category) {
                 <span class="sup-level-num">Niv. ${idx + levelOffset}</span>
                 <div class="sup-level-info">
                     <span class="sup-level-name">${level.name}</span>
-                    <span class="sup-level-effect">${level.effect}</span>
+                    <span class="sup-level-effect">${effectHTML}</span>
                 </div>
                 <div class="sup-building-status">
                     <span class="sup-badge building-badge">In aanbouw...</span>
@@ -10768,7 +10909,7 @@ function updateStadiumUpgradePanel(category) {
                     <span class="sup-level-num">Niv. ${idx + levelOffset}</span>
                     <div class="sup-level-info">
                         <span class="sup-level-name">${level.name}</span>
-                        <span class="sup-level-effect">${level.effect}</span>
+                        <span class="sup-level-effect">${effectHTML}</span>
                     </div>
                     <span class="sup-level-cost">${formatCurrency(level.cost)}</span>
                 </div>
@@ -10796,7 +10937,7 @@ function updateStadiumUpgradePanel(category) {
                 <span class="sup-level-num">Niv. ${idx + levelOffset}</span>
                 <div class="sup-level-info">
                     <span class="sup-level-name">${level.name}</span>
-                    <span class="sup-level-effect">${level.effect}</span>
+                    <span class="sup-level-effect">${effectHTML}</span>
                 </div>
                 <div class="sup-level-action">
                     <span class="sup-level-cost">${formatCurrency(level.cost)}</span>
@@ -10809,7 +10950,7 @@ function updateStadiumUpgradePanel(category) {
                 <span class="sup-level-num">Niv. ${idx + levelOffset}</span>
                 <div class="sup-level-info">
                     <span class="sup-level-name">${level.name}</span>
-                    <span class="sup-level-effect">${level.effect}</span>
+                    <span class="sup-level-effect">${effectHTML}</span>
                 </div>
                 <span class="sup-level-cost">${formatCurrency(level.cost)}</span>`;
         }
