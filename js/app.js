@@ -7964,10 +7964,7 @@ window.claimDailyBonus = claimDailyBonus;
 // ================================================
 
 function initPlayMatchButton() {
-    const playBtn = document.getElementById('play-match-btn');
-    if (playBtn) {
-        playBtn.addEventListener('click', playMatch);
-    }
+    // Button behavior is set dynamically by updateMatchTimer()
 }
 
 function playMatch() {
