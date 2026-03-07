@@ -28,20 +28,61 @@ const DAILY_REWARDS = [
 
 // Manager levels and XP requirements (with cash reward on level-up)
 const MANAGER_LEVELS = [
-    { level: 1, xpRequired: 0, title: 'Beginnend Trainer', cashReward: 0 },
-    { level: 2, xpRequired: 100, title: 'Assistent Coach', cashReward: 500 },
-    { level: 3, xpRequired: 300, title: 'Jeugdtrainer', cashReward: 750 },
-    { level: 4, xpRequired: 600, title: 'Trainer B', cashReward: 1000 },
-    { level: 5, xpRequired: 1000, title: 'Trainer A', cashReward: 1500 },
-    { level: 6, xpRequired: 1500, title: 'Hoofdcoach', cashReward: 2000 },
-    { level: 7, xpRequired: 2200, title: 'Ervaren Coach', cashReward: 3000 },
-    { level: 8, xpRequired: 3000, title: 'Tacticus', cashReward: 4000 },
-    { level: 9, xpRequired: 4000, title: 'Meestertrainer', cashReward: 5000 },
-    { level: 10, xpRequired: 5500, title: 'Strategisch Genie', cashReward: 7500 },
-    { level: 15, xpRequired: 10000, title: 'Legendarische Coach', cashReward: 15000 },
-    { level: 20, xpRequired: 20000, title: 'Voetbalicoon', cashReward: 30000 },
-    { level: 25, xpRequired: 35000, title: 'Hall of Famer', cashReward: 60000 },
-    { level: 30, xpRequired: 50000, title: 'De Beste Aller Tijden', cashReward: 100000 }
+    // Fase 1: De begindagen (1-10)
+    { level: 1,  xpRequired: 0,      title: 'Bidonvuller',          cashReward: 0 },
+    { level: 2,  xpRequired: 100,    title: 'Pylonnencoach',        cashReward: 500 },
+    { level: 3,  xpRequired: 250,    title: 'Hesjesuitdeler',       cashReward: 600 },
+    { level: 4,  xpRequired: 450,    title: 'Krijtveldtrekker',     cashReward: 700 },
+    { level: 5,  xpRequired: 700,    title: 'Kleedkamerheld',       cashReward: 800 },
+    { level: 6,  xpRequired: 1000,   title: 'Fluistercoach',        cashReward: 1000 },
+    { level: 7,  xpRequired: 1350,   title: 'Lijnentrekker',        cashReward: 1200 },
+    { level: 8,  xpRequired: 1750,   title: 'Zaterdagcoach',        cashReward: 1400 },
+    { level: 9,  xpRequired: 2200,   title: 'Trainingsveldheld',    cashReward: 1600 },
+    { level: 10, xpRequired: 2700,   title: 'Kantinestrateg',       cashReward: 2000 },
+    // Fase 2: Eerste successen (11-20)
+    { level: 11, xpRequired: 3300,   title: 'Hoekschopexpert',      cashReward: 2500 },
+    { level: 12, xpRequired: 4000,   title: 'Buitenspelval-fan',    cashReward: 3000 },
+    { level: 13, xpRequired: 4800,   title: 'Dugout-denker',        cashReward: 3500 },
+    { level: 14, xpRequired: 5700,   title: 'Warming-upgoeroe',     cashReward: 4000 },
+    { level: 15, xpRequired: 6700,   title: 'Veldstrateeg',         cashReward: 5000 },
+    { level: 16, xpRequired: 7800,   title: 'Wisselprofessor',      cashReward: 5500 },
+    { level: 17, xpRequired: 9000,   title: 'Formatiefanaat',       cashReward: 6000 },
+    { level: 18, xpRequired: 10500,  title: 'Tacticus',             cashReward: 7000 },
+    { level: 19, xpRequired: 12200,  title: 'Pressingmeester',      cashReward: 8000 },
+    { level: 20, xpRequired: 14000,  title: 'Hoofdcoach',           cashReward: 10000 },
+    // Fase 3: Reputatie groeit (21-30)
+    { level: 21, xpRequired: 16000,  title: 'Klembordgeneraal',     cashReward: 11000 },
+    { level: 22, xpRequired: 18500,  title: 'Veldheer',             cashReward: 12000 },
+    { level: 23, xpRequired: 21000,  title: 'Motivator',            cashReward: 14000 },
+    { level: 24, xpRequired: 24000,  title: 'Resultaatcoach',       cashReward: 16000 },
+    { level: 25, xpRequired: 27500,  title: 'Kampioensmaker',       cashReward: 18000 },
+    { level: 26, xpRequired: 31000,  title: 'Promovendus',          cashReward: 20000 },
+    { level: 27, xpRequired: 35000,  title: 'Bekerwinnaar',         cashReward: 23000 },
+    { level: 28, xpRequired: 39500,  title: 'Clublegende',          cashReward: 26000 },
+    { level: 29, xpRequired: 44500,  title: 'Eredivisiecoach',      cashReward: 30000 },
+    { level: 30, xpRequired: 50000,  title: 'Meesterbrein',         cashReward: 35000 },
+    // Fase 4: Nationaal beroemd (31-40)
+    { level: 31, xpRequired: 56000,  title: 'Catenaccio-koning',    cashReward: 40000 },
+    { level: 32, xpRequired: 63000,  title: 'Tiki-taka-trainer',    cashReward: 45000 },
+    { level: 33, xpRequired: 70000,  title: 'Dugout-generaal',      cashReward: 50000 },
+    { level: 34, xpRequired: 78000,  title: 'Persconferentiekoning', cashReward: 55000 },
+    { level: 35, xpRequired: 87000,  title: 'Tactisch Genie',       cashReward: 60000 },
+    { level: 36, xpRequired: 97000,  title: 'Bondscoachmateriaal',  cashReward: 70000 },
+    { level: 37, xpRequired: 108000, title: 'Fluittiran',           cashReward: 80000 },
+    { level: 38, xpRequired: 120000, title: 'Trainerslegende',      cashReward: 90000 },
+    { level: 39, xpRequired: 135000, title: 'Voetbalprofessor',     cashReward: 100000 },
+    { level: 40, xpRequired: 150000, title: 'Voetbalicoon',         cashReward: 120000 },
+    // Fase 5: Wereldklasse (41-50)
+    { level: 41, xpRequired: 170000, title: 'Champions League-stof', cashReward: 140000 },
+    { level: 42, xpRequired: 190000, title: 'Wereldcoach',           cashReward: 160000 },
+    { level: 43, xpRequired: 215000, title: 'Ballon d\'Or-maker',    cashReward: 180000 },
+    { level: 44, xpRequired: 240000, title: 'Dynastie-bouwer',       cashReward: 200000 },
+    { level: 45, xpRequired: 270000, title: 'Hall of Famer',         cashReward: 250000 },
+    { level: 46, xpRequired: 310000, title: 'Onsterfelijke Coach',   cashReward: 300000 },
+    { level: 47, xpRequired: 360000, title: 'Opperstrateg',          cashReward: 400000 },
+    { level: 48, xpRequired: 420000, title: 'Voetbalgod',            cashReward: 500000 },
+    { level: 49, xpRequired: 500000, title: 'De Uitverkorene',       cashReward: 750000 },
+    { level: 50, xpRequired: 600000, title: 'De Beste Aller Tijden', cashReward: 1000000 }
 ];
 
 // Player levels and XP requirements
@@ -564,7 +605,8 @@ export function awardPlayerXP(gameState, action, amount = null) {
  * Get season schedule
  */
 export function getSeasonSchedule(standings, week) {
-    const teams = standings.map(t => t.name);
+    // Sort teams alphabetically for a stable schedule regardless of standings order
+    const teams = standings.map(t => t.name).sort();
     const playerTeam = standings.find(t => t.isPlayer)?.name;
 
     // Generate round-robin schedule
@@ -602,9 +644,13 @@ export function getNextOpponent(standings, week) {
     const schedule = getSeasonSchedule(standings, week);
     const playerTeam = standings.find(t => t.isPlayer);
 
-    if (!playerTeam || week > schedule.length) return null;
+    if (!playerTeam || schedule.length === 0) return null;
 
-    const roundMatches = schedule[week - 1];
+    // Wrap week into the schedule range so it works beyond season length
+    const roundIndex = ((week - 1) % schedule.length);
+    const roundMatches = schedule[roundIndex];
+    if (!roundMatches) return null;
+
     const playerMatch = roundMatches.find(
         m => m.home === playerTeam.name || m.away === playerTeam.name
     );

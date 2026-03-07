@@ -917,6 +917,16 @@ function renderPlayerCards() {
             buyoutPlayer(playerId);
         });
     });
+
+    // Move squad-size-display into global-top-tiles (left of player tile) only when squad page is active
+    const squadPage = document.getElementById('squad');
+    if (squadPage && squadPage.classList.contains('active')) {
+        const ssd = document.querySelector('.squad-size-display');
+        const gtt = document.querySelector('.global-top-tiles');
+        if (ssd && gtt) {
+            gtt.prepend(ssd);
+        }
+    }
 }
 
 // Get potential display - always as range (xx-xx)
@@ -3027,11 +3037,7 @@ function renderScoutPage() {
 
     // Update header labels
     const levelLabel = document.getElementById('scout-level-label');
-    if (levelLabel) {
-        levelLabel.textContent = scoutLevel === 0
-            ? 'Scout: Lvl 0 · Aanbevelingen van de voorzitter'
-            : 'Scout: Lvl 1 · Professionele scout';
-    }
+    if (levelLabel) levelLabel.textContent = '';
     const hintEl = document.getElementById('scout-header-hint');
     if (hintEl) {
         hintEl.textContent = scoutLevel === 0
@@ -3043,7 +3049,11 @@ function renderScoutPage() {
     const chairmanIntro = document.getElementById('scout-chairman-intro');
     if (chairmanIntro) {
         const chairmanSvg = CHAIRMAN_SVG;
-        const quoteText = scoutLevel === 0
+        const mission = gameState.scoutMission;
+        const usedToday = !mission.active && mission.lastScoutDate === getTodayString();
+        const quoteText = usedToday
+            ? '"We hebben vandaag al gespeurd, trainer. Morgen kunnen we weer op pad!"'
+            : scoutLevel === 0
             ? '"We hebben nog geen scout in dienst. Bij de Staf kun je er een aannemen. Maar bij gebrek daaraan ken ik zelf ook wel een paar mensen die misschien voor ons zouden willen spelen. Je mag elke dag één keer zoeken!"'
             : '"Onze scout is actief op zoek naar versterking. Stuur hem erop uit en hij komt terug met een rapport!"';
         chairmanIntro.innerHTML = `
@@ -3595,6 +3605,35 @@ function renderTrainingPage() {
         : `Geen skill punten`;
     const derived = getMyPlayerDerived(mp);
 
+    // Season stats
+    const history = gameState.matchHistory || [];
+    const seasonHistory = history.filter(h => h.season === gameState.season);
+    const seasonMatches = seasonHistory.length;
+    const seasonGoals = seasonHistory.reduce((sum, m) => sum + (m.playerScore || 0), 0);
+    const seasonAssists = seasonHistory.reduce((sum, m) => {
+        return sum + (m.events || []).filter(e =>
+            e.type === 'goal' && e.team === 'home' && e.assistId
+        ).length;
+    }, 0);
+
+    // Vorm (last 5 matches)
+    const last5 = history.slice(-5);
+    const vormCircles = [];
+    for (let i = 0; i < 5; i++) {
+        if (i < last5.length) {
+            const m = last5[i];
+            if (m.resultType === 'win') vormCircles.push('<span class="mp-vorm-circle mp-vorm-win">W</span>');
+            else if (m.resultType === 'draw') vormCircles.push('<span class="mp-vorm-circle mp-vorm-draw">G</span>');
+            else vormCircles.push('<span class="mp-vorm-circle mp-vorm-loss">V</span>');
+        } else {
+            vormCircles.push('<span class="mp-vorm-circle mp-vorm-empty">-</span>');
+        }
+    }
+    const stats = gameState.stats || {};
+    let streakText = '';
+    if (stats.currentWinStreak > 1) streakText = `${stats.currentWinStreak} zeges op rij`;
+    else if (stats.currentUnbeaten > 1) streakText = `${stats.currentUnbeaten} ongeslagen`;
+
     container.innerHTML = `
         <div class="training-page-content">
             <!-- XP bar + Kenmerken naast elkaar -->
@@ -3631,6 +3670,24 @@ function renderTrainingPage() {
                             <span class="training-tile-lbl">Potentie</span>
                         </div>
                     </div>
+                    <div class="training-stat-tiles">
+                        <div class="training-stat-tile">
+                            <span class="training-tile-big">${seasonMatches}</span>
+                            <span class="training-tile-lbl">Wedstrijden</span>
+                        </div>
+                        <div class="training-stat-tile">
+                            <span class="training-tile-big">${seasonGoals}</span>
+                            <span class="training-tile-lbl">Doelpunten</span>
+                        </div>
+                        <div class="training-stat-tile">
+                            <span class="training-tile-big">${seasonAssists}</span>
+                            <span class="training-tile-lbl">Assists</span>
+                        </div>
+                    </div>
+                    <div class="training-vorm-row">
+                        ${vormCircles.join('')}
+                    </div>
+                    ${streakText ? `<div class="training-vorm-streak">${streakText}</div>` : ''}
                     <div class="txp-row">
                         <div class="txp-lvl current">
                             <span class="txp-lvl-num">${pLevel.level}</span>
@@ -3667,14 +3724,14 @@ function renderTrainingPage() {
             </div>
 
             <!-- 3 training actions -->
-            <div class="training-actions-header">Dagelijkse actie <span class="training-actions-hint">${trainedToday ? '(al gekozen vandaag)' : 'Kies er 1'}</span></div>
+            <div class="training-actions-header">Dagelijkse actie <span class="training-actions-hint ${!trainedToday ? 'training-hint-urgent' : ''}">${trainedToday ? '(al gekozen vandaag)' : 'Kies er 1!'}</span></div>
             <div class="training-actions-row">
                 <div class="training-action-card">
                     <div class="training-sec-icon">&#127939;</div>
                     <div class="training-sec-title">Trainen</div>
                     <div class="training-sec-desc">Verbeter je vaardigheden en verdien <strong>+25 XP</strong></div>
                     <button class="btn btn-sm ${canTrain ? 'btn-primary' : 'btn-secondary'}" onclick="${canTrain ? "trainMyPlayer('vrije_tijd')" : ''}" ${!canTrain ? 'disabled' : ''}>
-                        ${canTrain ? 'Trainen' : 'Getraind \u2713'}
+                        Trainen
                     </button>
                 </div>
                 <div class="training-action-card">
@@ -3683,7 +3740,7 @@ function renderTrainingPage() {
                     <div class="training-sec-desc">Herstel <strong>+50% energie</strong> voor de volgende wedstrijd</div>
                     <div class="training-sec-detail">Energie nu: ${Math.round(mp.energy)}%</div>
                     <button class="btn btn-sm ${canMassage ? 'btn-primary' : 'btn-secondary'}" onclick="${canMassage ? "trainMyPlayer('massage')" : ''}" ${!canMassage ? 'disabled' : ''}>
-                        ${mp.energy >= 100 ? 'Vol' : (trainedToday ? 'Cooldown' : 'Massage')}
+                        ${mp.energy >= 100 ? 'Energie is 100%' : 'Massage'}
                     </button>
                 </div>
                 <div class="training-action-card">
@@ -3692,9 +3749,10 @@ function renderTrainingPage() {
                     <div class="training-sec-desc">Analyseer de tegenstander voor <strong>+3% wedstrijdbonus</strong></div>
                     <div class="training-sec-detail">Tegenstander: ${opponentName}</div>
                     <button class="btn btn-sm ${canSpy ? 'btn-primary' : 'btn-secondary'}" onclick="${canSpy ? "trainMyPlayer('spy')" : ''}" ${!canSpy ? 'disabled' : ''}>
-                        ${trainedToday ? 'Cooldown' : 'Spioneer'}
+                        Spioneer
                     </button>
                 </div>
+                ${trainedToday ? '<div class="training-actions-limit">Max 1 actie per dag</div>' : ''}
             </div>
         </div>
     `;
@@ -3710,6 +3768,10 @@ function renderTrainingPrestaties() {
     const spelerAch = renderAchievementCards(allAch, spelerCats);
 
     container.innerHTML = `
+        <div class="chairman-intro">
+            <div class="chairman-intro-avatar">${CHAIRMAN_SVG}</div>
+            <p class="chairman-intro-quote">"Elke prestatie die je haalt levert XP op. Meer XP betekent meer skill punten, en meer skill punten betekent een betere speler. Werk ze allemaal af!"</p>
+        </div>
         <div class="prs-single">
             <h4 class="mp-section-title">Spelersprestaties <span class="ach-progress-text">${spelerAch.stats.unlocked} / ${spelerAch.stats.total}</span></h4>
             <div class="ach-progress">
@@ -5032,6 +5094,15 @@ function navigateToPage(page) {
         pageHeader.appendChild(tiles);
     }
 
+    // Move squad-size-display back to squad header when leaving squad page
+    if (page !== 'squad') {
+        const ssd = document.querySelector('.squad-size-display');
+        const squadHeaderRight = document.querySelector('#squad .header-right');
+        if (ssd && squadHeaderRight && !squadHeaderRight.contains(ssd)) {
+            squadHeaderRight.appendChild(ssd);
+        }
+    }
+
     // Close any open modals
     document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
 
@@ -5065,20 +5136,6 @@ function navigateToPage(page) {
     if (page === 'jeugdteam') renderJeugdteamPage();
     if (page === 'kantine') renderKantineDashboard();
     if (page === 'wedstrijden') renderMatchesPage();
-
-    // Track daily checklist visits
-    const checklistMap = {
-        'tactics': 'tacticsVisited',
-        'sponsors': 'sponsorsVisited',
-        'scout': 'scoutStarted',
-        'jeugdteam': 'youthVisited',
-        'transfers': 'transfersVisited',
-        'stadium': 'stadiumVisited',
-        'staff': 'staffVisited'
-    };
-    if (checklistMap[page]) {
-        markChecklistItem(checklistMap[page]);
-    }
 
     updateNavBadges();
 }
@@ -8000,7 +8057,6 @@ function renderDashboardExtras() {
     // Render dashboard finances, top players and checklist
     renderDashboardFinances();
     renderDashboardTopPlayers();
-    resetDailyChecklist();
     renderDashboardChecklist();
 
     // Initialize sticky note quick actions
@@ -8075,43 +8131,42 @@ function renderDashboardTopPlayers() {
 // DAILY CHECKLIST SYSTEM
 // ================================================
 
-function resetDailyChecklist() {
-    const today = new Date().toDateString();
-    if (!gameState.dailyChecklist) {
-        gameState.dailyChecklist = {};
-    }
-    if (gameState.dailyChecklist.lastResetDate !== today) {
-        gameState.dailyChecklist = {
-            lastResetDate: today,
-            tacticsVisited: false,
-            sponsorsVisited: false,
-            scoutStarted: false,
-            youthVisited: false,
-            transfersVisited: false,
-            stadiumVisited: false,
-            staffVisited: false
-        };
-    }
-}
-
-function markChecklistItem(key) {
-    resetDailyChecklist();
-    if (gameState.dailyChecklist[key] !== undefined) {
-        gameState.dailyChecklist[key] = true;
-        renderDashboardChecklist();
-    }
-}
-
 function getChecklistItems() {
-    resetDailyChecklist();
-    const cl = gameState.dailyChecklist;
-
-    // Auto-detect lineup: 11 non-null slots
+    // Lineup: 11+ non-null slots
     const hasLineup = (gameState.lineup || []).filter(x => x !== null).length >= 11;
 
-    // Auto-detect training: any slot has a player
+    // Tactics: formation chosen + team training selected
+    const hasTactics = !!gameState.formation && !!gameState.training?.teamTraining?.selected;
+
+    // Sponsors: at least 1 active sponsor
+    const hasSponsor = (gameState.sponsor?.weeksRemaining > 0) || (gameState.sponsorSlots?.bord?.weeksRemaining > 0);
+
+    // Individual training: any slot has a player
     const slots = gameState.training?.slots || {};
     const hasTraining = Object.values(slots).some(s => s.playerId !== null);
+
+    // Scouting: active mission or pending player found
+    const hasScouting = !!gameState.scoutMission?.active || !!gameState.scoutMission?.pendingPlayer;
+
+    // Youth: has youth players in academy
+    const hasYouth = (gameState.youthPlayers || []).length > 0;
+
+    // Transfers: squad has at least 16 players
+    const hasSquad = (gameState.players || []).length >= 16;
+
+    // Stadium: at least 1 upgrade above defaults
+    const hasStadiumUpgrade = (() => {
+        const s = gameState.stadium;
+        if (!s) return false;
+        if (s.tribune && s.tribune !== 'tribune_1') return true;
+        if (s.grass && s.grass !== 'grass_0') return true;
+        if ((s.horeca || []).length > 0) return true;
+        if ((s.fanshop || []).length > 0) return true;
+        return false;
+    })();
+
+    // Staff: at least 1 staff member hired
+    const hasStaff = Object.values(gameState.staff || {}).some(s => s !== null);
 
     const mustDo = [
         {
@@ -8124,14 +8179,14 @@ function getChecklistItems() {
         {
             id: 'tactics',
             label: 'Tactiek bedenken',
-            done: cl.tacticsVisited,
+            done: hasTactics,
             action: 'tactics',
             icon: '🧠'
         },
         {
             id: 'sponsors',
             label: 'Sponsors werven',
-            done: cl.sponsorsVisited,
+            done: hasSponsor,
             action: 'sponsors',
             icon: '🤝'
         },
@@ -8148,35 +8203,35 @@ function getChecklistItems() {
         {
             id: 'scout',
             label: 'Scouten',
-            done: cl.scoutStarted || gameState.scoutMission?.active,
+            done: hasScouting,
             action: 'scout',
             icon: '🔍'
         },
         {
             id: 'youth',
             label: 'Jeugd rekruteren',
-            done: cl.youthVisited,
+            done: hasYouth,
             action: 'jeugdteam',
             icon: '⭐'
         },
         {
             id: 'transfers',
             label: 'Team versterken',
-            done: cl.transfersVisited,
+            done: hasSquad,
             action: 'transfers',
             icon: '🔄'
         },
         {
             id: 'stadium',
             label: 'Stadionupgrades',
-            done: cl.stadiumVisited,
+            done: hasStadiumUpgrade,
             action: 'stadium',
             icon: '🏟️'
         },
         {
             id: 'staff',
             label: 'Staf aannemen',
-            done: cl.staffVisited,
+            done: hasStaff,
             action: 'staff',
             icon: '👔'
         }
@@ -10669,10 +10724,9 @@ function generateSponsorMarket() {
     const activeIds = Object.values(gameState.sponsorSlots || {}).filter(s => s).map(s => s.id);
     const available = SPONSOR_POOL.filter(s => s.minReputation <= rep && !activeIds.includes(s.id));
 
-    // Shuffle and pick 4-6
+    // Shuffle and pick max 2
     const shuffled = available.sort(() => Math.random() - 0.5);
-    const count = Math.min(shuffled.length, 4 + Math.floor(Math.random() * 3));
-    const offers = shuffled.slice(0, count);
+    const offers = shuffled.slice(0, 2);
 
     gameState.sponsorMarket = {
         offers,
@@ -10692,6 +10746,10 @@ function renderSponsorMarket() {
     const weekBadge = document.getElementById('sponsor-market-week');
     if (weekBadge) weekBadge.textContent = `Week ${gameState.week}`;
 
+    // Cap at 2 offers
+    if (gameState.sponsorMarket.offers.length > 2) {
+        gameState.sponsorMarket.offers = gameState.sponsorMarket.offers.slice(0, 2);
+    }
     const offers = gameState.sponsorMarket.offers;
     if (offers.length === 0) {
         container.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1; text-align: center;">Geen aanbiedingen beschikbaar. Verhoog je reputatie!</p>';
@@ -10699,13 +10757,15 @@ function renderSponsorMarket() {
     }
 
     container.innerHTML = offers.map(offer => {
-        const incomeLabel = offer.slot === 'bord' ? `€${offer.weeklyIncome}/thuiswedstrijd` : `€${offer.weeklyIncome}/wk`;
-        return `<div class="sponsor-market-offer" onclick="selectMarketSponsor('${offer.id}')">
-            <div class="smo-icon">${offer.icon}</div>
-            <div class="smo-name">${offer.name}</div>
-            <div class="smo-details">
-                <span class="smo-income">${incomeLabel}</span>
-                <span class="smo-duration">${offer.duration} weken</span>
+        const incomeLabel = offer.slot === 'bord' ? `€${offer.weeklyIncome}/thuiswed` : `€${offer.weeklyIncome}/wk`;
+        return `<div class="sponsor-block sponsor-block-bord" onclick="selectMarketSponsor('${offer.id}')">
+            <div class="sb-icon">${offer.icon}</div>
+            <div class="sb-info">
+                <div class="sb-name">${offer.name}</div>
+                <div class="sb-duration">${offer.duration} weken contract</div>
+            </div>
+            <div class="sb-stats">
+                <span class="sb-pay">${incomeLabel}</span>
             </div>
         </div>`;
     }).join('');
@@ -10757,7 +10817,11 @@ function renderSponsorOverview() {
     // Update kit display
     updateSponsorKitDisplay();
 
-    const shirtData = gameState.sponsor ? { name: gameState.sponsor.name, weeklyIncome: gameState.sponsor.weeklyPay, weeksRemaining: gameState.sponsor.weeksRemaining } : null;
+    const shirtSponsor = gameState.sponsor;
+    if (shirtSponsor && shirtSponsor.weeksRemaining == null) {
+        shirtSponsor.weeksRemaining = 2;
+    }
+    const shirtData = shirtSponsor ? { name: shirtSponsor.name, weeklyIncome: shirtSponsor.weeklyPay || shirtSponsor.matchIncome, weeksRemaining: shirtSponsor.weeksRemaining } : null;
     const bordData = gameState.sponsorSlots?.bord || null;
 
     // Update reclamebord
@@ -10775,7 +10839,7 @@ function renderSponsorOverview() {
 
     function slotTile(label, data, key) {
         if (data) {
-            const weeksInfo = data.weeksRemaining != null ? `<span class="spo-weeks">${data.weeksRemaining}w resterend</span>` : '';
+            const weeksInfo = data.weeksRemaining > 0 ? `<span class="spo-weeks">${data.weeksRemaining}w resterend</span>` : (data.weeksRemaining === 0 ? `<span class="spo-weeks">Verloopt deze week</span>` : '');
             const incomeLabel = key === 'bord' ? `€${data.weeklyIncome}/thuiswedstrijd` : `€${data.weeklyIncome}/w`;
             return `<div class="spo-tile filled">
                 <div class="spo-tile-header">
@@ -10807,7 +10871,10 @@ function renderSponsorOverview() {
 
     const totalEl = document.getElementById('sponsor-overview-total');
     if (totalEl) {
-        totalEl.innerHTML = `<div class="spo-total"><span>Totaal per week</span><span>€${totalWeekly}</span></div>`;
+        totalEl.innerHTML = `<div class="spo-total">
+            <span class="spo-total-label">Totaal per week</span>
+            <span class="spo-total-amount">€${totalWeekly}</span>
+        </div>`;
     }
 }
 
@@ -11223,14 +11290,27 @@ function renderStadiumMap() {
     const fansEl = document.getElementById('stadium-fans');
     if (fansEl) fansEl.textContent = gameState.club.fans || 50;
 
+    // Update chairman quote based on construction state
+    const quoteEl = document.querySelector('#stadium .chairman-intro-quote');
+    if (quoteEl) {
+        if (gameState.stadium.construction) {
+            const config = STADIUM_TILE_CONFIG[gameState.stadium.construction.category];
+            const level = config?.levels.find(l => l.id === gameState.stadium.construction.targetId);
+            const name = level?.name || 'een upgrade';
+            quoteEl.textContent = `"Er wordt momenteel gebouwd aan ${name}. We kunnen maar één project tegelijk aan, trainer — de aannemer heeft maar twee handen!"`;
+        } else {
+            quoteEl.textContent = `"Dit is ons complex, trainer. Klik op een gebouw om te upgraden. Grotere tribune, beter gras, een echte kantine... het kost wat, maar de supporters en de inkomsten groeien mee."`;
+        }
+    }
+
     // ===== LAYOUT =====
-    const cx = 310, cy = 165;
+    const cx = 340, cy = 165;
     const fieldW = 130, fieldH = 74;
 
     const tribuneConfig = STADIUM_TILE_CONFIG.tribune;
     const tribuneId = gameState.stadium[tribuneConfig.stateKey];
     const tribuneLevel = Math.max(0, tribuneConfig.levels.findIndex(l => l.id === tribuneId));
-    const ringThickness = [0, 14, 22, 32, 42][tribuneLevel];
+    const ringThickness = [0, 14, 22, 32, 42, 48, 54, 58, 62, 66][tribuneLevel] || 0;
     const stadW = fieldW + ringThickness * 2;
     const stadH = fieldH + ringThickness * 2;
 
@@ -11251,23 +11331,26 @@ function renderStadiumMap() {
     const roadTop = cy - roadAreaH / 2;
     const roadBottom = cy + roadAreaH / 2;
 
-    // Building positions — kantine+scouting small & near stadium
+    // Building positions — scale with stadium size
+    const buildingY = Math.max(roadTop - 30, 12);
     const positions = {
-        kantine:  { x: roadLeft + 30, y: roadTop - 30, w: 74, h: 46 },
-        scouting: { x: roadRight - 30, y: roadTop - 30, w: 74, h: 46 },
+        kantine:  { x: roadLeft + 30, y: buildingY, w: 74, h: 46 },
+        scouting: { x: roadRight - 30, y: buildingY, w: 74, h: 46 },
         medical:  { x: roadLeft - 45, y: cy },
         perszaal: { x: roadRight + 45, y: cy },
     };
 
-    // Training & Academy field positions (below stadium)
+    // Training & Academy field positions (below stadium road ring)
     const trainW = 110, trainH = 62;
     const acadW = 90, acadH = 50;
-    const trainX = cx - trainW - 8, trainY = 290;
-    const acadX = cx + 8, acadY = 290;
+    const trainY = Math.max(290, roadBottom + 16);
+    const trainX = cx - trainW - 8;
+    const acadX = cx + 8, acadY = trainY;
 
     const constructionData = gameState.stadium.construction;
 
-    let svg = `<svg viewBox="0 0 620 400" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Inter', system-ui, sans-serif;">`;
+    const viewH = Math.max(400, trainY + trainH + 40);
+    let svg = `<svg viewBox="0 0 620 ${viewH}" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Inter', system-ui, sans-serif;">`;
 
     // ===== DEFS =====
     svg += `<defs>
@@ -11303,11 +11386,11 @@ function renderStadiumMap() {
     }
 
     // ===== BACKGROUND =====
-    svg += `<rect width="620" height="400" fill="url(#grass-pattern)" rx="12"/>`;
+    svg += `<rect width="620" height="${viewH}" fill="url(#grass-pattern)" rx="12"/>`;
     // Subtle grass texture lines
     for (let i = 0; i < 31; i++) {
         const x = i * 20;
-        svg += `<line x1="${x}" y1="0" x2="${x}" y2="400" stroke="rgba(255,255,255,0.015)" stroke-width="1"/>`;
+        svg += `<line x1="${x}" y1="0" x2="${x}" y2="${viewH}" stroke="rgba(255,255,255,0.015)" stroke-width="1"/>`;
     }
 
     // ===== ROADS (ring around stadium + spur to training) =====
@@ -11336,9 +11419,9 @@ function renderStadiumMap() {
     });
 
     // ===== STADIUM (tribune) =====
-    const tribuneColors = ['#6a4a2a', '#5a5a5a', '#4a4a6a', '#3a3a7a', '#8a6a0a'];
-    const tc = tribuneColors[tribuneLevel];
-    const levelColors = [['#6b6b6b','#ef5350'],['#1b5e20','#4ade80'],['#1565c0','#42a5f5'],['#6a1b9a','#ce93d8'],['#e65100','#ffd54f']];
+    const tribuneColors = ['#6a4a2a', '#5a5a5a', '#4a4a6a', '#3a3a7a', '#8a6a0a', '#2a5a8a', '#1a4a6a', '#3a3a5a', '#4a2a5a', '#6a3a1a'];
+    const tc = tribuneColors[Math.min(tribuneLevel, tribuneColors.length - 1)];
+    const levelColors = [['#6b6b6b','#ef5350'],['#1b5e20','#4ade80'],['#1565c0','#42a5f5'],['#6a1b9a','#ce93d8'],['#e65100','#ffd54f'],['#0d47a1','#64b5f6'],['#1a237e','#7986cb'],['#4a148c','#b39ddb'],['#b71c1c','#ef9a9a'],['#f57f17','#ffd54f']];
     const tColors = levelColors[Math.min(tribuneLevel, levelColors.length - 1)];
     const isStadActive = currentStadiumCategory === 'tribune';
 
@@ -11403,9 +11486,10 @@ function renderStadiumMap() {
     const grassTextW = grassLevelName.length * 4.2;
     const grassCenterX = cx;
     const grassBadgeX = grassCenterX + grassTextW / 2 + 4;
-    svg += `<text x="${grassCenterX}" y="${cy+fieldH/2-5}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7" font-weight="600" letter-spacing="1">${grassLevelName}</text>`;
-    svg += `<rect x="${grassBadgeX}" y="${cy+fieldH/2-13}" width="22" height="12" fill="${gColors[1]}" rx="6"/>`;
-    svg += `<text x="${grassBadgeX + 11}" y="${cy+fieldH/2-4}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${grassLevel+1}</text>`;
+    const grassLabelY = cy + fieldH/2 + 12;
+    svg += `<text x="${grassCenterX}" y="${grassLabelY}" text-anchor="middle" fill="${gColors[1]}" font-size="7" font-weight="600" letter-spacing="1">${grassLevelName}</text>`;
+    svg += `<rect x="${grassBadgeX}" y="${grassLabelY - 8}" width="22" height="12" fill="${gColors[1]}" rx="6"/>`;
+    svg += `<text x="${grassBadgeX + 11}" y="${grassLabelY + 1}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${grassLevel + 1}</text>`;
     // Construction overlay for grass
     if (constructionData && constructionData.category === 'grass') {
         svg += renderConstructionOverlay(cx-fieldW/2, cy-fieldH/2, fieldW, fieldH, 2);
@@ -11615,7 +11699,8 @@ function renderStadiumMap() {
     });
 
     // ===== TREES (decoration) =====
-    [[22,40],[598,40],[22,370],[598,370],[170,365],[450,365],[25,200],[595,200]].forEach(([tx,ty]) => {
+    const bottomY = trainY + trainH;
+    [[22,40],[598,40],[22,bottomY+10],[598,bottomY+10],[170,bottomY+5],[450,bottomY+5],[25,200],[595,200]].forEach(([tx,ty]) => {
         svg += `<circle cx="${tx}" cy="${ty}" r="8" fill="#1a4a1a" opacity="0.5"/>`;
         svg += `<circle cx="${tx}" cy="${ty-3}" r="6" fill="#2a6a2a" opacity="0.5"/>`;
         svg += `<circle cx="${tx}" cy="${ty-5}" r="4" fill="#3a8a3a" opacity="0.4"/>`;
@@ -11628,15 +11713,16 @@ function renderStadiumMap() {
     }
 
     // ===== VILLAGE HOUSES (dorpshuisjes) =====
+    const houseBaseY = bottomY - 50;
     const houses = [
         // Left top houses
         { x: 38, y: 60, w: 18, h: 14, roof: '#8b4513', wall: '#d2b48c' },
         { x: 60, y: 55, w: 14, h: 12, roof: '#a0522d', wall: '#deb887' },
         { x: 42, y: 82, w: 16, h: 13, roof: '#6b3a1a', wall: '#c4a67a' },
         // Right bottom houses
-        { x: 550, y: 310, w: 18, h: 14, roof: '#a0522d', wall: '#d2b48c' },
-        { x: 572, y: 325, w: 14, h: 11, roof: '#8b4513', wall: '#deb887' },
-        { x: 555, y: 345, w: 16, h: 13, roof: '#6b3a1a', wall: '#c4a67a' },
+        { x: 550, y: houseBaseY, w: 18, h: 14, roof: '#a0522d', wall: '#d2b48c' },
+        { x: 572, y: houseBaseY + 15, w: 14, h: 11, roof: '#8b4513', wall: '#deb887' },
+        { x: 555, y: houseBaseY + 35, w: 16, h: 13, roof: '#6b3a1a', wall: '#c4a67a' },
     ];
     houses.forEach(h => {
         // Wall
@@ -11650,7 +11736,7 @@ function renderStadiumMap() {
     });
 
     // ===== WINDMILL (molen, rechts boven) =====
-    const mx = 580, my = 340;
+    const mx = 580, my = houseBaseY + 30;
     // Tower
     svg += `<polygon points="${mx-5},${my} ${mx-3},${my-22} ${mx+3},${my-22} ${mx+5},${my}" fill="#8b7355" opacity="0.8"/>`;
     // Cap/roof
@@ -11671,7 +11757,7 @@ function renderStadiumMap() {
     svg += `<rect x="${mx-2}" y="${my-5}" width="4" height="5" fill="#5a4a3a" opacity="0.6" rx="1"/>`;
 
     // Subtitle
-    svg += `<text x="310" y="393" text-anchor="middle" fill="rgba(255,255,255,0.12)" font-size="8" font-style="italic" letter-spacing="2">Het Dorpsveld</text>`;
+    svg += `<text x="310" y="${viewH - 7}" text-anchor="middle" fill="rgba(255,255,255,0.12)" font-size="8" font-style="italic" letter-spacing="2">Het Dorpsveld</text>`;
 
     svg += `</svg>`;
     container.innerHTML = svg;
@@ -11686,7 +11772,7 @@ const STADIUM_TILE_CONFIG = {
     tribune: {
         description: 'Vergroot de capaciteit om meer supporters te ontvangen en meer wedstrijdinkomsten te genereren.',
         levels: [
-            { id: 'tribune_1', name: 'Geen tribune', capacity: 200, cost: 0, effect: '200 toeschouwers' },
+            { id: 'tribune_1', name: 'Houten Banken', capacity: 200, cost: 0, effect: '200 toeschouwers' },
             { id: 'tribune_2', name: 'Stenen Tribune', capacity: 500, cost: 5000, effect: '500 toeschouwers' },
             { id: 'tribune_3', name: 'Overdekte Tribune', capacity: 1000, cost: 15000, effect: '1.000 toeschouwers' },
             { id: 'tribune_4', name: 'Moderne Tribune', capacity: 2500, cost: 40000, effect: '2.500 toeschouwers', reqCapacity: 500 },

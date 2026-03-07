@@ -143,7 +143,7 @@ export let gameState = {
         sessionDuration: 6 * 60 * 60 * 1000, // 6 hours
         // Team training
         teamTraining: {
-            selected: null, // 'defense', 'setpiece', 'attack'
+            selected: null, // 'defense', 'tactics', 'attack'
             bonus: null
         }
     },

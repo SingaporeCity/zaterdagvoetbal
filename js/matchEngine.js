@@ -491,14 +491,16 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
         const possessionRoll = Math.random() * 100;
         const isHomePossession = possessionRoll < result.possession.home;
 
+        // Pass lineup when the player's team has possession
+        const isPlayerPossession = (isHomePossession && isHomeGame) || (!isHomePossession && !isHomeGame);
         const events = simulateEvent(
             minute,
             homeStrength,
             awayStrength,
             isHomePossession,
             currentScore,
-            isHomePossession && isHomeGame ? homeLineup : null,
-            isHomePossession && isHomeGame ? tactics : null
+            isPlayerPossession ? homeLineup : null,
+            isPlayerPossession ? tactics : null
         );
 
         for (const event of events) {
