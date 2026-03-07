@@ -1294,9 +1294,30 @@ function renderAchievementCards(achievements, filterCategories) {
 
     function renderCards(category) {
         const currentDiv = gameState.club?.division ?? 8;
-        const cards = filtered
-            .filter(a => !category || a.category === category)
-            .map(a => {
+        const items = filtered.filter(a => !category || a.category === category);
+
+        // Sort: pending first, then unlocked, then locked
+        items.sort((a, b) => {
+            const aLocked = a.minDivision !== undefined && !a.unlocked && currentDiv > a.minDivision;
+            const bLocked = b.minDivision !== undefined && !b.unlocked && currentDiv > b.minDivision;
+            const aGroup = aLocked ? 2 : a.unlocked ? 1 : 0;
+            const bGroup = bLocked ? 2 : b.unlocked ? 1 : 0;
+            return aGroup - bGroup;
+        });
+
+        // Group by category when showing all
+        const groups = !category ? filterCategories : [category];
+        let html = '';
+
+        for (const cat of groups) {
+            const catItems = items.filter(a => a.category === cat);
+            if (catItems.length === 0) continue;
+
+            if (!category) {
+                html += `<div class="ach-group-label">${catLabels[cat] || cat}</div>`;
+            }
+
+            html += catItems.map(a => {
                 const isLocked = a.minDivision !== undefined && !a.unlocked && currentDiv > a.minDivision;
                 const isHidden = a.hidden && !a.unlocked;
 
@@ -1326,7 +1347,9 @@ function renderAchievementCards(achievements, filterCategories) {
                     ${a.unlocked ? '<span class="ach-check">✓</span>' : ''}
                 </div>`;
             }).join('');
-        return cards;
+        }
+
+        return html;
     }
 
     return { progressPct, stats, filterBtns, renderCards, defaultCategory: filterCategories[0] };
