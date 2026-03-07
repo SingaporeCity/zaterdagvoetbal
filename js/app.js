@@ -1045,7 +1045,7 @@ function createPlayerCardHTML(player, mini = false) {
                     <span class="pc-potential-label">POT</span>
                 </div>
             </div>
-            ${!player.isMyPlayer ? `<button class="pc-buyout-btn" data-buyout-id="${player.id}" title="Contract afkopen (${formatCurrency((player.salary || 0) * 10)})">✕</button>` : '<span></span>'}
+            ${!player.isMyPlayer ? `<button class="pc-buyout-btn" data-buyout-id="${player.id}" title="Contract afkopen (${formatCurrency((player.salary || 0) * 10)})">✕</button>` : '<span class="pc-buyout-placeholder"></span>'}
         </div>
     `;
 }
@@ -3021,8 +3021,9 @@ function renderScoutPage() {
         } else if (usedToday) {
             clearScoutMissionTimer();
             missionHTML = `
-                <div class="scout-mission-status">
-                    <div class="scout-mission-cooldown">Morgen weer beschikbaar</div>
+                <div class="scout-mission-status scout-used-today">
+                    <div class="scout-mission-cooldown">✓ Vandaag al gezocht</div>
+                    <div class="scout-mission-cooldown-sub">Morgen weer beschikbaar</div>
                 </div>`;
         } else {
             clearScoutMissionTimer();
@@ -3293,6 +3294,7 @@ window.startScoutMission = function() {
 
     saveGame();
     renderScoutPage();
+    updateNavBadges();
 };
 
 function checkScoutMission() {
@@ -3306,6 +3308,7 @@ function checkScoutMission() {
         mission.pendingPlayer = null;
         saveGame();
         showNotification('Je scout heeft een speler gevonden!', 'success');
+        updateNavBadges();
     }
 }
 
@@ -4598,6 +4601,7 @@ window.trainMyPlayer = function(key) {
     renderTrainingPage();
     renderPlayerCards();
     renderDashboardExtras();
+    updateNavBadges();
 };
 
 window.closeSpyModal = function() {
@@ -4903,11 +4907,16 @@ function navigateToPage(page) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(page)?.classList.add('active');
 
-    // Scroll to top of the main content area
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-        mainContent.scrollTop = 0;
+    // Move global tiles into the active page's header
+    const tiles = document.querySelector('.global-top-tiles');
+    const pageHeader = document.getElementById(page)?.querySelector('.page-header');
+    if (tiles && pageHeader) {
+        pageHeader.appendChild(tiles);
     }
+
+    // Scroll to top of the main content area
+    const activePage = document.getElementById(page);
+    if (activePage) activePage.scrollTop = 0;
     window.scrollTo(0, 0);
 
     // Clean up scout mission timer when leaving scout page
@@ -4949,6 +4958,38 @@ function navigateToPage(page) {
     if (checklistMap[page]) {
         markChecklistItem(checklistMap[page]);
     }
+
+    updateNavBadges();
+}
+
+function updateNavBadges() {
+    // Tactiek: geen volle opstelling OF geen wedstrijdvoorbereiding geselecteerd
+    const hasFullLineup = (gameState.lineup || []).filter(x => x !== null).length >= 11;
+    const hasTeamTraining = gameState.training?.teamTraining?.selected != null;
+    const tacticsBadge = document.getElementById('badge-tactics');
+    if (tacticsBadge) tacticsBadge.style.display = (hasFullLineup && hasTeamTraining) ? 'none' : '';
+
+    // Mijn Speler: nog niet getraind vandaag
+    const mp = gameState.myPlayer;
+    const trainedToday = mp && mp.lastTrainingDate === getTodayString();
+    const trainingBadge = document.getElementById('badge-training');
+    if (trainingBadge) trainingBadge.style.display = trainedToday ? 'none' : '';
+
+    // Sponsors: geen shirtsponsor actief
+    const hasSponsor = gameState.sponsor && gameState.sponsor.weeksRemaining > 0;
+    const sponsorsBadge = document.getElementById('badge-sponsors');
+    if (sponsorsBadge) sponsorsBadge.style.display = hasSponsor ? 'none' : '';
+
+    // Scouting: scout niet verstuurd vandaag, of scout terug met ongeziene speler
+    const mission = gameState.scoutMission;
+    const hasScout = gameState.staff?.scout !== null && gameState.staff?.scout !== undefined;
+    const scoutUsedToday = mission?.lastScoutDate === getTodayString();
+    const scoutActive = mission?.active && mission?.startTime;
+    const hasNewTips = (gameState.scoutTips || []).length > 0;
+    // Show badge if: has scout + not used today, OR new tips waiting
+    const scoutNeedsAttention = (hasScout && !scoutUsedToday && !scoutActive) || hasNewTips;
+    const scoutBadge = document.getElementById('badge-scout');
+    if (scoutBadge) scoutBadge.style.display = scoutNeedsAttention ? '' : 'none';
 }
 
 function initNavigation() {
@@ -7767,7 +7808,7 @@ function renderDashboardExtras() {
         if (gpOverall) gpOverall.textContent = mpCalcOverall || mp.overall || 50;
         const gpRatingBadge = document.querySelector('.gtb-player-rating');
         if (gpRatingBadge) gpRatingBadge.style.background = POSITIONS[mp.position]?.color || '#666';
-        if (gpTitle) gpTitle.textContent = pLevel.title;
+        if (gpTitle) gpTitle.innerHTML = `<span class="gtb-stars-wrap"><span class="gtb-stars-row">${renderStarsHTML(mp.stars || 5)}</span><span class="gtb-pot-label">POT</span></span>`;
         if (gpLevel) gpLevel.textContent = pLevel.level;
         if (gpFill) gpFill.style.width = `${pProgress}%`;
         if (gpLabel) gpLabel.textContent = pLevel.xpToNext > 0 ? `${pXp} / ${pNextXp} XP` : `${pXp} XP — Max!`;
@@ -8024,6 +8065,7 @@ function getChecklistItems() {
 }
 
 function renderDashboardChecklist() {
+    updateNavBadges();
     const container = document.getElementById('dashboard-checklist');
     if (!container) return;
 
@@ -8402,6 +8444,12 @@ function playMatch() {
     const newAchievements = checkAchievements(gameState);
     if (newAchievements.length > 0) {
         setTimeout(() => queueAchievements(newAchievements), 3000);
+    }
+
+    // Reset wedstrijdvoorbereiding for next match
+    if (gameState.training && gameState.training.teamTraining) {
+        gameState.training.teamTraining.selected = null;
+        gameState.training.teamTraining.bonus = null;
     }
 
     // Re-render UI
@@ -9614,6 +9662,7 @@ function selectSponsor(sponsorId) {
     showNotification(`${sponsor.name} is nu je shirtsponsor voor ${sponsor.duration} weken!`, 'success');
     renderSponsorOverview();
     saveGame();
+    updateNavBadges();
 }
 
 function updateSponsorKitDisplay() {

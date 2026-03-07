@@ -418,6 +418,7 @@ body {
     flex-direction: column;
     overflow: hidden;
     background: transparent;
+    position: relative;
 }
 
 /* Page Styles */
@@ -5601,7 +5602,7 @@ body {
    ================================================ */
 .player-card {
     display: grid;
-    grid-template-columns: 7fr 10fr 9fr 8fr 7fr auto;
+    grid-template-columns: 7fr 10fr 9fr 8fr 150px 28px;
     align-items: center;
     gap: 10px;
     padding: 6px 16px;
@@ -5759,12 +5760,16 @@ body {
 .pc-overall {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 3px;
-    padding: 3px 8px;
+    padding: 3px 0;
     border-radius: 4px;
     color: white;
     cursor: pointer;
     position: relative;
+    width: 44px;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .pc-overall-value {
@@ -5805,6 +5810,12 @@ body {
     background: #c62828;
     color: white;
     border-color: #c62828;
+}
+
+.pc-buyout-placeholder {
+    width: 28px;
+    height: 28px;
+    display: block;
 }
 
 .pc-potential {
@@ -9828,18 +9839,18 @@ body {
 /* Notification System */
 .game-notification {
     position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 14px 40px 14px 16px;
+    top: 60px;
+    right: 190px;
+    padding: 12px 36px 12px 14px;
     background: #1a365d;
     border-radius: var(--card-radius);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     z-index: 10000;
     animation: slideInRight 0.3s ease-out;
-    max-width: 420px;
+    max-width: 280px;
     border-left: 4px solid #c62828;
 }
 
@@ -12643,11 +12654,19 @@ body {
 }
 
 .scout-mission-cooldown {
-    font-size: 0.82rem;
+    font-size: 0.85rem;
+    color: var(--accent-orange);
+    text-align: center;
+    padding: 4px 0 0;
+    font-weight: 600;
+}
+
+.scout-mission-cooldown-sub {
+    font-size: 0.72rem;
     color: var(--text-muted);
     text-align: center;
-    padding: 8px 0;
     font-style: italic;
+    padding: 2px 0 4px;
 }
 
 @media (max-width: 768px) {
@@ -16893,10 +16912,10 @@ body {
    GLOBAL TOP BAR - Budget & Manager
    ================================================ */
 .global-top-tiles {
-    position: fixed;
-    top: 10px;
-    right: 120px;
-    z-index: 100;
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    z-index: 10;
     display: flex;
     gap: 10px;
     align-items: stretch;
@@ -17038,6 +17057,33 @@ body {
     font-size: 0.95rem;
     color: var(--text-primary);
     letter-spacing: 0.3px;
+    display: flex;
+    gap: 1px;
+}
+
+.gtb-title .star.full { color: #ffd600; }
+.gtb-title .star.half { color: #ffd600; }
+.gtb-title .star.empty { color: rgba(255, 255, 255, 0.15); }
+
+.gtb-stars-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    line-height: 1;
+}
+
+.gtb-stars-row {
+    display: flex;
+    gap: 1px;
+}
+
+.gtb-pot-label {
+    font-size: 0.45rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .gtb-level {
