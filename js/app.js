@@ -8061,10 +8061,12 @@ function playMatch() {
     }
 
     // Award Manager XP
-    if (resultType === 'win') awardXP(gameState, 'matchWin');
-    else if (resultType === 'draw') awardXP(gameState, 'matchDraw');
-    if (opponentScore === 0) awardXP(gameState, 'cleanSheet');
-    awardXP(gameState, 'goalScored', playerScore * 5);
+    const xpReasons = [];
+    if (resultType === 'win') { awardXP(gameState, 'matchWin'); xpReasons.push({ reason: 'Wedstrijd gewonnen', amount: 50 }); }
+    else if (resultType === 'draw') { awardXP(gameState, 'matchDraw'); xpReasons.push({ reason: 'Gelijkspel', amount: 20 }); }
+    if (opponentScore === 0) { awardXP(gameState, 'cleanSheet'); xpReasons.push({ reason: 'Clean sheet', amount: 25 }); }
+    if (playerScore > 0) { awardXP(gameState, 'goalScored', playerScore * 5); xpReasons.push({ reason: `${playerScore} doelpunt${playerScore > 1 ? 'en' : ''} gescoord`, amount: playerScore * 5 }); }
+    if (xpReasons.length > 0) showManagerXPPopup(xpReasons);
 
     // Award Player XP
     if (resultType === 'win') awardPlayerXP(gameState, 'matchWin');
@@ -8249,6 +8251,7 @@ function handleEndOfSeason() {
         gameState.stats.promotions++;
         awardXP(gameState, 'promotion');
         awardPlayerXP(gameState, 'promotion');
+        showManagerXPPopup([{ reason: 'Promotie!', amount: 500 }]);
     }
     if (result.position === 6) {
         gameState.stats.relegationEscapes++;
@@ -8256,6 +8259,7 @@ function handleEndOfSeason() {
     if (result.isChampion) {
         awardXP(gameState, 'title');
         awardPlayerXP(gameState, 'title');
+        showManagerXPPopup([{ reason: 'Kampioen!', amount: 1000 }]);
     }
 
     // Start new season
@@ -8955,6 +8959,34 @@ function claimAchievement(btn) {
     }, 300);
 }
 window.claimAchievement = claimAchievement;
+
+// ================================================
+// MANAGER XP POPUP
+// ================================================
+
+function showManagerXPPopup(reasons) {
+    // Remove existing popup if present
+    const existing = document.querySelector('.manager-xp-popup');
+    if (existing) existing.remove();
+
+    const totalXP = reasons.reduce((sum, r) => sum + r.amount, 0);
+    const lines = reasons.map(r => `<div class="mxp-line"><span class="mxp-reason">${r.reason}</span><span class="mxp-amount">+${r.amount} XP</span></div>`).join('');
+
+    const popup = document.createElement('div');
+    popup.className = 'manager-xp-popup';
+    popup.innerHTML = `
+        <div class="mxp-header">Manager XP +${totalXP}</div>
+        ${lines}
+    `;
+
+    document.body.appendChild(popup);
+    requestAnimationFrame(() => popup.classList.add('show'));
+
+    setTimeout(() => {
+        popup.classList.remove('show');
+        setTimeout(() => popup.remove(), 400);
+    }, 5000);
+}
 
 // ================================================
 // SEASON END MODAL

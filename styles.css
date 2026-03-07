@@ -16736,6 +16736,54 @@ body {
     border-radius: 12px;
 }
 
+/* Manager XP Popup */
+.manager-xp-popup {
+    position: fixed;
+    top: 80px;
+    right: 24px;
+    z-index: 101;
+    background: linear-gradient(135deg, #1a2a14, #162210);
+    border: 1px solid rgba(46, 125, 50, 0.25);
+    border-radius: 10px;
+    padding: 12px 18px;
+    min-width: 200px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    pointer-events: none;
+}
+
+.manager-xp-popup.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.mxp-header {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent-orange);
+    margin-bottom: 6px;
+}
+
+.mxp-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 0.75rem;
+    padding: 2px 0;
+}
+
+.mxp-reason {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.mxp-amount {
+    color: var(--accent-green);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 /* ================================================
    UNIFIED STAFF VIEW
    ================================================ */
