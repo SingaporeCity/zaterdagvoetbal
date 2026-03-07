@@ -744,22 +744,11 @@
                 <div class="jeugdteam-layout">
                     <!-- Left sidebar: Academy + Scouting -->
                     <div class="youth-sidebar">
-                        <div class="youth-academy-card">
-                            <div class="academy-header">
-                                <span class="academy-icon">🏟️</span>
-                                <span class="academy-title">Jeugdacademie</span>
-                            </div>
-                            <div class="academy-level-display" id="academy-level-display">
-                                <span class="level-name" id="academy-level">Niveau 1</span>
-                            </div>
-                            <button class="btn btn-secondary btn-academy-upgrade" id="btn-academy-upgrade">
-                                Upgrade
-                            </button>
-                            <div class="academy-capacity" id="academy-capacity">
-                                <!-- Filled by JS -->
-                            </div>
-                            <div class="academy-benefits" id="academy-benefits">
-                            </div>
+                        <div class="youth-academy-card" id="youth-academy-card">
+                            <!-- Filled by JS -->
+                        </div>
+                        <div class="youth-capacity-card" id="youth-capacity-card">
+                            <!-- Filled by JS -->
                         </div>
 
                     </div>
@@ -791,6 +780,14 @@
                     <div class="header-left">
                         <h2 class="page-title">Selectie</h2>
                         <p class="page-subtitle handwritten">Jouw spelers, jouw team</p>
+                    </div>
+                    <div class="header-right">
+                        <div class="squad-size-display">
+                            <span class="squad-size-number" id="squad-count">0</span>
+                            <span class="squad-size-sep">/</span>
+                            <span class="squad-size-max">18</span>
+                            <span class="squad-size-label">Spelers</span>
+                        </div>
                     </div>
                 </header>
 
@@ -836,11 +833,6 @@
                                 <span class="formation-drive" id="formation-drive"></span>
                             </div>
                             <div class="lineup-pitch" id="lineup-pitch"></div>
-                            <div class="lineup-fit-display">
-                                <span>Team Samenhang:</span>
-                                <div class="fit-bar"><div class="fit-bar-fill" id="lineup-fit-fill"></div></div>
-                                <span id="lineup-fit-score">0%</span>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1082,6 +1074,10 @@
                         <p class="page-subtitle handwritten">Bouw, upgrade en vul je stadion</p>
                     </div>
                     <div class="header-right">
+                        <div class="stadium-fans">
+                            <span class="fans-number" id="stadium-fans">50</span>
+                            <span class="fans-label">Fans</span>
+                        </div>
                         <div class="stadium-capacity">
                             <span class="capacity-number" id="stadium-capacity">200</span>
                             <span class="capacity-label">Capaciteit</span>

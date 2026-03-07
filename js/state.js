@@ -18,6 +18,7 @@ export let gameState = {
             accent: '#ff9800'
         },
         settingsChangedThisSeason: false,
+        fans: 50,
         stats: {
             founded: 1,
             titles: 0,
@@ -97,6 +98,7 @@ export let gameState = {
     youthPlayers: [],
     lineup: new Array(11).fill(null),
     formation: '4-4-2',
+    formationDrives: { '4-4-2': 50, '4-3-3': 100 },
     tactics: {
         mentaliteit: 'normaal',
         offensief: 'gebalanceerd',

@@ -806,20 +806,29 @@ function renderPlayerCards() {
 
     container.innerHTML = html;
 
-    // Update squad stats
+    // Update squad count
     const squadCount = document.getElementById('squad-count');
-    const squadAvg = document.getElementById('squad-avg');
-    if (squadCount) squadCount.textContent = gameState.players.length;
-    if (squadAvg) {
-        const avg = Math.round(gameState.players.reduce((sum, p) => sum + p.overall, 0) / gameState.players.length);
-        squadAvg.textContent = avg;
+    if (squadCount) {
+        const count = gameState.players.length;
+        squadCount.textContent = count;
+        squadCount.classList.toggle('squad-full', count >= 18);
     }
 
     // Add click handlers
     document.querySelectorAll('#player-cards .player-card').forEach(card => {
-        card.addEventListener('click', () => {
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('.pc-buyout-btn')) return;
             const playerId = parseFloat(card.dataset.playerId);
             showPlayerDetail(playerId);
+        });
+    });
+
+    // Buyout buttons
+    document.querySelectorAll('#player-cards .pc-buyout-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const playerId = parseFloat(btn.dataset.buyoutId);
+            buyoutPlayer(playerId);
         });
     });
 }
@@ -877,7 +886,7 @@ function renderStarsHTML(starCount) {
         html += '<span class="star full">★</span>';
     }
     if (hasHalf) {
-        html += '<span class="star half">⯪</span>';
+        html += '<span class="star half"><span class="star-half-filled">★</span><span class="star-half-empty">★</span></span>';
     }
     const filled = full + (hasHalf ? 1 : 0);
     for (let i = filled; i < 5; i++) {
@@ -961,6 +970,7 @@ function createPlayerCardHTML(player, mini = false) {
                     <span class="pc-potential-label">POT</span>
                 </div>
             </div>
+            ${!player.isMyPlayer ? `<button class="pc-buyout-btn" data-buyout-id="${player.id}" title="Contract afkopen (${formatCurrency((player.salary || 0) * 10)})">✕</button>` : ''}
         </div>
     `;
 }
@@ -1588,10 +1598,9 @@ function renderTacticsPage() {
     renderTeamTraining();
 }
 
-const FORMATION_DRIVE = { '4-3-3': 100, '4-4-2': 20 };
-
 function getFormationDrive(key) {
-    return FORMATION_DRIVE[key] || 0;
+    if (!gameState.formationDrives) gameState.formationDrives = {};
+    return Math.min(100, Math.round(gameState.formationDrives[key] || 0));
 }
 
 function renderFormationDropdown() {
@@ -1610,7 +1619,8 @@ function renderFormationDropdown() {
     for (const [key] of sortedFormations) {
         const selected = gameState.formation === key ? 'selected' : '';
         const drive = getFormationDrive(key);
-        html += `<option value="${key}" ${selected}>${key}  —  ${drive}%</option>`;
+        const driveLabel = drive > 0 ? `  —  ${drive}%` : '  —  Nieuw';
+        html += `<option value="${key}" ${selected}>${key}${driveLabel}</option>`;
     }
     select.innerHTML = html;
 
@@ -1682,7 +1692,8 @@ function updateFormationDrive() {
     const el = document.getElementById('formation-drive');
     if (!el) return;
     const pct = getFormationDrive(gameState.formation);
-    el.textContent = `Tactische bedrevenheid: ${pct}%`;
+    const tip = pct < 80 ? ' — Speel meer wedstrijden in deze formatie om beter in te spelen' : '';
+    el.innerHTML = `Bedrevenheid: <strong>${pct}%</strong>${tip}`;
     el.style.color = pct >= 80 ? 'var(--accent-green-dim)' : pct > 0 ? 'var(--text-secondary)' : 'var(--text-muted)';
 }
 
@@ -1884,30 +1895,7 @@ function renderAvailablePlayers() {
 }
 
 function updateLineupFit() {
-    const fitFill = document.getElementById('lineup-fit-fill');
-    const fitScore = document.getElementById('lineup-fit-score');
-
-    // Team Samenhang: based on how long players have been playing together
-    // Each player tracks matchesTogether; new players start at 0
-    const lineupIds = gameState.lineup.filter(p => p).map(p => p.id);
-    const count = lineupIds.length;
-    if (count === 0) {
-        if (fitFill) fitFill.style.width = '0%';
-        if (fitScore) fitScore.textContent = '0%';
-        return;
-    }
-
-    // Average matchesTogether across lineup players (capped at 20 for 100%)
-    let total = 0;
-    for (const p of gameState.lineup) {
-        if (!p) continue;
-        total += Math.min(p.matchesTogether || 0, 20);
-    }
-    const avg = total / count;
-    const samenhang = Math.round((avg / 20) * 100);
-
-    if (fitFill) fitFill.style.width = `${samenhang}%`;
-    if (fitScore) fitScore.textContent = `${samenhang}%`;
+    // Removed — team samenhang is no longer tracked
 }
 
 // Drag & Drop for lineup
@@ -2028,7 +2016,7 @@ function renderTacticsOptions() {
 
     const categoryInfo = {
         mentaliteit: 'Hoe agressief je speelt. Harder = meer kaarten en blessures. Kaarten kosten boetes.',
-        offensief: 'Balans aanval/verdediging. Meer aanval = meer kansen, maar kwetsbaarder achterop.',
+        offensief: 'Balans aanval/verdediging. Meer aanval = meer kansen, maar kwetsbaarder achterop. Aanvallender spelen levert meer fans op!',
         speltempo: 'Rustig = meer controle, minder stamina-verlies. Snel = meer verrassingen, sneller moe.',
         veldbreedte: 'Smal = sterker door het midden. Breed = meer dreiging over de vleugels.',
         dekking: 'Man-dekking = hoge pressing, maar kwetsbaar voor counters. Zone = stabieler, minder druk.'
@@ -3083,6 +3071,11 @@ function hireScoutedPlayer(playerId) {
         return;
     }
 
+    if (gameState.players.length >= 18) {
+        showNotification('Selectie is vol! (max 18 spelers). Koop eerst een contract af.', 'warning');
+        return;
+    }
+
     // Hire the player
     gameState.club.budget -= player.price;
     gameState.players.push(player);
@@ -3098,6 +3091,11 @@ window.acceptScoutTip = function(playerId) {
     if (!gameState.scoutTips) return;
     const idx = gameState.scoutTips.findIndex(p => String(p.id) === String(playerId));
     if (idx === -1) return;
+
+    if (gameState.players.length >= 18) {
+        showNotification('Selectie is vol! (max 18 spelers). Koop eerst een contract af.', 'warning');
+        return;
+    }
 
     const player = gameState.scoutTips.splice(idx, 1)[0];
     player.energy = 100;
@@ -4586,6 +4584,15 @@ function showPlayerDetail(playerId) {
                 Zet op Transfermarkt
             </button>
         </div>
+
+        <div class="player-buyout-section">
+            <h4>Contract afkopen</h4>
+            <p class="buyout-info">Kost 10x het weeksalaris om het contract te ontbinden.</p>
+            <div class="buyout-cost">Afkoopsom: <strong>${formatCurrency((player.salary || 0) * 10)}</strong></div>
+            <button class="btn-buyout" data-player-id="${player.id}" ${gameState.club.budget >= (player.salary || 0) * 10 ? '' : 'disabled'}>
+                Afkopen — ${formatCurrency((player.salary || 0) * 10)}
+            </button>
+        </div>
     `;
 
     // Add slider listener
@@ -4606,7 +4613,48 @@ function showPlayerDetail(playerId) {
         });
     }
 
+    // Add buyout button listener
+    const buyoutBtn = content.querySelector('.btn-buyout');
+    if (buyoutBtn) {
+        buyoutBtn.addEventListener('click', () => {
+            buyoutPlayer(playerId);
+        });
+    }
+
     modal.classList.add('active');
+}
+
+function buyoutPlayer(playerId) {
+    const playerIndex = gameState.players.findIndex(p => p.id === playerId);
+    if (playerIndex === -1) return;
+
+    const player = gameState.players[playerIndex];
+    const cost = (player.salary || 0) * 10;
+
+    if (gameState.club.budget < cost) {
+        showNotification('Niet genoeg budget voor de afkoopsom!', 'error');
+        return;
+    }
+
+    if (!confirm(`Wil je het contract van ${player.name} afkopen voor ${formatCurrency(cost)}?`)) return;
+
+    gameState.club.budget -= cost;
+    gameState.players.splice(playerIndex, 1);
+
+    // Remove from lineup if present
+    for (const pos of Object.keys(gameState.lineup)) {
+        if (gameState.lineup[pos] === playerId) {
+            gameState.lineup[pos] = null;
+        }
+    }
+
+    const modal = document.getElementById('player-modal');
+    if (modal) modal.classList.remove('active');
+
+    showNotification(`${player.name} afgekocht voor ${formatCurrency(cost)}.`, 'info');
+    renderPlayerCards();
+    updateBudgetDisplays();
+    saveGame();
 }
 
 async function listPlayerOnTransferMarket(playerId, price) {
@@ -5224,6 +5272,10 @@ async function handleTransferBuy(playerId, isPremium = false) {
                 return;
             }
         } else {
+            if (gameState.players.length >= 18) {
+                showNotification('Selectie is vol! (max 18 spelers). Koop eerst een contract af.', 'warning');
+                return;
+            }
             // Singleplayer: local transfer
             gameState.club.budget -= totalCost;
             gameState.players.push(player);
@@ -6261,6 +6313,9 @@ function renderJeugdteamPage() {
     // Update academy capacity display
     updateAcademyCapacity();
 
+    // Update academy level, benefits & upgrade button
+    updateAcademyUI();
+
     // Render current age group
     renderYouthPlayers(currentYouthAgeGroup);
 
@@ -6271,28 +6326,104 @@ function renderJeugdteamPage() {
     initYouthTabListeners();
 }
 
-function updateAcademyCapacity() {
-    const container = document.getElementById('academy-capacity');
-    if (!container) return;
+function updateAcademyUI() {
+    const card = document.getElementById('youth-academy-card');
+    const capCard = document.getElementById('youth-capacity-card');
+    if (!card) return;
 
-    const max = getYouthMaxPerCategory();
+    const config = STADIUM_TILE_CONFIG.academy;
+    const currentId = gameState.stadium?.academy || 'acad_1';
+    const currentIndex = config.levels.findIndex(l => l.id === currentId);
+    const currentLevel = config.levels[currentIndex];
+    const nextLevel = config.levels[currentIndex + 1];
+    const levelNum = currentIndex + 1;
+    const maxPerCat = getYouthMaxPerCategory();
+
     const groups = [
         { label: 'Pupillen', age: '12-13' },
         { label: 'Junioren', age: '14-15' },
         { label: 'Aspiranten', age: '16-17' }
     ];
 
-    container.innerHTML = `
-        <div class="acap-title">Max ${max} per categorie</div>
-        ${groups.map(g => {
-            const count = getYouthCategoryCount(g.age);
-            const full = count >= max;
-            return `<div class="acap-row ${full ? 'full' : ''}">
-                <span class="acap-label">${g.label}</span>
-                <span class="acap-count">${count}/${max}</span>
+    // Capacity card (separate tile above)
+    if (capCard) {
+        capCard.innerHTML = `
+            <div class="acad-capacity-title">Plekken per categorie</div>
+            ${groups.map(g => {
+                const count = getYouthCategoryCount(g.age);
+                const full = count >= maxPerCat;
+                return `<div class="acad-cap-row ${full ? 'full' : ''}">
+                    <span class="acad-cap-label">${g.label}</span>
+                    <span class="acad-cap-bar"><span class="acad-cap-fill" style="width: ${Math.min(100, Math.round(count / maxPerCat * 100))}%"></span></span>
+                    <span class="acad-cap-count">${count}/${maxPerCat}</span>
+                </div>`;
+            }).join('')}
+        `;
+    }
+
+    // Current stars
+    const currentStarsHtml = renderStarsHTML(currentLevel?.maxStars || 1);
+
+    // Upgrade section
+    let upgradeHtml = '';
+    if (nextLevel) {
+        const nextLevelNum = currentIndex + 2;
+        const canAfford = gameState.club.budget >= nextLevel.cost;
+        const nextStarsHtml = renderStarsHTML(nextLevel.maxStars);
+        const reqHtml = nextLevel.reqCapacity
+            ? `<div class="acad-upgrade-req">Vereist: ${nextLevel.reqCapacity} capaciteit</div>`
+            : nextLevel.reqDivision
+                ? `<div class="acad-upgrade-req">Vereist: Divisie ${nextLevel.reqDivision}</div>`
+                : '';
+
+        upgradeHtml = `
+            <div class="acad-upgrade-block">
+                <div class="acad-upgrade-header">Upgrade naar Lvl ${nextLevelNum}</div>
+                <div class="acad-upgrade-stars">
+                    <span class="acad-upgrade-stars-label">Max potentieel</span>
+                    <span class="pc-stars">${nextStarsHtml}</span>
+                </div>
+                ${reqHtml}
+                <button class="btn btn-primary acad-upgrade-btn" id="btn-academy-upgrade">
+                    Upgrade — ${formatCurrency(nextLevel.cost)}
+                </button>
             </div>`;
-        }).join('')}
+    } else {
+        upgradeHtml = `
+            <div class="acad-upgrade-block acad-maxed">
+                <div class="acad-upgrade-header">Maximaal niveau</div>
+            </div>`;
+    }
+
+    card.innerHTML = `
+        <div class="acad-current">
+            <div class="acad-current-top">
+                <span class="acad-icon">🎓</span>
+                <div class="acad-current-info">
+                    <span class="acad-current-name">Jeugdacademie</span>
+                    <span class="acad-current-lvl">Huidig: Lvl ${levelNum}</span>
+                </div>
+            </div>
+            <div class="acad-current-stars">
+                <span class="acad-stars-label">Potentieel</span>
+                <span class="pc-stars">${currentStarsHtml}</span>
+            </div>
+        </div>
+        ${upgradeHtml}
     `;
+
+    // Navigate to stadium academy tab
+    const btn = document.getElementById('btn-academy-upgrade');
+    if (btn && nextLevel) {
+        btn.onclick = () => {
+            navigateToPage('stadium');
+            setTimeout(() => selectStadiumCategory('academy'), 100);
+        };
+    }
+}
+
+function updateAcademyCapacity() {
+    updateAcademyUI();
 }
 
 function updateYouthTabBadges() {
@@ -6570,7 +6701,11 @@ function signYouthContract(playerId) {
         isYouthProduct: true
     };
 
-    // Add to squad
+    // Add to squad (check max)
+    if (gameState.players.length >= 18) {
+        showNotification('Selectie is vol! (max 18 spelers). Koop eerst een contract af.', 'warning');
+        return;
+    }
     gameState.players.push(professionalPlayer);
 
     // Remove from youth team
@@ -6606,10 +6741,14 @@ function dismissYouthPlayer(playerId) {
 function calculateWeeklyFinances() {
     // === INCOME (per week / per match) ===
 
-    // Kaartverkoop: capacity × €8 ticket price × ~75% attendance
+    // Kaartverkoop: alleen bij thuiswedstrijden, attendance max = fans
+    const lastMatch = gameState.lastMatch;
+    const wasHome = lastMatch ? lastMatch.isHome : true;
     const capacity = gameState.stadium.capacity || 200;
+    const fans = gameState.club.fans || 50;
     const ticketPrice = 8;
-    const attendance = Math.round(capacity * 0.75);
+    const maxAttendance = Math.min(capacity, fans);
+    const attendance = wasHome ? Math.round(maxAttendance * 0.75) : 0;
     const ticketIncome = attendance * ticketPrice;
 
     // Shirt sponsor (matchIncome = per match = per week)
@@ -6618,8 +6757,8 @@ function calculateWeeklyFinances() {
     // Win bonus (potential, not guaranteed)
     const winBonus = gameState.sponsor?.winBonus || 0;
 
-    // Board sponsor (weekly income)
-    const bordIncome = gameState.sponsorSlots?.bord?.weeklyIncome || 0;
+    // Board sponsor (alleen bij thuiswedstrijden)
+    const bordIncome = wasHome ? (gameState.sponsorSlots?.bord?.weeklyIncome || 0) : 0;
 
     // Kantine income per match
     const kantineConfig = STADIUM_TILE_CONFIG?.kantine?.levels.find(l => l.id === gameState.stadium.kantine);
@@ -6662,9 +6801,9 @@ function calculateWeeklyFinances() {
 
     return {
         income: [
-            { label: 'Kaartverkoop', value: ticketIncome, detail: `${attendance} toeschouwers` },
+            { label: 'Kaartverkoop', value: ticketIncome, detail: wasHome ? `${attendance} toeschouwers` : 'Uitwedstrijd' },
             { label: 'Shirtsponsor', value: shirtIncome },
-            { label: 'Bordsponsor', value: bordIncome },
+            { label: 'Bordsponsor', value: bordIncome, detail: wasHome ? '' : 'Uitwedstrijd' },
             { label: 'Kantine', value: kantineIncome }
         ],
         expense: [
@@ -7895,6 +8034,21 @@ function playMatch() {
         cards: result.cards || { home: { yellow: 0, red: 0 }, away: { yellow: 0, red: 0 } }
     };
 
+    // Calculate new fans
+    const baseFans = resultType === 'win' ? 10 : resultType === 'draw' ? 3 : -2;
+    const offensiveMultipliers = { zeer_verdedigend: 0.5, verdedigend: 0.7, gebalanceerd: 1.0, offensief: 1.5, leeroy: 2.0 };
+    const offensiveMultiplier = offensiveMultipliers[gameState.tactics.offensief] || 1.0;
+    const homeMultiplier = isHome ? 1.2 : 1.0;
+    const goalBonus = playerScore * 2;
+    const newFans = Math.round(baseFans * offensiveMultiplier * homeMultiplier) + goalBonus;
+    gameState.club.fans = Math.max(0, (gameState.club.fans || 50) + newFans);
+    gameState.lastMatch.newFans = newFans;
+
+    // Increase formation drive for the formation used this match (+15-20%)
+    if (!gameState.formationDrives) gameState.formationDrives = {};
+    const driveGain = 15 + Math.random() * 5;
+    gameState.formationDrives[gameState.formation] = Math.min(100, (gameState.formationDrives[gameState.formation] || 0) + driveGain);
+
     // Push to match history
     if (!gameState.matchHistory) gameState.matchHistory = [];
     gameState.matchHistory.push({
@@ -8205,6 +8359,12 @@ function renderMatchReport() {
                         <div class="chairman-comments">
                             <div class="chairman-comment positive">${comments.positive}</div>
                             <div class="chairman-comment negative">${comments.negative}</div>
+                        </div>
+                    ` : ''}
+
+                    ${match.newFans !== undefined ? `
+                        <div class="fans-change ${match.newFans >= 0 ? 'fans-positive' : 'fans-negative'}">
+                            ${match.newFans >= 0 ? `🎉 +${match.newFans} nieuwe fans!` : `😔 ${match.newFans} fans verloren`} (Totaal: ${gameState.club.fans} fans)
                         </div>
                     ` : ''}
 
@@ -9191,16 +9351,17 @@ function renderSponsorMarket() {
         return;
     }
 
-    container.innerHTML = offers.map(offer => `
-        <div class="sponsor-market-offer" onclick="selectMarketSponsor('${offer.id}')">
+    container.innerHTML = offers.map(offer => {
+        const incomeLabel = offer.slot === 'bord' ? `€${offer.weeklyIncome}/thuiswedstrijd` : `€${offer.weeklyIncome}/wk`;
+        return `<div class="sponsor-market-offer" onclick="selectMarketSponsor('${offer.id}')">
             <div class="smo-icon">${offer.icon}</div>
             <div class="smo-name">${offer.name}</div>
             <div class="smo-details">
-                <span class="smo-income">€${offer.weeklyIncome}/wk</span>
+                <span class="smo-income">${incomeLabel}</span>
                 <span class="smo-duration">${offer.duration} weken</span>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 function selectMarketSponsor(id) {
@@ -9268,13 +9429,14 @@ function renderSponsorOverview() {
     function slotTile(label, data, key) {
         if (data) {
             const weeksInfo = data.weeksRemaining != null ? `<span class="spo-weeks">${data.weeksRemaining}w resterend</span>` : '';
+            const incomeLabel = key === 'bord' ? `€${data.weeklyIncome}/thuiswedstrijd` : `€${data.weeklyIncome}/w`;
             return `<div class="spo-tile filled">
                 <div class="spo-tile-header">
                     <span class="spo-label">${label}</span>
                 </div>
                 <span class="spo-name">${data.name}</span>
                 <div class="spo-tile-footer">
-                    <span class="spo-income">€${data.weeklyIncome}/w</span>
+                    <span class="spo-income">${incomeLabel}</span>
                     ${weeksInfo}
                 </div>
             </div>`;
@@ -9763,6 +9925,9 @@ function renderStadiumMap() {
 
     const capacityEl = document.getElementById('stadium-capacity');
     if (capacityEl) capacityEl.textContent = gameState.stadium.capacity || 200;
+
+    const fansEl = document.getElementById('stadium-fans');
+    if (fansEl) fansEl.textContent = gameState.club.fans || 50;
 
     // ===== LAYOUT =====
     const cx = 310, cy = 165;
