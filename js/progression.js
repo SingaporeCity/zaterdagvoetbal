@@ -369,12 +369,7 @@ export function startNewSeason(gameState) {
         player.assists = 0;
     });
 
-    // Age youth players
-    if (gameState.youthPlayers) {
-        gameState.youthPlayers.forEach(player => {
-            player.age++;
-        });
-    }
+    // Youth players age daily now (ageYouthPlayersDaily in app.js)
 
     // Adjust budget based on new division
     const divisionData = getDivision(gameState.club.division);
@@ -537,7 +532,7 @@ export function getPlayerLevel(xp) {
         progress: nextLevel
             ? (xp - currentLevel.xpRequired) / (nextLevel.xpRequired - currentLevel.xpRequired)
             : 1,
-        skillPoints: currentLevel.level - 1
+        skillPoints: (currentLevel.level - 1) * 5
     };
 }
 

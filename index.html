@@ -279,7 +279,7 @@
                             <rect x="15" y="7" width="6" height="10" rx="1"/>
                         </svg>
                     </span>
-                    <span>Training</span>
+                    <span>Mijn Speler</span>
                     <span class="nav-badge training-badge">!</span>
                     <ul class="nav-submenu">
                         <li data-tab="speler">Individueel</li>
@@ -325,14 +325,15 @@
                             <rect x="8" y="14" width="8" height="6"/>
                         </svg>
                     </span>
-                    <span>Stadion</span>
+                    <span>Sportcomplex</span>
                 </li>
                 <li class="nav-item" data-page="staff">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-                            <rect x="9" y="3" width="6" height="4" rx="1"/>
-                            <path d="M9 14l2 2 4-4"/>
+                            <circle cx="11" cy="8" r="4"/>
+                            <path d="M6 21v-2a4 4 0 014-4h2"/>
+                            <circle cx="18.5" cy="15.5" r="2.5"/>
+                            <path d="M20.3 17.3L22 19"/>
                         </svg>
                     </span>
                     <span>Staf</span>
@@ -388,22 +389,42 @@
 
         <!-- Main Content Area -->
         <main class="main-content">
-            <!-- Global Top Bar - Budget & Manager -->
-            <div class="global-top-bar" id="global-top-bar">
-                <div class="gtb-top">
-                    <div class="gtb-budget">
-                        <span class="gtb-icon">💰</span>
-                        <span class="gtb-value" id="global-budget-amount">€5.000</span>
+            <!-- Global Top Bar - Player & Manager tiles -->
+            <div class="global-top-tiles">
+                <div class="global-top-bar" id="global-player-bar" onclick="navigateTo('training')" style="cursor:pointer">
+                    <div class="gtb-tile-label" id="global-player-name">⚽ Mijn Speler</div>
+                    <div class="gtb-top">
+                        <div class="gtb-player-rating">
+                            <span class="gtb-rating-value" id="global-player-overall">50</span>
+                            <span class="gtb-rating-label">ALG</span>
+                        </div>
+                        <div class="gtb-divider"></div>
+                        <div class="gtb-manager">
+                            <span class="gtb-title" id="global-player-title">Jeugdspeler</span>
+                            <span class="gtb-level">Niv. <span id="global-player-level">1</span></span>
+                        </div>
                     </div>
-                    <div class="gtb-divider"></div>
-                    <div class="gtb-manager">
-                        <span class="gtb-title" id="global-manager-title">Beginnende Coach</span>
-                        <span class="gtb-level">Niv. <span id="global-manager-level">1</span></span>
+                    <div class="gtb-xp-track">
+                        <div class="gtb-xp-fill" id="global-player-xp-fill"></div>
+                        <span class="gtb-xp-label" id="global-player-xp-label">0 / 0 XP</span>
                     </div>
                 </div>
-                <div class="gtb-xp-track">
-                    <div class="gtb-xp-fill" id="global-xp-fill"></div>
-                    <span class="gtb-xp-label" id="global-xp-label">0 / 0 XP</span>
+                <div class="global-top-bar" id="global-top-bar" onclick="navigateTo('prestaties')" style="cursor:pointer">
+                    <div class="gtb-tile-label" id="global-manager-name">📋 Manager</div>
+                    <div class="gtb-top">
+                        <div class="gtb-budget">
+                            <span class="gtb-value" id="global-budget-amount">€5.000</span>
+                        </div>
+                        <div class="gtb-divider"></div>
+                        <div class="gtb-manager">
+                            <span class="gtb-title" id="global-manager-title">Beginnende Coach</span>
+                            <span class="gtb-level">Niv. <span id="global-manager-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="gtb-xp-track">
+                        <div class="gtb-xp-fill" id="global-xp-fill"></div>
+                        <span class="gtb-xp-label" id="global-xp-label">0 / 0 XP</span>
+                    </div>
                 </div>
             </div>
 
@@ -738,7 +759,7 @@
                     <div class="chairman-intro-avatar">
                         <svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>
                     </div>
-                    <p class="chairman-intro-quote">"De jeugd is de toekomst, trainer. Elke dag is er een kans dat nieuwe jeugdspelers instromen, zolang er plek is. Spelers worden elk seizoen een jaar ouder — vanaf 16 jaar kun je ze overhevelen naar de A-selectie."</p>
+                    <p class="chairman-intro-quote">"De jeugd is de toekomst, trainer. Elke dag is er een kans dat nieuwe jeugdspelers instromen, zolang er plek is. Spelers worden elke dag een jaar ouder — vanaf 16 jaar kun je ze overhevelen naar de A-selectie. Als ze 18 worden verlaten ze automatisch de opleiding."</p>
                 </div>
 
                 <div class="jeugdteam-layout">
@@ -1013,7 +1034,7 @@
             <section id="training" class="page">
                 <header class="page-header">
                     <div class="header-left">
-                        <h2 class="page-title">Training</h2>
+                        <h2 class="page-title">Mijn Speler</h2>
                         <p class="page-subtitle handwritten">Train in je vrije tijd en verdien XP om je speler te upgraden</p>
                     </div>
                     <div class="header-right">
@@ -1024,6 +1045,13 @@
                 <div class="page-tabs" id="training-tabs">
                     <button class="page-tab active" data-page-tab="speler">Individueel</button>
                     <button class="page-tab" data-page-tab="prestaties">Statistieken</button>
+                </div>
+
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Een wijs man zei ooit: Invest in jezelf en een beetje in die crypto. Hij had half gelijk."</p>
                 </div>
                 <div id="speler-page-panel" class="page-panel active">
                     <div id="training-content"></div>
@@ -1070,10 +1098,19 @@
             <section id="stadium" class="page">
                 <header class="page-header">
                     <div class="header-left">
-                        <h2 class="page-title">Stadion</h2>
+                        <h2 class="page-title">Sportcomplex</h2>
                         <p class="page-subtitle handwritten">Bouw, upgrade en vul je stadion</p>
                     </div>
                     <div class="header-right">
+                    </div>
+                </header>
+
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Dit is ons complex, trainer. Klik op een gebouw om te upgraden. Grotere tribune, beter gras, een echte kantine... het kost wat, maar de supporters en de inkomsten groeien mee."</p>
+                    <div class="stadium-intro-stats">
                         <div class="stadium-fans">
                             <span class="fans-number" id="stadium-fans">50</span>
                             <span class="fans-label">Fans</span>
@@ -1083,13 +1120,6 @@
                             <span class="capacity-label">Capaciteit</span>
                         </div>
                     </div>
-                </header>
-
-                <div class="chairman-intro">
-                    <div class="chairman-intro-avatar">
-                        <svg viewBox="0 0 50 55"><ellipse cx="25" cy="22" rx="16" ry="17" fill="#f5d0c5"/><ellipse cx="25" cy="10" rx="14" ry="7" fill="#6d6d6d"/><circle cx="19" cy="20" r="2.5" fill="white"/><circle cx="31" cy="20" r="2.5" fill="white"/><circle cx="19" cy="20.5" r="1.2" fill="#333"/><circle cx="31" cy="20.5" r="1.2" fill="#333"/><circle cx="19" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="31" cy="20" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="24" y1="20" x2="26" y2="20" stroke="#333" stroke-width="1"/><path d="M25 23 L24 28 L26 28" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M21 32 Q25 35 29 32" fill="none" stroke="#a0522d" stroke-width="1.5"/><path d="M8 52 Q8 42 16 40 L25 43 L34 40 Q42 42 42 52 L42 55 L8 55 Z" fill="#1a365d"/><path d="M24 43 L25 52 L26 43 Z" fill="#c62828"/><path d="M20 42 L25 45 L30 42" fill="none" stroke="white" stroke-width="1.5"/></svg>
-                    </div>
-                    <p class="chairman-intro-quote">"Dit is ons complex, trainer. Klik op een gebouw om te upgraden. Grotere tribune, beter gras, een echte kantine... het kost wat, maar de supporters en de inkomsten groeien mee."</p>
                 </div>
 
                 <div class="stadium-map-container">
@@ -1137,6 +1167,9 @@
 
                     <!-- Main content: Tips -->
                     <div class="scouting-main">
+                        <div class="scout-chairman-intro" id="scout-chairman-intro">
+                            <!-- Filled by JS: voorzitter quote -->
+                        </div>
                         <div class="scout-tip-section" id="scout-tip-section">
                             <!-- Filled by JS: scout tip players -->
                         </div>
@@ -1360,8 +1393,8 @@
             <section id="staff" class="page">
                 <header class="page-header">
                     <div class="header-left">
-                        <h2 class="page-title">Stafcentrum</h2>
-                        <p class="page-subtitle handwritten">Bouw je technische staf</p>
+                        <h2 class="page-title">Staf</h2>
+                        <p class="page-subtitle handwritten">Vindt talentvolle spelers voor de toekomst</p>
                     </div>
                 </header>
 

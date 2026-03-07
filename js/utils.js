@@ -57,9 +57,14 @@ export function formatTimeRemaining(ms) {
 
 export function getPotentialStars(overall, potential) {
     const gap = potential - overall;
+    if (gap <= 1) return 0.5;
     if (gap <= 2) return 1;
+    if (gap <= 4) return 1.5;
     if (gap <= 7) return 2;
+    if (gap <= 10) return 2.5;
     if (gap <= 14) return 3;
+    if (gap <= 18) return 3.5;
     if (gap <= 24) return 4;
+    if (gap <= 30) return 4.5;
     return 5;
 }
