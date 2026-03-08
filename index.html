@@ -18,13 +18,34 @@
     <div id="auth-screen" class="mp-overlay" style="display:none;">
         <div class="mp-card">
             <div class="mp-logo">
-                <h1>Zaterdagvoetbal</h1>
-                <p class="mp-subtitle">Dutch Amateur Football Manager</p>
+                <div class="mp-logo-badge">
+                    <svg viewBox="0 0 100 120" width="80" height="96">
+                        <path d="M50 5 L95 25 L95 70 Q95 100 50 115 Q5 100 5 70 L5 25 Z" fill="#1e3a2a" stroke="#5ce065" stroke-width="2.5"/>
+                        <path d="M50 12 L88 28 L88 68 Q88 93 50 107 Q12 93 12 68 L12 28 Z" fill="none" stroke="#5ce065" stroke-width="0.7" opacity="0.25"/>
+                        <g transform="translate(35, 25)">
+                            <rect x="0" y="8" width="3" height="22" fill="#f5f2ea"/>
+                            <rect x="27" y="8" width="3" height="22" fill="#f5f2ea"/>
+                            <rect x="0" y="5" width="30" height="4" fill="#f5f2ea"/>
+                            <line x1="4" y1="9" x2="4" y2="30" stroke="#f5f2ea" stroke-width="0.5" opacity="0.4"/>
+                            <line x1="10" y1="9" x2="10" y2="30" stroke="#f5f2ea" stroke-width="0.5" opacity="0.4"/>
+                            <line x1="15" y1="9" x2="15" y2="30" stroke="#f5f2ea" stroke-width="0.5" opacity="0.4"/>
+                            <line x1="20" y1="9" x2="20" y2="30" stroke="#f5f2ea" stroke-width="0.5" opacity="0.4"/>
+                            <line x1="26" y1="9" x2="26" y2="30" stroke="#f5f2ea" stroke-width="0.5" opacity="0.4"/>
+                            <line x1="3" y1="15" x2="27" y2="15" stroke="#f5f2ea" stroke-width="0.5" opacity="0.4"/>
+                            <line x1="3" y1="22" x2="27" y2="22" stroke="#f5f2ea" stroke-width="0.5" opacity="0.4"/>
+                            <circle cx="15" cy="20" r="6" fill="#ff9020" stroke="#f5f2ea" stroke-width="1"/>
+                            <path d="M12 17 L18 23 M18 17 L12 23" stroke="#f5f2ea" stroke-width="0.8" opacity="0.7"/>
+                        </g>
+                        <text x="50" y="78" text-anchor="middle" fill="#5ce065" font-family="'Bebas Neue',sans-serif" font-size="11" letter-spacing="2">KELDER</text>
+                        <text x="50" y="98" text-anchor="middle" fill="#ff9020" font-family="'Bebas Neue',sans-serif" font-size="11" letter-spacing="2">KLASSE</text>
+                    </svg>
+                </div>
+                <h1>Kelderklasse</h1>
+                <p class="mp-subtitle">Amateurvoetbal Manager</p>
             </div>
 
             <!-- Login Form -->
             <div id="auth-login-form" class="mp-form">
-                <h2>Inloggen</h2>
                 <div class="mp-field">
                     <label for="login-email">E-mail</label>
                     <input type="email" id="login-email" placeholder="je@email.nl" autocomplete="email">
@@ -34,13 +55,12 @@
                     <input type="password" id="login-password" placeholder="Wachtwoord" autocomplete="current-password">
                 </div>
                 <div id="login-error" class="mp-error"></div>
-                <button id="login-btn" class="mp-btn mp-btn-primary">Inloggen</button>
-                <p class="mp-switch">Nog geen account? <a href="#" id="show-signup">Registreer</a></p>
+                <button id="login-btn" class="mp-btn mp-btn-primary mp-btn-block">Inloggen</button>
+                <p class="mp-switch">Nog geen account? <a href="#" id="show-signup">Maak er een</a></p>
             </div>
 
             <!-- Signup Form -->
             <div id="auth-signup-form" class="mp-form" style="display:none;">
-                <h2>Account aanmaken</h2>
                 <div class="mp-field">
                     <label for="signup-name">Managernaam</label>
                     <input type="text" id="signup-name" placeholder="Jouw naam" autocomplete="name">
@@ -54,7 +74,7 @@
                     <input type="password" id="signup-password" placeholder="Min. 6 tekens" autocomplete="new-password">
                 </div>
                 <div id="signup-error" class="mp-error"></div>
-                <button id="signup-btn" class="mp-btn mp-btn-primary">Registreer</button>
+                <button id="signup-btn" class="mp-btn mp-btn-primary mp-btn-block">Account aanmaken</button>
                 <p class="mp-switch">Al een account? <a href="#" id="show-login">Inloggen</a></p>
             </div>
         </div>
@@ -62,25 +82,24 @@
 
     <!-- Mode Selection Screen -->
     <div id="mode-screen" class="mp-overlay" style="display:none;">
-        <div class="mp-card">
-        </div>
+        <div class="mp-card"></div>
     </div>
 
     <!-- League Lobby Screen -->
     <div id="lobby-screen" class="mp-overlay" style="display:none;">
         <div class="mp-card">
-            <button id="lobby-back" class="mp-back-btn" style="display:none;">&larr; Terug</button>
-            <h2>Kelderklasse</h2>
+            <div class="mp-logo mp-logo-sm">
+                <h1>Kelderklasse</h1>
+            </div>
 
             <!-- Create or Join -->
             <div id="lobby-choice" class="mp-lobby-choice">
-                <button id="lobby-random-btn" class="mp-btn mp-btn-primary mp-btn-block">Speel</button>
-                <div class="mp-divider"><span>of</span></div>
-                <div class="mp-field">
-                    <label for="lobby-join-code">Invite code</label>
-                    <input type="text" id="lobby-join-code" placeholder="ABC123" maxlength="6" style="text-transform:uppercase;">
+                <button id="lobby-random-btn" class="mp-btn mp-btn-primary mp-btn-block mp-btn-lg">Nieuwe competitie</button>
+                <div class="mp-divider"><span>of doe mee</span></div>
+                <div class="mp-join-row">
+                    <input type="text" id="lobby-join-code" class="mp-join-input" placeholder="INVITE CODE" maxlength="6" style="text-transform:uppercase;">
+                    <button id="lobby-join-btn" class="mp-btn mp-btn-secondary">Deelnemen</button>
                 </div>
-                <button id="lobby-join-btn" class="mp-btn mp-btn-secondary mp-btn-block">Deelnemen</button>
                 <div id="lobby-error" class="mp-error"></div>
             </div>
 
@@ -91,6 +110,8 @@
                     <!-- Populated by JS -->
                 </div>
             </div>
+
+            <button id="lobby-back" class="mp-logout-btn" style="display:none;">Uitloggen</button>
         </div>
     </div>
 
@@ -98,9 +119,9 @@
     <div id="waiting-screen" class="mp-overlay" style="display:none;">
         <div class="mp-card">
             <button id="waiting-back" class="mp-back-btn">&larr; Terug</button>
-            <h2 id="waiting-league-name">Competitie</h2>
+            <h2 class="mp-waiting-title" id="waiting-league-name">Competitie</h2>
             <div class="mp-invite-code-box">
-                <span>Invite code:</span>
+                <span class="mp-invite-label">Invite code</span>
                 <strong id="waiting-invite-code">------</strong>
                 <button id="waiting-copy-code" class="mp-btn mp-btn-small">Kopieer</button>
             </div>
@@ -116,7 +137,7 @@
                     <input type="text" id="waiting-club-name" placeholder="FC Mijn Team" maxlength="30">
                 </div>
             </div>
-            <button id="waiting-start-btn" class="mp-btn mp-btn-primary mp-btn-block" style="display:none;">Start competitie</button>
+            <button id="waiting-start-btn" class="mp-btn mp-btn-primary mp-btn-block mp-btn-lg" style="display:none;">Start competitie</button>
             <p id="waiting-start-info" class="mp-info">Wacht tot de host de competitie start...</p>
         </div>
     </div>

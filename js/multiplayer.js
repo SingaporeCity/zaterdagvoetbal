@@ -96,9 +96,10 @@ export function initMultiplayerUI(onStartGame) {
         showAuthScreen();
     });
 
-    // Lobby
-    document.getElementById('lobby-back')?.addEventListener('click', () => {
-        showModeScreen();
+    // Lobby logout
+    document.getElementById('lobby-back')?.addEventListener('click', async () => {
+        await signOut();
+        showAuthScreen();
     });
 
     document.getElementById('lobby-random-btn')?.addEventListener('click', async () => {

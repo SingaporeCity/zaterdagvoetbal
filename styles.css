@@ -25348,6 +25348,7 @@ body {
 /* MULTIPLAYER UI STYLES                        */
 /* ============================================ */
 
+/* ---- Overlay base ---- */
 .mp-overlay {
     position: fixed;
     inset: 0;
@@ -25355,47 +25356,77 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-main, #f5f0e1);
+    background:
+        radial-gradient(ellipse at 30% 20%, rgba(92,224,101,0.06), transparent 55%),
+        radial-gradient(ellipse at 70% 80%, rgba(255,144,32,0.04), transparent 55%),
+        repeating-conic-gradient(rgba(92,224,101,0.012) 0% 25%, transparent 0% 50%) 0 0 / 6px 6px,
+        #0e1a12;
     padding: 1rem;
     overflow-y: auto;
 }
 
+/* ---- Card ---- */
 .mp-card {
-    background: var(--bg-card, #fff);
-    border-radius: 16px;
-    padding: 2rem;
-    max-width: 420px;
+    background: linear-gradient(165deg, #1e3a2a 0%, #172e22 100%);
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    max-width: 400px;
     width: 100%;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    box-shadow:
+        0 20px 60px rgba(0,0,0,0.5),
+        0 0 0 1px rgba(92,224,101,0.1),
+        inset 0 1px 0 rgba(255,255,255,0.04);
     position: relative;
 }
 
-.mp-card-wide {
-    max-width: 600px;
-}
-
+/* ---- Logo ---- */
 .mp-logo {
     text-align: center;
     margin-bottom: 2rem;
 }
 
+.mp-logo-sm {
+    margin-bottom: 1.5rem;
+}
+
+.mp-logo-sm h1 {
+    font-size: 2rem;
+}
+
+.mp-logo-badge {
+    margin-bottom: 0.75rem;
+}
+
 .mp-logo h1 {
-    font-family: 'Caveat', cursive;
-    font-size: 2.5rem;
-    color: var(--accent-green, #1b5e20);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    letter-spacing: 4px;
     margin: 0;
+    background: linear-gradient(180deg, #5ce065 0%, #3db847 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
 }
 
 .mp-subtitle {
-    color: var(--text-secondary, #666);
-    font-size: 0.9rem;
-    margin-top: 0.25rem;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 0.4rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 500;
 }
 
+/* ---- Forms ---- */
 .mp-form h2 {
-    font-size: 1.3rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
     margin-bottom: 1.5rem;
     text-align: center;
+    color: var(--text-primary);
+    letter-spacing: 1px;
 }
 
 .mp-field {
@@ -25405,48 +25436,59 @@ body {
 .mp-field label {
     display: block;
     font-weight: 600;
-    font-size: 0.85rem;
-    margin-bottom: 0.35rem;
-    color: var(--text-primary, #333);
+    font-size: 0.75rem;
+    margin-bottom: 0.4rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
 }
 
 .mp-field input {
     width: 100%;
-    padding: 0.7rem 0.9rem;
-    border: 2px solid var(--border-color, #ddd);
-    border-radius: 8px;
-    font-size: 1rem;
-    font-family: inherit;
-    background: var(--bg-main, #f5f0e1);
-    transition: border-color 0.2s;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid rgba(255,248,225,0.1);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: 'DM Sans', sans-serif;
+    background: rgba(0,0,0,0.25);
+    color: var(--text-primary);
+    transition: border-color 0.2s, box-shadow 0.2s;
     box-sizing: border-box;
+}
+
+.mp-field input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
 }
 
 .mp-field input:focus {
     outline: none;
-    border-color: var(--accent-green, #1b5e20);
+    border-color: #5ce065;
+    box-shadow: 0 0 0 3px rgba(92,224,101,0.12);
 }
 
 .mp-error {
-    color: #d32f2f;
-    font-size: 0.85rem;
+    color: #ff5252;
+    font-size: 0.82rem;
     min-height: 1.2rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
 }
 
+/* ---- Buttons ---- */
 .mp-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.7rem 1.5rem;
+    padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
     cursor: pointer;
-    font-family: inherit;
-    transition: background 0.2s, transform 0.1s;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
 }
 
 .mp-btn:active {
@@ -25454,111 +25496,83 @@ body {
 }
 
 .mp-btn-primary {
-    background: var(--accent-green, #1b5e20);
-    color: #fff;
+    background: linear-gradient(135deg, #5ce065 0%, #3db847 100%);
+    color: #0e1a12;
+    box-shadow: 0 4px 16px rgba(92,224,101,0.25);
 }
 
 .mp-btn-primary:hover {
-    background: #2e7d32;
+    box-shadow: 0 6px 24px rgba(92,224,101,0.35);
+    transform: translateY(-1px);
 }
 
 .mp-btn-secondary {
-    background: var(--accent-orange, #ff9800);
+    background: linear-gradient(135deg, #ff9020 0%, #e07800 100%);
     color: #fff;
+    box-shadow: 0 4px 16px rgba(255,144,32,0.2);
 }
 
 .mp-btn-secondary:hover {
-    background: #f57c00;
-}
-
-.mp-btn-text {
-    background: none;
-    color: var(--text-secondary, #666);
-    padding: 0.5rem 1rem;
-}
-
-.mp-btn-text:hover {
-    color: var(--text-primary, #333);
+    box-shadow: 0 6px 24px rgba(255,144,32,0.3);
+    transform: translateY(-1px);
 }
 
 .mp-btn-small {
     padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     border-radius: 6px;
-    background: var(--bg-main, #f5f0e1);
-    border: 1px solid var(--border-color, #ddd);
+    background: rgba(92,224,101,0.12);
+    border: 1px solid rgba(92,224,101,0.2);
+    color: #5ce065;
+    font-weight: 600;
+}
+
+.mp-btn-small:hover {
+    background: rgba(92,224,101,0.2);
 }
 
 .mp-btn-block {
     width: 100%;
 }
 
+.mp-btn-lg {
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 12px;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    font-size: 1.1rem;
+}
+
 .mp-switch {
     text-align: center;
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    color: var(--text-secondary, #666);
+    margin-top: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
 }
 
 .mp-switch a {
-    color: var(--accent-green, #1b5e20);
+    color: #5ce065;
     font-weight: 600;
     text-decoration: none;
+    transition: color 0.15s;
 }
 
 .mp-switch a:hover {
+    color: #7fe888;
     text-decoration: underline;
 }
 
-/* Mode Selection */
-.mp-mode-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin: 1.5rem 0;
-}
-
-.mp-mode-card {
-    background: var(--bg-main, #f5f0e1);
-    border: 2px solid var(--border-color, #ddd);
-    border-radius: 12px;
-    padding: 1.5rem;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.2s, transform 0.1s, box-shadow 0.2s;
-    font-family: inherit;
-}
-
-.mp-mode-card:hover {
-    border-color: var(--accent-green, #1b5e20);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.mp-mode-icon {
-    color: var(--accent-green, #1b5e20);
-    margin-bottom: 0.75rem;
-}
-
-.mp-mode-card h3 {
-    font-size: 1.1rem;
-    margin: 0 0 0.5rem;
-}
-
-.mp-mode-card p {
-    font-size: 0.85rem;
-    color: var(--text-secondary, #666);
-    margin: 0;
-}
-
-/* Lobby */
+/* ---- Lobby ---- */
 .mp-divider {
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin: 1.5rem 0;
-    color: var(--text-secondary, #666);
-    font-size: 0.85rem;
+    margin: 1.25rem 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .mp-divider::before,
@@ -25566,34 +25580,91 @@ body {
     content: '';
     flex: 1;
     height: 1px;
-    background: var(--border-color, #ddd);
+    background: rgba(255,248,225,0.1);
+}
+
+.mp-join-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.mp-join-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid rgba(255,248,225,0.1);
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 3px;
+    text-align: center;
+    background: rgba(0,0,0,0.25);
+    color: var(--text-primary);
+    transition: border-color 0.2s;
+}
+
+.mp-join-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.5;
+    letter-spacing: 2px;
+    font-size: 0.85rem;
+}
+
+.mp-join-input:focus {
+    outline: none;
+    border-color: #ff9020;
+    box-shadow: 0 0 0 3px rgba(255,144,32,0.12);
 }
 
 .mp-back-btn {
     position: absolute;
-    top: 1rem;
-    left: 1rem;
+    top: 1.25rem;
+    left: 1.25rem;
     background: none;
     border: none;
-    font-size: 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
-    color: var(--text-secondary, #666);
-    font-family: inherit;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    transition: color 0.15s;
 }
 
 .mp-back-btn:hover {
-    color: var(--text-primary, #333);
+    color: var(--text-primary);
+}
+
+.mp-logout-btn {
+    display: block;
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 0.6rem;
+    background: none;
+    border: 1px solid rgba(255,82,82,0.25);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.mp-logout-btn:hover {
+    border-color: #ff5252;
+    color: #ff5252;
 }
 
 .mp-my-leagues {
-    margin-top: 2rem;
-    border-top: 1px solid var(--border-color, #ddd);
-    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    border-top: 1px solid rgba(255,248,225,0.08);
+    padding-top: 1.25rem;
 }
 
 .mp-my-leagues h3 {
+    font-family: 'Bebas Neue', sans-serif;
     font-size: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .mp-leagues-list {
@@ -25606,59 +25677,87 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem;
-    background: var(--bg-main, #f5f0e1);
-    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(255,248,225,0.06);
+    transition: border-color 0.15s;
+}
+
+.mp-league-item:hover {
+    border-color: rgba(92,224,101,0.2);
 }
 
 .mp-league-item-info {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.15rem;
+}
+
+.mp-league-item-info strong {
+    font-size: 0.9rem;
 }
 
 .mp-league-status {
-    font-size: 0.8rem;
-    color: var(--text-secondary, #666);
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }
 
 .mp-status-active {
-    color: var(--accent-green, #1b5e20);
+    color: #5ce065;
 }
 
 .mp-status-lobby {
-    color: var(--accent-orange, #ff9800);
+    color: #ff9020;
 }
 
 .mp-empty {
     text-align: center;
-    color: var(--text-secondary, #666);
-    font-style: italic;
+    color: var(--text-muted);
+    font-size: 0.85rem;
     padding: 1rem;
+    opacity: 0.7;
 }
 
-/* Waiting Room */
+/* ---- Waiting Room ---- */
+.mp-waiting-title {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 1.5px;
+    font-size: 1.5rem;
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
 .mp-invite-code-box {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: var(--bg-main, #f5f0e1);
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
+    background: rgba(0,0,0,0.25);
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
     margin: 1rem 0 1.5rem;
+    border: 1px solid rgba(92,224,101,0.12);
+}
+
+.mp-invite-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
 }
 
 .mp-invite-code-box strong {
-    font-family: monospace;
-    font-size: 1.3rem;
-    letter-spacing: 0.15em;
-    color: var(--accent-green, #1b5e20);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.2em;
+    color: #5ce065;
+    flex: 1;
 }
 
 .mp-waiting-players {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.4rem;
     margin-bottom: 1rem;
 }
 
@@ -25667,35 +25766,36 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 0.65rem 0.85rem;
-    background: var(--bg-main, #f5f0e1);
+    background: rgba(0,0,0,0.2);
     border-radius: 8px;
-    border-left: 3px solid var(--accent-green, #1b5e20);
+    border-left: 3px solid #5ce065;
 }
 
 .mp-player-slot.mp-you {
-    border-left-color: var(--accent-orange, #ff9800);
-    background: #fff8e1;
+    border-left-color: #ff9020;
+    background: rgba(255,144,32,0.08);
 }
 
 .mp-player-slot.mp-empty-slot {
-    border-left-color: var(--border-color, #ddd);
-    opacity: 0.5;
+    border-left-color: rgba(255,248,225,0.08);
+    opacity: 0.35;
 }
 
 .mp-player-name {
     font-weight: 600;
     font-size: 0.9rem;
+    color: var(--text-primary);
 }
 
 .mp-club-name {
     font-size: 0.8rem;
-    color: var(--text-secondary, #666);
+    color: var(--text-muted);
 }
 
 .mp-waiting-info {
     text-align: center;
-    color: var(--text-secondary, #666);
-    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-size: 0.82rem;
     margin-bottom: 1rem;
 }
 
@@ -25705,50 +25805,22 @@ body {
 
 .mp-info {
     text-align: center;
-    color: var(--text-secondary, #666);
-    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-size: 0.82rem;
     font-style: italic;
 }
 
-/* League Overlay Bar (in-game) */
-.mp-league-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    pointer-events: none;
-}
-
-.mp-league-bar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1.5rem;
-    padding: 0.5rem 1rem;
-    background: var(--accent-green, #1b5e20);
-    color: #fff;
-    font-size: 0.85rem;
-    pointer-events: all;
-}
-
-.mp-league-name {
-    font-weight: 600;
-}
-
-.mp-league-countdown {
-    font-family: monospace;
-    letter-spacing: 0.05em;
-}
-
 @media (max-width: 768px) {
-    .mp-mode-grid {
-        grid-template-columns: 1fr;
-    }
-
     .mp-card {
-        padding: 1.5rem;
+        padding: 2rem 1.5rem;
         margin: 0.5rem;
+        border-radius: 16px;
+    }
+    .mp-logo h1 {
+        font-size: 2.2rem;
+    }
+    .mp-join-row {
+        flex-direction: column;
     }
 }
 
