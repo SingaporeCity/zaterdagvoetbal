@@ -194,7 +194,7 @@ function supabasePlayerToLocal(p) {
         nationality: nat,
         overall: p.overall,
         potential: p.potential,
-        stars: p.stars ?? 0,
+        stars: p.stars ?? p.attributes?._stars ?? 0,
         attributes: p.attributes || {},
         personality: p.personality,
         tag: p.tag,

@@ -854,8 +854,7 @@ async function generatePlayersForClub(clubId, leagueId, division) {
             nationality: 'nl',
             overall,
             potential: overall,
-            stars,
-            attributes,
+            attributes: { ...attributes, _stars: stars },
             morale: rnd(60, 90),
             fitness: rnd(70, 100),
             energy: rnd(60, 100),
@@ -864,7 +863,8 @@ async function generatePlayersForClub(clubId, leagueId, division) {
         };
     });
 
-    await supabase.from('players').insert(players);
+    const { error } = await supabase.from('players').insert(players);
+    if (error) console.error('Failed to insert players for club', clubId, error);
 }
 
 /**
