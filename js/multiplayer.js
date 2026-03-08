@@ -101,6 +101,10 @@ export function initMultiplayerUI(onStartGame) {
         showModeScreen();
     });
 
+    document.getElementById('lobby-random-btn')?.addEventListener('click', async () => {
+        await joinRandomLeague();
+    });
+
     document.getElementById('lobby-create-btn')?.addEventListener('click', async () => {
         await createLeague();
     });
@@ -157,17 +161,14 @@ function showAuthScreen() {
 }
 
 async function showModeScreen() {
+    // Skip mode selection — always multiplayer, go straight to lobby
     hideAllOverlays();
     const user = await getUser();
     if (!user) {
         showAuthScreen();
         return;
     }
-
-    const profile = await getProfile(user.id);
-    const name = profile?.display_name || user.user_metadata?.display_name || 'Manager';
-    document.getElementById('mode-welcome-msg').textContent = `Welkom, ${name}!`;
-    document.getElementById('mode-screen').style.display = 'flex';
+    showLobbyScreen();
 }
 
 async function showLobbyScreen() {
@@ -406,6 +407,95 @@ async function joinActiveLeague(league, user) {
 
     // Enter the game directly
     await enterLeague(leagueId, aiClub.id);
+}
+
+/**
+ * Join a random open league, or create one if none available
+ */
+async function joinRandomLeague() {
+    const errorEl = document.getElementById('lobby-error');
+    errorEl.textContent = '';
+
+    try {
+        const user = await getUser();
+        if (!user) throw new Error('Niet ingelogd');
+
+        // First check if user is already in a league
+        const { data: existingClub } = await supabase
+            .from('clubs')
+            .select('id, league_id, leagues(id, name, invite_code, status)')
+            .eq('owner_id', user.id)
+            .eq('is_ai', false)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (existingClub && existingClub.leagues) {
+            const league = existingClub.leagues;
+            if (league.status === 'active') {
+                await enterLeague(league.id, existingClub.id);
+                return;
+            } else if (league.status === 'lobby') {
+                showWaitingScreen(league);
+                await refreshWaitingRoom(league.id, user.id);
+                subscribeToLobby(league.id, user.id);
+                return;
+            }
+        }
+
+        // Find an open lobby league with space
+        const { data: openLeagues } = await supabase
+            .from('leagues')
+            .select('id, invite_code')
+            .eq('status', 'lobby')
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+        if (openLeagues && openLeagues.length > 0) {
+            // Try to join the first open league
+            for (const league of openLeagues) {
+                const { count } = await supabase
+                    .from('clubs')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('league_id', league.id)
+                    .eq('is_ai', false);
+
+                if (count < 8) {
+                    await joinLeague(league.invite_code);
+                    return;
+                }
+            }
+        }
+
+        // Also check active leagues with AI slots
+        const { data: activeLeagues } = await supabase
+            .from('leagues')
+            .select('id, invite_code')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+        if (activeLeagues && activeLeagues.length > 0) {
+            for (const league of activeLeagues) {
+                const { count } = await supabase
+                    .from('clubs')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('league_id', league.id)
+                    .eq('is_ai', true);
+
+                if (count > 0) {
+                    await joinLeague(league.invite_code);
+                    return;
+                }
+            }
+        }
+
+        // No open leagues found — create a new one and start it solo
+        await createLeague();
+
+    } catch (err) {
+        errorEl.textContent = err.message;
+    }
 }
 
 /**

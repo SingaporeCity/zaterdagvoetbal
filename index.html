@@ -96,18 +96,19 @@
     <!-- League Lobby Screen -->
     <div id="lobby-screen" class="mp-overlay" style="display:none;">
         <div class="mp-card">
-            <button id="lobby-back" class="mp-back-btn">&larr; Terug</button>
-            <h2>Multiplayer Lobby</h2>
+            <button id="lobby-back" class="mp-back-btn" style="display:none;">&larr; Terug</button>
+            <h2>Kelderklasse</h2>
 
             <!-- Create or Join -->
             <div id="lobby-choice" class="mp-lobby-choice">
-                <button id="lobby-create-btn" class="mp-btn mp-btn-primary mp-btn-block">Nieuwe competitie aanmaken</button>
+                <button id="lobby-random-btn" class="mp-btn mp-btn-primary mp-btn-block">Speel</button>
                 <div class="mp-divider"><span>of</span></div>
                 <div class="mp-field">
                     <label for="lobby-join-code">Invite code</label>
                     <input type="text" id="lobby-join-code" placeholder="ABC123" maxlength="6" style="text-transform:uppercase;">
                 </div>
                 <button id="lobby-join-btn" class="mp-btn mp-btn-secondary mp-btn-block">Deelnemen</button>
+                <button id="lobby-create-btn" class="mp-btn mp-btn-small mp-btn-block" style="margin-top:8px;opacity:0.7;">Nieuwe competitie aanmaken</button>
                 <div id="lobby-error" class="mp-error"></div>
             </div>
 
