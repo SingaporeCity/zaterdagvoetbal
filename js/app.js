@@ -16101,8 +16101,7 @@ async function initMultiplayerGame(detail) {
         }
     });
 
-    // Show league overlay bar
-    showLeagueOverlay(league.name || 'Competitie');
+    // Start multiplayer countdown (updates dashboard timer)
     startCountdown(league.match_time || '20:00');
 
     // Start auto-save to sync

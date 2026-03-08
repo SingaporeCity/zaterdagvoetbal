@@ -246,9 +246,14 @@ export function startCountdown(matchTime = '20:00') {
 
     const updateDisplay = () => {
         const countdown = getMatchCountdown(matchTime);
-        const el = document.getElementById('league-bar-countdown');
-        if (el) {
-            el.textContent = `Volgende wedstrijd: ${countdown.formatted}`;
+        // Update dashboard timer segments
+        const hoursEl = document.getElementById('timer-hours');
+        const minutesEl = document.getElementById('timer-minutes');
+        const secondsEl = document.getElementById('timer-seconds');
+        if (hoursEl && minutesEl && secondsEl) {
+            hoursEl.textContent = String(countdown.hours).padStart(2, '0');
+            minutesEl.textContent = String(countdown.minutes).padStart(2, '0');
+            secondsEl.textContent = String(countdown.seconds).padStart(2, '0');
         }
     };
 
