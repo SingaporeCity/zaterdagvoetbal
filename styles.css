@@ -25654,6 +25654,57 @@ body {
    ================================================ */
 
 @media (max-width: 768px) {
+    /* --- ROOT CAUSE: unlock scrolling on mobile --- */
+    .main-content {
+        height: auto !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+    /* All pages: allow vertical scroll */
+    .page.active {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+    /* Dashboard specific: remove fixed height + overflow locks */
+    #dashboard.active {
+        height: auto !important;
+        overflow: visible !important;
+    }
+    .dashboard-grid {
+        overflow: visible !important;
+    }
+    .dash-grid {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .dash-cell > * {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .dash-cell {
+        overflow: visible !important;
+    }
+    .dash-standings {
+        overflow: visible !important;
+    }
+    /* Remove all viewport-height locks on containers */
+    .kantine-dashboard {
+        height: auto !important;
+    }
+    .programma-schedule {
+        max-height: none !important;
+    }
+    .scouting-layout,
+    .jeugdteam-layout {
+        max-height: none !important;
+    }
+    /* Lineup/tactics containers: allow scroll */
+    .lineup-players-panel,
+    .lineup-pitch-panel {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
     /* --- GLOBAL --- */
     .page-title {
         font-size: 1.4rem;
