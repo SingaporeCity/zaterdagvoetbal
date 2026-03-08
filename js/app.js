@@ -16065,6 +16065,19 @@ async function initMultiplayerGame(detail) {
         gameState.multiplayer.isHost = league.created_by === userId;
     }
 
+    // Initialize all UI interactions (navigation, modals, tabs, etc.)
+    initNavigation();
+    initQuickActions();
+    initFilters();
+    initModals();
+    initScoutFilters();
+    initPlayMatchButton();
+
+    // Move global tiles into dashboard header
+    const tiles = document.querySelector('.global-top-tiles');
+    const dashHeader = document.getElementById('dashboard')?.querySelector('.page-header');
+    if (tiles && dashHeader) dashHeader.appendChild(tiles);
+
     // Render everything
     renderStandings();
     renderTopScorers();
