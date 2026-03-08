@@ -10397,6 +10397,12 @@ async function playMultiplayerMatch() {
     const season = gameState.season || 1;
     const week = gameState.week || 1;
 
+    // Week 0 = no schedule yet, waiting for more players
+    if (week === 0) {
+        showNotification('De competitie begint zodra er meer spelers joinen! Deel je invite code.', 'info');
+        return;
+    }
+
     showNotification('Wedstrijd laden...', 'info');
 
     try {

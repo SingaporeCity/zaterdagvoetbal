@@ -257,16 +257,16 @@ async function joinLeague(code) {
         const user = await getUser();
         if (!user) throw new Error('Niet ingelogd');
 
-        // Find league by code
+        // Find league by code (lobby OR active)
         const { data: league, error: findError } = await supabase
             .from('leagues')
             .select('*')
             .eq('invite_code', code)
-            .eq('status', 'lobby')
+            .in('status', ['lobby', 'active'])
             .single();
 
         if (findError || !league) {
-            errorEl.textContent = 'Competitie niet gevonden of al gestart.';
+            errorEl.textContent = 'Competitie niet gevonden of al afgelopen.';
             return;
         }
 
@@ -279,10 +279,13 @@ async function joinLeague(code) {
             .single();
 
         if (existingClub) {
-            // Already in this league, go to waiting room
-            showWaitingScreen(league);
-            await refreshWaitingRoom(league.id, user.id);
-            subscribeToLobby(league.id, user.id);
+            if (league.status === 'lobby') {
+                showWaitingScreen(league);
+                await refreshWaitingRoom(league.id, user.id);
+                subscribeToLobby(league.id, user.id);
+            } else {
+                await enterLeague(league.id, existingClub.id);
+            }
             return;
         }
 
@@ -298,33 +301,111 @@ async function joinLeague(code) {
             return;
         }
 
-        // Create club
-        const { error: clubError } = await supabase
-            .from('clubs')
-            .insert({
+        if (league.status === 'active') {
+            // Join an active league: replace an AI team
+            await joinActiveLeague(league, user);
+        } else {
+            // Join lobby as normal
+            const { error: clubError } = await supabase
+                .from('clubs')
+                .insert({
+                    league_id: league.id,
+                    owner_id: user.id,
+                    name: 'FC Nieuw Team',
+                    is_ai: false,
+                    division: league.division
+                });
+
+            if (clubError) throw clubError;
+
+            await supabase.from('league_feed').insert({
                 league_id: league.id,
-                owner_id: user.id,
-                name: 'FC Nieuw Team',
-                is_ai: false,
-                division: league.division
+                type: 'join',
+                data: { user_name: user.user_metadata?.display_name || 'Manager' }
             });
 
-        if (clubError) throw clubError;
-
-        // Add to feed
-        await supabase.from('league_feed').insert({
-            league_id: league.id,
-            type: 'join',
-            data: { user_name: user.user_metadata?.display_name || 'Manager' }
-        });
-
-        showWaitingScreen(league);
-        await refreshWaitingRoom(league.id, user.id);
-        subscribeToLobby(league.id, user.id);
+            showWaitingScreen(league);
+            await refreshWaitingRoom(league.id, user.id);
+            subscribeToLobby(league.id, user.id);
+        }
 
     } catch (err) {
         errorEl.textContent = err.message;
     }
+}
+
+/**
+ * Join an active league: replace an AI team, generate players, regenerate schedule
+ */
+async function joinActiveLeague(league, user) {
+    const leagueId = league.id;
+
+    // Find an AI club to replace
+    const { data: aiClub } = await supabase
+        .from('clubs')
+        .select('id')
+        .eq('league_id', leagueId)
+        .eq('is_ai', true)
+        .limit(1)
+        .single();
+
+    if (!aiClub) {
+        document.getElementById('lobby-error').textContent = 'Geen plek meer in deze competitie.';
+        return;
+    }
+
+    // Take over the AI club: set owner, mark as human, rename
+    await supabase
+        .from('clubs')
+        .update({
+            owner_id: user.id,
+            is_ai: false,
+            name: 'FC Nieuw Team'
+        })
+        .eq('id', aiClub.id);
+
+    // Add to feed
+    await supabase.from('league_feed').insert({
+        league_id: leagueId,
+        type: 'join',
+        data: { user_name: user.user_metadata?.display_name || 'Manager' }
+    });
+
+    // Get all human clubs now (including the new one)
+    const { data: humanClubs } = await supabase
+        .from('clubs')
+        .select('id')
+        .eq('league_id', leagueId)
+        .eq('is_ai', false);
+
+    // If this is the second human player and no schedule exists yet, generate it
+    if (humanClubs && humanClubs.length >= 2) {
+        const { data: existingSchedule } = await supabase
+            .from('schedule')
+            .select('id')
+            .eq('league_id', leagueId)
+            .limit(1);
+
+        if (!existingSchedule || existingSchedule.length === 0) {
+            // Get all clubs (human + AI) for schedule
+            const { data: allClubs } = await supabase
+                .from('clubs')
+                .select('id')
+                .eq('league_id', leagueId);
+
+            const humanClubIds = humanClubs.map(c => c.id);
+            await generateSchedule(leagueId, 1, allClubs.map(c => c.id), humanClubIds);
+
+            // Set week to 1 — competition starts!
+            await supabase
+                .from('leagues')
+                .update({ week: 1 })
+                .eq('id', leagueId);
+        }
+    }
+
+    // Enter the game directly
+    await enterLeague(leagueId, aiClub.id);
 }
 
 /**
@@ -477,17 +558,14 @@ async function refreshWaitingRoom(leagueId, userId) {
         }
     }
 
-    // Show start button only for host and if >= 2 human players
+    // Show start button for host (min 1 player)
     const isHost = league?.created_by === userId;
     if (startBtn && startInfo) {
-        if (isHost && clubs && clubs.length >= 2) {
+        if (isHost && clubs && clubs.length >= 1) {
             startBtn.style.display = 'block';
-            startInfo.style.display = 'none';
-        } else if (isHost) {
-            startBtn.style.display = 'none';
-            startInfo.textContent = 'Wacht op meer spelers (min. 2)...';
-            startInfo.style.display = 'block';
-        } else {
+            startInfo.textContent = clubs.length < 2 ? 'Je kunt alvast beginnen — wedstrijden starten als er meer spelers joinen.' : '';
+            startInfo.style.display = clubs.length < 2 ? 'block' : 'none';
+        } else if (!isHost) {
             startBtn.style.display = 'none';
             startInfo.textContent = 'Wacht tot de host de competitie start...';
             startInfo.style.display = 'block';
@@ -567,7 +645,7 @@ async function startLeague(onStartGame) {
         .eq('league_id', leagueId)
         .eq('is_ai', false);
 
-    if (!humanClubs || humanClubs.length < 2) return;
+    if (!humanClubs || humanClubs.length < 1) return;
 
     const aiNeeded = 8 - humanClubs.length;
 
@@ -595,7 +673,7 @@ async function startLeague(onStartGame) {
 
     const allClubs = [...humanClubs, ...aiClubs];
 
-    // Generate players for all clubs (AI gets full squads, humans get initial squads)
+    // Generate players for all clubs
     for (const club of allClubs) {
         await generatePlayersForClub(club.id, leagueId, 8);
     }
@@ -610,14 +688,16 @@ async function startLeague(onStartGame) {
         });
     }
 
-    // Generate round-robin schedule (human clubs face each other in weeks 1+2)
-    const humanClubIds = humanClubs.map(c => c.id);
-    await generateSchedule(leagueId, 1, allClubs.map(c => c.id), humanClubIds);
+    // Only generate schedule if 2+ human players; otherwise wait for more to join
+    if (humanClubs.length >= 2) {
+        const humanClubIds = humanClubs.map(c => c.id);
+        await generateSchedule(leagueId, 1, allClubs.map(c => c.id), humanClubIds);
+    }
 
-    // Update league status to active
+    // Update league status to active (week 0 = no matches yet if solo)
     await supabase
         .from('leagues')
-        .update({ status: 'active', week: 1, season: 1 })
+        .update({ status: 'active', week: humanClubs.length >= 2 ? 1 : 0, season: 1 })
         .eq('id', leagueId);
 
     // Feed entry
@@ -627,7 +707,7 @@ async function startLeague(onStartGame) {
         data: { season: 1, teams: allClubs.length }
     });
 
-    // Enter the game — use the host's club ID from humanClubs
+    // Enter the game
     const myClubId = humanClubs.find(c => c.owner_id === user.id)?.id;
     await enterLeague(leagueId, myClubId);
 }
