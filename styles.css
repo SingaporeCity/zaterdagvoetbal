@@ -25207,6 +25207,144 @@ body {
 }
 
 /* ============================================ */
+/* BUGS TAB + PAGE                              */
+/* ============================================ */
+
+.nav-bugs-wrapper {
+    margin-top: auto;
+    padding: 12px 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nav-bugs-item {
+    background: linear-gradient(135deg, #b71c1c, #d32f2f) !important;
+    border-radius: 8px !important;
+    padding: 10px 14px !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff !important;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.nav-bugs-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+}
+
+.nav-bugs-item .nav-icon svg {
+    stroke: #fff;
+}
+
+.bugs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 600px;
+    padding: 8px 0;
+}
+
+.bug-form-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bug-label {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.bug-input {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+}
+
+.bug-textarea {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    resize: vertical;
+    min-height: 100px;
+}
+
+.bug-input:focus, .bug-textarea:focus {
+    outline: none;
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.15);
+}
+
+.bug-submit-btn {
+    align-self: flex-start;
+    margin-top: 4px;
+    background: linear-gradient(135deg, #b71c1c, #d32f2f);
+}
+
+.bug-submit-btn:hover {
+    background: linear-gradient(135deg, #c62828, #e53935);
+}
+
+.bug-status {
+    font-size: 0.85rem;
+    color: var(--accent-green);
+    min-height: 1.2em;
+}
+
+.bug-history-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.bug-history-item {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 14px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 8px;
+}
+
+.bug-history-item-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.bug-history-item-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+}
+
+.bug-history-item-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+
+/* ============================================ */
 /* MULTIPLAYER UI STYLES                        */
 /* ============================================ */
 

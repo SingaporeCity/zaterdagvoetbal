@@ -5614,6 +5614,7 @@ function navigateToPage(page) {
     if (page === 'jeugdteam') renderJeugdteamPage();
     if (page === 'kantine') renderKantineDashboard();
     if (page === 'wedstrijden') renderMatchesPage();
+    if (page === 'bugs') renderBugHistory();
 
     updateNavBadges();
 }
@@ -9352,6 +9353,7 @@ function initGame(mode = 'local') {
     initChairmanTips();
     initPlayMatchButton();
     initSaveLoadButtons();
+    initBugReports();
 
     // Start timers
     startTimers();
@@ -12835,6 +12837,93 @@ function initSaveLoadButtons() {
     }
 }
 
+// ================================================
+// BUG REPORTS
+// ================================================
+
+function initBugReports() {
+    const submitBtn = document.getElementById('bug-submit-btn');
+    if (!submitBtn) return;
+
+    submitBtn.addEventListener('click', async () => {
+        const titleEl = document.getElementById('bug-title');
+        const descEl = document.getElementById('bug-description');
+        const statusEl = document.getElementById('bug-status');
+        const title = titleEl?.value?.trim();
+        const description = descEl?.value?.trim();
+
+        if (!title) {
+            statusEl.textContent = 'Vul een omschrijving in.';
+            statusEl.style.color = '#d32f2f';
+            return;
+        }
+
+        if (!isSupabaseAvailable()) {
+            statusEl.textContent = 'Kan niet versturen (geen verbinding).';
+            statusEl.style.color = '#d32f2f';
+            return;
+        }
+
+        submitBtn.disabled = true;
+        statusEl.textContent = 'Versturen...';
+        statusEl.style.color = 'var(--text-muted)';
+
+        const { error } = await supabase.from('bug_reports').insert({
+            user_id: gameState.multiplayer?.userId || null,
+            title,
+            description: description || null,
+            user_agent: navigator.userAgent
+        });
+
+        if (error) {
+            statusEl.textContent = 'Fout bij versturen. Probeer opnieuw.';
+            statusEl.style.color = '#d32f2f';
+            console.error('Bug report failed:', error);
+        } else {
+            statusEl.textContent = 'Bedankt! Bug is gemeld.';
+            statusEl.style.color = 'var(--accent-green)';
+            titleEl.value = '';
+            descEl.value = '';
+            renderBugHistory();
+        }
+        submitBtn.disabled = false;
+    });
+}
+
+async function renderBugHistory() {
+    const list = document.getElementById('bug-list');
+    if (!list || !isSupabaseAvailable()) {
+        if (list) list.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;">Geen meldingen.</p>';
+        return;
+    }
+
+    const { data, error } = await supabase
+        .from('bug_reports')
+        .select('id, title, description, created_at')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+    if (error || !data || data.length === 0) {
+        list.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;">Nog geen meldingen.</p>';
+        return;
+    }
+
+    list.innerHTML = data.map(b => {
+        const date = new Date(b.created_at).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        return `<div class="bug-history-item">
+            <div class="bug-history-item-title">${escapeHtml(b.title)}</div>
+            ${b.description ? `<div class="bug-history-item-desc">${escapeHtml(b.description)}</div>` : ''}
+            <div class="bug-history-item-date">${date}</div>
+        </div>`;
+    }).join('');
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 // Keep the old generateStandings for backward compatibility
 function generateStandings() {
     return generateNewStandings(gameState.club.name, gameState.club.division);
@@ -16107,6 +16196,7 @@ async function initMultiplayerGame(detail) {
         initChairmanTips();
         initPlayMatchButton();
         initSaveLoadButtons();
+        initBugReports();
 
         // Render everything
         renderStandings();
