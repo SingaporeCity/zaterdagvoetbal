@@ -16055,79 +16055,134 @@ function renderKantineTopscorers() {}
 async function initMultiplayerGame(detail) {
     const { leagueId, clubId, userId, league } = detail;
 
-    // Load game state from Supabase
-    setStorageMode('multiplayer', leagueId, clubId);
-    const mpState = await loadGame();
+    try {
+        // Load game state from Supabase
+        setStorageMode('multiplayer', leagueId, clubId);
+        const mpState = await loadGame();
 
-    if (mpState) {
-        replaceGameState(mpState);
-        gameState.multiplayer.userId = userId;
-        gameState.multiplayer.isHost = league.created_by === userId;
-    }
-
-    // Initialize all UI interactions (navigation, modals, tabs, etc.)
-    initNavigation();
-    initQuickActions();
-    initFilters();
-    initModals();
-    initScoutFilters();
-    initPlayMatchButton();
-
-    // Move global tiles into dashboard header
-    const tiles = document.querySelector('.global-top-tiles');
-    const dashHeader = document.getElementById('dashboard')?.querySelector('.page-header');
-    if (tiles && dashHeader) dashHeader.appendChild(tiles);
-
-    // Render everything
-    renderStandings();
-    renderTopScorers();
-    renderPlayerCards();
-    updateBudgetDisplays();
-    renderDashboardExtras();
-
-    // Subscribe to realtime updates
-    subscribeToLeague(leagueId, {
-        onStandingsChange: async () => {
-            const standings = await fetchStandings(leagueId);
-            if (standings.length > 0) {
-                gameState.standings = standings;
-                renderStandings();
-            }
-        },
-        onMatchResult: (result) => {
-            showNotification(`Uitslag: ${result.home_score}-${result.away_score}`, 'info');
-        },
-        onTransferChange: () => {
-            if (typeof renderTransferMarket === 'function') renderTransferMarket();
-        },
-        onFeedItem: (item) => {
-            if (item.type === 'result') {
-                showNotification('Nieuwe wedstrijduitslagen beschikbaar!', 'info');
-            }
-        },
-        onLeagueUpdate: (league) => {
-            if (league.week !== gameState.week || league.season !== gameState.season) {
-                gameState.week = league.week;
-                gameState.season = league.season;
-                renderDashboardExtras();
-            }
+        if (mpState) {
+            replaceGameState(mpState);
+            gameState.multiplayer.userId = userId;
+            gameState.multiplayer.isHost = league.created_by === userId;
+        } else {
+            // First time or load failed — ensure multiplayer state is set
+            gameState.multiplayer = {
+                enabled: true,
+                leagueId,
+                clubId,
+                userId,
+                isHost: league.created_by === userId,
+                leagueName: league.name,
+                inviteCode: league.invite_code
+            };
+            gameState.season = league.season || 1;
+            gameState.week = league.week || 1;
+            console.warn('No saved state found — using defaults');
         }
-    });
 
-    // Start multiplayer countdown (updates dashboard timer)
-    startCountdown(league.match_time || '20:00');
+        // Reset match timer so match is always playable on refresh
+        gameState.nextMatch = gameState.nextMatch || {};
+        gameState.nextMatch.time = Date.now() - 1000;
 
-    // Start auto-save to sync
-    startAutoSave(gameState);
+        // Fetch scheduled opponent from Supabase
+        if (gameState.multiplayer.clubId) {
+            getScheduledOpponent(
+                leagueId,
+                gameState.season || 1,
+                gameState.week || 1,
+                gameState.multiplayer.clubId
+            ).then(opp => {
+                if (opp) {
+                    gameState.nextMatch.opponent = opp.name;
+                    gameState.nextMatch.isHome = opp.isHome;
+                    const awayTeamName = document.getElementById('away-team-name');
+                    if (awayTeamName) awayTeamName.textContent = opp.name;
+                }
+            }).catch(() => {});
+        }
 
-    // Trigger onboarding for first-time multiplayer players
-    if (!gameState.onboardingCompleted) {
-        gameState.week = gameState.week || 1;
-        gameState.matchHistory = gameState.matchHistory || [];
-        setTimeout(() => showOnboarding(), 500);
+        // Move global tiles into dashboard header
+        const tiles = document.querySelector('.global-top-tiles');
+        const dashHeader = document.getElementById('dashboard')?.querySelector('.page-header');
+        if (tiles && dashHeader) dashHeader.appendChild(tiles);
+
+        // Initialize ALL UI interactions (must match initGame)
+        initNavigation();
+        initQuickActions();
+        initFilters();
+        initModals();
+        initScoutFilters();
+        initTrainingButton();
+        initTransferMarket();
+        initScoutCriteria();
+        initTacticsTabs();
+        initChairmanTips();
+        initPlayMatchButton();
+        initSaveLoadButtons();
+
+        // Render everything
+        renderStandings();
+        renderTopScorers();
+        renderPlayerCards();
+        updateBudgetDisplays();
+        renderDashboardExtras();
+
+        // Explicitly navigate to dashboard to ensure page is visible
+        navigateToPage('dashboard');
+
+        // Start timers (training + match timer)
+        startTimers();
+
+        // Subscribe to realtime updates
+        subscribeToLeague(leagueId, {
+            onStandingsChange: async () => {
+                const standings = await fetchStandings(leagueId);
+                if (standings.length > 0) {
+                    gameState.standings = standings;
+                    renderStandings();
+                }
+            },
+            onMatchResult: (result) => {
+                showNotification(`Uitslag: ${result.home_score}-${result.away_score}`, 'info');
+            },
+            onTransferChange: () => {
+                if (typeof renderTransferMarket === 'function') renderTransferMarket();
+            },
+            onFeedItem: (item) => {
+                if (item.type === 'result') {
+                    showNotification('Nieuwe wedstrijduitslagen beschikbaar!', 'info');
+                }
+            },
+            onLeagueUpdate: (leagueUpdate) => {
+                if (leagueUpdate.week !== gameState.week || leagueUpdate.season !== gameState.season) {
+                    gameState.week = leagueUpdate.week;
+                    gameState.season = leagueUpdate.season;
+                    renderDashboardExtras();
+                }
+            }
+        });
+
+        // Start multiplayer countdown (updates dashboard timer)
+        startCountdown(league.match_time || '20:00');
+
+        // Start auto-save to sync
+        startAutoSave(gameState);
+
+        // Trigger onboarding for first-time multiplayer players
+        if (!gameState.onboardingCompleted) {
+            gameState.week = gameState.week || 1;
+            gameState.matchHistory = gameState.matchHistory || [];
+            setTimeout(() => showOnboarding(), 500);
+        }
+
+        console.log(`Multiplayer game loaded: league=${leagueId}, club=${clubId}`);
+    } catch (err) {
+        console.error('initMultiplayerGame failed:', err);
+        // Even if loading failed, ensure basic UI works
+        initNavigation();
+        navigateToPage('dashboard');
+        showNotification('Fout bij laden multiplayer. Probeer opnieuw.', 'error');
     }
-
-    console.log(`Multiplayer game loaded: league=${leagueId}, club=${clubId}`);
 }
 
 /**
@@ -16143,7 +16198,9 @@ function onStartGame(mode) {
 
 // Listen for multiplayer game start
 window.addEventListener('multiplayer-start', (e) => {
-    initMultiplayerGame(e.detail);
+    initMultiplayerGame(e.detail).catch(err => {
+        console.error('Multiplayer start failed:', err);
+    });
 });
 
 // Start when DOM is ready
