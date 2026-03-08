@@ -23525,6 +23525,33 @@ body {
         transform: translateX(0);
     }
 
+    /* Restore full sidebar width and labels when open on mobile */
+    .sidebar {
+        width: var(--sidebar-width);
+    }
+
+    .nav-item span:not(.nav-icon):not(.nav-badge) {
+        display: inline;
+    }
+
+    .nav-item {
+        justify-content: flex-start;
+        padding: 10px 24px;
+    }
+
+    .club-info {
+        display: flex;
+    }
+
+    .sidebar-header {
+        flex-direction: row;
+        padding: 24px;
+    }
+
+    .sidebar-footer .stat-label {
+        display: inline;
+    }
+
     .main-content {
         margin-left: 0 !important;
         padding-top: 72px !important;
@@ -25431,23 +25458,473 @@ body {
     50% { box-shadow: 0 0 0 5px var(--accent-green, #4caf50), 0 0 0 10px rgba(76, 175, 80, 0.15); }
 }
 
-/* Mobile adjustments */
+/* Mobile adjustments — onboarding & tutorial */
 @media (max-width: 768px) {
+    /* Overlay: less padding, centered */
     .onboarding-overlay {
-        padding: 10px;
+        padding: 8px;
         align-items: flex-start;
+        justify-content: center;
+    }
+
+    /* Panel: full width, adapt padding */
+    .onboarding-panel {
+        width: 100%;
+        max-height: calc(100vh - 16px);
+        padding: 18px 16px;
+        border-radius: 14px;
+    }
+
+    /* Avatar smaller on mobile */
+    .onboarding-avatar {
+        width: 48px;
+        height: 48px;
+    }
+
+    .onboarding-avatar svg {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* Text slightly smaller */
+    .onboarding-title {
+        font-size: 1.05rem;
+        margin-bottom: 6px;
+    }
+
+    .onboarding-speech {
+        font-size: 0.84rem;
+        line-height: 1.45;
+    }
+
+    /* Content row: less gap */
+    .onboarding-content {
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    /* Inputs: 16px font to prevent iOS zoom */
+    .onboarding-input {
+        font-size: 16px;
+        padding: 11px 14px;
+    }
+
+    /* Position grid: stays 2 columns, smaller items */
+    .onboarding-positions {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .onboarding-pos-btn {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .onboarding-pos-abbr {
+        width: 28px;
+        height: 28px;
+        font-size: 0.7rem;
+    }
+
+    .onboarding-pos-name {
+        font-size: 0.78rem;
+    }
+
+    /* Skills: bigger touch targets for +/- */
+    .onboarding-skill-row {
+        gap: 8px;
+        padding: 6px 10px;
+    }
+
+    .onboarding-skill-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+        border-radius: 10px;
+    }
+
+    .onboarding-skill-value {
+        width: 30px;
+        font-size: 1.05rem;
+    }
+
+    .onboarding-skill-name {
+        font-size: 0.8rem;
+    }
+
+    .onboarding-skills {
+        gap: 6px;
+        margin-bottom: 12px;
+    }
+
+    .onboarding-skills-header {
+        padding: 8px 12px;
+        margin-bottom: 10px;
+    }
+
+    /* Buttons: proper tap size */
+    .onboarding-btn {
+        padding: 13px;
+        font-size: 0.95rem;
+    }
+
+    .onboarding-btn-row {
+        gap: 8px;
+    }
+
+    /* Step dots */
+    .onboarding-step-dots {
+        margin-bottom: 14px;
+    }
+
+    /* Tutorial panel: full width, top center */
+    .tutorial-panel {
+        left: 8px;
+        right: 8px;
+        top: 8px;
+        width: auto;
+        padding: 16px 14px;
+        border-radius: 14px;
+    }
+
+    .tutorial-step-counter {
+        margin-bottom: 8px;
+        font-size: 0.7rem;
+    }
+}
+
+/* Very small screens (iPhone SE, etc.) */
+@media (max-width: 380px) {
+    .onboarding-overlay {
+        padding: 4px;
     }
 
     .onboarding-panel {
-        width: 100%;
-        max-height: calc(100vh - 20px);
+        padding: 14px 12px;
+        max-height: calc(100vh - 8px);
     }
 
+    /* Stack avatar and text vertically */
+    .onboarding-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 10px;
+    }
+
+    .onboarding-title {
+        font-size: 1rem;
+    }
+
+    .onboarding-speech {
+        font-size: 0.8rem;
+    }
+
+    /* Positions: still 2 columns but tighter */
     .onboarding-positions {
-        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+    }
+
+    .onboarding-pos-btn {
+        padding: 7px 8px;
+        gap: 6px;
+    }
+
+    .onboarding-pos-name {
+        font-size: 0.72rem;
+    }
+
+    /* Button row: stack vertically if too narrow */
+    .onboarding-btn-row {
+        flex-direction: column;
+        gap: 6px;
     }
 
     .tutorial-panel {
-        padding: 16px;
+        left: 4px;
+        right: 4px;
+        top: 4px;
+        padding: 14px 12px;
+    }
+}
+
+/* ================================================
+   GLOBAL MOBILE FIXES
+   Only @media queries — desktop styles untouched
+   ================================================ */
+
+@media (max-width: 768px) {
+    /* Page title: too large at 2.5rem on mobile */
+    .page-title {
+        font-size: 1.4rem;
+        letter-spacing: 1px;
+    }
+
+    /* Player attributes grid: 5 cols → 3 cols */
+    .player-attributes {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+
+    /* Transfer attributes grid: 5 cols → 3 cols */
+    .transfer-attributes {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+
+    /* Bench position groups: 4 cols → 2 cols */
+    .bench-position-groups {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    /* Floorplan grid: 7 cols → 4 cols on tablet */
+    .floorplan-grid {
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: auto;
+        aspect-ratio: auto;
+        gap: 4px;
+    }
+
+    /* Scout grid: 2 col → single col */
+    .scout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Modal padding tighter */
+    .modal-content {
+        padding: 20px 16px;
+    }
+
+    /* Modal close button bigger for touch */
+    .modal-close {
+        width: 44px;
+        height: 44px;
+        font-size: 1.5rem;
+    }
+
+    /* Cards: reduce gaps */
+    .dashboard-grid {
+        gap: 12px;
+    }
+
+    .card {
+        padding: 14px;
+    }
+
+    /* Standings table: smaller text */
+    .standings-table th {
+        font-size: 0.65rem;
+    }
+
+    .standings-table td {
+        font-size: 0.75rem;
+        padding: 6px 4px;
+    }
+
+    /* Quick actions: ensure 2 columns */
+    .quick-actions-grid {
+        gap: 8px;
+    }
+
+    /* Global top tiles: wrap on mobile */
+    .global-top-tiles {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Page header: wrap and reduce spacing */
+    .page-header {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* Tactics columns: 4 → 1 */
+    .tactics-grid,
+    .tactics-col {
+        grid-template-columns: 1fr;
+    }
+
+    /* Sessions grid: 2 cols, tighter */
+    .sessions-grid {
+        gap: 8px;
+    }
+
+    /* Finance overview card padding */
+    .finance-card {
+        padding: 12px;
+    }
+
+    /* Lineup container: ensure it doesn't overflow */
+    .lineup-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* XP roadmap: scrollable */
+    .xp-roadmap {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Tier list: scrollable */
+    .tier-list {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Reduce general padding on pages */
+    .page {
+        padding: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Page title even smaller */
+    .page-title {
+        font-size: 1.2rem;
+        letter-spacing: 0.5px;
+    }
+
+    /* Main content: tighter padding */
+    .main-content {
+        padding: 10px 8px !important;
+    }
+
+    /* Player attributes: 3 cols still, but smaller */
+    .player-attributes {
+        gap: 4px;
+        padding: 8px;
+    }
+
+    /* Floorplan: 3 cols on small phones */
+    .floorplan-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 3px;
+    }
+
+    .facility-slot {
+        padding: 4px 2px;
+        font-size: 0.6rem;
+    }
+
+    .facility-label {
+        font-size: 0.55rem;
+    }
+
+    /* Bench groups: single column */
+    .bench-position-groups {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    /* Cards: minimal padding */
+    .card {
+        padding: 10px;
+    }
+
+    /* Standings: even more compact */
+    .standings-table th {
+        font-size: 0.6rem;
+        padding: 4px 3px;
+    }
+
+    .standings-table td {
+        font-size: 0.7rem;
+        padding: 5px 3px;
+    }
+
+    /* Modal: full width on small screens */
+    .modal-content {
+        max-width: 95%;
+        padding: 16px 12px;
+    }
+
+    /* Sessions: single column */
+    .sessions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Quick actions: tighter */
+    .quick-actions-grid {
+        gap: 6px;
+    }
+
+    .quick-action-btn {
+        padding: 10px 8px;
+        font-size: 0.75rem;
+    }
+
+    /* Match preview: tighter */
+    .match-preview {
+        gap: 12px;
+    }
+
+    .team-name {
+        font-size: 0.85rem;
+    }
+
+    /* Global top tiles: stack vertically */
+    .global-top-tiles {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    /* Reduce section gaps */
+    .page-section {
+        margin-bottom: 12px;
+    }
+
+    /* Transfer card: compact */
+    .transfer-card {
+        padding: 10px;
+    }
+
+    .transfer-attributes {
+        gap: 4px;
+    }
+
+    /* Scout panel tighter */
+    .scout-panel {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .scout-avatar {
+        width: 70px;
+        height: 90px;
+    }
+
+    /* Buttons: ensure minimum touch target */
+    .btn-primary,
+    .btn-secondary,
+    .btn-success,
+    .btn-danger {
+        min-height: 44px;
+        padding: 10px 16px;
+    }
+
+    /* Player cards: more compact */
+    .player-card {
+        padding: 10px;
+    }
+
+    .player-card-header {
+        gap: 8px;
+    }
+
+    /* Tab buttons: scrollable row */
+    .tab-buttons,
+    .tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+        gap: 4px;
+    }
+
+    .tab-btn,
+    .tab-button {
+        white-space: nowrap;
+        flex-shrink: 0;
+        padding: 8px 12px;
+        font-size: 0.75rem;
     }
 }
