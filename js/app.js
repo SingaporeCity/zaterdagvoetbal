@@ -2616,6 +2616,53 @@ window.handleDrop = function(e, targetIndex) {
 
 function renderStadiumPage() {
     renderStadiumMap();
+    renderStadiumMobileFacilities();
+}
+
+function renderStadiumMobileFacilities() {
+    // Remove existing mobile facilities container
+    const existing = document.getElementById('stadium-mobile-facilities');
+    if (existing) existing.remove();
+
+    const mapContainer = document.querySelector('.stadium-map-container');
+    if (!mapContainer) return;
+
+    const categoryIcons = {
+        tribune: '🏟️', grass: '🌱', training: '💪',
+        medical: '🏥', academy: '🎓', scouting: '🔍',
+        youthscouting: '👶', kantine: '🍺', sponsoring: '💼', perszaal: '📰'
+    };
+    const categoryNames = {
+        tribune: 'Stadion', grass: 'Wedstrijdveld', training: 'Trainingsveld',
+        medical: 'Medisch', academy: 'Jeugdopleiding', scouting: 'Scouting',
+        youthscouting: 'Scoutingcentrum', kantine: 'Kantine', sponsoring: 'Sponsoring', perszaal: 'Perszaal'
+    };
+
+    let html = '';
+    Object.keys(STADIUM_TILE_CONFIG).forEach(key => {
+        const config = STADIUM_TILE_CONFIG[key];
+        const currentId = gameState.stadium[config.stateKey];
+        const currentIndex = config.levels.findIndex(l => l.id === currentId);
+        const currentLevel = config.levels[currentIndex] || config.levels[0];
+        const levelOffset = config.levels[0].id.match(/_0$/) ? 0 : 1;
+
+        html += `
+            <div class="stadium-mobile-facility-btn" onclick="selectStadiumCategory('${key}')">
+                <span class="smf-icon">${categoryIcons[key] || '🏗️'}</span>
+                <div class="smf-info">
+                    <div class="smf-name">${categoryNames[key] || key}</div>
+                    <div class="smf-level">${currentLevel.name} — Niv. ${currentIndex + levelOffset}</div>
+                </div>
+                <span class="smf-arrow">›</span>
+            </div>
+        `;
+    });
+
+    const container = document.createElement('div');
+    container.id = 'stadium-mobile-facilities';
+    container.className = 'stadium-mobile-facilities';
+    container.innerHTML = html;
+    mapContainer.parentNode.insertBefore(container, mapContainer);
 }
 
 function renderTierList() {

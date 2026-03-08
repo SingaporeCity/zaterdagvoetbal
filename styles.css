@@ -13836,6 +13836,51 @@ body {
     display: none !important;
 }
 
+/* Mobile facility buttons (hidden on desktop) */
+.stadium-mobile-facilities {
+    display: none;
+}
+.stadium-mobile-facility-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--card-radius);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.stadium-mobile-facility-btn:hover,
+.stadium-mobile-facility-btn:active {
+    border-color: var(--accent-green-dim);
+    background: var(--bg-secondary);
+}
+.smf-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+.smf-info {
+    flex: 1;
+    min-width: 0;
+}
+.smf-name {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+.smf-level {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.smf-arrow {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
 /* ================================================
    STADIUM MAP - Bovenaanzicht
    ================================================ */
@@ -25729,8 +25774,56 @@ body {
         font-size: 1.5rem;
     }
     .global-top-tiles {
-        flex-wrap: wrap;
+        flex-direction: column;
         gap: 8px;
+    }
+    .global-top-tiles .global-top-bar {
+        width: 100%;
+    }
+
+    /* --- STADIUM MOBILE: hide map, show facility buttons --- */
+    .stadium-map-container .stadium-map {
+        display: none !important;
+    }
+    .stadium-mobile-facilities {
+        display: flex !important;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    /* --- TRANSFER CARD mobile layout --- */
+    .player-card.transfer-card {
+        grid-template-columns: auto 1fr auto !important;
+        grid-template-rows: auto auto;
+        gap: 6px 8px;
+    }
+    .player-card.transfer-card .pc-left {
+        grid-row: 1;
+        grid-column: 1;
+    }
+    .player-card.transfer-card .pc-name {
+        grid-row: 1;
+        grid-column: 2;
+    }
+    .player-card.transfer-card .pc-ratings {
+        grid-row: 1;
+        grid-column: 3;
+    }
+    .player-card.transfer-card .pc-finance {
+        grid-row: 2;
+        grid-column: 1 / 2;
+    }
+    .player-card.transfer-card .pc-condition-bars {
+        grid-row: 2;
+        grid-column: 2;
+    }
+    .player-card.transfer-card .btn-transfer-buy,
+    .player-card.transfer-card .pc-min-division {
+        grid-row: 2;
+        grid-column: 3;
+        justify-self: end;
+        align-self: center;
     }
 
     /* --- DASHBOARD --- */
@@ -25856,6 +25949,28 @@ body {
     .stadium-intro-stats {
         flex-wrap: wrap;
         gap: 8px;
+    }
+    .stadium-map-container {
+        min-height: auto;
+    }
+    .stadium-upgrade-panel {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        border-radius: 0 !important;
+        z-index: 10003 !important;
+        overflow-y: auto !important;
+    }
+    .stadium-panel-backdrop {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        z-index: 10002 !important;
     }
 
     /* --- STAF --- */
