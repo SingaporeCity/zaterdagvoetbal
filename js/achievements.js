@@ -244,10 +244,10 @@ const ACHIEVEMENTS = {
     },
     goalMachine: {
         id: 'goalMachine',
-        name: 'Verborgen',
+        name: 'Goalmachine',
         description: '25 doelpunten in 1 seizoen',
         category: CATEGORIES.GOALS,
-        icon: '❓',
+        icon: '🔥',
         hidden: true,
         reward: { playerXP: 150 },
         check: (state) => {
@@ -355,10 +355,10 @@ const ACHIEVEMENTS = {
     },
     yoyo: {
         id: 'yoyo',
-        name: 'Verborgen',
+        name: 'Jojo Club',
         description: 'Promoveer en degradeer in opeenvolgende seizoenen',
         category: CATEGORIES.SEASON,
-        icon: '❓',
+        icon: '🪀',
         hidden: true,
         reward: { playerXP: 50 },
         check: (state) => state.stats?.yoyoClub === true
@@ -618,15 +618,26 @@ const ACHIEVEMENTS = {
     },
     firstUpgrade: {
         id: 'firstUpgrade',
-        name: 'Verborgen',
+        name: 'Eerste Verbetering',
         description: 'Eerste stadion-upgrade',
         category: CATEGORIES.STADIUM,
-        icon: '❓',
+        icon: '🔧',
         hidden: true,
         reward: { managerXP: 25 },
         check: (state) => {
             const s = state.stadium;
-            return (s.capacity > 200) || s.training || s.medical || s.academy || s.scouting || s.kantine;
+            // Compare against initial defaults from state.js
+            return s.capacity > 200 ||
+                s.tribune !== 'tribune_1' ||
+                s.grass !== 'grass_0' ||
+                s.training !== 'train_1' ||
+                s.medical !== 'med_0' ||
+                s.academy !== 'acad_1' ||
+                s.scouting !== 'scout_0' ||
+                s.kantine !== 'kantine_0' ||
+                s.sponsoring !== 'sponsor_0' ||
+                s.perszaal !== 'pers_0' ||
+                s.lighting !== null;
         }
     },
 
@@ -700,60 +711,60 @@ const ACHIEVEMENTS = {
     // Hidden special achievements
     perfectSeason: {
         id: 'perfectSeason',
-        name: 'Verborgen',
+        name: 'Perfect Seizoen',
         description: 'Win alle wedstrijden in een seizoen',
         category: CATEGORIES.SPECIAL,
-        icon: '❓',
+        icon: '🏆',
         hidden: true,
         reward: { playerXP: 250 },
         check: (state) => state.stats?.perfectSeason === true
     },
     scoreTen: {
         id: 'scoreTen',
-        name: 'Verborgen',
+        name: 'Doelpuntenfestijn',
         description: 'Scoor 10+ doelpunten in één wedstrijd',
         category: CATEGORIES.SPECIAL,
-        icon: '❓',
+        icon: '🎯',
         hidden: true,
         reward: { playerXP: 100 },
         check: (state) => (state.stats?.highestScoreMatch || 0) >= 10
     },
     midnight: {
         id: 'midnight',
-        name: 'Verborgen',
+        name: 'Nachtbraker',
         description: 'Speel om middernacht',
         category: CATEGORIES.SPECIAL,
-        icon: '❓',
+        icon: '🌙',
         hidden: true,
         reward: { playerXP: 25 },
         check: (state) => state.stats?.playedAtMidnight === true
     },
     almostRelegation: {
         id: 'almostRelegation',
-        name: 'Verborgen',
+        name: 'Degradatiespook',
         description: 'Ontsnap 3x aan degradatie',
         category: CATEGORIES.SPECIAL,
-        icon: '❓',
+        icon: '😱',
         hidden: true,
         reward: { playerXP: 100 },
         check: (state) => (state.stats?.relegationEscapes || 0) >= 3
     },
     youthStar: {
         id: 'youthStar',
-        name: 'Verborgen',
+        name: 'Wonderkind',
         description: 'Train een jeugdspeler naar 85+ overall',
         category: CATEGORIES.SPECIAL,
-        icon: '❓',
+        icon: '⭐',
         hidden: true,
         reward: { playerXP: 250 },
         check: (state) => state.players.some(p => p.fromYouth && p.overall >= 85)
     },
     noLoss: {
         id: 'noLoss',
-        name: 'Verborgen',
+        name: 'Onverslaanbaar',
         description: 'Heel seizoen ongeslagen',
         category: CATEGORIES.SPECIAL,
-        icon: '❓',
+        icon: '🛡️',
         hidden: true,
         reward: { playerXP: 250 },
         check: (state) => {
@@ -764,20 +775,20 @@ const ACHIEVEMENTS = {
     },
     centurion: {
         id: 'centurion',
-        name: 'Verborgen',
+        name: 'Centurion',
         description: '100 zeges behaald',
         category: CATEGORIES.SPECIAL,
-        icon: '❓',
+        icon: '💯',
         hidden: true,
         reward: { playerXP: 250 },
         check: (state) => (state.stats?.wins || 0) >= 100
     },
     dedicatedManager: {
         id: 'dedicatedManager',
-        name: 'Verborgen',
+        name: 'Perfectionistisch',
         description: 'Alle dagelijkse taken afgevinkt',
         category: CATEGORIES.SPECIAL,
-        icon: '❓',
+        icon: '📋',
         hidden: true,
         reward: { playerXP: 50 },
         check: (state) => {
@@ -789,73 +800,103 @@ const ACHIEVEMENTS = {
     // New hidden achievements
     earlyBird: {
         id: 'earlyBird',
-        name: 'Verborgen',
+        name: 'Vroege Vogel',
         description: 'Speel voor 9 uur \'s ochtends',
         category: CATEGORIES.SPECIAL,
-        icon: '❓',
+        icon: '🐦',
         hidden: true,
         reward: { playerXP: 25 },
         check: (state) => new Date().getHours() < 9
     },
     drawSpecialist: {
         id: 'drawSpecialist',
-        name: 'Verborgen',
+        name: 'Gelijkspel Specialist',
         description: '5 gelijkspelen op rij',
         category: CATEGORIES.MATCHES,
-        icon: '❓',
+        icon: '🤝',
         hidden: true,
         reward: { playerXP: 75 },
         check: (state) => (state.stats?.drawStreak || 0) >= 5
     },
     silentAssassin: {
         id: 'silentAssassin',
-        name: 'Verborgen',
+        name: 'Stille Moordenaar',
         description: 'Win 5 wedstrijden met 1-0',
         category: CATEGORIES.MATCHES,
-        icon: '❓',
+        icon: '🤫',
         hidden: true,
         reward: { playerXP: 75 },
         check: (state) => (state.stats?.oneNilWins || 0) >= 5
     },
     youthArmy: {
         id: 'youthArmy',
-        name: 'Verborgen',
+        name: 'Jeugdleger',
         description: '5+ jeugdspelers in selectie',
         category: CATEGORIES.PLAYERS,
-        icon: '❓',
+        icon: '🌱',
         hidden: true,
         reward: { managerXP: 100 },
         check: (state) => (state.players || []).filter(p => p.isFromYouth || p.fromYouth).length >= 5
     },
     ironDefense: {
         id: 'ironDefense',
-        name: 'Verborgen',
+        name: 'IJzeren Defensie',
         description: '5 clean sheets op rij',
         category: CATEGORIES.MATCHES,
-        icon: '❓',
+        icon: '🧱',
         hidden: true,
         reward: { playerXP: 100 },
         check: (state) => (state.stats?.cleanSheetStreak || 0) >= 5
     },
     bigSpender: {
         id: 'bigSpender',
-        name: 'Verborgen',
+        name: 'Grote Spender',
         description: 'Geef €500k+ uit aan transfers in 1 seizoen',
         category: CATEGORIES.CLUB,
-        icon: '❓',
+        icon: '💸',
         hidden: true,
         reward: { managerXP: 100 },
         check: (state) => (state.stats?.seasonSpending || 0) >= 500000
     },
     moneyball: {
         id: 'moneyball',
-        name: 'Verborgen',
+        name: 'Moneyball',
         description: 'Promoveer met het laagste budget',
         category: CATEGORIES.SEASON,
-        icon: '❓',
+        icon: '🎬',
         hidden: true,
         reward: { managerXP: 150 },
         check: (state) => state.stats?.moneyballPromotion === true
+    },
+    skipTutorial: {
+        id: 'skipTutorial',
+        name: 'Ik Kan Echt Alles Zelf',
+        description: 'Sla de rondleiding over',
+        category: CATEGORIES.SPECIAL,
+        icon: '🏃',
+        hidden: true,
+        reward: { managerXP: 100 },
+        check: (state) => state.stats?.skippedTutorial === true
+    },
+    completeTutorial: {
+        id: 'completeTutorial',
+        name: 'Hou Me Bij De Hand Vast',
+        description: 'Voltooi de rondleiding',
+        category: CATEGORIES.SPECIAL,
+        icon: '🤝',
+        hidden: true,
+        reward: { managerXP: 50 },
+        check: (state) => state.stats?.completedTutorial === true
+    },
+    skippedTutorialHalfway: {
+        id: 'skippedTutorialHalfway',
+        name: 'Man Man Man',
+        description: 'Neem dan gewoon geen rondleiding',
+        category: CATEGORIES.SPECIAL,
+        icon: '🤦',
+        hidden: true,
+        reward: { managerXP: 10 },
+        check: (state) => state.stats?.skippedTutorialHalfway === true
     }
 };
 

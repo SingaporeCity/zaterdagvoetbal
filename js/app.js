@@ -462,6 +462,10 @@ function createZaterdagPlayer(position) {
     const playerName = generatePlayerName();
     const playerAge = random(40, 55);
 
+    // Salary based on overall and potential (stars)
+    const starBonus = 0; // starting squad has 0 stars
+    const calculatedSalary = Math.round(5 + (overall / 10) + starBonus * 3 + random(0, 3));
+
     return {
         id: Date.now() + Math.random(),
         name: playerName,
@@ -473,7 +477,7 @@ function createZaterdagPlayer(position) {
         tag: tag.name,
         tagBonus: tag.bonus,
         personality: generatePersonality(8, 0.5),
-        salary: random(8, 20),
+        salary: calculatedSalary,
         goals: 0,
         assists: 0,
         morale: random(60, 90),
@@ -847,7 +851,7 @@ function renderPlayerCards() {
         stars: mpSquadStars ? mpSquadStars.stars : (mp.stars || 1),
         isMyPlayer: true,
         nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
-        salary: 0,
+        salary: Math.round(5 + (mpOverall / 10) + (mp.stars || 1) * 3),
         energy: mp.energy || 100,
         attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
     };
@@ -1034,8 +1038,8 @@ function createScoutedPlayer(scoutLevel) {
     const playerName = generatePlayerName();
     const playerAge = random(16, 45);
 
-    // Salary: altijd rond de €10/week
-    const salary = random(5, 15);
+    // Salary based on overall and potential (stars)
+    const salary = Math.round(5 + (overall / 10) + (stars || 0) * 3 + random(0, 3));
 
     return {
         id: Date.now() + Math.random(),
@@ -5594,9 +5598,10 @@ function updateBudgetDisplays() {
     // Update global budget display
     const globalBudget = document.getElementById('global-budget-display');
     const globalAmount = document.getElementById('global-budget-amount');
-    if (globalBudget && globalAmount) {
+    if (globalAmount) {
         globalAmount.textContent = formattedBudget;
-
+    }
+    if (globalBudget) {
         // Update styling based on budget level
         globalBudget.classList.remove('low-budget', 'high-budget');
         if (budget < 1000) {
@@ -8328,12 +8333,12 @@ function showTutorialPrompt() {
                     <div class="onboarding-avatar">${CHAIRMAN_SVG}</div>
                     <div class="onboarding-text">
                         <h3 class="onboarding-title">Rondleiding?</h3>
-                        <p class="onboarding-speech">Zo, alles is geregeld! Zal ik je even rondleiden door de club? Ik kan je laten zien waar alles zit — of je zoekt het lekker zelf uit.</p>
+                        <p class="onboarding-speech">Ik ben Henk de Baas, voorzitter van deze prachtige club. Zal ik je even rondleiden? Dan laat ik je zien waar alles zit — of je zoekt het lekker zelf uit.</p>
                     </div>
                 </div>
                 <div class="onboarding-btn-row">
-                    <button class="onboarding-btn secondary" id="tutorial-skip">Nee, ik red me wel</button>
-                    <button class="onboarding-btn" id="tutorial-start">Ja, graag!</button>
+                    <button class="onboarding-btn secondary" id="tutorial-skip">Ik kan het echt zelf wel af</button>
+                    <button class="onboarding-btn" id="tutorial-start">Ja, dankjewel!</button>
                 </div>
             </div>
         </div>
@@ -8342,8 +8347,15 @@ function showTutorialPrompt() {
 
     document.getElementById('tutorial-skip').addEventListener('click', () => {
         gameState.tutorialCompleted = true;
+        if (!gameState.stats) gameState.stats = {};
+        gameState.stats.skippedTutorial = true;
         saveGame(gameState);
         overlay.remove();
+        // Trigger achievement check → "Ik Kan Echt Alles Zelf" (100 manager XP)
+        const newAchievements = checkAchievements(gameState);
+        if (newAchievements.length > 0) {
+            setTimeout(() => queueAchievements(newAchievements), 500);
+        }
     });
 
     document.getElementById('tutorial-start').addEventListener('click', () => {
@@ -8354,41 +8366,85 @@ function showTutorialPrompt() {
 
 function showTutorial() {
     const tutorialSteps = [
+        // --- DASHBOARD (4 sub-stappen) ---
         {
             page: 'dashboard',
-            highlight: '#standings-body',
-            title: 'De Competitie',
-            text: 'Dit is je cluboverzicht. Hier zie je de stand — we staan niet bovenaan. Dat is een understatement. Maar hey, van hier kan het alleen maar beter worden!'
+            highlight: '.dash-todo, .checklist-card',
+            title: 'Takenlijst',
+            text: 'Dit is je takenlijst. Hier zie je wat er gedaan moet worden — wedstrijden spelen, spelers trainen, de boel upgraden. Vink ze af en je krijgt beloningen. Ik zou beginnen met de makkelijke.'
         },
         {
+            page: 'dashboard',
+            highlight: '.dash-standings, .standings-card',
+            title: 'Competitiestand',
+            text: 'De ranglijst. We staan niet bovenaan — dat is een understatement. Maar van hier kan het alleen maar beter worden. Of slechter, maar laten we positief blijven.'
+        },
+        {
+            page: 'dashboard',
+            highlight: '.dash-talents, .talents-card',
+            title: 'Toptalenten',
+            text: 'Hier zie je de beste spelers uit de competitie. Handig om te weten wie je moet vrezen — of proberen te kopen als je ooit genoeg geld hebt. Spoiler: dat duurt even.'
+        },
+        {
+            page: 'dashboard',
+            highlight: '.dash-match, .match-card',
+            title: 'Volgende Wedstrijd',
+            text: 'Hier zie je je volgende wedstrijd. Wie de tegenstander is, wanneer je speelt, en hoe slecht het er voor staat. Als de wedstrijd beschikbaar is, druk je op spelen en hopen we het beste.'
+        },
+        // --- Overige pagina's in tabvolgorde ---
+        {
             page: 'squad',
-            highlight: '.lineup-pitch, .squad-formation',
-            title: 'Spelers & Opstelling',
-            text: 'Hier stel je je team op. Sleep spelers naar het veld. Let op: als je Henk op keeper zet, maak je geen vrienden. Niet dat hij dat als spits wel doet.'
+            highlight: '#player-cards, .squad-group',
+            title: 'Selectie',
+            text: 'Dit is de selectie die we nu hebben. Hij bestaat vooral uit oude vedettes die vroeger heel goed waren. Althans, dat zeggen ze zelf. Waarom we deze gasten betalen weet ik eigenlijk ook niet.'
+        },
+        {
+            page: 'tactics',
+            highlight: '.lineup-container, .lineup-pitch-panel',
+            title: 'Opstelling & Tactiek',
+            text: 'Hier stel je je team op en kies je de tactiek. Sleep spelers naar het veld, kies een formatie en stel je speelstijl in. Bij \'Specialisten\' wijs je de cornernemer, strafschopnemer en aanvoerder aan. Dat soort dingen maakt echt verschil — geloof me.'
         },
         {
             page: 'training',
             highlight: '.training-section, .training-slots',
             title: 'Jij als Speler',
-            text: 'Dit is het overzicht van jou als speler. Je kan ervoor kiezen om in je vrije tijd te trainen, maarja, wie wil dat nou?'
+            text: 'Dit is het overzicht van jou als speler. Je kan in je vrije tijd trainen om beter te worden. Met elke level-up krijg je skillpunten waarmee je je kenmerken verbetert — snelheid, techniek, passing, dat soort dingen. Maarja, wie wil er nou trainen in zijn vrije tijd?'
         },
         {
             page: 'transfers',
-            highlight: '.transfer-market, .transfer-list',
+            highlight: '.transfer-list, .transfer-filters-panel',
             title: 'Transfers',
             text: 'De transfermarkt! Hier koop en verkoop je spelers. Het budget is niet groot, maar met slim handelen kun je de selectie versterken. Verkoop de spelers die niet presteren — dat zijn er een paar.'
         },
         {
+            page: 'scout',
+            highlight: '.scouting-layout, .scout-tip-section',
+            title: 'Scouting',
+            text: 'Hier scout je nieuwe spelers. Verwacht geen Messi — denk meer aan je buurman die vroeger bij de D-junioren zat. Maar met een goede scout vind je af en toe een pareltje!'
+        },
+        {
+            page: 'jeugdteam',
+            highlight: '#jeugdteam',
+            title: 'Jeugdopleiding',
+            text: 'Dit is onze jeugdopleiding. Hier komen de talenten van morgen vandaan — of in ons geval, de middenmoters van overmorgen. Investeer in de jeugd en af en toe stroomt er eentje door naar het eerste. Goedkoper dan de transfermarkt!'
+        },
+        {
             page: 'stadium',
-            highlight: '.stadium-grid, .stadium-tiles',
+            highlight: '.stadium-map-container, .stadium-mobile-facilities',
             title: 'Het Stadion',
             text: 'Dit is ons stadion. \'Stadion\' is een groot woord voor een veld met een hek eromheen. Begin met de kantine — de jongens willen na de wedstrijd een biertje. Dat is eigenlijk het belangrijkste van zaterdagvoetbal.'
         },
         {
-            page: 'scout',
-            highlight: '.scout-section, .scout-filters',
-            title: 'Scouting',
-            text: 'En hier scout je nieuwe spelers. Verwacht geen Messi — denk meer aan je buurman die vroeger bij de D-junioren zat. Maar met een goede scout vind je af en toe een pareltje!'
+            page: 'staff',
+            highlight: '#staff',
+            title: 'Staf',
+            text: 'Hier beheer je de technische staf. Een goede assistent-trainer, een fysio, een jeugdcoach... het klinkt overdreven voor de 6e klasse, maar het helpt echt. Ze kosten wel geld, dus kies slim wie je aanneemt.'
+        },
+        {
+            page: 'sponsors',
+            highlight: '#sponsors',
+            title: 'Sponsors',
+            text: 'Sponsors zijn je broodwinning. Hoe beter je presteert en hoe groter je stadion, hoe meer sponsors geïnteresseerd zijn. Sommige deals zijn beter dan andere — lees de kleine lettertjes. Of niet, wij lezen ze ook nooit.'
         }
     ];
 
@@ -8421,7 +8477,6 @@ function showTutorial() {
                 if (el) {
                     highlightedEl = el;
                     el.classList.add('tutorial-highlight');
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     break;
                 }
             }
@@ -8451,15 +8506,15 @@ function showTutorial() {
                     currentStep++;
                     renderTutorialStep(currentStep);
                 } else {
-                    closeTutorial();
+                    closeTutorial(true); // completed fully
                 }
             });
 
-            tutorialPanel.querySelector('.tutorial-skip-btn').addEventListener('click', closeTutorial);
+            tutorialPanel.querySelector('.tutorial-skip-btn').addEventListener('click', () => closeTutorial(false));
         }, 300);
     }
 
-    function closeTutorial() {
+    function closeTutorial(completedFully) {
         if (highlightedEl) highlightedEl.classList.remove('tutorial-highlight');
         tutorialPanel.classList.add('slide-out');
         setTimeout(() => {
@@ -8467,7 +8522,19 @@ function showTutorial() {
             navigateToPage('dashboard');
         }, 400);
         gameState.tutorialCompleted = true;
+        if (!gameState.stats) gameState.stats = {};
+        if (completedFully) {
+            // Finished entire tutorial → "Hou Me Bij De Hand Vast" (50 manager XP)
+            gameState.stats.completedTutorial = true;
+        } else {
+            // Skipped halfway → "Man Man Man" (10 manager XP)
+            gameState.stats.skippedTutorialHalfway = true;
+        }
         saveGame(gameState);
+        const newAchievements = checkAchievements(gameState);
+        if (newAchievements.length > 0) {
+            setTimeout(() => queueAchievements(newAchievements), 800);
+        }
     }
 
     renderTutorialStep(0);
@@ -8524,6 +8591,13 @@ function initGame(mode = 'local') {
 
     // Migrate existing players: ensure 90% Dutch nationality + zaterdagvoetbal stats
     migratePlayersToZaterdag();
+
+    // Patch salary for players with salary 0 (old saves)
+    gameState.players.forEach(p => {
+        if (p && (!p.salary || p.salary === 0)) {
+            p.salary = Math.round(5 + ((p.overall || 10) / 10) + (p.stars || 0) * 3 + Math.floor(Math.random() * 3));
+        }
+    });
 
     // Ensure myPlayer is in gameState.players so they can be in the lineup
     const mp = initMyPlayer();
@@ -8725,6 +8799,14 @@ function renderDashboardExtras() {
     const globalXpLabel = document.getElementById('global-xp-label');
     if (globalXpLabel) globalXpLabel.textContent = managerInfo.xpToNext > 0 ? `${currentXp} / ${xpForNextLevel} XP` : `${currentXp} XP — Max!`;
 
+    // Update manager level-up reward badge
+    const managerRewardEl = document.getElementById('global-manager-reward');
+    if (managerRewardEl) {
+        const nextManagerLevel = MANAGER_LEVELS.find(l => l.xpRequired > (gameState.manager?.xp || 0));
+        managerRewardEl.textContent = nextManagerLevel?.cashReward ? `+${formatCurrency(nextManagerLevel.cashReward)}` : '';
+        managerRewardEl.style.display = nextManagerLevel?.cashReward ? '' : 'none';
+    }
+
     // Update global player tile
     const mp = gameState.myPlayer;
     if (mp) {
@@ -8753,6 +8835,14 @@ function renderDashboardExtras() {
         if (gpLevel) gpLevel.textContent = pLevel.level;
         if (gpFill) gpFill.style.width = `${pProgress}%`;
         if (gpLabel) gpLabel.textContent = pLevel.xpToNext > 0 ? `${pXp} / ${pNextXp} XP` : `${pXp} XP — Max!`;
+
+        // Update player level-up reward badge
+        const playerRewardEl = document.getElementById('global-player-reward');
+        if (playerRewardEl) {
+            const nextPlayerLevel = PLAYER_LEVELS.find(l => l.xpRequired > (mp.xp || 0));
+            playerRewardEl.textContent = nextPlayerLevel ? '+5 SP' : '';
+            playerRewardEl.style.display = nextPlayerLevel ? '' : 'none';
+        }
     }
 
     // Render streak (new kantine board sticker)
@@ -9267,7 +9357,8 @@ function playMatch() {
         gameState.stats.saturdayMatches++;
     }
 
-    // Award Manager XP
+    // Award Manager XP — capture level before/after for level-up detection
+    const mgrLevelBefore = getManagerLevel(gameState.manager?.xp || 0);
     const xpReasons = [];
     if (resultType === 'win') { awardXP(gameState, 'matchWin'); xpReasons.push({ reason: 'Wedstrijd gewonnen', amount: 50 }); }
     else if (resultType === 'draw') { awardXP(gameState, 'matchDraw'); xpReasons.push({ reason: 'Gelijkspel', amount: 20 }); }
@@ -9275,14 +9366,44 @@ function playMatch() {
     if (playerScore > 0) { awardXP(gameState, 'goalScored', playerScore * 5); xpReasons.push({ reason: `${playerScore} doelpunt${playerScore > 1 ? 'en' : ''} gescoord`, amount: playerScore * 5 }); }
     // Store XP reasons — popups shown after modal close
     gameState._pendingManagerXP = xpReasons.length > 0 ? xpReasons : null;
+    // Detect manager level-up
+    const mgrLevelAfter = getManagerLevel(gameState.manager?.xp || 0);
+    if (mgrLevelAfter.level > mgrLevelBefore.level) {
+        const mgrLevelData = MANAGER_LEVELS.find(l => l.level === mgrLevelAfter.level);
+        const mgrNextData = MANAGER_LEVELS.find(l => l.level === mgrLevelAfter.level + 1);
+        gameState._pendingLevelUps = gameState._pendingLevelUps || [];
+        gameState._pendingLevelUps.push({ type: 'manager', data: {
+            oldLevel: mgrLevelBefore.level, newLevel: mgrLevelAfter.level,
+            oldTitle: mgrLevelBefore.title, newTitle: mgrLevelAfter.title,
+            nextTitle: mgrNextData?.title || null,
+            cashReward: mgrLevelData?.cashReward || 0,
+            oldProgress: mgrLevelBefore.progress,
+            progress: mgrLevelAfter.progress, xpToNext: mgrLevelAfter.xpToNext
+        }});
+    }
 
-    // Award Player XP
+    // Award Player XP — capture level before/after for level-up detection
+    const plrLevelBefore = getPlayerLevel(gameState.myPlayer?.xp || 0);
     const pxpReasons = [];
     if (resultType === 'win') { awardPlayerXP(gameState, 'matchWin'); pxpReasons.push({ reason: 'Wedstrijd gewonnen', amount: 50 }); }
     else if (resultType === 'draw') { awardPlayerXP(gameState, 'matchDraw'); pxpReasons.push({ reason: 'Gelijkspel', amount: 20 }); }
     if (opponentScore === 0) { awardPlayerXP(gameState, 'cleanSheet'); pxpReasons.push({ reason: 'Clean sheet', amount: 20 }); }
     if (playerScore > 0) { awardPlayerXP(gameState, 'goalScored', playerScore * 10); pxpReasons.push({ reason: `${playerScore} doelpunt${playerScore > 1 ? 'en' : ''} gescoord`, amount: playerScore * 10 }); }
     gameState._pendingPlayerXP = pxpReasons.length > 0 ? pxpReasons : null;
+    // Detect player level-up
+    const plrLevelAfter = getPlayerLevel(gameState.myPlayer?.xp || 0);
+    if (plrLevelAfter.level > plrLevelBefore.level) {
+        const plrNextData = PLAYER_LEVELS.find(l => l.xpRequired > (gameState.myPlayer?.xp || 0));
+        gameState._pendingLevelUps = gameState._pendingLevelUps || [];
+        gameState._pendingLevelUps.push({ type: 'player', data: {
+            oldLevel: plrLevelBefore.level, newLevel: plrLevelAfter.level,
+            oldTitle: plrLevelBefore.title, newTitle: plrLevelAfter.title,
+            nextTitle: plrNextData?.title || null,
+            skillPoints: (plrLevelAfter.level - 1) * 5,
+            oldProgress: plrLevelBefore.progress,
+            progress: plrLevelAfter.progress, xpToNext: plrLevelAfter.xpToNext
+        }});
+    }
 
     // Player improvement: only lineup players with >= 1 star improve
     // Growth works via progress bar: each match adds %, at 100% → +1 ALG (max 99)
@@ -9308,6 +9429,37 @@ function playMatch() {
             improvements.push({ id: player.id, name: player.name, stars, gainPct: 0, progressPct: 0, leveled: false, newOverall: player.overall });
         }
     });
+
+    // Update energy: playing players lose energy, bench players recover
+    const tempo = gameState.tactics?.speltempo || 'normaal';
+    const tempoEnergyDrain = { rustig: { min: 15, max: 25 }, normaal: { min: 20, max: 30 }, snel: { min: 25, max: 35 } };
+    const drain = tempoEnergyDrain[tempo] || tempoEnergyDrain.normaal;
+    gameState.players.forEach(player => {
+        if (!player) return;
+        if (lineupIds.has(player.id)) {
+            // Playing: lose energy based on tempo
+            const loss = drain.min + Math.floor(Math.random() * (drain.max - drain.min + 1));
+            player.energy = Math.max(0, (player.energy || 75) - loss);
+        } else {
+            // Bench/not playing: recover ~20% energy
+            const recovery = 15 + Math.floor(Math.random() * 11); // 15-25
+            player.energy = Math.min(100, (player.energy || 75) + recovery);
+        }
+    });
+    // Also update myPlayer energy
+    if (gameState.myPlayer) {
+        const mpInLineup = lineupIds.has('myplayer');
+        if (mpInLineup) {
+            const loss = drain.min + Math.floor(Math.random() * (drain.max - drain.min + 1));
+            gameState.myPlayer.energy = Math.max(0, (gameState.myPlayer.energy || 100) - loss);
+        } else {
+            const recovery = 15 + Math.floor(Math.random() * 11);
+            gameState.myPlayer.energy = Math.min(100, (gameState.myPlayer.energy || 100) + recovery);
+        }
+        // Sync to squad entry
+        const mpSquad = gameState.players.find(p => p && p.id === 'myplayer');
+        if (mpSquad) mpSquad.energy = gameState.myPlayer.energy;
+    }
 
     // Compact playerRatings for storage (embed growth data directly)
     const improvById = {};
@@ -9464,6 +9616,15 @@ function playMatch() {
                 gameState._pendingPlayerXP = null;
             }
         }, 500);
+
+        // Show pending level-up modals
+        if (gameState._pendingLevelUps && gameState._pendingLevelUps.length > 0) {
+            const pending = gameState._pendingLevelUps.slice();
+            gameState._pendingLevelUps = null;
+            setTimeout(() => {
+                pending.forEach(lu => queueLevelUp(lu.type, lu.data));
+            }, 1200);
+        }
 
         // Show suspension/injury notifications
         if (matchNotifications.length > 0) {
@@ -10730,6 +10891,15 @@ function closeMatchResultModal() {
         showPlayerXPPopup(gameState._pendingPlayerXP);
         gameState._pendingPlayerXP = null;
     }
+
+    // Show pending level-up modals
+    if (gameState._pendingLevelUps && gameState._pendingLevelUps.length > 0) {
+        const pending = gameState._pendingLevelUps.slice();
+        gameState._pendingLevelUps = null;
+        setTimeout(() => {
+            pending.forEach(lu => queueLevelUp(lu.type, lu.data));
+        }, 800);
+    }
 }
 window.closeMatchResultModal = closeMatchResultModal;
 
@@ -10851,7 +11021,7 @@ let achievementModalOpen = false;
 
 function queueAchievements(achievements) {
     achievementQueue.push(...achievements);
-    if (!achievementModalOpen) {
+    if (!achievementModalOpen && !levelUpModalOpen) {
         showNextAchievement();
     }
 }
@@ -10876,7 +11046,10 @@ function showAchievementModal(achievement) {
     overlay._achievementReward = reward;
     overlay.innerHTML = `
         <div class="achievement-modal">
-            <div class="achievement-modal-icon">${achievement.icon}</div>
+            <div class="achievement-modal-icon-wrap">
+                <div class="achievement-modal-icon">${achievement.icon}</div>
+                <div class="achievement-modal-checkmark">✓</div>
+            </div>
             <div class="achievement-modal-label">Prestatie ontgrendeld!</div>
             <div class="achievement-modal-name">${achievement.name}</div>
             <div class="achievement-modal-desc">${achievement.description}</div>
@@ -10898,12 +11071,47 @@ function claimAchievement(btn) {
     const playerXP = reward.playerXP || 0;
     const managerXP = (reward.managerXP || 0) + (reward.xp || 0);
 
+    // Capture levels before XP grant for level-up detection
+    const mgrBefore = getManagerLevel(gameState.manager?.xp || 0);
+    const plrBefore = getPlayerLevel(gameState.myPlayer?.xp || 0);
+
     // Apply XP to game state now
     if (managerXP > 0 && gameState.manager) {
         gameState.manager.xp = (gameState.manager.xp || 0) + managerXP;
     }
     if (playerXP > 0 && gameState.myPlayer) {
         gameState.myPlayer.xp = (gameState.myPlayer.xp || 0) + playerXP;
+    }
+
+    // Detect level-ups from achievement XP
+    if (managerXP > 0) {
+        const mgrAfter = getManagerLevel(gameState.manager?.xp || 0);
+        if (mgrAfter.level > mgrBefore.level) {
+            const mgrLevelData = MANAGER_LEVELS.find(l => l.level === mgrAfter.level);
+            const mgrNextData = MANAGER_LEVELS.find(l => l.level === mgrAfter.level + 1);
+            setTimeout(() => queueLevelUp('manager', {
+                oldLevel: mgrBefore.level, newLevel: mgrAfter.level,
+                oldTitle: mgrBefore.title, newTitle: mgrAfter.title,
+                nextTitle: mgrNextData?.title || null,
+                cashReward: mgrLevelData?.cashReward || 0,
+                oldProgress: mgrBefore.progress,
+                progress: mgrAfter.progress, xpToNext: mgrAfter.xpToNext
+            }), 1200);
+        }
+    }
+    if (playerXP > 0) {
+        const plrAfter = getPlayerLevel(gameState.myPlayer?.xp || 0);
+        if (plrAfter.level > plrBefore.level) {
+            const plrNextData = PLAYER_LEVELS.find(l => l.xpRequired > (gameState.myPlayer?.xp || 0));
+            setTimeout(() => queueLevelUp('player', {
+                oldLevel: plrBefore.level, newLevel: plrAfter.level,
+                oldTitle: plrBefore.title, newTitle: plrAfter.title,
+                nextTitle: plrNextData?.title || null,
+                skillPoints: (plrAfter.level - 1) * 5,
+                oldProgress: plrBefore.progress,
+                progress: plrAfter.progress, xpToNext: plrAfter.xpToNext
+            }), 1200);
+        }
     }
 
     // Animate XP flying to tiles
@@ -10988,6 +11196,12 @@ function updateGlobalManagerTile() {
     if (el('global-manager-level')) el('global-manager-level').textContent = managerInfo.level;
     if (el('global-xp-fill')) el('global-xp-fill').style.width = `${progressPercent}%`;
     if (el('global-xp-label')) el('global-xp-label').textContent = managerInfo.xpToNext > 0 ? `${currentXp} / ${xpForNextLevel} XP` : `${currentXp} XP — Max!`;
+    const mReward = el('global-manager-reward');
+    if (mReward) {
+        const nextML = MANAGER_LEVELS.find(l => l.xpRequired > (gameState.manager?.xp || 0));
+        mReward.textContent = nextML?.cashReward ? `+${formatCurrency(nextML.cashReward)}` : '';
+        mReward.style.display = nextML?.cashReward ? '' : 'none';
+    }
 }
 
 function updateGlobalPlayerTile() {
@@ -11002,6 +11216,12 @@ function updateGlobalPlayerTile() {
     if (el('global-player-level')) el('global-player-level').textContent = pLevel.level;
     if (el('global-player-xp-fill')) el('global-player-xp-fill').style.width = `${pProgress}%`;
     if (el('global-player-xp-label')) el('global-player-xp-label').textContent = pLevel.xpToNext > 0 ? `${pXp} / ${pNextXp} XP` : `${pXp} XP — Max!`;
+    const pReward = el('global-player-reward');
+    if (pReward) {
+        const nextPL = PLAYER_LEVELS.find(l => l.xpRequired > (mp.xp || 0));
+        pReward.textContent = nextPL ? '+5 SP' : '';
+        pReward.style.display = nextPL ? '' : 'none';
+    }
 }
 
 function finishClaim(overlay) {
@@ -11010,6 +11230,170 @@ function finishClaim(overlay) {
         showNextAchievement();
     }, 200);
 }
+
+// ================================================
+// LEVEL UP MODAL
+// ================================================
+
+const levelUpQueue = [];
+let levelUpModalOpen = false;
+
+function queueLevelUp(type, data) {
+    levelUpQueue.push({ type, data });
+    if (!levelUpModalOpen && !achievementModalOpen) {
+        showNextLevelUp();
+    }
+}
+
+function showNextLevelUp() {
+    if (levelUpQueue.length === 0) {
+        levelUpModalOpen = false;
+        return;
+    }
+    levelUpModalOpen = true;
+    const { type, data } = levelUpQueue.shift();
+    showLevelUpModal(type, data);
+}
+
+function showLevelUpModal(type, data) {
+    const isManager = type === 'manager';
+    const icon = isManager ? '📋' : '⚽';
+    const label = isManager ? 'Manager' : 'Speler';
+    const color = isManager ? '#1565c0' : '#2e7d32';
+    const colorLight = isManager ? '#42a5f5' : '#66bb6a';
+    const rewardText = isManager
+        ? `+${formatCurrency(data.cashReward)}`
+        : `+5 Skillpunten`;
+    const rewardIcon = isManager ? '💰' : '⚡';
+    const progressPct = Math.round((data.progress || 0) * 100);
+    const oldProgressPct = Math.round((data.oldProgress || 0) * 100);
+
+    // Get current XP and next level XP for display
+    const currentXP = isManager ? (gameState.manager?.xp || 0) : (gameState.myPlayer?.xp || 0);
+    const currentLevelInfo = isManager ? getManagerLevel(currentXP) : getPlayerLevel(currentXP);
+    const xpForNext = currentLevelInfo.xpToNext > 0
+        ? `${currentXP} / ${currentXP + currentLevelInfo.xpToNext} XP`
+        : `${currentXP} XP — Max!`;
+
+    // RGB values for CSS custom properties
+    const borderRgb = isManager ? '66, 165, 245' : '102, 187, 106';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'levelup-modal-overlay';
+    overlay.innerHTML = `
+        <div class="levelup-modal" style="--lu-border-rgb: ${borderRgb}; --lu-accent: ${colorLight}">
+            <div class="levelup-burst" style="--lu-color: ${colorLight}"></div>
+            <div class="levelup-flash" id="lu-flash" style="--lu-color: ${colorLight}"></div>
+            <div class="levelup-icon-wrap">
+                <span class="levelup-icon">${icon}</span>
+            </div>
+            <div class="levelup-label">Level Up!</div>
+            <div class="levelup-type">${label}</div>
+            <div class="levelup-level-row">
+                <span class="levelup-old-level" id="lu-level-badge">Niv. ${data.oldLevel}</span>
+            </div>
+            <div class="levelup-title-row">
+                <span class="levelup-new-title" id="lu-title-text">${data.oldTitle}</span>
+            </div>
+            <div class="levelup-xp-bar-wrap">
+                <div class="levelup-xp-bar">
+                    <div class="levelup-xp-fill" id="lu-xp-fill" style="width: ${oldProgressPct}%; background: linear-gradient(90deg, ${color}, ${colorLight})"></div>
+                </div>
+                <div class="levelup-xp-labels" id="lu-xp-labels">
+                    <span>Niv. ${data.oldLevel} — ${data.oldTitle}</span>
+                    <span>Niv. ${data.newLevel} — ${data.newTitle}</span>
+                </div>
+                <div class="levelup-xp-amount" id="lu-xp-amount"></div>
+            </div>
+            <button class="levelup-claim-btn" id="lu-claim-btn" style="background: linear-gradient(135deg, ${color}, ${colorLight});">
+                ${rewardIcon} ${rewardText} claimen
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
+
+    // === ANIMATED SEQUENCE ===
+    const fill = overlay.querySelector('#lu-xp-fill');
+    const badge = overlay.querySelector('#lu-level-badge');
+    const titleText = overlay.querySelector('#lu-title-text');
+    const labels = overlay.querySelector('#lu-xp-labels');
+    const xpAmount = overlay.querySelector('#lu-xp-amount');
+    const flash = overlay.querySelector('#lu-flash');
+    const claimBtn = overlay.querySelector('#lu-claim-btn');
+
+    // Phase 1 (after 600ms): fill bar from oldProgress → 100%
+    setTimeout(() => {
+        fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        fill.style.width = '100%';
+    }, 600);
+
+    // Phase 2 (at 1500ms): flash + update level
+    setTimeout(() => {
+        // Flash effect
+        flash.classList.add('active');
+
+        // Update badge and title
+        badge.textContent = `Niv. ${data.newLevel}`;
+        badge.classList.add('levelup-badge-pop');
+        badge.style.background = color;
+        badge.style.color = '#fff';
+        badge.style.padding = '4px 14px';
+        badge.style.borderRadius = '8px';
+        titleText.textContent = data.newTitle;
+        titleText.classList.add('levelup-title-pop');
+    }, 1500);
+
+    // Phase 3 (at 1900ms): reset bar to 0%, then fill to new progress
+    setTimeout(() => {
+        fill.style.transition = 'none';
+        fill.style.width = '0%';
+
+        // Update labels for new level range
+        labels.innerHTML = `
+            <span>Niv. ${data.newLevel} — ${data.newTitle}</span>
+            <span>${data.nextTitle ? 'Niv. ' + (data.newLevel + 1) + ' — ' + data.nextTitle : ''}</span>
+        `;
+        xpAmount.textContent = xpForNext;
+    }, 2000);
+
+    setTimeout(() => {
+        fill.style.transition = 'width 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
+        fill.style.width = `${progressPct}%`;
+    }, 2100);
+
+    // Phase 4 (at 2900ms): show claim button
+    setTimeout(() => {
+        claimBtn.classList.add('visible');
+        claimBtn.style.pointerEvents = 'auto';
+    }, 2900);
+
+    overlay.querySelector('.levelup-claim-btn').addEventListener('click', () => {
+        // Apply reward on claim
+        if (isManager && data.cashReward && gameState.club) {
+            gameState.club.budget += data.cashReward;
+        }
+        // Update UI tiles after claiming
+        updateGlobalManagerTile();
+        updateGlobalPlayerTile();
+        updateBudgetDisplays();
+        saveGame(gameState);
+
+        overlay.classList.remove('show');
+        setTimeout(() => {
+            overlay.remove();
+            levelUpModalOpen = false;
+            // Show next level-up or queued achievements
+            if (levelUpQueue.length > 0) {
+                showNextLevelUp();
+            } else if (achievementQueue.length > 0) {
+                showNextAchievement();
+            }
+        }, 300);
+    });
+}
+window.queueLevelUp = queueLevelUp;
 
 // ================================================
 // MANAGER XP POPUP

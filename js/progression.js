@@ -533,13 +533,10 @@ export function awardXP(gameState, action, amount = null) {
 
     const newLevel = getManagerLevel(gameState.manager.xp);
 
-    // Cash reward on level-up
-    if (newLevel.level > oldLevel.level) {
-        const newLevelData = MANAGER_LEVELS.find(l => l.level === newLevel.level);
-        if (newLevelData?.cashReward && gameState.club) {
-            gameState.club.budget += newLevelData.cashReward;
-        }
-    }
+    // Cash reward on level-up is deferred to the level-up modal claim button
+
+    const newLevelInfo = MANAGER_LEVELS.find(l => l.level === newLevel.level);
+    const nextAfter = MANAGER_LEVELS.find(l => l.level === newLevel.level + 1);
 
     return {
         xpGained: xpAmount,
@@ -547,7 +544,12 @@ export function awardXP(gameState, action, amount = null) {
         leveledUp: newLevel.level > oldLevel.level,
         oldLevel: oldLevel.level,
         newLevel: newLevel.level,
-        newTitle: newLevel.title
+        oldTitle: oldLevel.title,
+        newTitle: newLevel.title,
+        nextTitle: nextAfter?.title || null,
+        cashReward: newLevelInfo?.cashReward || 0,
+        progress: newLevel.progress,
+        xpToNext: newLevel.xpToNext
     };
 }
 
@@ -594,13 +596,20 @@ export function awardPlayerXP(gameState, action, amount = null) {
 
     const newLevel = getPlayerLevel(gameState.myPlayer.xp);
 
+    const nextAfter = PLAYER_LEVELS.find(l => l.xpRequired > gameState.myPlayer.xp);
+
     return {
         xpGained: xpAmount,
         totalXP: gameState.myPlayer.xp,
         leveledUp: newLevel.level > oldLevel.level,
         oldLevel: oldLevel.level,
         newLevel: newLevel.level,
-        newTitle: newLevel.title
+        oldTitle: oldLevel.title,
+        newTitle: newLevel.title,
+        nextTitle: nextAfter?.title || null,
+        skillPoints: (newLevel.level - 1) * 5,
+        progress: newLevel.progress,
+        xpToNext: newLevel.xpToNext
     };
 }
 

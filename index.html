@@ -392,42 +392,47 @@
 
         <!-- Main Content Area -->
         <main class="main-content">
-            <!-- Global Top Bar - Player & Manager tiles -->
+            <!-- Global Top Bar - Combined Player/Manager tile -->
             <div class="global-top-tiles">
-                <div class="global-top-bar" id="global-player-bar" onclick="navigateTo('training')" style="cursor:pointer">
-                    <div class="gtb-tile-label" id="global-player-name">⚽ Mijn Speler</div>
-                    <div class="gtb-top">
-                        <div class="gtb-player-rating">
-                            <span class="gtb-rating-value" id="global-player-overall">50</span>
-                            <span class="gtb-rating-label">ALG</span>
+                <div class="gcb" id="global-combined-bar">
+                    <div class="gcb-rating gtb-player-rating">
+                        <span class="gcb-rating-value" id="global-player-overall">50</span>
+                        <span class="gcb-rating-label">ALG</span>
+                    </div>
+                    <div class="gcb-tracks">
+                        <div class="gcb-track-row gcb-speler" id="global-player-bar" onclick="navigateTo('training')" style="cursor:pointer">
+                            <div class="gcb-track-header">
+                                <span class="gcb-track-icon">⚽</span>
+                                <span class="gcb-track-name">Speler</span>
+                                <span class="gcb-track-level">Niv. <span id="global-player-level">1</span></span>
+                                <span class="gcb-track-reward gcb-reward-sp" id="global-player-reward">+5 SP</span>
+                            </div>
+                            <div class="gcb-xp-track gcb-speler-track">
+                                <div class="gcb-xp-fill" id="global-player-xp-fill"></div>
+                                <span class="gcb-xp-label" id="global-player-xp-label">0 / 0 XP</span>
+                            </div>
                         </div>
-                        <div class="gtb-divider"></div>
-                        <div class="gtb-manager">
-                            <span class="gtb-title" id="global-player-title">Jeugdspeler</span>
-                            <span class="gtb-level">Niv. <span id="global-player-level">1</span></span>
+                        <div class="gcb-track-row gcb-manager" id="global-top-bar" onclick="navigateTo('prestaties')" style="cursor:pointer">
+                            <div class="gcb-track-header">
+                                <span class="gcb-track-icon">📋</span>
+                                <span class="gcb-track-name">Manager</span>
+                                <span class="gcb-track-level">Niv. <span id="global-manager-level">1</span></span>
+                                <span class="gcb-track-reward gcb-reward-cash" id="global-manager-reward">+€500</span>
+                            </div>
+                            <div class="gcb-xp-track gcb-manager-track">
+                                <div class="gcb-xp-fill" id="global-xp-fill"></div>
+                                <span class="gcb-xp-label" id="global-xp-label">0 / 0 XP</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="gtb-xp-track">
-                        <div class="gtb-xp-fill" id="global-player-xp-fill"></div>
-                        <span class="gtb-xp-label" id="global-player-xp-label">0 / 0 XP</span>
+                    <div class="gcb-budget">
+                        <span class="gcb-budget-value" id="global-budget-amount">€5.000</span>
                     </div>
-                </div>
-                <div class="global-top-bar" id="global-top-bar" onclick="navigateTo('prestaties')" style="cursor:pointer">
-                    <div class="gtb-tile-label" id="global-manager-name">📋 Manager</div>
-                    <div class="gtb-top">
-                        <div class="gtb-budget">
-                            <span class="gtb-value" id="global-budget-amount">€5.000</span>
-                        </div>
-                        <div class="gtb-divider"></div>
-                        <div class="gtb-manager">
-                            <span class="gtb-title" id="global-manager-title">Beginnende Coach</span>
-                            <span class="gtb-level">Niv. <span id="global-manager-level">1</span></span>
-                        </div>
-                    </div>
-                    <div class="gtb-xp-track">
-                        <div class="gtb-xp-fill" id="global-xp-fill"></div>
-                        <span class="gtb-xp-label" id="global-xp-label">0 / 0 XP</span>
-                    </div>
+                    <!-- Hidden for JS compat -->
+                    <span id="global-player-name" style="display:none"></span>
+                    <span id="global-manager-name" style="display:none"></span>
+                    <span id="global-player-title" style="display:none"></span>
+                    <span id="global-manager-title" style="display:none"></span>
                 </div>
             </div>
 
