@@ -112,6 +112,7 @@ export function initMultiplayerUI(onStartGame) {
 
     document.getElementById('lobby-join-btn')?.addEventListener('click', async () => {
         const code = document.getElementById('lobby-join-code').value.trim().toUpperCase();
+        console.log('[lobby] Join clicked, code:', JSON.stringify(code), 'length:', code.length);
         if (code.length !== 6) {
             document.getElementById('lobby-error').textContent = 'Voer een geldige 6-teken code in.';
             return;
@@ -124,9 +125,22 @@ export function initMultiplayerUI(onStartGame) {
         showLobbyScreen();
     });
 
-    document.getElementById('waiting-copy-code')?.addEventListener('click', () => {
+    document.getElementById('waiting-copy-code')?.addEventListener('click', async () => {
         const code = document.getElementById('waiting-invite-code').textContent;
-        navigator.clipboard.writeText(code);
+        const btn = document.getElementById('waiting-copy-code');
+        try {
+            await navigator.clipboard.writeText(code);
+            btn.textContent = 'Gekopieerd!';
+        } catch {
+            // Fallback: select the code text
+            const range = document.createRange();
+            range.selectNode(document.getElementById('waiting-invite-code'));
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            btn.textContent = 'Gekopieerd!';
+        }
+        setTimeout(() => { btn.textContent = 'Kopieer'; }, 2000);
     });
 
     document.getElementById('waiting-start-btn')?.addEventListener('click', async () => {
@@ -205,7 +219,11 @@ async function createLeague() {
 
         // Generate invite code via RPC
         const { data: inviteCode, error: codeError } = await supabase.rpc('generate_invite_code');
-        if (codeError) throw codeError;
+        if (codeError) {
+            console.error('[createLeague] RPC error:', codeError);
+            throw codeError;
+        }
+        console.log('[createLeague] Generated invite code:', inviteCode);
 
         // Create league
         const { data: league, error: leagueError } = await supabase
@@ -259,18 +277,30 @@ async function joinLeague(code) {
         const user = await getUser();
         if (!user) throw new Error('Niet ingelogd');
 
+        console.log('[joinLeague] Looking for league with code:', code);
+
         // Find league by code (lobby OR active)
-        const { data: league, error: findError } = await supabase
+        const { data: leagues, error: findError } = await supabase
             .from('leagues')
             .select('*')
             .eq('invite_code', code)
-            .in('status', ['lobby', 'active'])
-            .single();
+            .or('status.eq.lobby,status.eq.active');
 
-        if (findError || !league) {
-            errorEl.textContent = 'Competitie niet gevonden of al afgelopen.';
+        console.log('[joinLeague] Query result:', { leagues, findError });
+
+        if (findError) {
+            console.error('[joinLeague] Query error:', findError);
+            errorEl.textContent = `Fout bij zoeken: ${findError.message}`;
             return;
         }
+
+        if (!leagues || leagues.length === 0) {
+            errorEl.textContent = 'Competitie niet gevonden. Controleer de code.';
+            return;
+        }
+
+        const league = leagues[0];
+        console.log('[joinLeague] Found league:', league.id, league.name, league.status);
 
         // Check if already joined
         const { data: existingClub } = await supabase
@@ -278,9 +308,10 @@ async function joinLeague(code) {
             .select('id')
             .eq('league_id', league.id)
             .eq('owner_id', user.id)
-            .single();
+            .maybeSingle();
 
         if (existingClub) {
+            console.log('[joinLeague] Already joined, entering league');
             if (league.status === 'lobby') {
                 showWaitingScreen(league);
                 await refreshWaitingRoom(league.id, user.id);
@@ -298,6 +329,8 @@ async function joinLeague(code) {
             .eq('league_id', league.id)
             .eq('is_ai', false);
 
+        console.log('[joinLeague] Human player count:', count, '/', league.max_players);
+
         if (count >= league.max_players) {
             errorEl.textContent = 'Deze competitie zit vol.';
             return;
@@ -308,6 +341,7 @@ async function joinLeague(code) {
             await joinActiveLeague(league, user);
         } else {
             // Join lobby as normal
+            console.log('[joinLeague] Inserting club for user', user.id);
             const { error: clubError } = await supabase
                 .from('clubs')
                 .insert({
@@ -318,21 +352,29 @@ async function joinLeague(code) {
                     division: league.division
                 });
 
-            if (clubError) throw clubError;
+            if (clubError) {
+                console.error('[joinLeague] Club insert error:', clubError);
+                throw clubError;
+            }
 
-            await supabase.from('league_feed').insert({
+            // Feed insert — non-critical, don't let it block join
+            supabase.from('league_feed').insert({
                 league_id: league.id,
                 type: 'join',
                 data: { user_name: user.user_metadata?.display_name || 'Manager' }
+            }).then(({ error }) => {
+                if (error) console.warn('[joinLeague] Feed insert failed (non-critical):', error);
             });
 
+            console.log('[joinLeague] Success, showing waiting screen');
             showWaitingScreen(league);
             await refreshWaitingRoom(league.id, user.id);
             subscribeToLobby(league.id, user.id);
         }
 
     } catch (err) {
-        errorEl.textContent = err.message;
+        console.error('[joinLeague] Error:', err);
+        errorEl.textContent = err.message || 'Er ging iets mis bij het deelnemen.';
     }
 }
 
@@ -429,7 +471,7 @@ async function joinRandomLeague() {
             .eq('is_ai', false)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
         if (existingClub && existingClub.leagues) {
             const league = existingClub.leagues;
