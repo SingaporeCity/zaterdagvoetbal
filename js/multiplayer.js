@@ -211,7 +211,7 @@ async function createLeague() {
         const { data: league, error: leagueError } = await supabase
             .from('leagues')
             .insert({
-                name: `Competitie ${inviteCode}`,
+                name: 'Kelderklasse',
                 invite_code: inviteCode,
                 created_by: user.id,
                 status: 'lobby'

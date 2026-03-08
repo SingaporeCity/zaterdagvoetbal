@@ -180,27 +180,36 @@ function clubRecordToGameState(club, players, standings, leagueData) {
  * Convert Supabase player record to local format
  */
 function supabasePlayerToLocal(p) {
+    // Convert nationality string to object if needed
+    let nat = p.nationality;
+    if (typeof nat === 'string') {
+        nat = { code: nat.toUpperCase(), flag: '🇳🇱', name: 'Nederlands' };
+    }
+
     return {
         id: p.id,
         name: p.name,
         age: p.age,
         position: p.position,
-        nationality: p.nationality,
+        nationality: nat,
         overall: p.overall,
         potential: p.potential,
+        stars: p.stars ?? 0,
         attributes: p.attributes || {},
         personality: p.personality,
         tag: p.tag,
         salary: Number(p.salary),
         contractWeeks: p.contract_weeks,
-        goals: p.goals,
-        assists: p.assists,
+        goals: p.goals || 0,
+        assists: p.assists || 0,
         morale: p.morale,
         fitness: p.fitness,
+        condition: p.fitness,
         energy: p.energy,
         matchesTogether: p.matches_together,
         listedForSale: p.listed_for_sale,
-        xp: p.xp || 0
+        xp: p.xp || 0,
+        fixedMarketValue: 0
     };
 }
 
