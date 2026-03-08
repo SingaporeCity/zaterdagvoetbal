@@ -25654,277 +25654,460 @@ body {
    ================================================ */
 
 @media (max-width: 768px) {
-    /* Page title: too large at 2.5rem on mobile */
+    /* --- GLOBAL --- */
     .page-title {
         font-size: 1.4rem;
         letter-spacing: 1px;
     }
+    .page-header {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .page {
+        padding: 8px;
+    }
+    .card {
+        padding: 14px;
+    }
+    .modal-content {
+        padding: 20px 16px;
+    }
+    .modal-close {
+        width: 44px;
+        height: 44px;
+        font-size: 1.5rem;
+    }
+    .global-top-tiles {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
 
-    /* Player attributes grid: 5 cols → 3 cols */
+    /* --- DASHBOARD --- */
+    .dashboard-grid {
+        gap: 12px;
+    }
+    .quick-actions-grid {
+        gap: 8px;
+    }
+    .standings-table th {
+        font-size: 0.65rem;
+    }
+    .standings-table td {
+        font-size: 0.75rem;
+        padding: 6px 4px;
+    }
+
+    /* --- TACTIEK --- */
+    .tactics-grid,
+    .tactics-col {
+        grid-template-columns: 1fr;
+    }
+    .tactics-bottom {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .lineup-container {
+        grid-template-columns: 1fr !important;
+        overflow-x: visible;
+    }
+    .lineup-players-panel {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .team-training-options {
+        flex-wrap: wrap;
+    }
+    .team-training-option {
+        flex: 1 1 45%;
+    }
+
+    /* --- SELECTIE / SQUAD --- */
     .player-attributes {
         grid-template-columns: repeat(3, 1fr);
         gap: 6px;
     }
-
-    /* Transfer attributes grid: 5 cols → 3 cols */
-    .transfer-attributes {
+    .player-detail-attributes {
         grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
+        gap: 8px;
+        margin-bottom: 16px;
     }
-
-    /* Bench position groups: 4 cols → 2 cols */
+    .player-detail-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
     .bench-position-groups {
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
     }
 
-    /* Floorplan grid: 7 cols → 4 cols on tablet */
+    /* --- MIJN SPELER / TRAINING --- */
+    .trainers-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .position-training-slots {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .sessions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    /* --- TRANSFERS --- */
+    .transfer-attributes {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+    .transfer-filters-panel {
+        gap: 10px;
+    }
+    .filter-buttons {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    /* --- SCOUTING --- */
+    .scout-grid {
+        grid-template-columns: 1fr;
+    }
+    .scouting-layout {
+        grid-template-columns: 1fr;
+    }
+    .scouting-sidebar {
+        flex-direction: row;
+        gap: 12px;
+    }
+    .scout-results-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+
+    /* --- JEUGD --- */
+    .jeugdteam-layout {
+        grid-template-columns: 1fr;
+    }
+    .youth-sidebar {
+        flex-direction: row;
+        gap: 12px;
+    }
+    .youth-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+    }
+
+    /* --- STADION --- */
     .floorplan-grid {
         grid-template-columns: repeat(4, 1fr);
         grid-template-rows: auto;
         aspect-ratio: auto;
         gap: 4px;
     }
+    .stadium-intro-stats {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
 
-    /* Scout grid: 2 col → single col */
-    .scout-grid {
+    /* --- STAF --- */
+    .staff-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+    .assistant-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    /* --- SPONSORS --- */
+    .sponsors-page-layout {
         grid-template-columns: 1fr;
     }
-
-    /* Modal padding tighter */
-    .modal-content {
-        padding: 20px 16px;
+    .sponsor-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .spo-visuals {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
     }
 
-    /* Modal close button bigger for touch */
-    .modal-close {
-        width: 44px;
-        height: 44px;
-        font-size: 1.5rem;
-    }
-
-    /* Cards: reduce gaps */
-    .dashboard-grid {
+    /* --- FINANCIEN --- */
+    .fin-week-view {
+        grid-template-columns: 1fr;
         gap: 12px;
     }
-
-    .card {
-        padding: 14px;
-    }
-
-    /* Standings table: smaller text */
-    .standings-table th {
-        font-size: 0.65rem;
-    }
-
-    .standings-table td {
-        font-size: 0.75rem;
-        padding: 6px 4px;
-    }
-
-    /* Quick actions: ensure 2 columns */
-    .quick-actions-grid {
-        gap: 8px;
-    }
-
-    /* Global top tiles: wrap on mobile */
-    .global-top-tiles {
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    /* Page header: wrap and reduce spacing */
-    .page-header {
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    /* Tactics columns: 4 → 1 */
-    .tactics-grid,
-    .tactics-col {
-        grid-template-columns: 1fr;
-    }
-
-    /* Sessions grid: 2 cols, tighter */
-    .sessions-grid {
-        gap: 8px;
-    }
-
-    /* Finance overview card padding */
     .finance-card {
         padding: 12px;
     }
-
-    /* Lineup container: ensure it doesn't overflow */
-    .lineup-container {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* XP roadmap: scrollable */
-    .xp-roadmap {
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* Tier list: scrollable */
-    .tier-list {
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* Reduce general padding on pages */
-    .page {
-        padding: 8px;
-    }
-}
-
-@media (max-width: 480px) {
-    /* Page title even smaller */
-    .page-title {
-        font-size: 1.2rem;
-        letter-spacing: 0.5px;
-    }
-
-    /* Main content: tighter padding */
-    .main-content {
-        padding: 10px 8px !important;
-    }
-
-    /* Player attributes: 3 cols still, but smaller */
-    .player-attributes {
-        gap: 4px;
-        padding: 8px;
-    }
-
-    /* Floorplan: 3 cols on small phones */
-    .floorplan-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 3px;
-    }
-
-    .facility-slot {
-        padding: 4px 2px;
-        font-size: 0.6rem;
-    }
-
-    .facility-label {
-        font-size: 0.55rem;
-    }
-
-    /* Bench groups: single column */
-    .bench-position-groups {
-        grid-template-columns: 1fr;
-        gap: 8px;
-    }
-
-    /* Cards: minimal padding */
-    .card {
-        padding: 10px;
-    }
-
-    /* Standings: even more compact */
-    .standings-table th {
-        font-size: 0.6rem;
-        padding: 4px 3px;
-    }
-
-    .standings-table td {
-        font-size: 0.7rem;
-        padding: 5px 3px;
-    }
-
-    /* Modal: full width on small screens */
-    .modal-content {
-        max-width: 95%;
-        padding: 16px 12px;
-    }
-
-    /* Sessions: single column */
-    .sessions-grid {
+    .finance-overview {
         grid-template-columns: 1fr;
     }
 
-    /* Quick actions: tighter */
-    .quick-actions-grid {
-        gap: 6px;
+    /* --- WEDSTRIJDEN --- */
+    .programma-layout {
+        grid-template-columns: 1fr;
+        gap: 12px;
     }
-
-    .quick-action-btn {
-        padding: 10px 8px;
-        font-size: 0.75rem;
-    }
-
-    /* Match preview: tighter */
     .match-preview {
         gap: 12px;
     }
 
-    .team-name {
-        font-size: 0.85rem;
+    /* --- PRESTATIES --- */
+    .vg-dna-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+    }
+    .activity-cards,
+    .activity-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
     }
 
-    /* Global top tiles: stack vertically */
+    /* --- MIJN TEAM --- */
+    .mijnteam-container {
+        grid-template-columns: 1fr;
+    }
+    .club-stats-grid {
+        gap: 10px;
+    }
+
+    /* --- KANTINE --- */
+    .kantine-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* --- TABS (alle pagina's) --- */
+    .page-tabs,
+    .matches-tabs,
+    .tactics-tabs,
+    .youth-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+        gap: 4px;
+        padding-bottom: 4px;
+    }
+    .page-tab,
+    .matches-tab,
+    .tactics-tab,
+    .youth-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+        font-size: 0.8rem;
+    }
+
+    /* --- VOORZITTER INTRO (alle pagina's) --- */
+    .chairman-intro {
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px;
+    }
+    .chairman-intro-avatar {
+        width: 50px;
+        height: 50px;
+    }
+    .chairman-intro-quote {
+        font-size: 0.82rem;
+    }
+
+    /* --- SCROLLBARE LIJSTEN --- */
+    .xp-roadmap,
+    .tier-list {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* --- GROTE FONT SIZES --- */
+    .match-score {
+        font-size: 2.5rem;
+    }
+    .staff-icon {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    /* --- GLOBAL --- */
+    .page-title {
+        font-size: 1.15rem;
+        letter-spacing: 0.5px;
+    }
+    .main-content {
+        padding: 8px 6px !important;
+    }
+    .card {
+        padding: 10px;
+    }
+    .modal-content {
+        max-width: 96%;
+        padding: 14px 10px;
+    }
     .global-top-tiles {
         flex-direction: column;
         gap: 6px;
     }
 
-    /* Reduce section gaps */
-    .page-section {
-        margin-bottom: 12px;
+    /* --- GRIDS: naar 1 kolom op kleine telefoons --- */
+    .tactics-bottom {
+        grid-template-columns: 1fr;
+    }
+    .trainers-row {
+        grid-template-columns: 1fr;
+    }
+    .position-training-slots {
+        grid-template-columns: 1fr;
+    }
+    .sessions-grid {
+        grid-template-columns: 1fr;
+    }
+    .assistant-grid {
+        grid-template-columns: 1fr;
+    }
+    .sponsor-cards {
+        grid-template-columns: 1fr;
+    }
+    .scout-results-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .bench-position-groups {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    .youth-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .vg-dna-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 
-    /* Transfer card: compact */
+    /* --- SELECTIE --- */
+    .player-attributes {
+        gap: 4px;
+        padding: 8px;
+    }
+    .player-detail-attributes {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    .player-detail-stats {
+        grid-template-columns: 1fr;
+    }
+    .player-card {
+        padding: 10px;
+    }
+    .player-card-header {
+        gap: 8px;
+    }
+
+    /* --- STADION --- */
+    .floorplan-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 3px;
+    }
+    .facility-slot {
+        padding: 4px 2px;
+        font-size: 0.6rem;
+    }
+    .facility-label {
+        font-size: 0.55rem;
+    }
+
+    /* --- STAF --- */
+    .staff-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* --- TRANSFERS --- */
     .transfer-card {
         padding: 10px;
     }
-
     .transfer-attributes {
+        grid-template-columns: repeat(3, 1fr);
         gap: 4px;
     }
+    .price-range-inputs {
+        flex-direction: column;
+        gap: 6px;
+    }
 
-    /* Scout panel tighter */
+    /* --- SCOUTING --- */
+    .scouting-sidebar {
+        flex-direction: column;
+    }
     .scout-panel {
         padding: 12px;
         gap: 12px;
     }
-
     .scout-avatar {
         width: 70px;
         height: 90px;
     }
 
-    /* Buttons: ensure minimum touch target */
+    /* --- JEUGD --- */
+    .youth-sidebar {
+        flex-direction: column;
+    }
+
+    /* --- WEDSTRIJDEN --- */
+    .match-score {
+        font-size: 2rem;
+    }
+    .match-preview {
+        gap: 8px;
+    }
+    .team-name {
+        font-size: 0.85rem;
+    }
+
+    /* --- FINANCIEN --- */
+    .fin-col-header {
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+    }
+
+    /* --- STANDINGS --- */
+    .standings-table th {
+        font-size: 0.6rem;
+        padding: 4px 3px;
+    }
+    .standings-table td {
+        font-size: 0.7rem;
+        padding: 5px 3px;
+    }
+
+    /* --- KNOPPEN --- */
     .btn-primary,
     .btn-secondary,
     .btn-success,
-    .btn-danger {
+    .btn-danger,
+    .quick-action-btn {
         min-height: 44px;
-        padding: 10px 16px;
+        padding: 10px 12px;
+        font-size: 0.8rem;
+    }
+    .quick-actions-grid {
+        gap: 6px;
     }
 
-    /* Player cards: more compact */
-    .player-card {
-        padding: 10px;
-    }
-
-    .player-card-header {
-        gap: 8px;
-    }
-
-    /* Tab buttons: scrollable row */
-    .tab-buttons,
-    .tabs {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        flex-wrap: nowrap;
-        gap: 4px;
-    }
-
-    .tab-btn,
-    .tab-button {
-        white-space: nowrap;
-        flex-shrink: 0;
+    /* --- TABS --- */
+    .page-tab,
+    .matches-tab,
+    .tactics-tab,
+    .youth-tab {
         padding: 8px 12px;
         font-size: 0.75rem;
+    }
+
+    /* --- VOORZITTER --- */
+    .chairman-intro {
+        padding: 10px;
+    }
+    .chairman-intro-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* --- DIVERSE --- */
+    .page-section {
+        margin-bottom: 12px;
     }
 }
