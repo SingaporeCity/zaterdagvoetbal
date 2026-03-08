@@ -556,7 +556,7 @@ export function awardXP(gameState, action, amount = null) {
 /**
  * Get player level from XP
  */
-export function getPlayerLevel(xp) {
+export function getPlayerLevel(xp, stars = 1) {
     let currentLevel = PLAYER_LEVELS[0];
 
     for (const level of PLAYER_LEVELS) {
@@ -568,6 +568,7 @@ export function getPlayerLevel(xp) {
     }
 
     const nextLevel = PLAYER_LEVELS.find(l => l.xpRequired > xp);
+    const spPerLevel = getSPPerLevel(stars);
 
     return {
         level: currentLevel.level,
@@ -578,8 +579,17 @@ export function getPlayerLevel(xp) {
         progress: nextLevel
             ? (xp - currentLevel.xpRequired) / (nextLevel.xpRequired - currentLevel.xpRequired)
             : 1,
-        skillPoints: (currentLevel.level - 1) * 5
+        skillPoints: (currentLevel.level - 1) * spPerLevel,
+        spPerLevel
     };
+}
+
+/**
+ * Calculate SP per level based on potential stars
+ * Base 3 SP + 2 SP per star (0.5 stars = +1 SP)
+ */
+export function getSPPerLevel(stars) {
+    return 3 + Math.floor((stars || 1) * 2);
 }
 
 /**
@@ -590,11 +600,12 @@ export function awardPlayerXP(gameState, action, amount = null) {
     if (gameState.myPlayer.xp === undefined) gameState.myPlayer.xp = 0;
 
     const xpAmount = amount || PLAYER_XP_REWARDS[action] || 0;
-    const oldLevel = getPlayerLevel(gameState.myPlayer.xp);
+    const stars = gameState.myPlayer.stars || 1;
+    const oldLevel = getPlayerLevel(gameState.myPlayer.xp, stars);
 
     gameState.myPlayer.xp += xpAmount;
 
-    const newLevel = getPlayerLevel(gameState.myPlayer.xp);
+    const newLevel = getPlayerLevel(gameState.myPlayer.xp, stars);
 
     const nextAfter = PLAYER_LEVELS.find(l => l.xpRequired > gameState.myPlayer.xp);
 

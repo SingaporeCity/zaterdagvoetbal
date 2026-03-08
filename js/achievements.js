@@ -29,7 +29,7 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '⚽',
         reward: { playerXP: 15 },
-        check: (state) => (state.club?.stats?.totalMatches || 0) >= 1
+        check: (state) => (state.stats?.myPlayerMatches || 0) >= 1
     },
     firstWin: {
         id: 'firstWin',

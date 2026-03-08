@@ -9,7 +9,7 @@ export let gameState = {
     club: {
         name: 'FC Goals Maken',
         division: 8,
-        budget: 5000,
+        budget: 0,
         reputation: 10,
         position: 3,
         colors: {

@@ -106,8 +106,9 @@ const COMMENTARY = {
  * Calculate team strength based on lineup, formation, and tactics
  */
 export function calculateTeamStrength(lineup, formation, tactics, players, options = {}) {
-    if (!lineup || lineup.filter(p => p !== null).length < 11) {
-        return { attack: 30, defense: 30, midfield: 30, overall: 30 };
+    const filledCount = lineup ? lineup.filter(p => p !== null).length : 0;
+    if (!lineup || filledCount === 0) {
+        return { attack: 1, defense: 1, midfield: 1, overall: 1 };
     }
 
     let attack = 0;
@@ -209,6 +210,14 @@ export function calculateTeamStrength(lineup, formation, tactics, players, optio
 
     // Include goalkeeper in defense
     defense = (defense * 3 + goalkeeper) / 4;
+
+    // Penalty for missing players: each empty slot = ~9% weaker (1/11)
+    if (filledCount < 11) {
+        const missingPenalty = filledCount / 11;
+        attack *= missingPenalty;
+        defense *= missingPenalty;
+        midfield *= missingPenalty;
+    }
 
     const overall = (attack + defense + midfield) / 3;
 
@@ -525,6 +534,60 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
             };
         });
     }
+
+    // === Voorbeschouwing (pre-match commentary by chairman) ===
+    const playerTeamName = isHomeGame ? homeTeam.name : awayTeam.name;
+    const opponentTeamName = isHomeGame ? awayTeam.name : homeTeam.name;
+    const playerStrength = isHomeGame ? homeStrength : awayStrength;
+    const oppStrength = isHomeGame ? awayStrength : homeStrength;
+    const playerOverall = (playerStrength.attack + playerStrength.defense + playerStrength.midfield) / 3;
+    const oppOverall = (oppStrength.attack + oppStrength.defense + oppStrength.midfield) / 3;
+    const filledSlots = homeLineup ? homeLineup.filter(p => p !== null).length : 0;
+
+    // Weather based on grass level
+    const grass = options.grassLevel || 0;
+    const weatherLines = [
+        'Het regent pijpenstelen vandaag — het veld is doorweekt!',
+        'Bewolkt met af en toe een bui. Typisch Nederlands weer.',
+        'Het is fris maar droog. Prima voetbalweer!',
+        'Heerlijk weer vandaag! De zon schijnt volop.',
+        'Stralend weer, het veld ligt er perfect bij!',
+    ];
+    const weatherLine = grass <= 1 ? randomFromArray(weatherLines.slice(0, 2))
+        : grass <= 4 ? randomFromArray(weatherLines.slice(1, 3))
+        : grass <= 7 ? randomFromArray(weatherLines.slice(2, 4))
+        : randomFromArray(weatherLines.slice(3));
+
+    // Strength comparison
+    let strengthLine;
+    const diff = playerOverall - oppOverall;
+    if (diff > 10) strengthLine = `Op papier zijn wij duidelijk de sterkere ploeg. Dit moeten we winnen!`;
+    else if (diff > 3) strengthLine = `We lijken iets sterker dan ${opponentTeamName}. Maar onderschat ze niet!`;
+    else if (diff > -3) strengthLine = `Dit wordt een gelijkwaardige wedstrijd. Het kan alle kanten op.`;
+    else if (diff > -10) strengthLine = `${opponentTeamName} lijkt sterker dan ons. We zullen ons beste beentje voor moeten zetten.`;
+    else strengthLine = `${opponentTeamName} is veel sterker. Dit wordt een zware klus, maar in het zaterdagvoetbal kan alles!`;
+
+    // Incomplete lineup
+    let lineupLine = '';
+    if (filledSlots < 11) {
+        const missing = 11 - filledSlots;
+        if (missing === 1) lineupLine = 'We staan met 10 man op het veld. Dat wordt zwaar, maar het is niet onmogelijk!';
+        else if (missing <= 3) lineupLine = `We missen ${missing} spelers in de opstelling. Dat is een flinke handicap...`;
+        else lineupLine = `Met maar ${filledSlots} spelers beginnen? Dit wordt een hels karwei!`;
+    }
+
+    // Tactics comment
+    const tacticsOffensief = tactics?.offensief || 'gebalanceerd';
+    const tacticsData = { zeer_verdedigend: 'zeer verdedigend', verdedigend: 'verdedigend', gebalanceerd: 'gebalanceerd', offensief: 'offensief', leeroy: 'vol in de aanval — Leeroy Jenkins-stijl' };
+    const tacticsLine = `We spelen vandaag ${tacticsData[tacticsOffensief] || 'gebalanceerd'}. Laten we hopen dat het werkt!`;
+
+    // Build voorbeschouwing events
+    result.events.push({ minute: 0, type: 'preview', commentary: `📋 Voorbeschouwing — ${playerTeamName} vs ${opponentTeamName}` });
+    result.events.push({ minute: 0, type: 'preview', commentary: `🌤️ ${weatherLine}` });
+    result.events.push({ minute: 0, type: 'preview', commentary: `📊 ${strengthLine}` });
+    if (lineupLine) result.events.push({ minute: 0, type: 'preview', commentary: `⚠️ ${lineupLine}` });
+    result.events.push({ minute: 0, type: 'preview', commentary: `⚽ ${tacticsLine}` });
+    result.events.push({ minute: 0, type: 'preview', commentary: '🏁 De scheidsrechter fluit — de wedstrijd begint!' });
 
     // Simulate match minute by minute with key moments
     const keyMinutes = generateKeyMinutes();

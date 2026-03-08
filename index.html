@@ -225,6 +225,8 @@
                     </span>
                     <span>Dashboard</span>
                 </li>
+
+                <li class="nav-group-label">Wedstrijden</li>
                 <li class="nav-item has-submenu" data-page="wedstrijden">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -270,23 +272,8 @@
                         <li data-tab="specialisten">Specialisten</li>
                     </ul>
                 </li>
-                <li class="nav-item has-submenu" data-page="training">
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M6 5v14"/>
-                            <path d="M18 5v14"/>
-                            <path d="M6 12h12"/>
-                            <rect x="3" y="7" width="6" height="10" rx="1"/>
-                            <rect x="15" y="7" width="6" height="10" rx="1"/>
-                        </svg>
-                    </span>
-                    <span>Mijn Speler</span>
-                    <span class="nav-badge todo-badge" id="badge-training" style="display:none">!</span>
-                    <ul class="nav-submenu">
-                        <li data-tab="speler">Individueel</li>
-                        <li data-tab="prestaties">Spelersprestaties</li>
-                    </ul>
-                </li>
+
+                <li class="nav-group-label">Recruitment</li>
                 <li class="nav-item" data-page="transfers">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -318,6 +305,8 @@
                     </span>
                     <span>Jeugd</span>
                 </li>
+
+                <li class="nav-group-label">Mijn Club</li>
                 <li class="nav-item" data-page="stadium">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -366,20 +355,24 @@
                     </span>
                     <span>Financiën</span>
                 </li>
-                <li class="nav-item has-submenu" data-page="prestaties">
+
+                <li class="nav-group-label" id="nav-group-player-label">Mijn Speler</li>
+                <li class="nav-item has-submenu" data-page="training">
                     <span class="nav-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M6 9H3V4h3"/>
-                            <path d="M18 9h3V4h-3"/>
-                            <path d="M6 4h12v7a6 6 0 01-12 0V4z"/>
-                            <path d="M12 17v4"/>
-                            <path d="M8 21h8"/>
+                            <path d="M6 5v14"/>
+                            <path d="M18 5v14"/>
+                            <path d="M6 12h12"/>
+                            <rect x="3" y="7" width="6" height="10" rx="1"/>
+                            <rect x="15" y="7" width="6" height="10" rx="1"/>
                         </svg>
                     </span>
-                    <span>Prestaties</span>
+                    <span id="nav-player-name">Mijn Speler</span>
+                    <span class="nav-badge todo-badge" id="badge-training" style="display:none">!</span>
                     <ul class="nav-submenu">
-                        <li data-tab="manager">Voortgang</li>
-                        <li data-tab="prestaties">Achievements</li>
+                        <li data-tab="training">Training</li>
+                        <li data-tab="statistieken">Statistieken</li>
+                        <li data-tab="achievements">Achievements</li>
                     </ul>
                 </li>
             </ul>
@@ -412,7 +405,7 @@
                                 <span class="gcb-xp-label" id="global-player-xp-label">0 / 0 XP</span>
                             </div>
                         </div>
-                        <div class="gcb-track-row gcb-manager" id="global-top-bar" onclick="navigateTo('prestaties')" style="cursor:pointer">
+                        <div class="gcb-track-row gcb-manager" id="global-top-bar" onclick="navigateTo('training')" style="cursor:pointer">
                             <div class="gcb-track-header">
                                 <span class="gcb-track-icon">📋</span>
                                 <span class="gcb-track-name">Manager</span>
@@ -582,25 +575,6 @@
                 <div id="daily-streak" style="display:none;"></div>
             </section>
 
-            <!-- Prestaties Page -->
-            <section id="prestaties" class="page">
-                <header class="page-header">
-                    <div class="header-left">
-                        <h2 class="page-title">Prestaties</h2>
-                    </div>
-                </header>
-
-                <div class="page-tabs" id="prestaties-tabs">
-                    <button class="page-tab active" data-page-tab="manager">Voortgang</button>
-                    <button class="page-tab" data-page-tab="prestaties">Achievements</button>
-                </div>
-                <div id="manager-page-panel" class="page-panel active">
-                    <div id="voortgang-content"></div>
-                </div>
-                <div id="prestaties-page-panel" class="page-panel">
-                    <div id="prestaties-content"></div>
-                </div>
-            </section>
 
             <!-- Mijn Team Page -->
             <section id="mijnteam" class="page">
@@ -768,9 +742,9 @@
                     <!-- Main content: Players -->
                     <div class="youth-main">
                         <div class="youth-tabs">
-                            <button class="youth-tab active" data-age="12-13">Pupillen</button>
-                            <button class="youth-tab" data-age="14-15">Junioren</button>
-                            <button class="youth-tab" data-age="16-17">Aspiranten</button>
+                            <button class="youth-tab active" data-age="12-13">Pupillen (12-13)</button>
+                            <button class="youth-tab" data-age="14-15">Junioren (14-15)</button>
+                            <button class="youth-tab" data-age="16-17">Aspiranten (16-17)</button>
                         </div>
 
                         <div class="youth-players-grid" id="youth-players-grid">
@@ -790,15 +764,7 @@
             <section id="squad" class="page">
                 <header class="page-header">
                     <div class="header-left">
-                        <h2 class="page-title">Selectie</h2>
-                    </div>
-                    <div class="header-right">
-                        <div class="squad-size-display">
-                            <span class="squad-size-number" id="squad-count">0</span>
-                            <span class="squad-size-sep">/</span>
-                            <span class="squad-size-max">18</span>
-                            <span class="squad-size-label">Spelers</span>
-                        </div>
+                        <h2 class="page-title">Selectie <span class="squad-size-inline"><span id="squad-count">0</span> / 18</span></h2>
                     </div>
                 </header>
 
@@ -856,8 +822,10 @@
 
                     <div class="tactics-section-block">
                         <div class="team-training-panel">
-                            <h3 class="section-block-title">Wedstrijdvoorbereiding</h3>
-                            <p class="training-rules">Kies een focus voor het hele team</p>
+                            <div class="training-header-row">
+                                <h3 class="section-block-title">Wedstrijdvoorbereiding</h3>
+                                <span class="team-training-warning-inline" id="team-training-warning">Nog geen voorbereiding gekozen</span>
+                            </div>
                             <div class="team-training-options" id="team-training-options">
                                 <div class="team-training-option" data-type="defense" onclick="selectTeamTraining('defense')">
                                     <div class="tto-icon defense">
@@ -1026,22 +994,26 @@
             <section id="training" class="page">
                 <header class="page-header">
                     <div class="header-left">
-                        <h2 class="page-title">Mijn Speler</h2>
+                        <h2 class="page-title" id="profile-page-title">Mijn Speler</h2>
                     </div>
                     <div class="header-right">
                     </div>
                 </header>
 
                 <div class="page-tabs" id="training-tabs">
-                    <button class="page-tab active" data-page-tab="speler">Individueel</button>
-                    <button class="page-tab" data-page-tab="prestaties">Spelersprestaties</button>
+                    <button class="page-tab active" data-page-tab="training">Training</button>
+                    <button class="page-tab" data-page-tab="statistieken">Statistieken</button>
+                    <button class="page-tab" data-page-tab="achievements">Achievements</button>
                 </div>
 
-                <div id="speler-page-panel" class="page-panel active">
+                <div id="training-page-panel" class="page-panel active">
                     <div id="training-content"></div>
                 </div>
-                <div id="prestaties-page-panel-training" class="page-panel">
-                    <div id="training-prestaties-content"></div>
+                <div id="statistieken-page-panel" class="page-panel">
+                    <div id="statistieken-content"></div>
+                </div>
+                <div id="achievements-page-panel" class="page-panel">
+                    <div id="achievements-content"></div>
                 </div>
             </section>
 
@@ -1182,7 +1154,7 @@
                     <div class="chairman-intro-avatar">
                         <svg viewBox="0 0 55 60"><!-- Hat crown --><ellipse cx="27" cy="30" rx="14" ry="15" fill="#f5d0c5"/><ellipse cx="13" cy="29" rx="3" ry="4" fill="#e8bfb0"/><ellipse cx="41" cy="29" rx="3" ry="4" fill="#e8bfb0"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="#777"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="none" stroke="#666" stroke-width="0.8"/><rect x="14" y="17" width="26" height="3.5" rx="0.5" fill="#555"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="#888"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="none" stroke="#666" stroke-width="0.8"/><path d="M18 26 Q21 24 24 26" fill="none" stroke="#555" stroke-width="1.2"/><path d="M30 26 Q33 24 36 26" fill="none" stroke="#555" stroke-width="1.2"/><circle cx="21" cy="29" r="2.5" fill="white"/><circle cx="33" cy="29" r="2.5" fill="white"/><circle cx="21.5" cy="29.3" r="1.2" fill="#333"/><circle cx="33.5" cy="29.3" r="1.2" fill="#333"/><circle cx="21" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="33" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="26" y1="29" x2="28" y2="29" stroke="#333" stroke-width="1"/><path d="M27 32 L25.5 36 L28.5 36" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M23 39 Q27 41 31 39" fill="none" stroke="#a0522d" stroke-width="1.3"/><rect x="31" y="37.5" width="12" height="3" rx="1.5" fill="#8B4513"/><rect x="31" y="37.5" width="3" height="3" rx="1" fill="#cd853f"/><circle cx="43" cy="39" r="1.2" fill="#e65100" opacity="0.7"/><path d="M44 37 Q46 33 44 29" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="0.8"/><path d="M45 38 Q48 32 45 27" fill="none" stroke="rgba(200,200,200,0.35)" stroke-width="0.6"/><path d="M10 57 Q10 49 18 47 L27 50 L36 47 Q44 49 44 57 L44 60 L10 60 Z" fill="#1a365d"/><path d="M26 50 L27 58 L28 50 Z" fill="#c62828"/><path d="M22 49 L27 52 L32 49" fill="none" stroke="white" stroke-width="1.5"/></svg>
                     </div>
-                    <p class="chairman-intro-quote">"Hier kun je spelers binnenhalen van andere clubs. Ze zullen overtuigd moeten worden met een tekenbonus en een salaris — gratis spelers bestaan niet! Hoe beter de speler, hoe meer hij kost. Spelers uit hogere klassen zijn sterker, maar ook duurder."</p>
+                    <p class="chairman-intro-quote">"Hier kun je spelers binnenhalen. Maar pas op: je koopt hier al snel een kat in de zak! De ALG-rating en potentie zijn schattingen — de werkelijkheid valt vaak tegen. Het salaris is gebaseerd op wat de speler denkt waard te zijn, niet op wat hij echt waard is. Pas als ze tekenen zie je de waarheid."</p>
                 </div>
 
                 <div class="transfer-filters-panel">
@@ -1198,35 +1170,6 @@
                         </div>
                     </div>
 
-                    <!-- Price Range Filter -->
-                    <div class="transfer-filter-group">
-                        <span class="filter-group-label">Marktwaarde:</span>
-                        <div class="price-range-container">
-                            <div class="price-range-inputs">
-                                <div class="price-input-group">
-                                    <span class="price-prefix">€</span>
-                                    <input type="number" id="transfer-min-price" min="0" max="50000" value="0" step="100" class="price-input">
-                                </div>
-                                <span class="price-separator">-</span>
-                                <div class="price-input-group">
-                                    <span class="price-prefix">€</span>
-                                    <input type="number" id="transfer-max-price" min="0" max="50000" value="50000" step="100" class="price-input">
-                                </div>
-                            </div>
-                            <label class="free-transfer-toggle">
-                                <input type="checkbox" id="transfer-free-only">
-                                <span>Alleen transfervrij</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Interesse filter -->
-                    <div class="transfer-filter-group">
-                        <label class="free-transfer-toggle">
-                            <input type="checkbox" id="transfer-interested-only">
-                            <span>Is geinteresseerd</span>
-                        </label>
-                    </div>
                 </div>
 
                 <div class="transfer-list" id="transfer-list">
@@ -1249,60 +1192,55 @@
                     <p class="chairman-intro-quote">"Sponsors, trainer, dat is het smeermiddel van de club. Kies een shirtsponsor die bij ons past en houd de sponsormarkt in de gaten voor bordsponsors. Hoe beter we presteren, hoe groter de namen die aankloppen."</p>
                 </div>
 
-                <div class="sponsors-page-layout">
-                    <!-- Left: Kit + Reclamebord (spans shirt+bord rows) -->
-                    <div class="sponsor-overview-panel" id="sponsor-overview-panel">
-                        <div class="spo-visuals">
-                            <div class="spo-column">
-                                <div class="spo-kit-mini">
-                                    <div class="kit-display" id="kit-display">
-                                        <div class="kit-wrapper">
-                                            <svg viewBox="0 0 100 100" class="kit-shirt-svg" id="sponsor-shirt-svg">
-                                                <path d="M20 20 L32 12 L32 5 L68 5 L68 12 L80 20 L85 38 L75 42 L75 95 L25 95 L25 42 L15 38 Z"
-                                                      fill="var(--shirt-primary, #1b5e20)" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2"/>
-                                                <path d="M32 5 Q50 12 68 5" fill="none" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2.5"/>
-                                                <rect x="26" y="36" width="48" height="26" rx="2" fill="var(--shirt-secondary, #f5f0e1)" opacity="0.9"/>
-                                                <text x="50" y="47" text-anchor="middle" fill="var(--shirt-primary, #1b5e20)"
-                                                      font-family="var(--font-display)" font-size="5.5" font-weight="bold" id="shirt-sponsor-line1"></text>
-                                                <text x="50" y="56" text-anchor="middle" fill="var(--shirt-primary, #1b5e20)"
-                                                      font-family="var(--font-display)" font-size="5.5" font-weight="bold" id="shirt-sponsor-line2"></text>
-                                            </svg>
-                                            <svg viewBox="0 0 100 55" class="kit-shorts-svg" id="sponsor-shorts-svg">
-                                                <path d="M25 5 L75 5 L75 10 L78 50 L55 50 L50 35 L45 50 L22 50 L25 10 Z"
-                                                      fill="var(--shirt-primary, #1b5e20)" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2"/>
-                                                <line x1="50" y1="5" x2="50" y2="35" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="1.5" opacity="0.6"/>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="spo-tile-shirt"><!-- Dynamically rendered --></div>
-                            </div>
-                            <div class="spo-column">
-                                <div class="spo-reclamebord" id="spo-reclamebord">
-                                    <svg viewBox="0 0 140 90" class="reclamebord-svg">
-                                        <rect x="10" y="0" width="4" height="90" rx="2" fill="#666"/>
-                                        <rect x="126" y="0" width="4" height="90" rx="2" fill="#666"/>
-                                        <rect x="6" y="8" width="128" height="52" rx="4" fill="#fff" stroke="#999" stroke-width="1.5"/>
-                                        <rect x="10" y="12" width="120" height="44" rx="2" fill="#1a365d"/>
-                                        <text x="70" y="32" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold" id="bord-sponsor-icon"></text>
-                                        <text x="70" y="48" text-anchor="middle" fill="#fff" font-size="8" font-weight="600" id="bord-sponsor-name">Geen sponsor</text>
-                                        <rect x="0" y="78" width="140" height="12" rx="1" fill="#2e7d32" opacity="0.5"/>
+                <!-- Shirtsponsor Section -->
+                <div class="sponsor-section" id="sponsor-section-shirt">
+                    <h3 class="sponsor-section-label">Shirtsponsor</h3>
+                    <div class="sponsor-row">
+                        <div class="sponsor-visual">
+                            <div class="kit-display" id="kit-display">
+                                <div class="kit-wrapper">
+                                    <svg viewBox="0 0 100 100" class="kit-shirt-svg" id="sponsor-shirt-svg">
+                                        <path d="M20 20 L32 12 L32 5 L68 5 L68 12 L80 20 L85 38 L75 42 L75 95 L25 95 L25 42 L15 38 Z"
+                                              fill="var(--shirt-primary, #1b5e20)" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2"/>
+                                        <path d="M32 5 Q50 12 68 5" fill="none" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2.5"/>
+                                        <rect x="26" y="36" width="48" height="26" rx="2" fill="var(--shirt-secondary, #f5f0e1)" opacity="0.9"/>
+                                        <text x="50" y="47" text-anchor="middle" fill="var(--shirt-primary, #1b5e20)"
+                                              font-family="var(--font-display)" font-size="5.5" font-weight="bold" id="shirt-sponsor-line1"></text>
+                                        <text x="50" y="56" text-anchor="middle" fill="var(--shirt-primary, #1b5e20)"
+                                              font-family="var(--font-display)" font-size="5.5" font-weight="bold" id="shirt-sponsor-line2"></text>
+                                    </svg>
+                                    <svg viewBox="0 0 100 55" class="kit-shorts-svg" id="sponsor-shorts-svg">
+                                        <path d="M25 5 L75 5 L75 10 L78 50 L55 50 L50 35 L45 50 L22 50 L25 10 Z"
+                                              fill="var(--shirt-primary, #1b5e20)" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2"/>
+                                        <line x1="50" y1="5" x2="50" y2="35" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="1.5" opacity="0.6"/>
                                     </svg>
                                 </div>
-                                <div id="spo-tile-bord"><!-- Dynamically rendered --></div>
                             </div>
+                            <div class="sponsor-info" id="sponsor-info-shirt"><!-- JS --></div>
                         </div>
-                        <div id="sponsor-overview-total"><!-- Dynamically rendered --></div>
+                        <div class="sponsor-options" id="shirt-sponsor-grid"><!-- JS --></div>
                     </div>
+                </div>
 
-                    <!-- Right: titles + grids as direct grid children -->
-                    <h3 class="sponsor-section-title spl-shirt-title">👕 Shirtsponsor</h3>
-                    <div class="shirt-sponsor-row spl-shirt-grid" id="shirt-sponsor-grid">
-                        <!-- Dynamically rendered -->
-                    </div>
-                    <h3 class="sponsor-section-title spl-bord-title">📋 Bordsponsors <span class="slot-week-badge" id="sponsor-market-week"></span></h3>
-                    <div class="sponsor-market-grid spl-bord-grid" id="sponsor-market-grid">
-                        <!-- Dynamically rendered -->
+                <!-- Bordsponsor Section -->
+                <div class="sponsor-section" id="sponsor-section-bord">
+                    <h3 class="sponsor-section-label">Bordsponsor</h3>
+                    <div class="sponsor-row">
+                        <div class="sponsor-visual">
+                            <div class="spo-reclamebord" id="spo-reclamebord">
+                                <svg viewBox="0 0 140 90" class="reclamebord-svg">
+                                    <rect x="10" y="0" width="4" height="90" rx="2" fill="#666"/>
+                                    <rect x="126" y="0" width="4" height="90" rx="2" fill="#666"/>
+                                    <rect x="6" y="8" width="128" height="52" rx="4" fill="#fff" stroke="#999" stroke-width="1.5"/>
+                                    <rect x="10" y="12" width="120" height="44" rx="2" fill="#1a365d"/>
+                                    <text x="70" y="32" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold" id="bord-sponsor-icon"></text>
+                                    <text x="70" y="48" text-anchor="middle" fill="#fff" font-size="8" font-weight="600" id="bord-sponsor-name">Geen sponsor</text>
+                                    <rect x="0" y="78" width="140" height="12" rx="1" fill="#2e7d32" opacity="0.5"/>
+                                </svg>
+                            </div>
+                            <div class="sponsor-info" id="sponsor-info-bord"><!-- JS --></div>
+                        </div>
+                        <div class="sponsor-options" id="sponsor-market-grid"><!-- JS --></div>
                     </div>
                 </div>
             </section>
@@ -1367,7 +1305,7 @@
                     <div class="chairman-intro-avatar">
                         <svg viewBox="0 0 55 60"><!-- Hat crown --><ellipse cx="27" cy="30" rx="14" ry="15" fill="#f5d0c5"/><ellipse cx="13" cy="29" rx="3" ry="4" fill="#e8bfb0"/><ellipse cx="41" cy="29" rx="3" ry="4" fill="#e8bfb0"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="#777"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="none" stroke="#666" stroke-width="0.8"/><rect x="14" y="17" width="26" height="3.5" rx="0.5" fill="#555"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="#888"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="none" stroke="#666" stroke-width="0.8"/><path d="M18 26 Q21 24 24 26" fill="none" stroke="#555" stroke-width="1.2"/><path d="M30 26 Q33 24 36 26" fill="none" stroke="#555" stroke-width="1.2"/><circle cx="21" cy="29" r="2.5" fill="white"/><circle cx="33" cy="29" r="2.5" fill="white"/><circle cx="21.5" cy="29.3" r="1.2" fill="#333"/><circle cx="33.5" cy="29.3" r="1.2" fill="#333"/><circle cx="21" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="33" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="26" y1="29" x2="28" y2="29" stroke="#333" stroke-width="1"/><path d="M27 32 L25.5 36 L28.5 36" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M23 39 Q27 41 31 39" fill="none" stroke="#a0522d" stroke-width="1.3"/><rect x="31" y="37.5" width="12" height="3" rx="1.5" fill="#8B4513"/><rect x="31" y="37.5" width="3" height="3" rx="1" fill="#cd853f"/><circle cx="43" cy="39" r="1.2" fill="#e65100" opacity="0.7"/><path d="M44 37 Q46 33 44 29" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="0.8"/><path d="M45 38 Q48 32 45 27" fill="none" stroke="rgba(200,200,200,0.35)" stroke-width="0.6"/><path d="M10 57 Q10 49 18 47 L27 50 L36 47 Q44 49 44 57 L44 60 L10 60 Z" fill="#1a365d"/><path d="M26 50 L27 58 L28 50 Z" fill="#c62828"/><path d="M22 49 L27 52 L32 49" fill="none" stroke="white" stroke-width="1.5"/></svg>
                     </div>
-                    <p class="chairman-intro-quote">"Hier regel je de staf, trainer. Een scout en een individuele trainer kun je meteen aannemen. Voor een fysio moet je eerst wat bouwen, en een jurist... tja, die is pas nodig als we wat hoger spelen. Ze kosten je wel elke week geld, dus denk er goed over na."</p>
+                    <p class="chairman-intro-quote">"Goed personeel is het halve werk. Elke stafmedewerker brengt unieke voordelen mee — bekijk de bonussen goed voordat je iemand aanneemt. Let op: ze kosten je wel elke week salaris!"</p>
                 </div>
 
                 <!-- Unified Staff View -->
