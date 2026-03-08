@@ -62,34 +62,7 @@
 
     <!-- Mode Selection Screen -->
     <div id="mode-screen" class="mp-overlay" style="display:none;">
-        <div class="mp-card mp-card-wide">
-            <h2>Kies je modus</h2>
-            <p class="mp-subtitle" id="mode-welcome-msg">Welkom, Manager!</p>
-            <div class="mp-mode-grid">
-                <button id="mode-singleplayer" class="mp-mode-card">
-                    <div class="mp-mode-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
-                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                            <circle cx="12" cy="7" r="4"/>
-                        </svg>
-                    </div>
-                    <h3>Singleplayer</h3>
-                    <p>Speel alleen tegen AI-teams. Alles lokaal opgeslagen.</p>
-                </button>
-                <button id="mode-multiplayer" class="mp-mode-card">
-                    <div class="mp-mode-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
-                            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 00-3-3.87"/>
-                            <path d="M16 3.13a4 4 0 010 7.75"/>
-                        </svg>
-                    </div>
-                    <h3>Multiplayer</h3>
-                    <p>Speel met vrienden. Wedstrijden elke dag om 20:00.</p>
-                </button>
-            </div>
-            <button id="mode-logout" class="mp-btn mp-btn-text">Uitloggen</button>
+        <div class="mp-card">
         </div>
     </div>
 
@@ -149,14 +122,7 @@
         </div>
     </div>
 
-    <!-- League Dashboard Overlay (in-game) -->
-    <div id="league-overlay" class="mp-league-overlay" style="display:none;">
-        <div class="mp-league-bar">
-            <span class="mp-league-name" id="league-bar-name">Competitie</span>
-            <span class="mp-league-countdown" id="league-bar-countdown">Volgende wedstrijd: --:--:--</span>
-            <button id="league-bar-toggle" class="mp-btn mp-btn-small">Standings</button>
-        </div>
-    </div>
+    <!-- League overlay removed — countdown is on dashboard -->
 
     <!-- Main App Container -->
     <div id="app">
