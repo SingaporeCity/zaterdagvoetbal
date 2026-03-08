@@ -18105,18 +18105,12 @@ body {
 }
 
 .training-hint-urgent {
-    color: #fff;
-    font-weight: 700;
-    background: var(--accent-amber);
-    padding: 3px 12px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 3px 10px;
     border-radius: 10px;
-    animation: urgentPulse 1.5s ease-in-out infinite;
-    box-shadow: 0 0 12px rgba(255, 144, 32, 0.4);
-}
-
-@keyframes urgentPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
 }
 
 .training-actions-row {
@@ -18135,8 +18129,8 @@ body {
 }
 
 .training-action-card {
-    background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(25, 118, 210, 0.06) 100%);
-    border: 1px solid rgba(33, 150, 243, 0.25);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
     border-radius: var(--card-radius);
     padding: 8px 10px;
     text-align: center;
@@ -18280,8 +18274,8 @@ body {
 }
 
 .training-actions-col .training-action-card.action-available {
-    border-color: rgba(92, 224, 101, 0.3);
-    background: linear-gradient(135deg, rgba(92, 224, 101, 0.08) 0%, rgba(92, 224, 101, 0.03) 100%);
+    border-color: rgba(255, 248, 225, 0.15);
+    background: var(--card-bg);
 }
 
 .training-actions-col .training-sec-icon {
