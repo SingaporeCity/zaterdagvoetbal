@@ -807,30 +807,44 @@ async function startLeague(onStartGame) {
  * Generate initial players for a club
  */
 async function generatePlayersForClub(clubId, leagueId, division) {
+    // Kelderklasse: old-timers squad (40-55yr, ALG 3-7) with 3 young guys (20-27yr, ALG 2-3)
     const positions = [
-        'keeper', 'linksback', 'centraleVerdediger', 'centraleVerdediger', 'rechtsback',
-        'linksMid', 'centraleMid', 'rechtsMid',
-        'linksbuiten', 'spits', 'rechtsbuiten',
-        // Bench
-        'keeper', 'centraleVerdediger', 'centraleMid', 'spits', 'linksMid'
+        'keeper', 'keeper',
+        'linksback', 'centraleVerdediger', 'centraleVerdediger', 'rechtsback', 'centraleVerdediger',
+        'centraleMid', 'centraleMid', 'centraleMid', 'centraleMid',
+        'linksbuiten', 'linksbuiten', 'rechtsbuiten', 'rechtsbuiten',
+        'spits', 'spits'
     ];
 
     const firstNames = ['Jan', 'Kees', 'Pieter', 'Henk', 'Willem', 'Jaap', 'Sander', 'Erik', 'Bas', 'Tom', 'Mark', 'Joost', 'Frank', 'Daan', 'Lars', 'Bram'];
     const lastNames = ['de Jong', 'Bakker', 'Visser', 'Smit', 'Meijer', 'de Boer', 'Mulder', 'de Groot', 'Bos', 'Vos', 'Peters', 'Hendriks', 'van Dijk', 'Janssen', 'van den Berg', 'Vermeer'];
 
-    const divStrength = {
-        8: { min: 20, max: 40 }, 7: { min: 30, max: 50 }, 6: { min: 40, max: 58 },
-        5: { min: 48, max: 65 }, 4: { min: 55, max: 72 }, 3: { min: 63, max: 78 },
-        2: { min: 70, max: 85 }, 1: { min: 78, max: 90 }, 0: { min: 85, max: 95 }
-    };
+    // Pick 3 random non-keeper indices to be young players
+    const nonKeeperIndices = positions.map((p, i) => p !== 'keeper' ? i : -1).filter(i => i >= 0);
+    const youngIndices = new Set();
+    while (youngIndices.size < 3 && nonKeeperIndices.length > 0) {
+        const pick = nonKeeperIndices.splice(Math.floor(Math.random() * nonKeeperIndices.length), 1)[0];
+        youngIndices.add(pick);
+    }
 
-    const str = divStrength[division] || divStrength[8];
+    const rnd = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
 
     const players = positions.map((pos, idx) => {
-        const overall = str.min + Math.floor(Math.random() * (str.max - str.min));
-        const age = 17 + Math.floor(Math.random() * 18);
+        const isYoung = youngIndices.has(idx);
+        const overall = isYoung ? rnd(2, 3) : rnd(3, 7);
+        const age = isYoung ? rnd(20, 27) : rnd(40, 55);
+        const stars = isYoung ? 0.5 : 0;
         const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
         const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+
+        const isKeeper = pos === 'keeper';
+        const attrNames = isKeeper ? ['REF', 'BAL', 'SNE', 'FYS'] : ['AAN', 'VER', 'SNE', 'FYS'];
+        const attributes = {};
+        const spread = isYoung ? 2 : 3;
+        attrNames.forEach(attr => {
+            attributes[attr] = Math.max(1, Math.min(10, overall + rnd(-spread, spread)));
+        });
+
         return {
             club_id: clubId,
             league_id: leagueId,
@@ -839,12 +853,13 @@ async function generatePlayersForClub(clubId, leagueId, division) {
             position: pos,
             nationality: 'nl',
             overall,
-            potential: Math.min(99, overall + Math.floor(Math.random() * 20)),
-            attributes: generateAttributes(overall, pos),
-            morale: 60 + Math.floor(Math.random() * 30),
-            fitness: 70 + Math.floor(Math.random() * 25),
-            energy: 70 + Math.floor(Math.random() * 25),
-            salary: division >= 7 ? 0 : Math.round(overall * (10 + Math.random() * 20)),
+            potential: overall,
+            stars,
+            attributes,
+            morale: rnd(60, 90),
+            fitness: rnd(70, 100),
+            energy: rnd(60, 100),
+            salary: Math.round(5 + (overall / 10) + stars * 3 + rnd(0, 3)),
             lineup_position: idx < 11 ? idx : null
         };
     });
