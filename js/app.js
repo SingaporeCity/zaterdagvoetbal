@@ -16107,6 +16107,13 @@ async function initMultiplayerGame(detail) {
     // Start auto-save to sync
     startAutoSave(gameState);
 
+    // Trigger onboarding for first-time multiplayer players
+    if (!gameState.onboardingCompleted) {
+        gameState.week = gameState.week || 1;
+        gameState.matchHistory = gameState.matchHistory || [];
+        setTimeout(() => showOnboarding(), 500);
+    }
+
     console.log(`Multiplayer game loaded: league=${leagueId}, club=${clubId}`);
 }
 
