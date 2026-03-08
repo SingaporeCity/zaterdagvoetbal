@@ -660,7 +660,7 @@ body {
 }
 
 #dashboard .page-title {
-    font-size: 1.5rem;
+    font-size: 2.4rem;
 }
 
 #dashboard .page-subtitle.handwritten {
@@ -5755,6 +5755,16 @@ body {
     content: 'Salaris: ';
 }
 
+.pc-signing-bonus {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.pc-signing-bonus::before {
+    content: 'Tekengeld: ';
+}
+
 /* Ratings section - compact horizontal badges */
 .pc-ratings {
     display: flex;
@@ -6074,12 +6084,49 @@ body {
     color: rgba(255, 255, 255, 0.15);
 }
 
-.pc-potential-stars .pc-stars .star.empty {
-    color: rgba(0, 0, 0, 0.2);
+/* Combo star: left half yellow, right half black */
+.star.half-yellow-dark {
+    position: relative;
+    display: inline-block;
+    color: transparent;
+}
+.star.half-yellow-dark .star-half-filled {
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #ffd600;
+    clip-path: inset(0 50% 0 0);
+}
+.star.half-yellow-dark .star-half-dark {
+    color: #000;
+    clip-path: inset(0 0 0 50%);
 }
 
-.pc-potential-stars .pc-stars .star.uncertain {
-    color: rgba(0, 0, 0, 0.5);
+.pc-potential-stars .pc-stars .star.empty {
+    color: rgba(0, 0, 0, 0.15);
+}
+
+/* Dark/black uncertainty stars (transfer market & scouting) */
+.star.dark,
+.pc-potential-stars .pc-stars .star.dark {
+    color: #000;
+}
+.star.dark-half,
+.pc-potential-stars .pc-stars .star.dark-half {
+    position: relative;
+    display: inline-block;
+    color: rgba(0, 0, 0, 0.15);
+}
+.star.dark-half .star-half-filled-dark,
+.pc-potential-stars .pc-stars .star.dark-half .star-half-filled-dark {
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #000;
+    clip-path: inset(0 50% 0 0);
+}
+.star.dark-half .star-half-empty {
+    color: rgba(0, 0, 0, 0.15);
 }
 
 .pc-potential-stars .pc-potential-label {
@@ -6162,6 +6209,10 @@ body {
 
 .pc-value::before {
     content: 'Waarde: ';
+}
+
+.transfer-card .pc-value::before {
+    content: 'Tekengeld: ';
 }
 
 /* Energy bar - compact horizontal */
@@ -13705,6 +13756,21 @@ body {
     padding: 2px 0 4px;
 }
 
+.scout-blocked-banner {
+    background: rgba(211, 47, 47, 0.12);
+    border: 1.5px solid #d32f2f;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.scout-blocked-text {
+    color: #d32f2f;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.4;
+}
+
 @media (max-width: 768px) {
     .scouting-layout {
         grid-template-columns: 1fr;
@@ -14303,6 +14369,19 @@ body {
     border: 1px solid rgba(244, 67, 54, 0.2);
     margin-bottom: 10px;
     grid-column: 1 / -1;
+}
+
+.youth-global-full-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: rgba(255, 152, 0, 0.1);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+    margin-bottom: 12px;
+    font-size: 0.8rem;
+    color: var(--accent-orange);
 }
 
 .yfb-icon {
@@ -16038,7 +16117,28 @@ body {
 }
 
 .scout-stars .star.empty {
-    color: rgba(0, 0, 0, 0.2);
+    color: rgba(0, 0, 0, 0.15);
+}
+
+.scout-stars .star.dark {
+    color: #000;
+}
+
+.scout-stars .star.dark-half {
+    position: relative;
+    display: inline-block;
+}
+
+.scout-stars .star.dark-half .star-half-filled-dark {
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #000;
+    clip-path: inset(0 50% 0 0);
+}
+
+.scout-stars .star.dark-half .star-half-empty {
+    color: rgba(0, 0, 0, 0.15);
 }
 
 .scout-rating-value {
@@ -18967,7 +19067,7 @@ body {
 
 #dashboard .page-title {
     font-family: var(--font-display);
-    font-size: 1.8rem;
+    font-size: 2.4rem;
     color: var(--text-primary);
     margin: 0;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -19740,7 +19840,7 @@ body {
     border-top: 3px solid rgba(120,100,70,0.25);
 }
 
-/* Spiral binding holes along left edge — synced to 28px lines */
+/* Spiral binding holes along left edge — synced to 22px lines */
 .checklist-card::before {
     content: '';
     position: absolute;
@@ -19748,8 +19848,8 @@ body {
     left: 10px;
     bottom: 0;
     width: 10px;
-    background-image: radial-gradient(circle 3px at 5px 14px, rgba(80,70,50,0.5) 3px, transparent 3px);
-    background-size: 10px 28px;
+    background-image: radial-gradient(circle 3px at 5px 13px, rgba(80,70,50,0.5) 3px, transparent 3px);
+    background-size: 10px 26px;
     z-index: 2;
 }
 
@@ -19765,15 +19865,15 @@ body {
     gap: 0;
     min-height: 0;
     overflow-y: auto;
-    /* Ruled lines — synced with 28px item height */
+    /* Ruled lines — synced with 22px item height */
     background-image: repeating-linear-gradient(
         180deg,
         transparent 0px,
-        transparent 27px,
-        rgba(140,160,180,0.12) 27px,
-        rgba(140,160,180,0.12) 28px
+        transparent 25px,
+        rgba(140,160,180,0.12) 25px,
+        rgba(140,160,180,0.12) 26px
     );
-    background-size: 100% 28px;
+    background-size: 100% 26px;
 }
 
 /* Progress bar — sits on one notebook line */
@@ -19781,7 +19881,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 28px;
+    height: 26px;
     box-sizing: border-box;
     padding: 0;
     margin: 0;
@@ -19818,13 +19918,13 @@ body {
 }
 
 .cl-section-label {
-    font-size: 0.6rem;
+    font-size: 0.55rem;
     font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    height: 28px;
-    line-height: 28px;
+    height: 26px;
+    line-height: 26px;
     padding: 0;
     margin: 0;
     box-sizing: border-box;
@@ -19841,14 +19941,14 @@ body {
 .cl-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     padding: 0 6px;
     border-radius: 0;
     cursor: pointer;
     transition: background 0.15s ease;
-    height: 28px;
-    min-height: 28px;
-    max-height: 28px;
+    height: 26px;
+    min-height: 26px;
+    max-height: 26px;
     box-sizing: border-box;
     flex-shrink: 0;
 }
@@ -19868,10 +19968,10 @@ body {
 
 /* Checkbox */
 .cl-checkbox {
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    border: 2px solid var(--text-muted);
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1.5px solid var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -19885,8 +19985,8 @@ body {
 }
 
 .cl-checkbox svg {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     stroke: white;
     fill: none;
 }
@@ -19900,7 +20000,7 @@ body {
 }
 
 .cl-label {
-    font-size: 0.75rem;
+    font-size: 0.68rem;
     color: var(--text-primary);
     font-weight: 500;
 }
@@ -26433,6 +26533,50 @@ body {
 }
 
 /* Position grid */
+/* Color preset buttons for onboarding */
+.onboarding-color-presets {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.onboarding-color-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--bg-secondary, #0d1520);
+    border: 2px solid var(--border, rgba(255,255,255,0.08));
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-primary, #f5f0e1);
+}
+
+.onboarding-color-btn:hover {
+    border-color: rgba(255,255,255,0.25);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.onboarding-color-btn.selected {
+    border-color: var(--accent-green);
+    background: rgba(46, 125, 50, 0.12);
+    box-shadow: 0 0 10px rgba(46, 125, 50, 0.2);
+}
+
+.ocp-swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.ocp-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 .onboarding-positions {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

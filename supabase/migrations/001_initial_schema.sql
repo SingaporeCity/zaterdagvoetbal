@@ -7,8 +7,10 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
--- 1. PROFILES — extends auth.users
+-- TABLES FIRST (no RLS policies yet)
 -- ============================================
+
+-- 1. PROFILES
 CREATE TABLE profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     display_name TEXT NOT NULL DEFAULT 'Manager',
@@ -17,32 +19,7 @@ CREATE TABLE profiles (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-
--- Anyone can read profiles
-CREATE POLICY "profiles_select" ON profiles FOR SELECT USING (true);
--- Users can update their own profile
-CREATE POLICY "profiles_update" ON profiles FOR UPDATE USING (auth.uid() = id);
--- Users can insert their own profile (via trigger, but also allow manual)
-CREATE POLICY "profiles_insert" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
-
--- Auto-create profile on signup
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO public.profiles (id, display_name)
-    VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'display_name', 'Manager'));
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION handle_new_user();
-
--- ============================================
--- 2. LEAGUES — lobby system
--- ============================================
+-- 2. LEAGUES
 CREATE TABLE leagues (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
@@ -58,23 +35,7 @@ CREATE TABLE leagues (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-ALTER TABLE leagues ENABLE ROW LEVEL SECURITY;
-
--- Lobby leagues visible to everyone; active/finished visible to members
-CREATE POLICY "leagues_select" ON leagues FOR SELECT USING (
-    status = 'lobby'
-    OR EXISTS (
-        SELECT 1 FROM clubs WHERE clubs.league_id = leagues.id AND clubs.owner_id = auth.uid()
-    )
-);
--- Only creator can update their league
-CREATE POLICY "leagues_update" ON leagues FOR UPDATE USING (created_by = auth.uid());
--- Authenticated users can create leagues
-CREATE POLICY "leagues_insert" ON leagues FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
-
--- ============================================
--- 3. CLUBS — 1 per player per league
--- ============================================
+-- 3. CLUBS
 CREATE TABLE clubs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     league_id UUID NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
@@ -84,7 +45,6 @@ CREATE TABLE clubs (
     division INT NOT NULL DEFAULT 8,
     budget NUMERIC NOT NULL DEFAULT 5000,
     reputation INT NOT NULL DEFAULT 10,
-    -- Complex state as JSONB
     stadium JSONB NOT NULL DEFAULT '{}',
     staff JSONB NOT NULL DEFAULT '{}',
     training JSONB NOT NULL DEFAULT '{}',
@@ -109,27 +69,7 @@ CREATE TABLE clubs (
     UNIQUE(league_id, owner_id)
 );
 
-ALTER TABLE clubs ENABLE ROW LEVEL SECURITY;
-
--- Visible to league members
-CREATE POLICY "clubs_select" ON clubs FOR SELECT USING (
-    EXISTS (
-        SELECT 1 FROM clubs c WHERE c.league_id = clubs.league_id AND c.owner_id = auth.uid()
-    )
-    OR EXISTS (
-        SELECT 1 FROM leagues l WHERE l.id = clubs.league_id AND l.status = 'lobby'
-    )
-);
--- Only owner can update own club
-CREATE POLICY "clubs_update" ON clubs FOR UPDATE USING (owner_id = auth.uid());
--- Insert via server functions (service role) or own club
-CREATE POLICY "clubs_insert" ON clubs FOR INSERT WITH CHECK (
-    owner_id = auth.uid() OR owner_id IS NULL
-);
-
--- ============================================
--- 4. PLAYERS — separate table for transfers/queries
--- ============================================
+-- 4. PLAYERS
 CREATE TABLE players (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     club_id UUID REFERENCES clubs(id) ON DELETE SET NULL,
@@ -151,7 +91,7 @@ CREATE TABLE players (
     fitness INT NOT NULL DEFAULT 90,
     energy INT NOT NULL DEFAULT 80,
     matches_together INT NOT NULL DEFAULT 0,
-    lineup_position INT,  -- NULL = bench, 0-10 = lineup slot
+    lineup_position INT,
     listed_for_sale BOOLEAN NOT NULL DEFAULT false,
     xp INT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -162,31 +102,7 @@ CREATE INDEX idx_players_club ON players(club_id);
 CREATE INDEX idx_players_league ON players(league_id);
 CREATE INDEX idx_players_goals ON players(league_id, goals DESC);
 
-ALTER TABLE players ENABLE ROW LEVEL SECURITY;
-
--- Visible to league members
-CREATE POLICY "players_select" ON players FOR SELECT USING (
-    EXISTS (
-        SELECT 1 FROM clubs c WHERE c.league_id = players.league_id AND c.owner_id = auth.uid()
-    )
-);
--- Owner of the club can update their players
-CREATE POLICY "players_update" ON players FOR UPDATE USING (
-    EXISTS (
-        SELECT 1 FROM clubs c WHERE c.id = players.club_id AND c.owner_id = auth.uid()
-    )
-);
--- Insert via service role or club owner
-CREATE POLICY "players_insert" ON players FOR INSERT WITH CHECK (
-    club_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM clubs c WHERE c.id = players.club_id AND c.owner_id = auth.uid()
-    )
-);
-
--- ============================================
--- 5. YOUTH_PLAYERS — per club
--- ============================================
+-- 5. YOUTH_PLAYERS
 CREATE TABLE youth_players (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
@@ -203,32 +119,7 @@ CREATE TABLE youth_players (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-ALTER TABLE youth_players ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "youth_select" ON youth_players FOR SELECT USING (
-    EXISTS (
-        SELECT 1 FROM clubs c WHERE c.id = youth_players.club_id AND c.owner_id = auth.uid()
-    )
-);
-CREATE POLICY "youth_update" ON youth_players FOR UPDATE USING (
-    EXISTS (
-        SELECT 1 FROM clubs c WHERE c.id = youth_players.club_id AND c.owner_id = auth.uid()
-    )
-);
-CREATE POLICY "youth_insert" ON youth_players FOR INSERT WITH CHECK (
-    EXISTS (
-        SELECT 1 FROM clubs c WHERE c.id = youth_players.club_id AND c.owner_id = auth.uid()
-    )
-);
-CREATE POLICY "youth_delete" ON youth_players FOR DELETE USING (
-    EXISTS (
-        SELECT 1 FROM clubs c WHERE c.id = youth_players.club_id AND c.owner_id = auth.uid()
-    )
-);
-
--- ============================================
--- 6. STANDINGS — per league/season/club
--- ============================================
+-- 6. STANDINGS
 CREATE TABLE standings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     league_id UUID NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
@@ -248,19 +139,7 @@ CREATE TABLE standings (
 
 CREATE INDEX idx_standings_league_season ON standings(league_id, season);
 
-ALTER TABLE standings ENABLE ROW LEVEL SECURITY;
-
--- Visible to league members
-CREATE POLICY "standings_select" ON standings FOR SELECT USING (
-    EXISTS (
-        SELECT 1 FROM clubs c WHERE c.league_id = standings.league_id AND c.owner_id = auth.uid()
-    )
-);
--- Only server (service role) writes standings — no user policy for insert/update
-
--- ============================================
--- 7. SCHEDULE — pre-generated round-robin
--- ============================================
+-- 7. SCHEDULE
 CREATE TABLE schedule (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     league_id UUID NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
@@ -274,17 +153,7 @@ CREATE TABLE schedule (
 
 CREATE INDEX idx_schedule_league_week ON schedule(league_id, season, week);
 
-ALTER TABLE schedule ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "schedule_select" ON schedule FOR SELECT USING (
-    EXISTS (
-        SELECT 1 FROM clubs c WHERE c.league_id = schedule.league_id AND c.owner_id = auth.uid()
-    )
-);
-
--- ============================================
--- 8. MATCH_RESULTS — wedstrijduitslagen
--- ============================================
+-- 8. MATCH_RESULTS
 CREATE TABLE match_results (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     league_id UUID NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
@@ -295,29 +164,19 @@ CREATE TABLE match_results (
     away_club_id UUID NOT NULL REFERENCES clubs(id),
     home_score INT NOT NULL DEFAULT 0,
     away_score INT NOT NULL DEFAULT 0,
-    match_data JSONB NOT NULL DEFAULT '{}',  -- events, ratings, man of the match
+    match_data JSONB NOT NULL DEFAULT '{}',
     played_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_results_league_season ON match_results(league_id, season);
 
-ALTER TABLE match_results ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "results_select" ON match_results FOR SELECT USING (
-    EXISTS (
-        SELECT 1 FROM clubs c WHERE c.league_id = match_results.league_id AND c.owner_id = auth.uid()
-    )
-);
-
--- ============================================
--- 9. TRANSFER_MARKET — shared per league
--- ============================================
+-- 9. TRANSFER_MARKET
 CREATE TABLE transfer_market (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     league_id UUID NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
     player_name TEXT NOT NULL,
-    player_data JSONB NOT NULL,  -- full player attributes
-    listed_by_club_id UUID REFERENCES clubs(id),  -- NULL = AI/server generated
+    player_data JSONB NOT NULL,
+    listed_by_club_id UUID REFERENCES clubs(id),
     price NUMERIC NOT NULL DEFAULT 0,
     signing_bonus NUMERIC NOT NULL DEFAULT 0,
     salary NUMERIC NOT NULL DEFAULT 0,
@@ -331,30 +190,11 @@ CREATE TABLE transfer_market (
 
 CREATE INDEX idx_transfer_league ON transfer_market(league_id, status);
 
-ALTER TABLE transfer_market ENABLE ROW LEVEL SECURITY;
-
--- Visible to league members
-CREATE POLICY "transfer_select" ON transfer_market FOR SELECT USING (
-    EXISTS (
-        SELECT 1 FROM clubs c WHERE c.league_id = transfer_market.league_id AND c.owner_id = auth.uid()
-    )
-);
--- Players can list their own players
-CREATE POLICY "transfer_insert" ON transfer_market FOR INSERT WITH CHECK (
-    listed_by_club_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM clubs c WHERE c.id = transfer_market.listed_by_club_id AND c.owner_id = auth.uid()
-    )
-);
--- Buy is handled via RPC function (service role)
-
--- ============================================
--- 10. LEAGUE_FEED — activity feed
--- ============================================
+-- 10. LEAGUE_FEED
 CREATE TABLE league_feed (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     league_id UUID NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
-    type TEXT NOT NULL,  -- 'transfer', 'result', 'promotion', 'chat', 'join', 'season_end'
+    type TEXT NOT NULL,
     club_id UUID REFERENCES clubs(id),
     data JSONB NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -362,23 +202,133 @@ CREATE TABLE league_feed (
 
 CREATE INDEX idx_feed_league ON league_feed(league_id, created_at DESC);
 
+-- ============================================
+-- NOW ENABLE RLS + POLICIES (all tables exist)
+-- ============================================
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE leagues ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clubs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE youth_players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE standings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE schedule ENABLE ROW LEVEL SECURITY;
+ALTER TABLE match_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transfer_market ENABLE ROW LEVEL SECURITY;
 ALTER TABLE league_feed ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "feed_select" ON league_feed FOR SELECT USING (
-    EXISTS (
-        SELECT 1 FROM clubs c WHERE c.league_id = league_feed.league_id AND c.owner_id = auth.uid()
+-- PROFILES
+CREATE POLICY "profiles_select" ON profiles FOR SELECT USING (true);
+CREATE POLICY "profiles_update" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "profiles_insert" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- LEAGUES
+CREATE POLICY "leagues_select" ON leagues FOR SELECT USING (
+    status = 'lobby'
+    OR EXISTS (
+        SELECT 1 FROM clubs WHERE clubs.league_id = leagues.id AND clubs.owner_id = auth.uid()
     )
 );
--- Insert allowed for league members (for chat) or service role
-CREATE POLICY "feed_insert" ON league_feed FOR INSERT WITH CHECK (
+CREATE POLICY "leagues_update" ON leagues FOR UPDATE USING (created_by = auth.uid());
+CREATE POLICY "leagues_insert" ON leagues FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+
+-- CLUBS
+CREATE POLICY "clubs_select" ON clubs FOR SELECT USING (
     EXISTS (
-        SELECT 1 FROM clubs c WHERE c.league_id = league_feed.league_id AND c.owner_id = auth.uid()
+        SELECT 1 FROM clubs c WHERE c.league_id = clubs.league_id AND c.owner_id = auth.uid()
+    )
+    OR EXISTS (
+        SELECT 1 FROM leagues l WHERE l.id = clubs.league_id AND l.status = 'lobby'
+    )
+);
+CREATE POLICY "clubs_update" ON clubs FOR UPDATE USING (owner_id = auth.uid());
+CREATE POLICY "clubs_insert" ON clubs FOR INSERT WITH CHECK (
+    owner_id = auth.uid() OR owner_id IS NULL
+);
+
+-- PLAYERS
+CREATE POLICY "players_select" ON players FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM clubs c WHERE c.league_id = players.league_id AND c.owner_id = auth.uid()
+    )
+);
+CREATE POLICY "players_update" ON players FOR UPDATE USING (
+    EXISTS (
+        SELECT 1 FROM clubs c WHERE c.id = players.club_id AND c.owner_id = auth.uid()
+    )
+);
+CREATE POLICY "players_insert" ON players FOR INSERT WITH CHECK (
+    club_id IS NULL
+    OR EXISTS (
+        SELECT 1 FROM clubs c WHERE c.id = players.club_id AND c.owner_id = auth.uid()
     )
 );
 
+-- YOUTH_PLAYERS
+CREATE POLICY "youth_select" ON youth_players FOR SELECT USING (
+    EXISTS (SELECT 1 FROM clubs c WHERE c.id = youth_players.club_id AND c.owner_id = auth.uid())
+);
+CREATE POLICY "youth_update" ON youth_players FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM clubs c WHERE c.id = youth_players.club_id AND c.owner_id = auth.uid())
+);
+CREATE POLICY "youth_insert" ON youth_players FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM clubs c WHERE c.id = youth_players.club_id AND c.owner_id = auth.uid())
+);
+CREATE POLICY "youth_delete" ON youth_players FOR DELETE USING (
+    EXISTS (SELECT 1 FROM clubs c WHERE c.id = youth_players.club_id AND c.owner_id = auth.uid())
+);
+
+-- STANDINGS
+CREATE POLICY "standings_select" ON standings FOR SELECT USING (
+    EXISTS (SELECT 1 FROM clubs c WHERE c.league_id = standings.league_id AND c.owner_id = auth.uid())
+);
+
+-- SCHEDULE
+CREATE POLICY "schedule_select" ON schedule FOR SELECT USING (
+    EXISTS (SELECT 1 FROM clubs c WHERE c.league_id = schedule.league_id AND c.owner_id = auth.uid())
+);
+
+-- MATCH_RESULTS
+CREATE POLICY "results_select" ON match_results FOR SELECT USING (
+    EXISTS (SELECT 1 FROM clubs c WHERE c.league_id = match_results.league_id AND c.owner_id = auth.uid())
+);
+
+-- TRANSFER_MARKET
+CREATE POLICY "transfer_select" ON transfer_market FOR SELECT USING (
+    EXISTS (SELECT 1 FROM clubs c WHERE c.league_id = transfer_market.league_id AND c.owner_id = auth.uid())
+);
+CREATE POLICY "transfer_insert" ON transfer_market FOR INSERT WITH CHECK (
+    listed_by_club_id IS NULL
+    OR EXISTS (SELECT 1 FROM clubs c WHERE c.id = transfer_market.listed_by_club_id AND c.owner_id = auth.uid())
+);
+
+-- LEAGUE_FEED
+CREATE POLICY "feed_select" ON league_feed FOR SELECT USING (
+    EXISTS (SELECT 1 FROM clubs c WHERE c.league_id = league_feed.league_id AND c.owner_id = auth.uid())
+);
+CREATE POLICY "feed_insert" ON league_feed FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM clubs c WHERE c.league_id = league_feed.league_id AND c.owner_id = auth.uid())
+);
+
 -- ============================================
--- HELPER: updated_at trigger
+-- TRIGGERS
 -- ============================================
+
+-- Auto-create profile on signup
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (id, display_name)
+    VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'display_name', 'Manager'));
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- updated_at trigger
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -393,8 +343,9 @@ CREATE TRIGGER update_clubs_updated_at BEFORE UPDATE ON clubs FOR EACH ROW EXECU
 CREATE TRIGGER update_players_updated_at BEFORE UPDATE ON players FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- ============================================
--- RPC: execute_transfer (atomic buy)
+-- RPC FUNCTIONS
 -- ============================================
+
 CREATE OR REPLACE FUNCTION execute_transfer(
     p_listing_id UUID,
     p_buyer_club_id UUID,
@@ -407,7 +358,6 @@ DECLARE
     v_total_cost NUMERIC;
     v_new_player_id UUID;
 BEGIN
-    -- Lock the listing row
     SELECT * INTO v_listing
     FROM transfer_market
     WHERE id = p_listing_id AND status = 'available'
@@ -417,7 +367,6 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'Speler is al verkocht of niet beschikbaar');
     END IF;
 
-    -- Check buyer club ownership
     SELECT * INTO v_club
     FROM clubs
     WHERE id = p_buyer_club_id AND owner_id = p_buyer_user_id
@@ -427,23 +376,18 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'Club niet gevonden');
     END IF;
 
-    -- Calculate total cost
     v_total_cost := v_listing.price + v_listing.signing_bonus;
 
-    -- Check budget
     IF v_club.budget < v_total_cost THEN
         RETURN jsonb_build_object('success', false, 'error', 'Niet genoeg budget');
     END IF;
 
-    -- Deduct budget
     UPDATE clubs SET budget = budget - v_total_cost WHERE id = p_buyer_club_id;
 
-    -- If listed by another club, credit their budget
     IF v_listing.listed_by_club_id IS NOT NULL THEN
         UPDATE clubs SET budget = budget + v_listing.price WHERE id = v_listing.listed_by_club_id;
     END IF;
 
-    -- Create player record for buyer
     INSERT INTO players (
         club_id, league_id, name, age, position, nationality, overall, potential,
         attributes, personality, tag, salary
@@ -463,12 +407,10 @@ BEGIN
         v_listing.salary
     RETURNING id INTO v_new_player_id;
 
-    -- Mark listing as sold
     UPDATE transfer_market
     SET status = 'sold', bought_by_club_id = p_buyer_club_id, sold_at = now()
     WHERE id = p_listing_id;
 
-    -- Add to league feed
     INSERT INTO league_feed (league_id, type, club_id, data)
     VALUES (
         v_listing.league_id,
@@ -489,9 +431,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- ============================================
--- RPC: generate_invite_code
--- ============================================
 CREATE OR REPLACE FUNCTION generate_invite_code()
 RETURNS TEXT AS $$
 DECLARE
@@ -508,7 +447,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================
--- Enable realtime for key tables
+-- REALTIME
 -- ============================================
 ALTER PUBLICATION supabase_realtime ADD TABLE standings;
 ALTER PUBLICATION supabase_realtime ADD TABLE match_results;

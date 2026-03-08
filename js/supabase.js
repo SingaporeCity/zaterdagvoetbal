@@ -5,9 +5,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// These will be set via environment variables in Vite
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Hardcoded for testing — replace with your Supabase project values
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://afkcxrspzpevuaefarxq.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFma2N4cnNwenBldnVhZWZhcnhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMDI4MjYsImV4cCI6MjA4ODU3ODgyNn0.G65iuGqxsLipxogsdTVdNaKiwHlYfbCp4AN6FyVzxdI';
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.warn('Supabase credentials not configured. Multiplayer disabled.');

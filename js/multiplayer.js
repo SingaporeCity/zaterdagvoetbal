@@ -610,8 +610,9 @@ async function startLeague(onStartGame) {
         });
     }
 
-    // Generate round-robin schedule
-    await generateSchedule(leagueId, 1, allClubs.map(c => c.id));
+    // Generate round-robin schedule (human clubs face each other in weeks 1+2)
+    const humanClubIds = humanClubs.map(c => c.id);
+    await generateSchedule(leagueId, 1, allClubs.map(c => c.id), humanClubIds);
 
     // Update league status to active
     await supabase
@@ -626,8 +627,9 @@ async function startLeague(onStartGame) {
         data: { season: 1, teams: allClubs.length }
     });
 
-    // Enter the game
-    await enterLeague(leagueId, myClub.league_id ? (await supabase.from('clubs').select('id').eq('league_id', leagueId).eq('owner_id', user.id).single()).data?.id : null);
+    // Enter the game — use the host's club ID from humanClubs
+    const myClubId = humanClubs.find(c => c.owner_id === user.id)?.id;
+    await enterLeague(leagueId, myClubId);
 }
 
 /**
@@ -715,13 +717,14 @@ function generateAttributes(overall, position) {
 /**
  * Generate round-robin schedule for a league
  */
-async function generateSchedule(leagueId, season, clubIds) {
+async function generateSchedule(leagueId, season, clubIds, humanClubIds = []) {
     const n = clubIds.length;
     const rounds = (n - 1) * 2; // Home + away
-    const matches = [];
 
+    // Build rounds as arrays of match objects
+    const roundMatches = [];
     for (let round = 0; round < rounds; round++) {
-        const week = round + 1;
+        const roundArr = [];
         for (let i = 0; i < Math.floor(n / 2); i++) {
             let home = (round + i) % (n - 1);
             let away = (n - 1 - i + round) % (n - 1);
@@ -729,24 +732,56 @@ async function generateSchedule(leagueId, season, clubIds) {
 
             // Swap for second half
             if (round >= n - 1) {
-                matches.push({
-                    league_id: leagueId,
-                    season,
-                    week,
-                    home_club_id: clubIds[away],
-                    away_club_id: clubIds[home]
-                });
+                roundArr.push({ home: clubIds[away], away: clubIds[home] });
             } else {
-                matches.push({
-                    league_id: leagueId,
-                    season,
-                    week,
-                    home_club_id: clubIds[home],
-                    away_club_id: clubIds[away]
-                });
+                roundArr.push({ home: clubIds[home], away: clubIds[away] });
             }
         }
+        roundMatches.push(roundArr);
     }
+
+    // If exactly 2 human players, ensure they face each other in week 1 and 2
+    if (humanClubIds.length === 2) {
+        const [h1, h2] = humanClubIds;
+        const halfSize = n - 1; // rounds per half (7 for 8 teams)
+
+        // Find round in first half where h1 vs h2
+        const firstHalfIdx = roundMatches.findIndex((round, idx) =>
+            idx < halfSize && round.some(m =>
+                (m.home === h1 && m.away === h2) || (m.home === h2 && m.away === h1)
+            )
+        );
+        // Find round in second half (reverse fixture)
+        const secondHalfIdx = roundMatches.findIndex((round, idx) =>
+            idx >= halfSize && round.some(m =>
+                (m.home === h1 && m.away === h2) || (m.home === h2 && m.away === h1)
+            )
+        );
+
+        // Swap first-half round to position 0 (week 1)
+        if (firstHalfIdx > 0) {
+            [roundMatches[0], roundMatches[firstHalfIdx]] = [roundMatches[firstHalfIdx], roundMatches[0]];
+        }
+        // Swap second-half round to position 1 (week 2)
+        if (secondHalfIdx > 1 && secondHalfIdx !== -1) {
+            [roundMatches[1], roundMatches[secondHalfIdx]] = [roundMatches[secondHalfIdx], roundMatches[1]];
+        }
+    }
+
+    // Flatten to match records with correct week numbers
+    const matches = [];
+    roundMatches.forEach((round, roundIdx) => {
+        const week = roundIdx + 1;
+        round.forEach(m => {
+            matches.push({
+                league_id: leagueId,
+                season,
+                week,
+                home_club_id: m.home,
+                away_club_id: m.away
+            });
+        });
+    });
 
     // Insert in batches
     const batchSize = 50;
@@ -782,6 +817,292 @@ export function showLeagueOverlay(leagueName) {
         overlay.style.display = 'block';
         document.getElementById('league-bar-name').textContent = leagueName;
     }
+}
+
+// ============================================
+// MULTIPLAYER MATCH HELPERS
+// ============================================
+
+/**
+ * Get my scheduled match for this week
+ */
+export async function getMyMatch(leagueId, season, week, myClubId) {
+    const { data } = await supabase
+        .from('schedule')
+        .select('*')
+        .eq('league_id', leagueId)
+        .eq('season', season)
+        .eq('week', week)
+        .or(`home_club_id.eq.${myClubId},away_club_id.eq.${myClubId}`)
+        .single();
+    return data;
+}
+
+/**
+ * Check if a match result already exists for this week
+ */
+export async function getMatchResult(leagueId, season, week, myClubId) {
+    const { data } = await supabase
+        .from('match_results')
+        .select('*')
+        .eq('league_id', leagueId)
+        .eq('season', season)
+        .eq('week', week)
+        .or(`home_club_id.eq.${myClubId},away_club_id.eq.${myClubId}`)
+        .single();
+    return data;
+}
+
+/**
+ * Get all schedule entries for a week
+ */
+export async function getWeekSchedule(leagueId, season, week) {
+    const { data } = await supabase
+        .from('schedule')
+        .select('*')
+        .eq('league_id', leagueId)
+        .eq('season', season)
+        .eq('week', week);
+    return data || [];
+}
+
+/**
+ * Get club data (name, tactics, etc) by ID
+ */
+export async function getClubData(clubId) {
+    const { data } = await supabase
+        .from('clubs')
+        .select('*')
+        .eq('id', clubId)
+        .single();
+    return data;
+}
+
+/**
+ * Get players for a club
+ */
+export async function getClubPlayers(clubId) {
+    const { data } = await supabase
+        .from('players')
+        .select('*')
+        .eq('club_id', clubId)
+        .order('lineup_position', { ascending: true, nullsFirst: false });
+    return data || [];
+}
+
+/**
+ * Build a team object (name + strength) from club data and players
+ * Used for simulateMatch() input
+ */
+function buildTeamFromClub(club, players) {
+    // Build lineup array (11 positions, null for empty slots)
+    const lineup = new Array(11).fill(null);
+    players.forEach(p => {
+        if (p.lineup_position !== null && p.lineup_position >= 0 && p.lineup_position < 11) {
+            lineup[p.lineup_position] = p;
+        }
+    });
+
+    const formation = club.tactics?.formation || '4-4-2';
+    const tactics = club.tactics || { offensief: 'gebalanceerd', speltempo: 'normaal', veldbreedte: 'normaal', dekking: 'normaal', mentaliteit: 'normaal' };
+
+    // We import calculateTeamStrength dynamically to avoid circular deps
+    // Instead, calculate a simple strength estimate from player overalls
+    const filledPlayers = lineup.filter(p => p !== null);
+    const avgOverall = filledPlayers.length > 0
+        ? filledPlayers.reduce((sum, p) => sum + (p.overall || 30), 0) / filledPlayers.length
+        : 25;
+
+    // Split by rough position groups for attack/defense/midfield
+    const defenders = filledPlayers.filter(p => ['keeper', 'linksback', 'centraleVerdediger', 'rechtsback'].includes(p.position));
+    const midfielders = filledPlayers.filter(p => ['linksMid', 'centraleMid', 'rechtsMid'].includes(p.position));
+    const attackers = filledPlayers.filter(p => ['linksbuiten', 'rechtsbuiten', 'spits'].includes(p.position));
+
+    const avgOf = (arr) => arr.length > 0 ? arr.reduce((s, p) => s + (p.overall || 30), 0) / arr.length : avgOverall;
+
+    return {
+        name: club.name,
+        strength: {
+            attack: Math.round(avgOf(attackers)),
+            defense: Math.round(avgOf(defenders)),
+            midfield: Math.round(avgOf(midfielders)),
+            overall: Math.round(avgOverall)
+        },
+        roster: filledPlayers.map((p, i) => ({ name: p.name, id: `opp_${i}` })),
+        lineup,
+        tactics
+    };
+}
+
+/**
+ * Simulate all matches for a week, save results, update standings, advance week
+ * Returns the match results array
+ */
+export async function simulateWeek(leagueId, season, week, simulateMatchFn, calculateStrengthFn) {
+    // Get all matches for this week
+    const weekSchedule = await getWeekSchedule(leagueId, season, week);
+    if (!weekSchedule || weekSchedule.length === 0) return [];
+
+    // Check if already simulated (any result exists)
+    const { data: existingResults } = await supabase
+        .from('match_results')
+        .select('id')
+        .eq('league_id', leagueId)
+        .eq('season', season)
+        .eq('week', week)
+        .limit(1);
+
+    if (existingResults && existingResults.length > 0) {
+        // Already simulated, fetch all results
+        const { data: allResults } = await supabase
+            .from('match_results')
+            .select('*')
+            .eq('league_id', leagueId)
+            .eq('season', season)
+            .eq('week', week);
+        return allResults || [];
+    }
+
+    const results = [];
+
+    for (const match of weekSchedule) {
+        // Load both clubs and their players
+        const [homeClub, awayClub, homePlayers, awayPlayers] = await Promise.all([
+            getClubData(match.home_club_id),
+            getClubData(match.away_club_id),
+            getClubPlayers(match.home_club_id),
+            getClubPlayers(match.away_club_id)
+        ]);
+
+        const homeTeam = buildTeamFromClub(homeClub, homePlayers);
+        const awayTeam = buildTeamFromClub(awayClub, awayPlayers);
+
+        // Build home lineup for match engine
+        const homeLineup = homeTeam.lineup;
+        const formation = homeClub.tactics?.formation || '4-4-2';
+        const tactics = homeClub.tactics || {};
+
+        // If calculateStrengthFn is provided, use it for more accurate strength
+        if (calculateStrengthFn) {
+            homeTeam.strength = calculateStrengthFn(homeLineup, formation, tactics, homeLineup, {});
+            const awayLineup = awayTeam.lineup;
+            const awayFormation = awayClub.tactics?.formation || '4-4-2';
+            const awayTactics = awayClub.tactics || {};
+            awayTeam.strength = calculateStrengthFn(awayLineup, awayFormation, awayTactics, awayLineup, {});
+        }
+
+        // Simulate the match (from home perspective)
+        const result = simulateMatchFn(
+            homeTeam,
+            awayTeam,
+            homeLineup,
+            formation,
+            tactics,
+            true, // isHomeGame
+            { grassLevel: homeClub.stadium?.grass || 0 }
+        );
+
+        // Store result in database
+        const matchResultRecord = {
+            league_id: leagueId,
+            schedule_id: match.id,
+            season,
+            week,
+            home_club_id: match.home_club_id,
+            away_club_id: match.away_club_id,
+            home_score: result.homeScore,
+            away_score: result.awayScore,
+            match_data: {
+                events: result.events,
+                possession: result.possession,
+                shots: result.shots,
+                shotsOnTarget: result.shotsOnTarget,
+                fouls: result.fouls,
+                cards: result.cards,
+                xG: result.xG,
+                manOfTheMatch: result.manOfTheMatch
+            }
+        };
+
+        const { data: savedResult } = await supabase
+            .from('match_results')
+            .insert(matchResultRecord)
+            .select()
+            .single();
+
+        results.push(savedResult || matchResultRecord);
+
+        // Update standings for both teams
+        await updateMultiplayerStandings(leagueId, season, match.home_club_id, result.homeScore, result.awayScore);
+        await updateMultiplayerStandings(leagueId, season, match.away_club_id, result.awayScore, result.homeScore);
+
+        // Mark schedule entry as played
+        await supabase
+            .from('schedule')
+            .update({ played: true })
+            .eq('id', match.id);
+    }
+
+    // Advance league week
+    await supabase
+        .from('leagues')
+        .update({ week: week + 1 })
+        .eq('id', leagueId);
+
+    return results;
+}
+
+/**
+ * Update standings for a single club after a match
+ */
+async function updateMultiplayerStandings(leagueId, season, clubId, goalsFor, goalsAgainst) {
+    // Fetch current standings
+    const { data: standing } = await supabase
+        .from('standings')
+        .select('*')
+        .eq('league_id', leagueId)
+        .eq('season', season)
+        .eq('club_id', clubId)
+        .single();
+
+    if (!standing) return;
+
+    const won = goalsFor > goalsAgainst;
+    const drawn = goalsFor === goalsAgainst;
+
+    const update = {
+        played: (standing.played || 0) + 1,
+        won: (standing.won || 0) + (won ? 1 : 0),
+        drawn: (standing.drawn || 0) + (drawn ? 1 : 0),
+        lost: (standing.lost || 0) + (!won && !drawn ? 1 : 0),
+        goals_for: (standing.goals_for || 0) + goalsFor,
+        goals_against: (standing.goals_against || 0) + goalsAgainst,
+        points: (standing.points || 0) + (won ? 3 : drawn ? 1 : 0)
+    };
+
+    await supabase
+        .from('standings')
+        .update(update)
+        .eq('id', standing.id);
+}
+
+/**
+ * Get the scheduled opponent's club name for the dashboard
+ */
+export async function getScheduledOpponent(leagueId, season, week, myClubId) {
+    const match = await getMyMatch(leagueId, season, week, myClubId);
+    if (!match) return null;
+
+    const opponentClubId = match.home_club_id === myClubId ? match.away_club_id : match.home_club_id;
+    const isHome = match.home_club_id === myClubId;
+
+    const { data: opponentClub } = await supabase
+        .from('clubs')
+        .select('id, name, is_ai')
+        .eq('id', opponentClubId)
+        .single();
+
+    return opponentClub ? { ...opponentClub, isHome } : null;
 }
 
 /**
