@@ -25776,9 +25776,20 @@ body {
     .global-top-tiles {
         flex-direction: column;
         gap: 8px;
+        margin-left: 0 !important;
+        width: 100% !important;
     }
     .global-top-tiles .global-top-bar {
-        width: 100%;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #global-player-bar {
+        background: linear-gradient(135deg, #1b5e20, #2e7d32) !important;
+        border-color: rgba(76, 175, 80, 0.4) !important;
+    }
+    #global-top-bar {
+        background: linear-gradient(135deg, #0d47a1, #1565c0) !important;
+        border-color: rgba(66, 165, 245, 0.4) !important;
     }
 
     /* --- STADIUM MOBILE: hide map, show facility buttons --- */
