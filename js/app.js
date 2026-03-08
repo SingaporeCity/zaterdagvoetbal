@@ -473,7 +473,7 @@ function createZaterdagPlayer(position) {
         tag: tag.name,
         tagBonus: tag.bonus,
         personality: generatePersonality(8, 0.5),
-        salary: 0,
+        salary: random(8, 20),
         goals: 0,
         assists: 0,
         morale: random(60, 90),
@@ -787,7 +787,7 @@ function renderStandings() {
                 <td>${team.wins || 0}</td>
                 <td>${team.draws || 0}</td>
                 <td>${team.losses || 0}</td>
-                <td><strong>${team.points}</strong></td>
+                <td><strong>${team.points}</strong>${isPlayer && gameState.club.pointsDeducted ? ` <span style="color: #f44336; font-size: 0.7em;">(-${gameState.club.pointsDeducted})</span>` : ''}</td>
             </tr>
         `;
     });
@@ -991,6 +991,118 @@ function renderStarsHTML(starCount) {
     return html;
 }
 
+// Create a scouted player with caps based on scout level
+// scoutLevel: 0 = no scout, 1 = scout, 2 = scout + centrum
+function createScoutedPlayer(scoutLevel) {
+    const positions = Object.keys(POSITIONS).filter(p => p !== 'keeper');
+    const pos = randomFromArray(positions);
+    const isKeeper = false;
+    const attrNames = ['AAN', 'VER', 'SNE', 'FYS'];
+
+    // Determine attribute cap based on scout level
+    // Max overall: 0=5, 1=10, 2=15 → attributes capped accordingly
+    const maxAttr = scoutLevel === 0 ? 3 : scoutLevel === 1 ? 6 : 8;
+    const attributes = {};
+    attrNames.forEach(attr => {
+        attributes[attr] = random(1, maxAttr);
+    });
+
+    let overall = calculateOverall(attributes, pos);
+
+    // Hard cap overall
+    const maxOverall = scoutLevel === 0 ? 5 : scoutLevel === 1 ? 10 : 15;
+    if (overall > maxOverall) {
+        // Scale attributes down proportionally
+        const scale = maxOverall / overall;
+        attrNames.forEach(attr => {
+            attributes[attr] = Math.max(1, Math.round(attributes[attr] * scale));
+        });
+        overall = calculateOverall(attributes, pos);
+    }
+
+    // Stars: scout = gegarandeerd 0.5-1, centrum = 0.5-1.5, geen scout = 0
+    let stars = 0;
+    if (scoutLevel === 1) {
+        stars = Math.random() < 0.5 ? 0.5 : 1;
+    } else if (scoutLevel >= 2) {
+        const roll = Math.random();
+        stars = roll < 0.33 ? 0.5 : roll < 0.66 ? 1 : 1.5;
+    }
+
+    const nationality = Math.random() < 0.90 ? NATIONALITIES[0] : generateNationality();
+    const tag = getPlayerTag(attributes, pos);
+    const playerName = generatePlayerName();
+    const playerAge = random(16, 45);
+
+    // Salary: altijd rond de €10/week
+    const salary = random(5, 15);
+
+    return {
+        id: Date.now() + Math.random(),
+        name: playerName,
+        age: playerAge,
+        position: pos,
+        nationality: nationality,
+        attributes: attributes,
+        overall: overall,
+        tag: tag.name,
+        tagBonus: tag.bonus,
+        personality: generatePersonality(8, 0.5),
+        salary: salary,
+        goals: 0,
+        assists: 0,
+        morale: random(60, 90),
+        fitness: random(80, 100),
+        condition: random(70, 100),
+        energy: random(60, 100),
+        stars: stars,
+        fixedMarketValue: 0,
+        photo: generatePlayerPhoto(playerName, pos),
+        scoutedAtWeek: gameState.week,
+        scoutUncertainty: true
+    };
+}
+
+// Scout uncertainty system
+function getScoutUncertainty(player) {
+    if (!player.scoutUncertainty) {
+        return { weeksScouted: 99, isExact: true, overallMin: player.overall, overallMax: player.overall, starsMin: player.stars, starsMax: player.stars };
+    }
+    const weeksScouted = Math.min(3, (gameState.week || 1) - (player.scoutedAtWeek || 0));
+    if (weeksScouted >= 3) {
+        return { weeksScouted: 3, isExact: true, overallMin: player.overall, overallMax: player.overall, starsMin: player.stars, starsMax: player.stars };
+    }
+    const margins = [12, 8, 4];
+    const starMargins = [2, 1.5, 0.5];
+    const margin = margins[weeksScouted];
+    const starMargin = starMargins[weeksScouted];
+    return {
+        weeksScouted,
+        isExact: false,
+        overallMin: Math.max(1, player.overall - margin),
+        overallMax: Math.min(99, player.overall + margin),
+        starsMin: Math.max(1, Math.floor(player.stars - starMargin)),
+        starsMax: Math.min(5, Math.ceil(player.stars + starMargin))
+    };
+}
+
+// Render scout stars: white (certain minimum) + black (uncertain range)
+function renderScoutStarsHTML(minStars, maxStars) {
+    let html = '';
+    const min = Math.min(5, Math.max(0, minStars));
+    const max = Math.min(5, Math.max(min, maxStars));
+    for (let i = 0; i < min; i++) {
+        html += '<span class="star full">★</span>';
+    }
+    for (let i = min; i < max; i++) {
+        html += '<span class="star uncertain">★</span>';
+    }
+    for (let i = max; i < 5; i++) {
+        html += '<span class="star empty">☆</span>';
+    }
+    return html;
+}
+
 // Render transfer stars: known (yellow) + uncertain (dark) + empty
 function renderTransferStarsHTML(known, uncertain) {
     let html = '';
@@ -1040,7 +1152,7 @@ function createPlayerCardHTML(player, mini = false) {
                 </div>
                 <img class="pc-flag-img" src="https://flagcdn.com/w40/${(player.nationality.code || 'nl').toLowerCase()}.png" alt="${player.nationality.code || 'NL'}" />
             </div>
-            <span class="pc-name">${player.name}</span>
+            <span class="pc-name">${player.name}${player.suspendedUntil && player.suspendedUntil > gameState.week ? ` <span class="pc-status pc-suspended">🚫 Geschorst (${player.suspendedUntil - gameState.week}w)</span>` : player.injuredUntil && player.injuredUntil > gameState.week ? ` <span class="pc-status pc-injured">🏥 Geblesseerd (${player.injuredUntil - gameState.week}w)</span>` : (player.yellowCards || 0) > 0 ? ` <span class="pc-status pc-yellows">🟨${player.yellowCards}/5</span>` : ''}</span>
             <span class="pc-finance">
                 <span class="pc-salary">${formatCurrency(player.salary ?? 50)}/w</span>
                 <span class="pc-value">${formatCurrency(marketValue)}</span>
@@ -1076,35 +1188,35 @@ function createPlayerCardHTML(player, mini = false) {
 function initMyPlayer() {
     if (!gameState.myPlayer) {
         gameState.myPlayer = {
-            name: 'Patrick',
-            age: 45,
+            name: 'Speler',
+            age: 35,
             position: 'spits',
             number: 10,
             energy: 100,
             attributes: {
-                SNE: 12,
-                TEC: 12,
-                PAS: 12,
-                SCH: 12,
-                VER: 12,
-                FYS: 12
+                SNE: 5,
+                TEC: 5,
+                PAS: 5,
+                SCH: 5,
+                VER: 5,
+                FYS: 5
             }
         };
     }
     // Migrate old saves missing new attributes
     const a = gameState.myPlayer.attributes;
-    if (a.PAS === undefined) a.PAS = 12;
-    if (a.SCH === undefined) a.SCH = 12;
+    if (a.PAS === undefined) a.PAS = 5;
+    if (a.SCH === undefined) a.SCH = 5;
     if (gameState.myPlayer.energy === undefined) gameState.myPlayer.energy = 100;
     // Migrate position to valid POSITIONS key
     if (gameState.myPlayer.position === 'CM') gameState.myPlayer.position = 'spits';
     // Migrate player XP fields
-    if (gameState.myPlayer.xp === undefined || gameState.myPlayer.xp < 1100) gameState.myPlayer.xp = 1100;
+    if (gameState.myPlayer.xp === undefined) gameState.myPlayer.xp = 0;
     if (gameState.myPlayer.spentSkillPoints === undefined) gameState.myPlayer.spentSkillPoints = 0;
-    // Migrate old saves: cap initial attributes at 12 (only if no skill points spent yet)
+    // Migrate old saves: cap initial attributes at 5 (only if no skill points spent yet)
     if (!gameState.myPlayer.spentSkillPoints) {
         const attrKeys = ['SNE', 'TEC', 'PAS', 'SCH', 'VER', 'FYS'];
-        attrKeys.forEach(k => { if (a[k] > 12) a[k] = 12; });
+        attrKeys.forEach(k => { if (a[k] > 5) a[k] = 5; });
     }
     // Sync overall from attributes
     gameState.myPlayer.overall = Math.round((a.SNE + a.TEC + a.PAS + a.SCH + a.VER + a.FYS) / 6);
@@ -1741,6 +1853,12 @@ function getFormationDrive(key) {
     return Math.min(100, Math.round(gameState.formationDrives[key] || 0));
 }
 
+function getGrassLevel() {
+    const grassId = gameState.stadium?.grass || 'grass_0';
+    const match = grassId.match(/grass_(\d+)/);
+    return match ? parseInt(match[1]) : 0;
+}
+
 function renderFormationDropdown() {
     const select = document.getElementById('formation-select');
     if (!select) return;
@@ -1955,6 +2073,7 @@ function renderLineupPitch() {
                         <span class="lp-overall">${player.overall + chemistryBonus}${chemistryBonus > 0 ? '<span class="chemistry-boost">+' + chemistryBonus + '</span>' : ''}</span>
                         <span class="lp-name">${player.name.split(' ')[0]}</span>
                         <span class="lp-position">${POSITIONS[player.position]?.abbr || player.position}</span>
+                        ${player.suspendedUntil && player.suspendedUntil > gameState.week ? '<span class="lp-status">🚫</span>' : player.injuredUntil && player.injuredUntil > gameState.week ? '<span class="lp-status">🏥</span>' : (player.yellowCards || 0) >= 3 ? `<span class="lp-status">🟨${player.yellowCards}</span>` : ''}
                     </div>
                 ` : `
                     <div class="lineup-empty-slot" style="border-color: ${slotColor}">
@@ -2009,13 +2128,30 @@ function renderAvailablePlayers() {
             const energyColor = energy > 70 ? '#4caf50' : energy >= 40 ? '#ff9800' : '#ef5350';
             const stars = player.stars || 0;
             const inLineup = lineupIds.has(player.id);
+
+            const isSuspended = player.suspendedUntil && player.suspendedUntil > gameState.week;
+            const isInjured = player.injuredUntil && player.injuredUntil > gameState.week;
+            const isUnavailable = isSuspended || isInjured;
+
+            let statusHTML = '';
+            if (isSuspended) {
+                const weeks = player.suspendedUntil - gameState.week;
+                statusHTML = `<span class="ap-status ap-suspended">🚫${weeks}w</span>`;
+            } else if (isInjured) {
+                const weeks = player.injuredUntil - gameState.week;
+                statusHTML = `<span class="ap-status ap-injured">🏥${weeks}w</span>`;
+            } else if ((player.yellowCards || 0) >= 3) {
+                statusHTML = `<span class="ap-status ap-yellows">🟨${player.yellowCards}</span>`;
+            }
+
             html += `
-                <div class="available-player${inLineup ? ' in-lineup' : ''}"
-                     draggable="true"
+                <div class="available-player${inLineup ? ' in-lineup' : ''}${isUnavailable ? ' unavailable' : ''}"
+                     draggable="${isUnavailable ? 'false' : 'true'}"
                      data-player-id="${player.id}">
                     <span class="ap-pos" style="background:${posData?.color || '#666'};color:#fff">${posData?.abbr || '??'}</span>
                     <span class="ap-age">${player.age}j</span>
                     <span class="ap-name">${player.name}</span>
+                    ${statusHTML}
                     <span class="ap-energy"><span class="ap-energy-bar" style="width:${energy}%;background:${energyColor}"></span></span>
                     <span class="ap-overall" style="background: ${posData?.color || '#666'}">${player.overall}</span>
                     <span class="ap-stars">${renderStarsHTML(stars)}</span>
@@ -3051,10 +3187,10 @@ function renderScoutPage() {
         const chairmanSvg = CHAIRMAN_SVG;
         const mission = gameState.scoutMission;
         const usedToday = !mission.active && mission.lastScoutDate === getTodayString();
-        const quoteText = usedToday
+        const quoteText = scoutLevel === 0
+            ? '"We hebben nog geen scout in dienst, maar ik ken zelf ook wel een paar mensen. Elke paar dagen heb ik een tip voor je! Neem een scout aan voor betere spelers."'
+            : usedToday
             ? '"We hebben vandaag al gespeurd, trainer. Morgen kunnen we weer op pad!"'
-            : scoutLevel === 0
-            ? '"We hebben nog geen scout in dienst. Bij de Staf kun je er een aannemen. Maar bij gebrek daaraan ken ik zelf ook wel een paar mensen die misschien voor ons zouden willen spelen. Je mag elke dag één keer zoeken!"'
             : '"Onze scout is actief op zoek naar versterking. Stuur hem erop uit en hij komt terug met een rapport!"';
         chairmanIntro.innerHTML = `
             <div class="chairman-intro">
@@ -3103,12 +3239,12 @@ function renderScoutPage() {
         scoutCard.innerHTML = scoutLevel === 0
             ? `
             <div class="scouting-card-header">
-                <span class="scouting-card-icon">❌</span>
-                <span class="scouting-card-title">Geen Scout</span>
+                <span class="scouting-card-icon">💬</span>
+                <span class="scouting-card-title">Voorzitter</span>
             </div>
-            <div class="scouting-card-desc">Je hebt nog geen scout in dienst. Neem een scout aan via de <strong>Staf</strong>-pagina om professioneel te kunnen scouten.</div>
+            <div class="scouting-card-desc">De voorzitter zoekt elke 2 dagen een speler voor je. Neem een scout aan via <strong>Staf</strong> voor betere spelers.</div>
             <div class="scouting-card-info">
-                <span>💬 Tips van de voorzitter</span>
+                <span>👤 Max 5 ALG / 0 ster potentieel</span>
             </div>
             `
             : `
@@ -3119,8 +3255,7 @@ function renderScoutPage() {
             <div class="scouting-card-level" style="color: var(--accent-green);">✓ In dienst</div>
             <div class="scouting-card-desc">Je scout zoekt de beste spelers voor jou.</div>
             <div class="scouting-card-info">
-                <span>👤 1 speler per missie</span>
-                ${hasCentrum ? '<span>🏟️ 2 spelers met scoutingscentrum</span>' : ''}
+                <span>📋 Scoutinglijst: ${hasCentrum ? '2 plekken' : '1 plek'}</span>
             </div>
             ${missionHTML}
             `;
@@ -3136,7 +3271,7 @@ function renderScoutPage() {
                     <span class="scouting-card-title">Scoutingscentrum</span>
                 </div>
                 <div class="scouting-card-level">Actief</div>
-                <div class="scouting-card-desc">Je ontvangt 2 speler-suggesties per keer in plaats van 1.</div>
+                <div class="scouting-card-desc">2 plekken op je scoutinglijst in plaats van 1.</div>
             `;
         } else {
             centrumCard.innerHTML = `
@@ -3145,7 +3280,7 @@ function renderScoutPage() {
                     <span class="scouting-card-title">Scoutingscentrum</span>
                 </div>
                 <div class="scouting-card-level scouting-locked">Vergrendeld</div>
-                <div class="scouting-card-desc">Promoveer naar <strong>Divisie 5</strong> om een scoutingscentrum te bouwen en 2 spelers per keer te zien.</div>
+                <div class="scouting-card-desc">Promoveer naar <strong>Divisie 5</strong> om een scoutingscentrum te bouwen en 2 plekken op je scoutinglijst te krijgen.</div>
                 <div class="scouting-card-req">
                     <span>🔒</span> Vereist: Divisie 5
                 </div>
@@ -3161,26 +3296,64 @@ function renderScoutPage() {
         gameState.scoutHistory = [];
     }
 
-    // Generate the chairman's son tip if no tips exist yet
+    // Generate the chairman's son tip if no tips exist yet (first time only)
     if (gameState.scoutTips.length === 0 && !gameState.scoutTipClaimed) {
-        const chairmanSon = createZaterdagPlayer('centraleMid');
+        const chairmanSon = createScoutedPlayer(0); // voorzitter level
         chairmanSon.name = `${randomFromArray(DUTCH_FIRST_NAMES)} Bakker`;
         chairmanSon.age = 18;
-        chairmanSon.overall = 2;
-        chairmanSon.stars = 2;
-        chairmanSon.salary = 0;
-        chairmanSon.fixedMarketValue = 0;
         chairmanSon.nationality = NATIONALITIES[0]; // NL
-        const attrNames = ['AAN', 'VER', 'SNE', 'FYS'];
-        attrNames.forEach(a => { chairmanSon.attributes[a] = random(1, 4); });
-        chairmanSon.overall = calculateOverall(chairmanSon.attributes, chairmanSon.position);
         chairmanSon.tipSource = 'voorzitter';
         gameState.scoutTips.push(chairmanSon);
+        saveGame();
     }
 
-    // Helper to render a player card
+    // Without scout: auto-generate a player every 2 days
+    if (scoutLevel === 0 && gameState.scoutTips.length === 0 && gameState.scoutTipClaimed) {
+        const mission = gameState.scoutMission;
+        const today = getTodayString();
+        const lastDate = mission.lastScoutDate;
+        let daysPassed = 999; // first time = always generate
+        if (lastDate) {
+            const last = new Date(lastDate);
+            const now = new Date(today);
+            daysPassed = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+        }
+        if (daysPassed >= 2) {
+            const player = createScoutedPlayer(0);
+            player.tipSource = 'voorzitter';
+            gameState.scoutTips.push(player);
+            mission.lastScoutDate = today;
+            saveGame();
+            showNotification('De voorzitter heeft een speler voor je gevonden!', 'info');
+        }
+    }
+
+    // Helper to render a player card with uncertainty
     function renderScoutPlayerCard(player, actions) {
         const posData = POSITIONS[player.position] || { abbr: '??', color: '#666' };
+        const unc = getScoutUncertainty(player);
+
+        // ALG display
+        let overallDisplay;
+        if (unc.isExact) {
+            overallDisplay = `<span class="pc-overall-value">${player.overall}</span>`;
+        } else {
+            overallDisplay = `<span class="pc-overall-value scout-overall-range">${unc.overallMin} - ${unc.overallMax}</span>`;
+        }
+
+        // Stars display
+        const starsHTML = unc.isExact
+            ? renderStarsHTML(player.stars)
+            : renderScoutStarsHTML(unc.starsMin, unc.starsMax);
+
+        // Progress indicator
+        let progressHTML = '';
+        if (player.scoutUncertainty && !unc.isExact) {
+            progressHTML = `<div class="scout-progress-indicator">Week ${unc.weeksScouted}/3 🔍</div>`;
+        } else if (player.scoutUncertainty && unc.isExact) {
+            progressHTML = `<div class="scout-progress-indicator scout-progress-complete">Rapport compleet ✓</div>`;
+        }
+
         return `
             <div class="scout-tip-card">
                 <div class="player-card" data-player-id="${player.id}">
@@ -3194,7 +3367,7 @@ function renderScoutPage() {
                     </div>
                     <span class="pc-name">${player.name}</span>
                     <span class="pc-finance">
-                        <span class="pc-salary">${formatCurrency(0)}/w</span>
+                        <span class="pc-salary">${formatCurrency(player.salary || 0)}/w</span>
                         <span class="pc-value">${formatCurrency(0)}</span>
                     </span>
                     <div class="pc-condition-bars">
@@ -3208,14 +3381,15 @@ function renderScoutPage() {
                     </div>
                     <div class="pc-ratings">
                         <div class="pc-overall" style="background: ${posData.color}">
-                            <span class="pc-overall-value">${player.overall}</span>
+                            ${overallDisplay}
                             <span class="pc-overall-label">ALG</span>
                         </div>
                         <div class="pc-potential-stars">
-                            <span class="pc-stars">${renderStarsHTML(2)}</span>
+                            <span class="pc-stars">${starsHTML}</span>
                             <span class="pc-potential-label">POT</span>
                         </div>
                     </div>
+                    ${progressHTML}
                 </div>
                 <div class="scout-tip-actions">
                     ${actions}
@@ -3224,21 +3398,23 @@ function renderScoutPage() {
         `;
     }
 
-    // Section 1: Nieuw gescoute spelers
+    // Section 1: Nieuw gescoute spelers (3 knoppen: Aannemen, Afwijzen, Blijven Scouten)
     const newTipsHTML = gameState.scoutTips.length > 0
         ? gameState.scoutTips.map(player => renderScoutPlayerCard(player, `
-            <button class="btn btn-primary" onclick="acceptScoutTip('${player.id}')">Aannemen</button>
+            <button class="btn btn-primary" onclick="acceptScoutTip('${player.id}')">Contracteren</button>
             <button class="btn btn-secondary" onclick="declineScoutTip('${player.id}')">Afwijzen</button>
+            <button class="btn btn-outline" onclick="keepScouting('${player.id}')">Blijven Scouten</button>
         `)).join('')
         : '<p class="scout-no-tips">Geen nieuwe spelers. Stuur je scout erop uit!</p>';
 
-    // Section 2: Eerder gescoute spelers
+    // Section 2: Scoutinglijst (met capaciteit)
+    const maxScoutSlots = hasCentrum ? 2 : 1;
     const historyHTML = gameState.scoutHistory.length > 0
         ? gameState.scoutHistory.map(player => renderScoutPlayerCard(player, `
-            <button class="btn btn-primary" onclick="acceptScoutTip('${player.id}')">Aannemen</button>
-            <button class="btn btn-danger btn-sm" onclick="removeFromHistory('${player.id}')">Verwijderen</button>
+            <button class="btn btn-primary" onclick="acceptScoutTip('${player.id}')">Contracteren</button>
+            <button class="btn btn-danger btn-sm" onclick="declineScoutTip('${player.id}')">Afwijzen</button>
         `)).join('')
-        : '<p class="scout-no-tips">Nog geen eerder gescoute spelers.</p>';
+        : '<p class="scout-no-tips">Geen spelers op de scoutinglijst.</p>';
 
     section.innerHTML = `
         <div class="scout-section">
@@ -3250,8 +3426,8 @@ function renderScoutPage() {
         </div>
         <div class="scout-section">
             <div class="scout-section-header scout-section-header--history">
-                <span class="scout-section-title">Eerder gescoute spelers</span>
-                <span class="scout-section-count">${gameState.scoutHistory.length}</span>
+                <span class="scout-section-title">Scoutinglijst</span>
+                <span class="scout-capacity">${gameState.scoutHistory.length}/${maxScoutSlots}</span>
             </div>
             ${historyHTML}
         </div>
@@ -3283,31 +3459,41 @@ function hireScoutedPlayer(playerId) {
 }
 
 // Scout tip system
-window.acceptScoutTip = function(playerId) {
+window.acceptScoutTip = async function(playerId) {
     if (gameState.players.length >= 18) {
         showNotification('Selectie is vol! (max 18 spelers). Koop eerst een contract af.', 'warning');
         return;
     }
 
+    // Find player first (without removing) to show salary in confirmation
     let player = null;
-
-    // Check scoutTips first
+    let source = null;
     if (gameState.scoutTips) {
-        const idx = gameState.scoutTips.findIndex(p => String(p.id) === String(playerId));
-        if (idx !== -1) {
-            player = gameState.scoutTips.splice(idx, 1)[0];
-        }
+        player = gameState.scoutTips.find(p => String(p.id) === String(playerId));
+        if (player) source = 'tips';
     }
-
-    // Check scoutHistory if not found in scoutTips
     if (!player && gameState.scoutHistory) {
-        const histIdx = gameState.scoutHistory.findIndex(p => String(p.id) === String(playerId));
-        if (histIdx !== -1) {
-            player = gameState.scoutHistory.splice(histIdx, 1)[0];
-        }
+        player = gameState.scoutHistory.find(p => String(p.id) === String(playerId));
+        if (player) source = 'history';
+    }
+    if (!player) return;
+
+    // Confirmation popup with salary
+    const salary = player.salary || 0;
+    if (!await showConfirm(`Wil je ${player.name} contracteren voor ${formatCurrency(salary)} per week?`)) return;
+
+    // Now remove from the list
+    if (source === 'tips') {
+        const idx = gameState.scoutTips.findIndex(p => String(p.id) === String(playerId));
+        if (idx !== -1) gameState.scoutTips.splice(idx, 1);
+    } else {
+        const idx = gameState.scoutHistory.findIndex(p => String(p.id) === String(playerId));
+        if (idx !== -1) gameState.scoutHistory.splice(idx, 1);
     }
 
-    if (!player) return;
+    // Remove scout uncertainty fields so real values are shown
+    delete player.scoutUncertainty;
+    delete player.scoutedAtWeek;
 
     player.energy = 100;
     player.condition = 100;
@@ -3320,24 +3506,52 @@ window.acceptScoutTip = function(playerId) {
 };
 
 window.declineScoutTip = function(playerId) {
+    // Permanent verwijderen uit scoutTips of scoutHistory
+    let found = false;
+    if (gameState.scoutTips) {
+        const idx = gameState.scoutTips.findIndex(p => String(p.id) === String(playerId));
+        if (idx !== -1) {
+            gameState.scoutTips.splice(idx, 1);
+            found = true;
+        }
+    }
+    if (!found && gameState.scoutHistory) {
+        const idx = gameState.scoutHistory.findIndex(p => String(p.id) === String(playerId));
+        if (idx !== -1) {
+            gameState.scoutHistory.splice(idx, 1);
+            found = true;
+        }
+    }
+    if (!found) return;
+    gameState.scoutTipClaimed = true;
+    saveGame();
+    renderScoutPage();
+    showNotification('Speler permanent afgewezen.', 'info');
+};
+
+window.keepScouting = function(playerId) {
     if (!gameState.scoutTips) return;
     const idx = gameState.scoutTips.findIndex(p => String(p.id) === String(playerId));
     if (idx === -1) return;
-    const player = gameState.scoutTips.splice(idx, 1)[0];
+
     if (!gameState.scoutHistory) gameState.scoutHistory = [];
+    const hasCentrum = gameState.club.division <= 5;
+    const maxSlots = hasCentrum ? 2 : 1;
+    if (gameState.scoutHistory.length >= maxSlots) {
+        showNotification(`Scoutinglijst is vol! (max ${maxSlots}). Neem een speler aan of wijs er een af.`, 'warning');
+        return;
+    }
+
+    const player = gameState.scoutTips.splice(idx, 1)[0];
     gameState.scoutHistory.push(player);
     gameState.scoutTipClaimed = true;
     saveGame();
     renderScoutPage();
-    showNotification('Tip afgewezen. Je vindt deze speler terug bij "Eerder gescoute spelers".', 'info');
+    showNotification('Speler toegevoegd aan de scoutinglijst. Na elke wedstrijd wordt het rapport nauwkeuriger.', 'success');
 };
 
 window.removeFromHistory = function(playerId) {
-    if (!gameState.scoutHistory) return;
-    gameState.scoutHistory = gameState.scoutHistory.filter(p => String(p.id) !== String(playerId));
-    saveGame();
-    renderScoutPage();
-    showNotification('Speler verwijderd uit geschiedenis.', 'info');
+    window.declineScoutTip(playerId);
 };
 
 // Scout daily mission
@@ -3348,10 +3562,15 @@ window.startScoutMission = function() {
     if (mission.active) return;
     if (mission.lastScoutDate === getTodayString()) return;
 
-    // Pick a random position (excluding keeper)
-    const positions = Object.keys(POSITIONS).filter(p => p !== 'keeper');
-    const pos = randomFromArray(positions);
-    const player = createZaterdagPlayer(pos);
+    // Check: max 1 speler in scoutTips
+    if (gameState.scoutTips && gameState.scoutTips.length >= 1) {
+        showNotification('Je hebt al een nieuwe speler om te beoordelen. Neem hem aan, wijs hem af, of laat hem verder scouten.', 'warning');
+        return;
+    }
+
+    const hasCentrum = gameState.club.division <= 5;
+    const scoutLevel = hasCentrum ? 2 : 1;
+    const player = createScoutedPlayer(scoutLevel);
     player.tipSource = 'scout';
 
     mission.active = true;
@@ -3591,7 +3810,8 @@ function renderTrainingPage() {
     // Massage info
     const canMassage = mp.energy < 100 && !trainedToday;
     const canSpy = !trainedToday;
-    const canTrain = !trainedToday;
+    const hasIndividualTrainer = (gameState.hiredStaff?.trainers || []).length > 0;
+    const canTrain = !trainedToday && hasIndividualTrainer;
     const opponentName = gameState.nextMatch?.opponent || 'Onbekend';
 
     const nextLevelNum = nextLevel ? nextLevel.level : pLevel.level;
@@ -3726,12 +3946,12 @@ function renderTrainingPage() {
             <!-- 3 training actions -->
             <div class="training-actions-header">Dagelijkse actie <span class="training-actions-hint ${!trainedToday ? 'training-hint-urgent' : ''}">${trainedToday ? '(al gekozen vandaag)' : 'Kies er 1!'}</span></div>
             <div class="training-actions-row">
-                <div class="training-action-card">
+                <div class="training-action-card ${!hasIndividualTrainer ? 'locked' : ''}">
                     <div class="training-sec-icon">&#127939;</div>
                     <div class="training-sec-title">Trainen</div>
-                    <div class="training-sec-desc">Verbeter je vaardigheden en verdien <strong>+25 XP</strong></div>
-                    <button class="btn btn-sm ${canTrain ? 'btn-primary' : 'btn-secondary'}" onclick="${canTrain ? "trainMyPlayer('vrije_tijd')" : ''}" ${!canTrain ? 'disabled' : ''}>
-                        Trainen
+                    <div class="training-sec-desc">${hasIndividualTrainer ? 'Verbeter je vaardigheden en verdien <strong>+25 XP</strong>' : 'Je hebt een <strong>individuele trainer</strong> nodig'}</div>
+                    <button class="btn btn-sm ${canTrain ? 'btn-primary' : 'btn-secondary'}" onclick="${canTrain ? "trainMyPlayer('vrije_tijd')" : !hasIndividualTrainer ? "navigateToPage('staff')" : ''}" ${!canTrain && hasIndividualTrainer ? 'disabled' : ''}>
+                        ${hasIndividualTrainer ? 'Trainen' : 'Neem trainer aan'}
                     </button>
                 </div>
                 <div class="training-action-card">
@@ -4666,6 +4886,10 @@ window.trainMyPlayer = function(key) {
     }
 
     if (key === 'vrije_tijd') {
+        if (!(gameState.hiredStaff?.trainers || []).length) {
+            showNotification('Je hebt een individuele trainer nodig om te trainen!', 'warning');
+            return;
+        }
         awardPlayerXP(gameState, 'training', 25);
         mp.lastTrainingDate = getTodayString();
         showPlayerXPPopup([{ reason: 'Training', amount: 25 }]);
@@ -5385,10 +5609,11 @@ function generateTransferMarket() {
             player.overall = random(Math.max(divInfo.minAttr, divInfo.maxAttr - 3), divInfo.maxAttr);
         }
 
-        // 6e Klasse (id 8): klein salaris, geen transferwaarde
+        // 6e Klasse (id 8): geen transferwaarde maar wel tekengeld + salaris
         if (playerDiv === 8) {
             player.price = 0;
-            player.signingBonus = 0;
+            player.salary = random(15, 40);
+            player.signingBonus = random(50, 200);
             player.isFreeAgent = true;
         } else {
             // 5e Klasse en hoger: salaris + transferwaarde
@@ -7235,6 +7460,56 @@ function calculateWeeklyFinances() {
     };
 }
 
+function applyWeeklyFinances(didWin) {
+    const fin = calculateWeeklyFinances();
+    let delta = fin.weeklyResult;
+
+    if (didWin && fin.winBonus > 0) {
+        delta += fin.winBonus;
+    }
+
+    gameState.club.budget += delta;
+    console.log(`💰 Weekresultaat: ${delta >= 0 ? '+' : ''}€${delta} → Budget: €${gameState.club.budget}`);
+
+    // Bankroet check: alleen als budget < 0 én wekelijks resultaat ook negatief
+    if (gameState.club.budget < 0 && fin.weeklyResult < 0) {
+        checkBankruptcy();
+    }
+
+    return delta;
+}
+
+function checkBankruptcy() {
+    if (gameState.club.budget >= 0) return;
+
+    const deficit = Math.abs(gameState.club.budget);
+    // Noodlening: dek het tekort + €500 buffer
+    const loanAmount = deficit + 500;
+    gameState.club.budget += loanAmount;
+
+    // Puntenaftrek: -3 punten in de huidige competitie
+    const pointsDeducted = 3;
+    const clubName = gameState.club.name;
+    const team = gameState.standings?.find(t => t.name === clubName);
+    if (team) {
+        team.points = Math.max(0, team.points - pointsDeducted);
+        // Re-sort standings
+        gameState.standings.sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
+            return b.goalsFor - a.goalsFor;
+        });
+        gameState.standings.forEach((t, i) => { t.position = i + 1; });
+    }
+
+    // Track totale puntenaftrek dit seizoen
+    if (!gameState.club.pointsDeducted) gameState.club.pointsDeducted = 0;
+    gameState.club.pointsDeducted += pointsDeducted;
+
+    saveGame();
+    showNotification(`Bankroet! De bond heeft een noodlening van ${formatCurrency(loanAmount)} verstrekt. Straf: ${pointsDeducted} punten in mindering.`, 'error');
+}
+
 function renderDailyFinances() {
     const fin = calculateWeeklyFinances();
 
@@ -7729,9 +8004,439 @@ function generateFakeMatchHistory() {
     gameState.week = 5;
 }
 
+// ================================================
+// ONBOARDING & TUTORIAL
+// ================================================
+
+function showOnboarding() {
+    const positionOptions = [
+        { key: 'keeper', name: 'Keeper', abbr: 'KEE', color: '#f9a825' },
+        { key: 'linksback', name: 'Linksback', abbr: 'LB', color: '#2196f3' },
+        { key: 'centraleVerdediger', name: 'Centrale Verdediger', abbr: 'CV', color: '#1976d2' },
+        { key: 'rechtsback', name: 'Rechtsback', abbr: 'RB', color: '#2196f3' },
+        { key: 'linksMid', name: 'Links Middenvelder', abbr: 'LM', color: '#4caf50' },
+        { key: 'centraleMid', name: 'Centrale Middenvelder', abbr: 'CM', color: '#4caf50' },
+        { key: 'rechtsMid', name: 'Rechts Middenvelder', abbr: 'RM', color: '#4caf50' },
+        { key: 'linksbuiten', name: 'Linksbuiten', abbr: 'LW', color: '#9c27b0' },
+        { key: 'rechtsbuiten', name: 'Rechtsbuiten', abbr: 'RW', color: '#9c27b0' },
+        { key: 'spits', name: 'Spits', abbr: 'ST', color: '#9c27b0' }
+    ];
+
+    let currentStep = 0;
+    let selectedPosition = null;
+    const skillPoints = { SNE: 5, TEC: 5, PAS: 5, SCH: 5, VER: 5, FYS: 5 };
+    let pointsRemaining = 10;
+    let savedClubName = '';
+    let savedPlayerName = '';
+
+    const steps = [
+        {
+            title: 'Welkom bij de club!',
+            text: 'Welkom, welkom! Ik ben de voorzitter van... ja, hoe heet onze club eigenlijk? We zijn net gepromoveerd naar de 6e klasse. Nou ja, \'gepromoveerd\'... we zijn er bij ingedeeld omdat er te weinig teams waren.',
+            inputType: 'text',
+            inputId: 'onboarding-clubname',
+            placeholder: 'FC Goals Maken',
+            label: 'Clubnaam'
+        },
+        {
+            title: 'Wie ben jij?',
+            text: 'Dus jij wilt speler-manager worden? Bij ons speelt de manager gewoon mee — we hebben namelijk niet genoeg spelers. Hoe heet je?',
+            inputType: 'text',
+            inputId: 'onboarding-playername',
+            placeholder: 'JanAnsen',
+            label: 'Jouw naam'
+        },
+        {
+            title: 'Kies je positie',
+            text: 'Op welke positie wil je spelen? Niet dat het veel uitmaakt in de 6e klasse — iedereen loopt toch overal. Maar goed, je hebt officieel een positie nodig voor het wedstrijdformulier.',
+            inputType: 'positions'
+        },
+        {
+            title: 'Verdeel je skillpunten',
+            text: 'Je hebt 10 punten om te verdelen over je skills. De rest van de selectie is ook niet geweldig — sommigen kunnen amper een bal raken. Maar met een goede verdeling maak jij het verschil.',
+            inputType: 'skills'
+        }
+    ];
+
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'onboarding-overlay';
+    overlay.innerHTML = '<div class="onboarding-panel" id="onboarding-panel"></div>';
+    document.body.appendChild(overlay);
+
+    function renderStep(stepIndex) {
+        const step = steps[stepIndex];
+        const panel = document.getElementById('onboarding-panel');
+
+        let inputHTML = '';
+        if (step.inputType === 'text') {
+            inputHTML = `
+                <div class="onboarding-field">
+                    <label class="onboarding-label">${step.label}</label>
+                    <input type="text" id="${step.inputId}" class="onboarding-input" placeholder="${step.placeholder}" maxlength="30" autocomplete="off">
+                </div>`;
+        } else if (step.inputType === 'positions') {
+            inputHTML = `<div class="onboarding-positions">${positionOptions.map(p =>
+                `<button class="onboarding-pos-btn" data-pos="${p.key}" style="--pos-color: ${p.color}">
+                    <span class="onboarding-pos-abbr">${p.abbr}</span>
+                    <span class="onboarding-pos-name">${p.name}</span>
+                </button>`
+            ).join('')}</div>`;
+        } else if (step.inputType === 'skills') {
+            const skillNames = { SNE: 'Snelheid', TEC: 'Techniek', PAS: 'Passen', SCH: 'Schieten', VER: 'Verdedigen', FYS: 'Fysiek' };
+            const avg = Math.round(Object.values(skillPoints).reduce((s, v) => s + v, 0) / 6);
+            inputHTML = `
+                <div class="onboarding-skills-header">
+                    <span class="onboarding-points-left">Punten over: <strong id="points-remaining">${pointsRemaining}</strong></span>
+                    <span class="onboarding-alg">ALG: <strong id="onboarding-alg">${avg}</strong></span>
+                </div>
+                <div class="onboarding-skills">
+                    ${Object.entries(skillNames).map(([key, name]) => `
+                        <div class="onboarding-skill-row">
+                            <span class="onboarding-skill-name">${name}</span>
+                            <button class="onboarding-skill-btn minus" data-skill="${key}" data-dir="-1">−</button>
+                            <span class="onboarding-skill-value" id="skill-val-${key}">${skillPoints[key]}</span>
+                            <button class="onboarding-skill-btn plus" data-skill="${key}" data-dir="1">+</button>
+                        </div>
+                    `).join('')}
+                </div>`;
+        }
+
+        const isLast = stepIndex === steps.length - 1;
+        const btnText = isLast ? 'Start!' : 'Verder';
+        const btnId = isLast ? 'onboarding-start' : 'onboarding-next';
+
+        panel.innerHTML = `
+            <div class="onboarding-step ${stepIndex > 0 ? 'slide-in' : ''}">
+                <div class="onboarding-step-dots">
+                    ${steps.map((_, i) => `<span class="onboarding-dot ${i === stepIndex ? 'active' : i < stepIndex ? 'done' : ''}"></span>`).join('')}
+                </div>
+                <div class="onboarding-content">
+                    <div class="onboarding-avatar">${CHAIRMAN_SVG}</div>
+                    <div class="onboarding-text">
+                        <h3 class="onboarding-title">${step.title}</h3>
+                        <p class="onboarding-speech">${step.text}</p>
+                    </div>
+                </div>
+                ${inputHTML}
+                <button class="onboarding-btn" id="${btnId}" ${step.inputType === 'positions' ? 'disabled' : ''} ${step.inputType === 'skills' && pointsRemaining > 0 ? 'disabled' : ''}>${btnText}</button>
+            </div>
+        `;
+
+        // Trigger animation
+        requestAnimationFrame(() => {
+            panel.querySelector('.onboarding-step')?.classList.add('visible');
+        });
+
+        // Bind events
+        if (step.inputType === 'text') {
+            const input = document.getElementById(step.inputId);
+            input.focus();
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && input.value.trim()) nextStep();
+            });
+        }
+
+        if (step.inputType === 'positions') {
+            panel.querySelectorAll('.onboarding-pos-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    panel.querySelectorAll('.onboarding-pos-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedPosition = btn.dataset.pos;
+                    document.getElementById(btnId).disabled = false;
+                });
+            });
+        }
+
+        if (step.inputType === 'skills') {
+            panel.querySelectorAll('.onboarding-skill-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const skill = btn.dataset.skill;
+                    const dir = parseInt(btn.dataset.dir);
+                    const newVal = skillPoints[skill] + dir;
+                    if (newVal < 5 || newVal > 15) return;
+                    if (dir > 0 && pointsRemaining <= 0) return;
+                    skillPoints[skill] = newVal;
+                    pointsRemaining -= dir;
+                    document.getElementById(`skill-val-${skill}`).textContent = newVal;
+                    document.getElementById('points-remaining').textContent = pointsRemaining;
+                    const avg = Math.round(Object.values(skillPoints).reduce((s, v) => s + v, 0) / 6);
+                    document.getElementById('onboarding-alg').textContent = avg;
+                    document.getElementById(btnId).disabled = pointsRemaining > 0;
+                    // Update +/- button states
+                    panel.querySelectorAll('.onboarding-skill-btn').forEach(b => {
+                        const sk = b.dataset.skill;
+                        const d = parseInt(b.dataset.dir);
+                        if (d > 0) b.disabled = pointsRemaining <= 0 || skillPoints[sk] >= 15;
+                        if (d < 0) b.disabled = skillPoints[sk] <= 5;
+                    });
+                });
+            });
+            // Initial button states
+            panel.querySelectorAll('.onboarding-skill-btn.minus').forEach(b => b.disabled = true);
+        }
+
+        document.getElementById(btnId)?.addEventListener('click', nextStep);
+    }
+
+    function nextStep() {
+        // Save and validate current step
+        if (currentStep === 0) {
+            const val = document.getElementById('onboarding-clubname')?.value.trim();
+            if (!val) {
+                document.getElementById('onboarding-clubname')?.focus();
+                return;
+            }
+            savedClubName = val;
+        }
+        if (currentStep === 1) {
+            const val = document.getElementById('onboarding-playername')?.value.trim();
+            if (!val) {
+                document.getElementById('onboarding-playername')?.focus();
+                return;
+            }
+            savedPlayerName = val;
+        }
+        if (currentStep === 2 && !selectedPosition) return;
+        if (currentStep === 3 && pointsRemaining > 0) return;
+
+        if (currentStep < steps.length - 1) {
+            currentStep++;
+            renderStep(currentStep);
+        } else {
+            applyOnboarding();
+        }
+    }
+
+    function applyOnboarding() {
+        const clubName = savedClubName || 'FC Goals Maken';
+        const playerName = savedPlayerName || 'Speler';
+        const position = selectedPosition || 'spits';
+
+        const oldClubName = gameState.club.name;
+
+        // Apply club name
+        gameState.club.name = clubName;
+
+        // Apply player data
+        gameState.myPlayer.name = playerName;
+        gameState.myPlayer.position = position;
+        gameState.myPlayer.attributes = { ...skillPoints };
+        gameState.myPlayer.spentSkillPoints = 10;
+        gameState.myPlayer.overall = Math.round(Object.values(skillPoints).reduce((s, v) => s + v, 0) / 6);
+
+        // Sync myPlayer in players array
+        const mpInSquad = gameState.players.find(p => p && p.id === 'myplayer');
+        if (mpInSquad) {
+            mpInSquad.name = playerName;
+            mpInSquad.position = position;
+            mpInSquad.overall = gameState.myPlayer.overall;
+            mpInSquad.attributes = { AAN: skillPoints.SCH, VER: skillPoints.VER, SNE: skillPoints.SNE, FYS: skillPoints.FYS };
+        }
+
+        // Update standings with new club name
+        if (gameState.standings) {
+            gameState.standings.forEach(team => {
+                if (team.name === oldClubName || team.isPlayer) {
+                    team.name = clubName;
+                }
+            });
+        }
+
+        gameState.onboardingCompleted = true;
+        saveGame(gameState);
+
+        // Re-render UI
+        renderStandings();
+        renderPlayerCards();
+        updateBudgetDisplays();
+        renderDashboardExtras();
+
+        // Update club name in all UI locations
+        const clubNameDisplay = document.getElementById('club-name-display');
+        if (clubNameDisplay) clubNameDisplay.textContent = clubName;
+        const homeTeamName = document.getElementById('home-team-name');
+        if (homeTeamName) homeTeamName.textContent = clubName;
+
+        // Animate out
+        const panel = document.getElementById('onboarding-panel');
+        if (panel) panel.classList.add('slide-out');
+        setTimeout(() => {
+            overlay.remove();
+            // Ask about tutorial
+            showTutorialPrompt();
+        }, 400);
+    }
+
+    renderStep(0);
+}
+
+function showTutorialPrompt() {
+    const overlay = document.createElement('div');
+    overlay.className = 'onboarding-overlay';
+    overlay.innerHTML = `
+        <div class="onboarding-panel visible-immediate">
+            <div class="onboarding-step visible">
+                <div class="onboarding-content">
+                    <div class="onboarding-avatar">${CHAIRMAN_SVG}</div>
+                    <div class="onboarding-text">
+                        <h3 class="onboarding-title">Rondleiding?</h3>
+                        <p class="onboarding-speech">Zo, alles is geregeld! Zal ik je even rondleiden door de club? Ik kan je laten zien waar alles zit — of je zoekt het lekker zelf uit.</p>
+                    </div>
+                </div>
+                <div class="onboarding-btn-row">
+                    <button class="onboarding-btn secondary" id="tutorial-skip">Nee, ik red me wel</button>
+                    <button class="onboarding-btn" id="tutorial-start">Ja, graag!</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    document.getElementById('tutorial-skip').addEventListener('click', () => {
+        gameState.tutorialCompleted = true;
+        saveGame(gameState);
+        overlay.remove();
+    });
+
+    document.getElementById('tutorial-start').addEventListener('click', () => {
+        overlay.remove();
+        showTutorial();
+    });
+}
+
+function showTutorial() {
+    const tutorialSteps = [
+        {
+            page: 'dashboard',
+            highlight: '#standings-body',
+            title: 'De Competitie',
+            text: 'Dit is je cluboverzicht. Hier zie je de stand — we staan niet bovenaan. Dat is een understatement. Maar hey, van hier kan het alleen maar beter worden!'
+        },
+        {
+            page: 'squad',
+            highlight: '.lineup-pitch, .squad-formation',
+            title: 'Spelers & Opstelling',
+            text: 'Hier stel je je team op. Sleep spelers naar het veld. Let op: als je Henk op keeper zet, maak je geen vrienden. Niet dat hij dat als spits wel doet.'
+        },
+        {
+            page: 'training',
+            highlight: '.training-section, .training-slots',
+            title: 'Jij als Speler',
+            text: 'Dit is het overzicht van jou als speler. Je kan ervoor kiezen om in je vrije tijd te trainen, maarja, wie wil dat nou?'
+        },
+        {
+            page: 'transfers',
+            highlight: '.transfer-market, .transfer-list',
+            title: 'Transfers',
+            text: 'De transfermarkt! Hier koop en verkoop je spelers. Het budget is niet groot, maar met slim handelen kun je de selectie versterken. Verkoop de spelers die niet presteren — dat zijn er een paar.'
+        },
+        {
+            page: 'stadium',
+            highlight: '.stadium-grid, .stadium-tiles',
+            title: 'Het Stadion',
+            text: 'Dit is ons stadion. \'Stadion\' is een groot woord voor een veld met een hek eromheen. Begin met de kantine — de jongens willen na de wedstrijd een biertje. Dat is eigenlijk het belangrijkste van zaterdagvoetbal.'
+        },
+        {
+            page: 'scout',
+            highlight: '.scout-section, .scout-filters',
+            title: 'Scouting',
+            text: 'En hier scout je nieuwe spelers. Verwacht geen Messi — denk meer aan je buurman die vroeger bij de D-junioren zat. Maar met een goede scout vind je af en toe een pareltje!'
+        }
+    ];
+
+    let currentStep = 0;
+    let highlightedEl = null;
+
+    // Create tutorial panel (fixed at bottom)
+    const tutorialPanel = document.createElement('div');
+    tutorialPanel.className = 'tutorial-panel';
+    document.body.appendChild(tutorialPanel);
+
+    function renderTutorialStep(stepIndex) {
+        const step = tutorialSteps[stepIndex];
+
+        // Remove previous highlight
+        if (highlightedEl) {
+            highlightedEl.classList.remove('tutorial-highlight');
+            highlightedEl = null;
+        }
+
+        // Navigate to the right page
+        navigateToPage(step.page);
+
+        // Small delay to let the page render, then highlight
+        setTimeout(() => {
+            // Try each selector (comma-separated fallbacks)
+            const selectors = step.highlight.split(',').map(s => s.trim());
+            for (const sel of selectors) {
+                const el = document.querySelector(sel);
+                if (el) {
+                    highlightedEl = el;
+                    el.classList.add('tutorial-highlight');
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    break;
+                }
+            }
+
+            const isLast = stepIndex === tutorialSteps.length - 1;
+            const btnText = isLast ? 'Aan de slag!' : 'Volgende';
+
+            tutorialPanel.innerHTML = `
+                <div class="tutorial-step visible">
+                    <div class="tutorial-step-counter">${stepIndex + 1} / ${tutorialSteps.length}</div>
+                    <div class="onboarding-content">
+                        <div class="onboarding-avatar">${CHAIRMAN_SVG}</div>
+                        <div class="onboarding-text">
+                            <h3 class="onboarding-title">${step.title}</h3>
+                            <p class="onboarding-speech">${step.text}</p>
+                        </div>
+                    </div>
+                    <div class="onboarding-btn-row">
+                        <button class="onboarding-btn secondary tutorial-skip-btn">Overslaan</button>
+                        <button class="onboarding-btn tutorial-next-btn">${btnText}</button>
+                    </div>
+                </div>
+            `;
+
+            tutorialPanel.querySelector('.tutorial-next-btn').addEventListener('click', () => {
+                if (stepIndex < tutorialSteps.length - 1) {
+                    currentStep++;
+                    renderTutorialStep(currentStep);
+                } else {
+                    closeTutorial();
+                }
+            });
+
+            tutorialPanel.querySelector('.tutorial-skip-btn').addEventListener('click', closeTutorial);
+        }, 300);
+    }
+
+    function closeTutorial() {
+        if (highlightedEl) highlightedEl.classList.remove('tutorial-highlight');
+        tutorialPanel.classList.add('slide-out');
+        setTimeout(() => {
+            tutorialPanel.remove();
+            navigateToPage('dashboard');
+        }, 400);
+        gameState.tutorialCompleted = true;
+        saveGame(gameState);
+    }
+
+    renderTutorialStep(0);
+}
+
 function initGame(mode = 'local') {
+    // Handle reset via URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reset') === '1') {
+        localStorage.removeItem('zaterdagvoetbal_save');
+        window.history.replaceState({}, '', window.location.pathname);
+    }
+
     // Check for existing save (singleplayer uses sync load)
     const savedState = loadGameSync();
+    const isNewGame = !savedState;
 
     if (savedState) {
         // Load saved game
@@ -7864,8 +8569,8 @@ function initGame(mode = 'local') {
     // Age youth players daily
     ageYouthPlayersDaily();
 
-    // Generate fake match history for testing (only on first load with no history)
-    if ((!gameState.matchHistory || gameState.matchHistory.length === 0) && gameState.players.length > 0) {
+    // Generate fake match history for testing (only on first load with no history, skip for fresh new games)
+    if (!isNewGame && (!gameState.matchHistory || gameState.matchHistory.length === 0) && gameState.players.length > 0) {
         generateFakeMatchHistory();
     }
 
@@ -7916,16 +8621,27 @@ function initGame(mode = 'local') {
 
     // Random events disabled - no popups on dashboard load
 
-    // Check achievements
-    const newAchievements = checkAchievements(gameState);
-    if (newAchievements.length > 0) {
-        setTimeout(() => queueAchievements(newAchievements), 2000);
+    // Check achievements (skip during onboarding to avoid popups)
+    if (!isNewGame || gameState.onboardingCompleted) {
+        const newAchievements = checkAchievements(gameState);
+        if (newAchievements.length > 0) {
+            setTimeout(() => queueAchievements(newAchievements), 2000);
+        }
     }
 
     console.log('🎮 Zaterdagvoetbal v2.0 initialized!');
     console.log('📊 Squad:', gameState.players.length, 'players');
     console.log('💰 Budget:', formatCurrency(gameState.club.budget));
     console.log('🏆 Achievements:', getAchievementStats(gameState).unlocked + '/' + getAchievementStats(gameState).total);
+
+    // Trigger onboarding for new players
+    if (isNewGame && !gameState.onboardingCompleted) {
+        gameState.week = 1;
+        gameState.matchHistory = [];
+        gameState.lastMatch = null;
+        console.log('🆕 New game detected — starting onboarding');
+        setTimeout(() => showOnboarding(), 500);
+    }
 }
 
 // ================================================
@@ -8290,6 +9006,9 @@ function handleChecklistClick(action) {
 // Make functions globally accessible
 window.handleChecklistClick = handleChecklistClick;
 window.navigateTo = navigateToPage;
+window.resetGame = function() {
+    window.location.href = window.location.pathname + '?reset=1';
+};
 
 function updateTopScorerPolaroid() {
     const photoEl = document.getElementById('top-scorer-photo');
@@ -8394,6 +9113,16 @@ function playMatch() {
         return;
     }
 
+    // Check for suspended/injured players
+    const unavailable = validLineup.filter(p =>
+        (p.suspendedUntil && p.suspendedUntil > gameState.week) ||
+        (p.injuredUntil && p.injuredUntil > gameState.week)
+    );
+    if (unavailable.length > 0) {
+        showNotification(`Geschorste/geblesseerde spelers in opstelling: ${unavailable.map(p => p.name).join(', ')}`, 'error');
+        return;
+    }
+
     // Generate opponent
     const opponent = generateOpponent(
         gameState.club.division,
@@ -8404,14 +9133,21 @@ function playMatch() {
     // Determine if home game (alternate)
     const isHome = (gameState.week % 2 === 1);
 
+    // Gather match parameters
+    const formationDrive = getFormationDrive(gameState.formation);
+    const grassLevel = getGrassLevel();
+    const teamTrainingBonus = gameState.training?.teamTraining?.bonus || null;
+
     // Simulate match
+    const strengthOptions = { formationDrive, teamTrainingBonus };
     const result = simulateMatch(
-        { name: gameState.club.name, strength: calculateTeamStrength(gameState.lineup, gameState.formation, gameState.tactics, gameState.lineup) },
+        { name: gameState.club.name, strength: calculateTeamStrength(gameState.lineup, gameState.formation, gameState.tactics, gameState.lineup, strengthOptions) },
         opponent,
         gameState.lineup,
         gameState.formation,
         gameState.tactics,
-        isHome
+        isHome,
+        { grassLevel }
     );
 
     // Determine scores from player's perspective
@@ -8419,7 +9155,25 @@ function playMatch() {
     const opponentScore = isHome ? result.awayScore : result.homeScore;
 
     // Apply results to player stats
-    applyMatchResults(gameState.lineup, result, isHome);
+    applyMatchResults(gameState.lineup, result, isHome, gameState.week);
+
+    // Red card fines (€100 per red card)
+    const ourTeam = isHome ? 'home' : 'away';
+    const redCardEvents = result.events.filter(e => e.type === 'red_card' && e.team === ourTeam);
+    redCardEvents.forEach(() => gameState.club.budget -= 100);
+
+    // Collect suspension/injury notifications to show after match
+    const matchNotifications = [];
+    gameState.lineup.filter(p => p).forEach(p => {
+        if (p.suspendedUntil && p.suspendedUntil > gameState.week) {
+            const weeks = p.suspendedUntil - gameState.week;
+            matchNotifications.push(`${p.name} is geschorst voor ${weeks} wedstrijd${weeks > 1 ? 'en' : ''}`);
+        }
+        if (p.injuredUntil && p.injuredUntil > gameState.week) {
+            const weeks = p.injuredUntil - gameState.week;
+            matchNotifications.push(`${p.name} is geblesseerd voor ${weeks} ${weeks > 1 ? 'weken' : 'week'}`);
+        }
+    });
 
     // Update standings
     updateStandings(gameState.standings, gameState.club.name, playerScore, opponentScore);
@@ -8483,7 +9237,7 @@ function playMatch() {
     if (playerScore > 0) { awardPlayerXP(gameState, 'goalScored', playerScore * 10); pxpReasons.push({ reason: `${playerScore} doelpunt${playerScore > 1 ? 'en' : ''} gescoord`, amount: playerScore * 10 }); }
     gameState._pendingPlayerXP = pxpReasons.length > 0 ? pxpReasons : null;
 
-    // Player improvement: only lineup players with >= 1.5 stars improve
+    // Player improvement: only lineup players with >= 1 star improve
     // Growth works via progress bar: each match adds %, at 100% → +1 ALG (max 99)
     const improvements = [];
     const lineupIds = new Set((gameState.lineup || []).filter(p => p).map(p => p.id));
@@ -8491,7 +9245,7 @@ function playMatch() {
         if (!player) return;
         if (!lineupIds.has(player.id)) return; // Only lineup players
         const stars = player.stars || 0;
-        if (stars >= 0.5 && player.overall < 99) {
+        if (stars >= 1 && player.overall < 99) {
             // Growth per match: stars determine speed (0.5★ = slow, 5★ = fast)
             const growthGain = Math.round(15 + stars * 4 + Math.random() * 10);
             if (!player.growthProgress) player.growthProgress = 0;
@@ -8591,6 +9345,7 @@ function playMatch() {
         possession: result.possession,
         shots: result.shots,
         shotsOnTarget: result.shotsOnTarget,
+        xG: result.xG || { home: 0, away: 0 },
         corners: { home: cornersHome, away: cornersAway },
         fouls: result.fouls || { home: 0, away: 0 },
         cards: result.cards || { home: { yellow: 0, red: 0 }, away: { yellow: 0, red: 0 } },
@@ -8602,6 +9357,18 @@ function playMatch() {
 
     // Advance week
     gameState.week++;
+
+    // Remove suspended/injured players from lineup for next match
+    gameState.lineup = gameState.lineup.map(player => {
+        if (!player) return null;
+        if (player.suspendedUntil && player.suspendedUntil > gameState.week) return null;
+        if (player.injuredUntil && player.injuredUntil > gameState.week) return null;
+        return player;
+    });
+
+    // Apply weekly finances (income - expenses + optional win bonus)
+    const didWin = playerScore > opponentScore;
+    applyWeeklyFinances(didWin);
 
     // Tick sponsor contracts (decrease weeks remaining)
     tickSponsorContracts();
@@ -8650,6 +9417,18 @@ function playMatch() {
                 gameState._pendingPlayerXP = null;
             }
         }, 500);
+
+        // Show suspension/injury notifications
+        if (matchNotifications.length > 0) {
+            setTimeout(() => {
+                matchNotifications.forEach(msg => showNotification(msg, 'warning'));
+            }, 1000);
+        }
+        if (redCardEvents.length > 0) {
+            setTimeout(() => {
+                showNotification(`Rode kaart boete: ${formatCurrency(redCardEvents.length * 100)}`, 'warning');
+            }, 1500);
+        }
 
         // Check achievements
         const newAchievements = checkAchievements(gameState);
@@ -8750,24 +9529,86 @@ function renderMatchesPage() {
 function generateChairmanComments(result, isHome, improvements, resultType, playerScore, opponentScore) {
     const positiveOptions = [];
     const negativeOptions = [];
-
-    // Positive options
-    if (resultType === 'win') positiveOptions.push('De voorzitter is tevreden met de overwinning.');
-    if (opponentScore === 0) positiveOptions.push('De voorzitter prijst de verdediging — geen tegendoelpunt!');
-    if (playerScore >= 3) positiveOptions.push('Wat een doelpuntenfestijn! De voorzitter geniet.');
-    if (result.manOfTheMatch) positiveOptions.push(`De voorzitter is onder de indruk van ${result.manOfTheMatch.name}.`);
-    if (improvements.length > 0) positiveOptions.push(`${improvements[0].name} wordt steeds beter! De voorzitter ziet de groei.`);
-    if (positiveOptions.length === 0) positiveOptions.push('De voorzitter waardeert de inzet van het team.');
-
-    // Negative options
-    if (resultType === 'loss') negativeOptions.push('De voorzitter maakt zich zorgen over het resultaat.');
-    if (opponentScore >= 3) negativeOptions.push('Te veel tegendoelpunten. De voorzitter wil actie.');
-    const cards = (result.events || []).filter(e => e.type === 'yellow_card' || e.type === 'red_card');
-    if (cards.length >= 2) negativeOptions.push('Te veel kaarten. De discipline moet beter.');
+    const formation = FORMATIONS[gameState.formation];
+    const formationName = formation?.name || gameState.formation;
+    const tactics = gameState.tactics || {};
+    const teamTraining = gameState.training?.teamTraining?.selected;
     const possession = isHome ? result.possession?.home : result.possession?.away;
-    if (possession && possession < 40) negativeOptions.push('De voorzitter vindt dat we meer aan de bal moeten zijn.');
-    if (playerScore === 0) negativeOptions.push('Niet gescoord. De voorzitter verwacht meer aanvallend vermogen.');
-    if (negativeOptions.length === 0) negativeOptions.push('De voorzitter ziet altijd ruimte voor verbetering.');
+    const formationDrive = getFormationDrive(gameState.formation);
+
+    // --- Count players on wrong positions ---
+    const lineup = gameState.lineup || [];
+    let wrongPositionCount = 0;
+    if (formation) {
+        lineup.forEach((playerId, i) => {
+            if (!playerId || !formation.positions[i]) return;
+            const player = gameState.players.find(p => p.id === playerId);
+            if (!player) return;
+            if (getPositionGroup(player.position) !== getPositionGroup(formation.positions[i].role)) {
+                wrongPositionCount++;
+            }
+        });
+    }
+
+    // Max ~60 tekens per zin (past in de tegel)
+
+    // === POSITIVE ===
+    if (resultType === 'win') positiveOptions.push('Goed resultaat! Daar doen we het voor.');
+    if (opponentScore === 0) positiveOptions.push('De nul gehouden! Sterke verdediging.');
+    if (playerScore >= 3) positiveOptions.push('Doelpuntenfestijn! De supporters genieten.');
+    if (result.manOfTheMatch) positiveOptions.push(`${result.manOfTheMatch.name} was de uitblinker.`);
+    if (improvements.length > 0) positiveOptions.push(`${improvements[0].name} groeit zichtbaar. Goed bezig.`);
+
+    // Tactical positives
+    if (wrongPositionCount === 0) positiveOptions.push('Iedereen op de juiste plek. Dat betaalt zich uit.');
+    if (formationDrive >= 80) positiveOptions.push(`Goed ingespeeld op de ${formationName}.`);
+    if (isHome && (tactics.offensief === 'offensief' || tactics.offensief === 'leeroy') && playerScore >= 2) {
+        positiveOptions.push('Aanvallend voor eigen publiek. De fans zijn blij!');
+    }
+    if (teamTraining === 'defense' && opponentScore === 0) positiveOptions.push('Verdedigend voorbereid en de nul gehouden!');
+    if (teamTraining === 'attack' && playerScore >= 2) positiveOptions.push('Aanvallende voorbereiding heeft effect gehad.');
+    if (teamTraining === 'tactics' && formationDrive >= 60) positiveOptions.push('Tactische voorbereiding heeft ons scherper gemaakt.');
+    if (tactics.speltempo === 'snel' && playerScore > opponentScore) positiveOptions.push('Het hoge tempo verraste de tegenstander.');
+    if (tactics.dekking === 'man' && opponentScore <= 1) positiveOptions.push('Mandekking werkte goed. Sterk verdedigd.');
+    if (possession && possession >= 55) positiveOptions.push('Goed balbezit. We hadden de controle.');
+
+    if (positiveOptions.length === 0) positiveOptions.push('De inzet was er. Daar begint het mee.');
+
+    // === NEGATIVE ===
+    if (resultType === 'loss') negativeOptions.push('Dit is niet goed genoeg. Moet beter.');
+    if (opponentScore >= 3) negativeOptions.push('Te veel tegendoelpunten. Actie nodig.');
+
+    // Tactical negatives
+    if (wrongPositionCount >= 3) {
+        negativeOptions.push(`${wrongPositionCount} spelers op verkeerde positie. Kost kwaliteit!`);
+    } else if (wrongPositionCount >= 1) {
+        negativeOptions.push('Spelers op verkeerde positie. Zonde van hun talent.');
+    }
+    if (formationDrive < 40) negativeOptions.push(`Nog niet ingespeeld op de ${formationName}.`);
+    if (isHome && (tactics.offensief === 'zeer_verdedigend' || tactics.offensief === 'verdedigend')) {
+        negativeOptions.push('Thuis verdedigend? De fans willen aanval zien!');
+    }
+    if (!isHome && tactics.offensief === 'leeroy') {
+        negativeOptions.push('Uit Leeroy Jenkins is wel erg riskant...');
+    }
+    if (tactics.mentaliteit === 'extreem') {
+        const cards = (result.events || []).filter(e => e.type === 'yellow_card' || e.type === 'red_card');
+        if (cards.length >= 2) negativeOptions.push('Extreme mentaliteit kost ons te veel kaarten.');
+    }
+    if (tactics.speltempo === 'snel' && resultType === 'loss') {
+        negativeOptions.push('Hoog tempo maakte ons slordig. Rustiger opbouwen?');
+    }
+    if (tactics.dekking === 'man' && opponentScore >= 2) {
+        negativeOptions.push('Mandekking werd uitgespeeld. Zone was slimmer.');
+    }
+    if (tactics.veldbreedte === 'smal' && possession && possession < 45) {
+        negativeOptions.push('Te smal gespeeld. Overweeg breder te spelen.');
+    }
+    if (!teamTraining) negativeOptions.push('Geen wedstrijdvoorbereiding gedaan. Gemiste kans.');
+    if (playerScore === 0) negativeOptions.push('Niet gescoord. We missen scherpte voorin.');
+    if (possession && possession < 40) negativeOptions.push('Te weinig aan de bal. Moet beter.');
+
+    if (negativeOptions.length === 0) negativeOptions.push('Er is altijd ruimte voor verbetering.');
 
     return {
         positive: positiveOptions[Math.floor(Math.random() * positiveOptions.length)],
@@ -8802,6 +9643,8 @@ function renderMatchReport() {
     const shotsAway = isHome ? match.shots.away : match.shots.home;
     const sotHome = isHome ? match.shotsOnTarget.home : match.shotsOnTarget.away;
     const sotAway = isHome ? match.shotsOnTarget.away : match.shotsOnTarget.home;
+    const xgHome = isHome ? (match.xG?.home || 0) : (match.xG?.away || 0);
+    const xgAway = isHome ? (match.xG?.away || 0) : (match.xG?.home || 0);
     const cornersHome = isHome ? (match.corners?.home || 0) : (match.corners?.away || 0);
     const cornersAway = isHome ? (match.corners?.away || 0) : (match.corners?.home || 0);
     const foulsHome = isHome ? (match.fouls?.home || 0) : (match.fouls?.away || 0);
@@ -8876,15 +9719,14 @@ function renderMatchReport() {
                             <div class="rating-growth-bar"><div class="rating-growth-fill" style="width: ${p.progressPct}%"></div></div>
                             <span class="rating-growth-label-positive">+${p.gainPct}%</span>${levelUpIcon}
                         </div>`;
-                    } else if (stars < 0.5) {
-                        growthHTML = `<span class="rating-no-growth">-</span>`;
                     } else {
                         growthHTML = `<span class="rating-no-growth">-</span>`;
                     }
                     const posData2 = POSITIONS[p.position] || { color: '#666' };
+                    const starsHtml = renderStarsHTML(stars);
                     return `<tr>
                         <td><span class="mr-pos-badge" style="background: ${posData2.color}">${posAbbr}</span></td>
-                        <td>${p.name} ${icons}</td>
+                        <td><span class="mr-name-wrap">${p.name} ${icons}<span class="rating-stars-cell">${starsHtml}</span></span></td>
                         <td><span class="mr-ovr-badge" style="background: ${posData2.color}">${actualPlayer ? actualPlayer.overall : '?'}</span></td>
                         <td><span class="match-rating-badge ${ratingClass}">${p.rating.toFixed(1)}</span></td>
                         <td class="rating-growth-cell">${growthHTML}</td>
@@ -8923,34 +9765,37 @@ function renderMatchReport() {
                         <div class="stat-compact-row"><span class="stat-compact-val">${possHome}%</span><span class="stat-compact-label">Balbezit</span><span class="stat-compact-val">${possAway}%</span></div>
                         <div class="stat-compact-row"><span class="stat-compact-val">${shotsHome}</span><span class="stat-compact-label">Schoten</span><span class="stat-compact-val">${shotsAway}</span></div>
                         <div class="stat-compact-row"><span class="stat-compact-val">${sotHome}</span><span class="stat-compact-label">Op doel</span><span class="stat-compact-val">${sotAway}</span></div>
+                        <div class="stat-compact-row"><span class="stat-compact-val">${xgHome.toFixed(2)}</span><span class="stat-compact-label">xG</span><span class="stat-compact-val">${xgAway.toFixed(2)}</span></div>
                         <div class="stat-compact-row"><span class="stat-compact-val">${cornersHome}</span><span class="stat-compact-label">Corners</span><span class="stat-compact-val">${cornersAway}</span></div>
                         <div class="stat-compact-row"><span class="stat-compact-val">${foulsHome}</span><span class="stat-compact-label">Overtredingen</span><span class="stat-compact-val">${foulsAway}</span></div>
                         <div class="stat-compact-row"><span class="stat-compact-val">${cardsYellowHome} / ${cardsRedHome}</span><span class="stat-compact-label">Geel / Rood</span><span class="stat-compact-val">${cardsYellowAway} / ${cardsRedAway}</span></div>
                     </div>
 
-                    ${match.manOfTheMatch ? `
-                        <div class="match-result-motm">
-                            <span class="match-result-motm-star">⭐</span>
-                            <div class="match-result-motm-info">
-                                <span class="match-result-motm-label">Man of the Match</span>
-                                <span class="match-result-motm-name">${match.manOfTheMatch.name}</span>
-                                ${match.manOfTheMatch.rating ? `<span class="match-result-motm-rating">${match.manOfTheMatch.rating.toFixed(1)}</span>` : ''}
+                    <div class="match-report-summary-card">
+                        ${match.manOfTheMatch ? `
+                            <div class="match-result-motm">
+                                <span class="match-result-motm-star">⭐</span>
+                                <div class="match-result-motm-info">
+                                    <span class="match-result-motm-label">Man of the Match</span>
+                                    <span class="match-result-motm-name">${match.manOfTheMatch.name}</span>
+                                    ${match.manOfTheMatch.rating ? `<span class="match-result-motm-rating">${match.manOfTheMatch.rating.toFixed(1)}</span>` : ''}
+                                </div>
                             </div>
-                        </div>
-                    ` : ''}
+                        ` : ''}
 
-                    ${comments ? `
-                        <div class="chairman-comments">
-                            <div class="chairman-comment positive">${comments.positive}</div>
-                            <div class="chairman-comment negative">${comments.negative}</div>
-                        </div>
-                    ` : ''}
+                        ${comments ? `
+                            <div class="chairman-comments">
+                                <div class="chairman-comment positive">${comments.positive}</div>
+                                <div class="chairman-comment negative">${comments.negative}</div>
+                            </div>
+                        ` : ''}
 
-                    ${match.newFans !== undefined ? `
-                        <div class="fans-change ${match.newFans >= 0 ? 'fans-positive' : 'fans-negative'}">
-                            ${match.newFans >= 0 ? `🎉 +${match.newFans} nieuwe fans!` : `😔 ${match.newFans} fans verloren`} (Totaal: ${gameState.club.fans} fans)
-                        </div>
-                    ` : ''}
+                        ${match.newFans !== undefined ? `
+                            <div class="fans-change ${match.newFans >= 0 ? 'fans-positive' : 'fans-negative'}">
+                                ${match.newFans >= 0 ? `🎉 +${match.newFans} nieuwe fans!` : `😔 ${match.newFans} fans verloren`} (Totaal: ${gameState.club.fans} fans)
+                            </div>
+                        ` : ''}
+                    </div>
 
                 </div>
 
@@ -9129,12 +9974,13 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
     function isShotEvent(ev) { return shotTypes.has(ev.type); }
 
     // Determine which half the play is on (for field highlight)
+    // Own attacks = top half (opponent goal), opponent attacks = bottom half (our goal)
     function getFieldSide(ev) {
         const isPlayerTeam = (isHome && ev.team === 'home') || (!isHome && ev.team === 'away');
         switch (ev.type) {
             case 'goal': case 'shot': case 'shot_saved': case 'shot_missed':
             case 'penalty': case 'penalty_miss': case 'chance': case 'corner': case 'free_kick':
-                return isPlayerTeam ? 'right' : 'left';
+                return isPlayerTeam ? 'left' : 'right';
             default:
                 return null; // no highlight
         }
@@ -9216,7 +10062,8 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
         sotHome: 0, sotAway: 0,
         foulsHome: 0, foulsAway: 0,
         yellowsHome: 0, yellowsAway: 0,
-        redsHome: 0, redsAway: 0
+        redsHome: 0, redsAway: 0,
+        xgHome: 0, xgAway: 0
     };
 
     // Build overlay HTML
@@ -9236,6 +10083,8 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
                     <div class="live-match-field-goal-right"></div>
                     <div class="live-match-field-highlight" id="lm-highlight"></div>
                     <div class="live-match-field-ball" id="lm-ball"></div>
+                    <div class="live-match-field-team top">${opponentName}</div>
+                    <div class="live-match-field-team bottom">${playerTeam}</div>
                 </div>
                 <div class="live-match-minute" id="lm-minute">0'</div>
                 <div class="live-match-scoreboard">
@@ -9265,6 +10114,11 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
                         <span class="live-match-stat-value home" id="lm-sot-home">0</span>
                         <span class="live-match-stat-label">Op doel</span>
                         <span class="live-match-stat-value away" id="lm-sot-away">0</span>
+                    </div>
+                    <div class="live-match-stat">
+                        <span class="live-match-stat-value home" id="lm-xg-home">0.00</span>
+                        <span class="live-match-stat-label">xG</span>
+                        <span class="live-match-stat-value away" id="lm-xg-away">0.00</span>
                     </div>
                     <div class="live-match-stat">
                         <span class="live-match-stat-value home" id="lm-fouls-home">0</span>
@@ -9323,7 +10177,9 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
         redsHome: document.getElementById('lm-reds-home'),
         redsAway: document.getElementById('lm-reds-away'),
         possHome: document.getElementById('lm-poss-home'),
-        possAway: document.getElementById('lm-poss-away')
+        possAway: document.getElementById('lm-poss-away'),
+        xgHome: document.getElementById('lm-xg-home'),
+        xgAway: document.getElementById('lm-xg-away')
     };
 
     let currentMinute = 0;
@@ -9340,14 +10196,16 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
     }
 
     function showBall(ev) {
-        // Only show ball for own team shot events
         const isOwn = isOwnTeamEvent(ev);
-        if (!isOwn) { hideBall(); return; }
-
-        // Position near opponent goal (bottom of field = attacking end)
-        // Random position within penalty area zone: bottom 20%, center 60%
-        const top = 75 + Math.random() * 18; // 75-93% from top
-        const left = 20 + Math.random() * 60; // 20-80% from left
+        // Own team attacks top (opponent goal at top), opponent attacks bottom (our goal at bottom)
+        let top, left;
+        if (isOwn) {
+            top = 5 + Math.random() * 18;   // 5-23% — near opponent goal (top)
+            left = 20 + Math.random() * 60;
+        } else {
+            top = 75 + Math.random() * 18;  // 75-93% — near our goal (bottom)
+            left = 20 + Math.random() * 60;
+        }
         ballEl.style.top = top + '%';
         ballEl.style.left = left + '%';
         ballEl.classList.add('visible');
@@ -9392,6 +10250,13 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
             statEls['sot' + side].textContent = liveStats['sot' + side];
         }
 
+        // xG — expected goals per shot type
+        const xgValues = { goal: 0.35, shot_saved: 0.12, shot_missed: 0.06, penalty: 0.76, penalty_miss: 0.76, chance: 0.08 };
+        if (xgValues[ev.type] !== undefined) {
+            liveStats['xg' + side] += xgValues[ev.type];
+            statEls['xg' + side].textContent = liveStats['xg' + side].toFixed(2);
+        }
+
         // Fouls
         if (ev.type === 'foul' || ev.type === 'yellow_card' || ev.type === 'red_card') {
             liveStats['fouls' + side]++;
@@ -9423,13 +10288,18 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
         entry.className = cls;
 
         const icon = eventIcons[ev.type] || '\uD83D\uDCCB';
-        const teamLabel = isOwnTeamEvent(ev) ? playerTeam : opponentName;
+        const isOwn = isOwnTeamEvent(ev);
+        const teamLabel = isOwn ? playerTeam : opponentName;
         let text = ev.commentary || ev.description || ev.type;
+
+        // Show team badge for fouls, cards, injuries
+        const showTeamBadge = ['foul', 'yellow_card', 'red_card', 'injury'].includes(ev.type);
+        const teamBadge = showTeamBadge ? `<span class="live-match-log-team ${isOwn ? 'own' : 'opp'}">${teamLabel}</span>` : '';
 
         entry.innerHTML = `
             <span class="live-match-log-minute">${ev.minute}'</span>
             <span class="live-match-log-icon">${icon}</span>
-            <span class="live-match-log-text">${text}</span>
+            <span class="live-match-log-text">${teamBadge}${text}</span>
         `;
 
         logEl.insertBefore(entry, logEl.firstChild);
@@ -10120,10 +10990,20 @@ function showTileTooltip(el, type) {
     tooltip.innerHTML = tooltips[type];
     document.body.appendChild(tooltip);
 
-    // Position fixed relative to viewport
+    // Position fixed relative to viewport — above if not enough space below
     const rect = el.getBoundingClientRect();
     tooltip.style.left = rect.left + rect.width / 2 + 'px';
-    tooltip.style.top = rect.bottom + 8 + 'px';
+    tooltip.style.visibility = 'hidden';
+    tooltip.style.display = 'block';
+    const tipHeight = tooltip.offsetHeight;
+    tooltip.style.visibility = '';
+    tooltip.style.display = '';
+    const spaceBelow = window.innerHeight - rect.bottom;
+    if (spaceBelow < tipHeight + 16) {
+        tooltip.style.top = (rect.top - tipHeight - 8) + 'px';
+    } else {
+        tooltip.style.top = rect.bottom + 8 + 'px';
+    }
 
     setTimeout(() => tooltip.classList.add('visible'), 10);
 
@@ -11836,8 +12716,8 @@ const STADIUM_TILE_CONFIG = {
     academy: {
         description: 'Een betere jeugdopleiding produceert talentvoller spelers.',
         levels: [
-            { id: 'acad_1', name: 'Bescheiden Jeugdopleiding', cost: 0, effect: 'Max ★ potentieel', maxStars: 1 },
-            { id: 'acad_2', name: 'Jeugdopleiding', cost: 6000, effect: 'Max ★⯪ potentieel', maxStars: 1.5 },
+            { id: 'acad_1', name: 'Bescheiden Jeugdopleiding', cost: 0, effect: 'Max ⯪ potentieel', maxStars: 0.5 },
+            { id: 'acad_2', name: 'Jeugdopleiding', cost: 3000, effect: 'Max ★ potentieel', maxStars: 1 },
             { id: 'acad_3', name: 'Voetbalschool', cost: 18000, effect: 'Max ★★ potentieel', maxStars: 2, reqCapacity: 500 },
             { id: 'acad_4', name: 'Topacademie', cost: 50000, effect: 'Max ★★⯪ potentieel', maxStars: 2.5, reqCapacity: 1000 },
             { id: 'acad_5', name: 'Talentcentrum', cost: 130000, effect: 'Max ★★★ potentieel', maxStars: 3, reqDivision: 6 },

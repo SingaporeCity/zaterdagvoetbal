@@ -105,7 +105,7 @@ const COMMENTARY = {
 /**
  * Calculate team strength based on lineup, formation, and tactics
  */
-export function calculateTeamStrength(lineup, formation, tactics, players) {
+export function calculateTeamStrength(lineup, formation, tactics, players, options = {}) {
     if (!lineup || lineup.filter(p => p !== null).length < 11) {
         return { attack: 30, defense: 30, midfield: 30, overall: 30 };
     }
@@ -115,6 +115,9 @@ export function calculateTeamStrength(lineup, formation, tactics, players) {
     let midfield = 0;
     let goalkeeper = 0;
     let totalPlayers = 0;
+
+    // Track individual strengths per line for star player impact
+    const lineStrengths = { defender: [], midfielder: [], attacker: [] };
 
     const formationData = FORMATIONS[formation];
     if (!formationData) return { attack: 30, defense: 30, midfield: 30, overall: 30 };
@@ -138,7 +141,9 @@ export function calculateTeamStrength(lineup, formation, tactics, players) {
             fitMultiplier = 0.75; // Bigger penalty for wrong group
         }
 
-        const playerStrength = player.overall * fitMultiplier * (player.fitness / 100);
+        // Energy factor: 100% energy = ×1.0, 50% = ×0.85, 30% = ×0.79
+        const energyFactor = 0.7 + ((player.energy || 100) / 100) * 0.3;
+        const playerStrength = player.overall * fitMultiplier * (player.fitness / 100) * energyFactor;
 
         switch (positionGroup) {
             case 'goalkeeper':
@@ -146,25 +151,31 @@ export function calculateTeamStrength(lineup, formation, tactics, players) {
                 break;
             case 'defender':
                 defense += playerStrength;
+                lineStrengths.defender.push(playerStrength);
                 break;
             case 'midfielder':
                 midfield += playerStrength;
+                lineStrengths.midfielder.push(playerStrength);
                 break;
             case 'attacker':
                 attack += playerStrength;
+                lineStrengths.attacker.push(playerStrength);
                 break;
         }
         totalPlayers++;
     });
 
-    // Normalize by typical formation distribution
-    const defenderCount = Math.max(1, lineup.filter((p, i) => p && POSITIONS[formationData.positions[i]?.role]?.group === 'defender').length);
-    const midfielderCount = Math.max(1, lineup.filter((p, i) => p && POSITIONS[formationData.positions[i]?.role]?.group === 'midfielder').length);
-    const attackerCount = Math.max(1, lineup.filter((p, i) => p && POSITIONS[formationData.positions[i]?.role]?.group === 'attacker').length);
+    // Star player impact: lineStrength = average * 0.8 + best * 0.2
+    const calcLineStrength = (strengths) => {
+        if (strengths.length === 0) return 0;
+        const avg = strengths.reduce((a, b) => a + b, 0) / strengths.length;
+        const best = Math.max(...strengths);
+        return avg * 0.8 + best * 0.2;
+    };
 
-    defense = defense / defenderCount;
-    midfield = midfield / midfielderCount;
-    attack = attack / attackerCount;
+    defense = calcLineStrength(lineStrengths.defender) || defense;
+    midfield = calcLineStrength(lineStrengths.midfielder) || midfield;
+    attack = calcLineStrength(lineStrengths.attacker) || attack;
 
     // Apply tactics modifiers (5 dimensions)
     const offensiefMod = TACTICS.offensief.find(t => t.id === tactics.offensief)?.effect || {};
@@ -181,6 +192,20 @@ export function calculateTeamStrength(lineup, formation, tactics, players) {
     attack += (breedteMod.wide || 0) / 4;
     // Dekking → defensive pressing
     defense += (dekkingMod.pressing || 0) / 4;
+
+    // Team training bonus
+    const teamTrainingBonus = options.teamTrainingBonus;
+    if (teamTrainingBonus) {
+        if (teamTrainingBonus.type === 'attack') attack += teamTrainingBonus.value / 2;
+        if (teamTrainingBonus.type === 'defense') defense += teamTrainingBonus.value / 2;
+    }
+
+    // Formation drive: 0% = ×0.90 (-10%), 100% = ×1.0 (no penalty)
+    const formationDrive = options.formationDrive ?? 100;
+    const driveMultiplier = 0.90 + (formationDrive / 100) * 0.10;
+    attack *= driveMultiplier;
+    defense *= driveMultiplier;
+    midfield *= driveMultiplier;
 
     // Include goalkeeper in defense
     defense = (defense * 3 + goalkeeper) / 4;
@@ -247,8 +272,27 @@ export function generateOpponent(division, position = null) {
             midfield: Math.min(99, baseStrength + random(-5, 5) + positionBonus),
             overall: Math.min(99, baseStrength + positionBonus)
         },
+        roster: generateOpponentRoster(),
         position: position || random(1, 8)
     };
+}
+
+// Dutch player name pool for opponent teams
+const OPPONENT_FIRST = ['Jan', 'Pieter', 'Klaas', 'Henk', 'Willem', 'Sander', 'Daan', 'Tim', 'Lars', 'Tom', 'Bas', 'Kevin', 'Mike', 'Rick', 'Ruben', 'Jesse', 'Mark', 'Joost', 'Thijs', 'Niels', 'Stijn', 'Bram', 'Luuk', 'Wouter', 'Jeroen', 'Dennis', 'Stefan', 'Marco', 'Patrick', 'Roy'];
+const OPPONENT_LAST = ['de Jong', 'Jansen', 'de Vries', 'van Dijk', 'Bakker', 'Visser', 'Smit', 'Meijer', 'de Boer', 'Mulder', 'de Groot', 'Bos', 'Vos', 'Peters', 'Hendriks', 'van Leeuwen', 'Dekker', 'Brouwer', 'de Wit', 'Dijkstra', 'Vermeer', 'Kok', 'van den Berg', 'Willems', 'Scholten', 'van der Linden', 'Kuipers', 'Prins', 'Wolters', 'Hoekstra'];
+
+function generateOpponentRoster() {
+    const used = new Set();
+    const roster = [];
+    for (let i = 0; i < 11; i++) {
+        let name;
+        do {
+            name = randomFromArray(OPPONENT_LAST);
+        } while (used.has(name));
+        used.add(name);
+        roster.push({ name, id: 'opp_' + i });
+    }
+    return roster;
 }
 
 /**
@@ -263,15 +307,17 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
     const roll = Math.random() * 100;
 
     // Determine event type based on team strength and random factors
-    const attackChance = strength.attack / (strength.attack + opposingStrength.defense) * 100;
+    const attackChance = strength.attack / (strength.attack + opposingStrength.defense * 1.2) * 100;
     const chanceCreated = roll < attackChance;
 
     if (chanceCreated) {
-        // Attack succeeds, create a chance
+        // Direct goal probability based on attack vs defense advantage
+        // Equal teams: ~25% goal, mismatch: up to 40%, underdog: down to 5%
         const shotRoll = Math.random() * 100;
-        const goalChance = (strength.attack / 2) + random(-10, 10);
+        const attackAdvantage = strength.attack - opposingStrength.defense;
+        const goalProb = Math.max(5, Math.min(40, 25 + attackAdvantage * 0.4));
 
-        if (shotRoll < goalChance * 0.3) {
+        if (shotRoll < goalProb) {
             // GOAL!
             const scorer = players ? selectScorer(players) : null;
             const assister = players && Math.random() > 0.4 ? selectAssister(players, scorer) : null;
@@ -290,7 +336,7 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
                     score: `${currentScore.home + (isHome ? 1 : 0)}-${currentScore.away + (isHome ? 0 : 1)}`
                 })
             });
-        } else if (shotRoll < goalChance * 0.6) {
+        } else if (shotRoll < goalProb + 25) {
             // Shot saved
             const shooter = players ? selectScorer(players) : null;
             events.push({
@@ -301,8 +347,8 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
                 playerId: shooter?.id,
                 commentary: formatCommentary('shot_saved', { player: shooter?.name || 'Speler' })
             });
-        } else if (shotRoll < goalChance) {
-            // Shot missed
+        } else {
+            // Shot missed — kelderklasse: wild shots are common
             const shooter = players ? selectScorer(players) : null;
             events.push({
                 minute,
@@ -434,7 +480,7 @@ function formatCommentary(type, vars) {
 /**
  * Simulate a full match
  */
-export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics, isHomeGame = true) {
+export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics, isHomeGame = true, options = {}) {
     const result = {
         homeTeam: isHomeGame ? homeTeam : awayTeam,
         awayTeam: isHomeGame ? awayTeam : homeTeam,
@@ -447,20 +493,19 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
         shots: { home: 0, away: 0 },
         shotsOnTarget: { home: 0, away: 0 },
         fouls: { home: 0, away: 0 },
-        cards: { home: { yellow: 0, red: 0 }, away: { yellow: 0, red: 0 } }
+        cards: { home: { yellow: 0, red: 0 }, away: { yellow: 0, red: 0 } },
+        xG: { home: 0, away: 0 }
     };
 
-    // Calculate team strengths
-    const homeStrength = isHomeGame
-        ? calculateTeamStrength(homeLineup, formation, tactics, homeLineup)
-        : awayTeam.strength;
-    const awayStrength = isHomeGame
-        ? awayTeam.strength
-        : calculateTeamStrength(homeLineup, formation, tactics, homeLineup);
+    // Use pre-calculated strengths (options like formationDrive/teamTraining are already baked in)
+    const homeStrength = isHomeGame ? { ...homeTeam.strength } : { ...awayTeam.strength };
+    const awayStrength = isHomeGame ? { ...awayTeam.strength } : { ...homeTeam.strength };
 
-    // Home advantage
-    homeStrength.attack += 3;
-    homeStrength.defense += 3;
+    // Home advantage — scales with grass level (0=+2, 3=+5, 9=+11)
+    const grassLevel = options.grassLevel || 0;
+    const homeBonus = 2 + grassLevel;
+    homeStrength.attack += homeBonus;
+    homeStrength.defense += homeBonus;
 
     // Calculate possession based on midfield strength
     const totalMidfield = homeStrength.midfield + awayStrength.midfield;
@@ -491,15 +536,16 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
         const possessionRoll = Math.random() * 100;
         const isHomePossession = possessionRoll < result.possession.home;
 
-        // Pass lineup when the player's team has possession
+        // Pass lineup for whichever team has possession
         const isPlayerPossession = (isHomePossession && isHomeGame) || (!isHomePossession && !isHomeGame);
+        const opponentTeam = isHomeGame ? awayTeam : homeTeam;
         const events = simulateEvent(
             minute,
             homeStrength,
             awayStrength,
             isHomePossession,
             currentScore,
-            isPlayerPossession ? homeLineup : null,
+            isPlayerPossession ? homeLineup : (opponentTeam.roster || null),
             isPlayerPossession ? tactics : null
         );
 
@@ -514,6 +560,7 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
                 else result.awayScore++;
                 result.shots[team]++;
                 result.shotsOnTarget[team]++;
+                result.xG[team] += 0.35;
 
                 // Update player stats
                 if (event.playerId && result.playerRatings[event.playerId]) {
@@ -527,8 +574,10 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
             } else if (event.type === EVENT_TYPES.SHOT_SAVED) {
                 result.shots[team]++;
                 result.shotsOnTarget[team]++;
+                result.xG[team] += 0.12;
             } else if (event.type === EVENT_TYPES.SHOT_MISSED) {
                 result.shots[team]++;
+                result.xG[team] += 0.06;
             } else if (event.type === EVENT_TYPES.FOUL) {
                 result.fouls[team]++;
             } else if (event.type === EVENT_TYPES.YELLOW_CARD) {
@@ -594,20 +643,20 @@ function generateKeyMinutes() {
 
     // First half
     for (let i = 1; i <= 45; i++) {
-        if (Math.random() < 0.35) { // ~35% chance each minute has action
+        if (Math.random() < 0.30) { // ~30% chance each minute has action
             minutes.push(i);
         }
     }
 
     // Second half
     for (let i = 46; i <= 90; i++) {
-        if (Math.random() < 0.35) {
+        if (Math.random() < 0.30) {
             minutes.push(i);
         }
     }
 
     // Ensure some minimum number of events
-    while (minutes.length < 15) {
+    while (minutes.length < 14) {
         const newMinute = random(1, 90);
         if (!minutes.includes(newMinute)) {
             minutes.push(newMinute);
@@ -644,7 +693,7 @@ export function getMatchPoints(resultType) {
 /**
  * Apply match results to player stats
  */
-export function applyMatchResults(players, matchResult, isHomeGame) {
+export function applyMatchResults(players, matchResult, isHomeGame, currentWeek) {
     const team = isHomeGame ? 'home' : 'away';
     const won = (isHomeGame && matchResult.homeScore > matchResult.awayScore) ||
                 (!isHomeGame && matchResult.awayScore > matchResult.homeScore);
@@ -680,6 +729,30 @@ export function applyMatchResults(players, matchResult, isHomeGame) {
 
         // Team samenhang: increment matchesTogether for lineup players
         player.matchesTogether = (player.matchesTogether || 0) + 1;
+
+        // Track cards
+        player.yellowCards = (player.yellowCards || 0) + (rating.yellowCards || 0);
+        player.redCards = (player.redCards || 0) + (rating.redCards || 0);
+
+        // Red card → 2 match suspension
+        if (rating.redCards > 0) {
+            player.suspendedUntil = currentWeek + 2;
+        }
+        // 5 yellows → 1 match suspension, reset
+        if (player.yellowCards >= 5) {
+            player.suspendedUntil = currentWeek + 1;
+            player.yellowCards = 0;
+        }
+
+        // Injury events
+        const injuryEvent = matchResult.events.find(e =>
+            e.type === 'injury' && e.playerId === player.id && e.team === team
+        );
+        if (injuryEvent) {
+            const duration = 1 + Math.floor(Math.random() * 5);
+            player.injuredUntil = currentWeek + duration;
+            player.injuryDuration = duration;
+        }
     });
 }
 

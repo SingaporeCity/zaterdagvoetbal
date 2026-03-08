@@ -396,6 +396,9 @@ export function startNewSeason(gameState) {
     gameState.season++;
     gameState.week = 1;
 
+    // Reset puntenaftrek voor nieuw seizoen
+    gameState.club.pointsDeducted = 0;
+
     // Generate new standings
     gameState.standings = generateStandings(
         gameState.club.name,
