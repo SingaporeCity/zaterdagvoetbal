@@ -5847,8 +5847,6 @@ function startTimers() {
 // ================================================
 
 function generateTransferMarket() {
-    // In multiplayer, transfer market comes from shared Supabase table
-    if (isMultiplayer()) return;
 
     const division = gameState.club.division;
     const count = random(7, 10);
@@ -6064,11 +6062,6 @@ function renderTransferMarket() {
     const container = document.getElementById('transfer-list');
     if (!container) return;
 
-    // In multiplayer, load from shared market
-    if (isMultiplayer() && (!gameState.transferMarket.lastRefresh || Date.now() - gameState.transferMarket.lastRefresh > 30000)) {
-        loadMultiplayerTransferMarket().then(() => renderTransferMarket());
-        return;
-    }
 
     // Get active filters
     const positionFilter = document.querySelector('.transfer-filter.active')?.dataset.filter || 'all';
@@ -6371,11 +6364,6 @@ function initTransferMarket() {
         });
     });
 
-    // Refresh button
-    document.getElementById('refresh-market-btn')?.addEventListener('click', () => {
-        generateTransferMarket();
-        renderTransferMarket();
-    });
 }
 
 // ================================================
