@@ -8968,15 +8968,20 @@ function showOnboarding() {
         }
     ];
 
+    // Remove any stale onboarding overlay (prevents duplicate panel bug)
+    document.querySelectorAll('.onboarding-overlay').forEach(el => el.remove());
+
     // Create overlay
     const overlay = document.createElement('div');
     overlay.className = 'onboarding-overlay';
-    overlay.innerHTML = '<div class="onboarding-panel" id="onboarding-panel"></div>';
+    const panelEl = document.createElement('div');
+    panelEl.className = 'onboarding-panel';
+    overlay.appendChild(panelEl);
     document.body.appendChild(overlay);
 
     function renderStep(stepIndex) {
         const step = steps[stepIndex];
-        const panel = document.getElementById('onboarding-panel');
+        const panel = panelEl;
 
         let inputHTML = '';
         if (step.inputType === 'text' && step.inputId === 'onboarding-clubname') {
@@ -9060,13 +9065,15 @@ function showOnboarding() {
             panel.querySelector('.onboarding-step')?.classList.add('visible');
         });
 
-        // Bind events
+        // Bind events — use panel.querySelector to avoid stale DOM references
         if (step.inputType === 'text') {
-            const input = document.getElementById(step.inputId);
-            input.focus();
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && input.value.trim()) nextStep();
-            });
+            const input = panel.querySelector(`#${step.inputId}`);
+            if (input) {
+                input.focus();
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && input.value.trim()) nextStep();
+                });
+            }
         }
 
         // Color preset buttons (clubname step)
@@ -9081,13 +9088,15 @@ function showOnboarding() {
             });
         }
 
+        const nextBtn = panel.querySelector(`#${btnId}`);
+
         if (step.inputType === 'positions') {
             panel.querySelectorAll('.onboarding-pos-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     panel.querySelectorAll('.onboarding-pos-btn').forEach(b => b.classList.remove('selected'));
                     btn.classList.add('selected');
                     selectedPosition = btn.dataset.pos;
-                    document.getElementById(btnId).disabled = false;
+                    if (nextBtn) nextBtn.disabled = false;
                 });
             });
         }
@@ -9102,11 +9111,14 @@ function showOnboarding() {
                     if (dir > 0 && pointsRemaining <= 0) return;
                     skillPoints[skill] = newVal;
                     pointsRemaining -= dir;
-                    document.getElementById(`skill-val-${skill}`).textContent = newVal;
-                    document.getElementById('points-remaining').textContent = pointsRemaining;
+                    const valEl = panel.querySelector(`#skill-val-${skill}`);
+                    if (valEl) valEl.textContent = newVal;
+                    const ptsEl = panel.querySelector('#points-remaining');
+                    if (ptsEl) ptsEl.textContent = pointsRemaining;
                     const avg = Math.round(Object.values(skillPoints).reduce((s, v) => s + v, 0) / 6);
-                    document.getElementById('onboarding-alg').textContent = avg;
-                    document.getElementById(btnId).disabled = pointsRemaining > 0;
+                    const algEl = panel.querySelector('#onboarding-alg');
+                    if (algEl) algEl.textContent = avg;
+                    if (nextBtn) nextBtn.disabled = pointsRemaining > 0;
                     // Update +/- button states
                     panel.querySelectorAll('.onboarding-skill-btn').forEach(b => {
                         const sk = b.dataset.skill;
@@ -9120,23 +9132,25 @@ function showOnboarding() {
             panel.querySelectorAll('.onboarding-skill-btn.minus').forEach(b => b.disabled = true);
         }
 
-        document.getElementById(btnId)?.addEventListener('click', nextStep);
+        if (nextBtn) nextBtn.addEventListener('click', nextStep);
     }
 
     function nextStep() {
-        // Save and validate current step
+        // Save and validate current step — use panelEl to avoid stale DOM
         if (currentStep === 0) {
-            const val = document.getElementById('onboarding-clubname')?.value.trim();
+            const input = panelEl.querySelector('#onboarding-clubname');
+            const val = input?.value.trim();
             if (!val) {
-                document.getElementById('onboarding-clubname')?.focus();
+                input?.focus();
                 return;
             }
             savedClubName = val;
         }
         if (currentStep === 1) {
-            const val = document.getElementById('onboarding-playername')?.value.trim();
+            const input = panelEl.querySelector('#onboarding-playername');
+            const val = input?.value.trim();
             if (!val) {
-                document.getElementById('onboarding-playername')?.focus();
+                input?.focus();
                 return;
             }
             savedPlayerName = val;
@@ -9209,8 +9223,7 @@ function showOnboarding() {
         updateMainBadgeSVG();
 
         // Animate out
-        const panel = document.getElementById('onboarding-panel');
-        if (panel) panel.classList.add('slide-out');
+        panelEl.classList.add('slide-out');
         setTimeout(() => {
             overlay.remove();
             // Ask about tutorial
