@@ -3637,7 +3637,6 @@ function renderScoutPage() {
         chairmanSon.nationality = NATIONALITIES[0];
         chairmanSon.tipSource = 'voorzitter';
         gameState.scoutTips.push(chairmanSon);
-        gameState.scoutMission.lastScoutDate = getTodayString();
         saveGame();
     }
 
