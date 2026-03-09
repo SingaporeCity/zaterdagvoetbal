@@ -6860,9 +6860,24 @@ function renderLineupBuilder() {
         goalkeeper: { label: 'KEE', color: '#f9a825', players: [] }
     };
 
-    // Get players not in lineup
+    // Get players not in lineup (include "Mijn Speler")
+    const mp = initMyPlayer();
+    const mpOverall = Math.round((mp.attributes.SNE + mp.attributes.TEC + mp.attributes.PAS + mp.attributes.SCH + mp.attributes.VER + mp.attributes.FYS) / 6);
+    const myPlayerEntry = {
+        id: 'myplayer',
+        name: mp.name,
+        age: mp.age,
+        position: mp.position,
+        overall: mpOverall,
+        stars: mp.stars || 1,
+        isMyPlayer: true,
+        energy: mp.energy || 100,
+        nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
+        attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
+    };
+    const allPlayers = [myPlayerEntry, ...gameState.players.filter(p => !p.isMyPlayer)];
     const lineupIds = Object.values(gameState.lineup).filter(p => p).map(p => p.id);
-    const availablePlayers = gameState.players.filter(p => !lineupIds.includes(p.id));
+    const availablePlayers = allPlayers.filter(p => !lineupIds.includes(p.id));
 
     availablePlayers.forEach(player => {
         const posData = POSITIONS[player.position];
@@ -6979,9 +6994,23 @@ function openLineupDropdown(event, positionIndex, role) {
     const slot = event.currentTarget;
     const posData = POSITIONS[role] || { abbr: '??', color: '#666', group: 'midfielder' };
 
-    // Get available players (not in lineup) that fit this position
+    // Get available players (not in lineup) that fit this position, including "Mijn Speler"
+    const mp = initMyPlayer();
+    const mpOverall = Math.round((mp.attributes.SNE + mp.attributes.TEC + mp.attributes.PAS + mp.attributes.SCH + mp.attributes.VER + mp.attributes.FYS) / 6);
+    const myPlayerEntry = {
+        id: 'myplayer',
+        name: mp.name,
+        age: mp.age,
+        position: mp.position,
+        overall: mpOverall,
+        stars: mp.stars || 1,
+        isMyPlayer: true,
+        energy: mp.energy || 100,
+        attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
+    };
+    const allPlayers = [myPlayerEntry, ...gameState.players.filter(p => !p.isMyPlayer)];
     const lineupIds = Object.values(gameState.lineup).filter(p => p).map(p => p.id);
-    const availablePlayers = gameState.players.filter(p => !lineupIds.includes(p.id));
+    const availablePlayers = allPlayers.filter(p => !lineupIds.includes(p.id));
 
     // Get best fit players (same position) and alternatives (same group)
     const exactFit = availablePlayers.filter(p => p.position === role);
@@ -7006,7 +7035,7 @@ function openLineupDropdown(event, positionIndex, role) {
         exactFit.forEach(player => {
             const pData = POSITIONS[player.position];
             html += `
-                <div class="dropdown-player" onclick="selectLineupPlayer(${positionIndex}, ${player.id})">
+                <div class="dropdown-player" onclick="selectLineupPlayer(${positionIndex}, '${player.id}')">
                     <span class="dp-overall" style="background: ${pData?.color || '#666'}">${player.overall}</span>
                     <span class="dp-name">${player.name}</span>
                     <span class="dp-pos">${pData?.abbr || '??'}</span>
@@ -7020,7 +7049,7 @@ function openLineupDropdown(event, positionIndex, role) {
         groupFit.slice(0, 5).forEach(player => {
             const pData = POSITIONS[player.position];
             html += `
-                <div class="dropdown-player alt" onclick="selectLineupPlayer(${positionIndex}, ${player.id})">
+                <div class="dropdown-player alt" onclick="selectLineupPlayer(${positionIndex}, '${player.id}')">
                     <span class="dp-overall" style="background: ${pData?.color || '#666'}">${player.overall}</span>
                     <span class="dp-name">${player.name}</span>
                     <span class="dp-pos">${pData?.abbr || '??'}</span>
@@ -7050,7 +7079,20 @@ function closeLineupDropdown() {
 }
 
 function selectLineupPlayer(positionIndex, playerId) {
-    const player = gameState.players.find(p => p.id === playerId);
+    playerId = parsePlayerId(playerId);
+    // Check gameState.players first, then try "Mijn Speler"
+    let player = gameState.players.find(p => p.id === playerId);
+    if (!player && playerId === 'myplayer') {
+        const mp = initMyPlayer();
+        const mpOverall = Math.round((mp.attributes.SNE + mp.attributes.TEC + mp.attributes.PAS + mp.attributes.SCH + mp.attributes.VER + mp.attributes.FYS) / 6);
+        player = {
+            id: 'myplayer', name: mp.name, age: mp.age, position: mp.position,
+            overall: mpOverall, stars: mp.stars || 1, isMyPlayer: true,
+            energy: mp.energy || 100,
+            nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
+            attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
+        };
+    }
     if (!player) return;
 
     // Remove player from any existing position
