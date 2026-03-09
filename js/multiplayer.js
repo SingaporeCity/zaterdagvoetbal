@@ -279,27 +279,32 @@ async function joinLeague(code) {
 
         console.log('[joinLeague] Looking for league with code:', code);
 
-        // Find league by code (lobby OR active)
-        const { data: leagues, error: findError } = await supabase
-            .from('leagues')
-            .select('*')
-            .eq('invite_code', code)
-            .or('status.eq.lobby,status.eq.active');
+        // Use RPC to bypass RLS for invite code lookup
+        let league = null;
+        const { data: rpcLeagues, error: rpcError } = await supabase
+            .rpc('find_league_by_invite_code', { p_code: code });
 
-        console.log('[joinLeague] Query result:', { leagues, findError });
-
-        if (findError) {
-            console.error('[joinLeague] Query error:', findError);
-            errorEl.textContent = `Fout bij zoeken: ${findError.message}`;
-            return;
+        if (!rpcError && rpcLeagues?.length > 0) {
+            league = rpcLeagues[0];
+            console.log('[joinLeague] Found via RPC:', league.id, league.status);
+        } else {
+            // Fallback: direct query (if RPC not available or RLS fixed)
+            if (rpcError) console.warn('[joinLeague] RPC unavailable:', rpcError.message);
+            const { data: directLeagues } = await supabase
+                .from('leagues')
+                .select('*')
+                .eq('invite_code', code);
+            league = directLeagues?.find(l => l.status === 'lobby' || l.status === 'active') || null;
+            if (league) console.log('[joinLeague] Found via direct query:', league.id, league.status);
         }
 
-        if (!leagues || leagues.length === 0) {
+        if (!league) {
             errorEl.textContent = 'Competitie niet gevonden. Controleer de code.';
             return;
         }
 
-        const league = leagues[0];
+        console.log('[joinLeague] Found league:', league.id, league.name, league.status);
+
         console.log('[joinLeague] Found league:', league.id, league.name, league.status);
 
         // Check if already joined
