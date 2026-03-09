@@ -13643,9 +13643,11 @@ window.hireScoutDirect = function() {
     gameState.hiredStaff.medisch.push('st_scout_senior');
     if (!gameState.staffHiredAt) gameState.staffHiredAt = {};
     gameState.staffHiredAt['st_scout_senior'] = gameState.week || 1;
+    gameState.stats.staffHired = (gameState.stats.staffHired || 0) + 1;
     updateBudgetDisplays();
     renderScoutPage();
     saveGame();
+    triggerAchievementCheck();
     const scoutSalary = STAFF_MEMBERS.find(s => s.id === 'st_scout_senior')?.salary || 175;
     showNotification(`Scout aangenomen! Salaris: ${formatCurrency(scoutSalary)}/week`, 'success');
 };
@@ -13782,6 +13784,7 @@ window.fireStaffMember = function(staffId) {
     renderStaffPage();
     renderDashboardChecklist();
     saveGame();
+    triggerAchievementCheck();
     showNotification(`${staff?.name || 'Stafmedewerker'} ontslagen.`, 'info');
 };
 
@@ -13820,6 +13823,7 @@ window.hireStaffMember = function(staffId) {
     renderStaffPage();
     renderDashboardChecklist();
     saveGame();
+    triggerAchievementCheck();
 
     const staffName = staff?.name || 'Stafmedewerker';
     showNotification(`${staffName} aangenomen! Salaris: ${formatCurrency(staff?.salary || 0)}/week`, 'success');
