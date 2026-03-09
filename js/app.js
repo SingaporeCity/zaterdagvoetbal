@@ -3520,6 +3520,13 @@ function renderScoutPage() {
     if (!gameState.scoutTips) gameState.scoutTips = [];
     if (!gameState.scoutHistory) gameState.scoutHistory = [];
 
+    // Fix signingBonus for players created before the salary variable bugfix
+    [...gameState.scoutTips, ...gameState.scoutHistory].forEach(p => {
+        if (!p.signingBonus || isNaN(p.signingBonus)) {
+            p.signingBonus = Math.round((p.salary || 10) * (2 + (p.stars || 0)) / 10) * 10;
+        }
+    });
+
     // Seed first tip for new games (voorzitter's son)
     if (gameState.scoutTips.length === 0 && !gameState.scoutTipClaimed) {
         const chairmanSon = createScoutedPlayer(0);
