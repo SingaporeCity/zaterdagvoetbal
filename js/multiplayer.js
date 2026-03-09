@@ -989,7 +989,7 @@ async function generateSchedule(leagueId, season, clubIds, humanClubIds = []) {
         roundMatches.push(roundArr);
     }
 
-    // If exactly 2 human players, ensure they face each other in week 1 and 2
+    // If exactly 2 human players, ensure they face each other in week 1
     if (humanClubIds.length === 2) {
         const [h1, h2] = humanClubIds;
         const halfSize = n - 1; // rounds per half (7 for 8 teams)
@@ -1000,20 +1000,10 @@ async function generateSchedule(leagueId, season, clubIds, humanClubIds = []) {
                 (m.home === h1 && m.away === h2) || (m.home === h2 && m.away === h1)
             )
         );
-        // Find round in second half (reverse fixture)
-        const secondHalfIdx = roundMatches.findIndex((round, idx) =>
-            idx >= halfSize && round.some(m =>
-                (m.home === h1 && m.away === h2) || (m.home === h2 && m.away === h1)
-            )
-        );
 
-        // Swap first-half round to position 0 (week 1)
+        // Swap first-half human match to week 1
         if (firstHalfIdx > 0) {
             [roundMatches[0], roundMatches[firstHalfIdx]] = [roundMatches[firstHalfIdx], roundMatches[0]];
-        }
-        // Swap second-half round to position 1 (week 2)
-        if (secondHalfIdx > 1 && secondHalfIdx !== -1) {
-            [roundMatches[1], roundMatches[secondHalfIdx]] = [roundMatches[secondHalfIdx], roundMatches[1]];
         }
     }
 
