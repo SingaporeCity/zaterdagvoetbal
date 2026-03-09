@@ -31,7 +31,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '⚽',
         reward: { playerXP: 15 },
-        check: (state) => (state.stats?.myPlayerMatches || 0) >= 1
+        check: (state) => (state.stats?.myPlayerMatches || 0) >= 1,
+        progress: { value: (state) => state.stats?.myPlayerMatches || 0, target: 1 }
     },
     secondMatch: {
         id: 'secondMatch',
@@ -40,7 +41,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '⚽',
         reward: { playerXP: 10 },
-        check: (state) => (state.stats?.myPlayerMatches || 0) >= 2
+        check: (state) => (state.stats?.myPlayerMatches || 0) >= 2,
+        progress: { value: (state) => state.stats?.myPlayerMatches || 0, target: 2 }
     },
     fiveMatches: {
         id: 'fiveMatches',
@@ -49,7 +51,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '⚽',
         reward: { playerXP: 20 },
-        check: (state) => (state.stats?.myPlayerMatches || 0) >= 5
+        check: (state) => (state.stats?.myPlayerMatches || 0) >= 5,
+        progress: { value: (state) => state.stats?.myPlayerMatches || 0, target: 5 }
     },
     tenMatches: {
         id: 'tenMatches',
@@ -58,7 +61,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '⚽',
         reward: { playerXP: 25 },
-        check: (state) => (state.club.stats?.totalMatches || 0) >= 10
+        check: (state) => (state.club.stats?.totalMatches || 0) >= 10,
+        progress: { value: (state) => state.club.stats?.totalMatches || 0, target: 10 }
     },
     twentyFiveMatches: {
         id: 'twentyFiveMatches',
@@ -67,7 +71,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '⚽',
         reward: { playerXP: 40 },
-        check: (state) => (state.club.stats?.totalMatches || 0) >= 25
+        check: (state) => (state.club.stats?.totalMatches || 0) >= 25,
+        progress: { value: (state) => state.club.stats?.totalMatches || 0, target: 25 }
     },
     fiftyMatches: {
         id: 'fiftyMatches',
@@ -76,7 +81,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '⚽',
         reward: { playerXP: 60 },
-        check: (state) => (state.club.stats?.totalMatches || 0) >= 50
+        check: (state) => (state.club.stats?.totalMatches || 0) >= 50,
+        progress: { value: (state) => state.club.stats?.totalMatches || 0, target: 50 }
     },
     hundredMatches: {
         id: 'hundredMatches',
@@ -85,7 +91,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🏟️',
         reward: { playerXP: 150 },
-        check: (state) => (state.club.stats?.totalMatches || 0) >= 100
+        check: (state) => (state.club.stats?.totalMatches || 0) >= 100,
+        progress: { value: (state) => state.club.stats?.totalMatches || 0, target: 100 }
     },
     twoHundredMatches: {
         id: 'twoHundredMatches',
@@ -94,7 +101,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🏟️',
         reward: { playerXP: 250 },
-        check: (state) => (state.club.stats?.totalMatches || 0) >= 200
+        check: (state) => (state.club.stats?.totalMatches || 0) >= 200,
+        progress: { value: (state) => state.club.stats?.totalMatches || 0, target: 200 }
     },
     firstWin: {
         id: 'firstWin',
@@ -103,7 +111,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🏆',
         reward: { playerXP: 25 },
-        check: (state) => (state.stats?.wins || 0) >= 1
+        check: (state) => (state.stats?.wins || 0) >= 1,
+        progress: { value: (state) => state.stats?.wins || 0, target: 1 }
     },
     fiveWins: {
         id: 'fiveWins',
@@ -112,7 +121,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '✋',
         reward: { playerXP: 30 },
-        check: (state) => (state.stats?.wins || 0) >= 5
+        check: (state) => (state.stats?.wins || 0) >= 5,
+        progress: { value: (state) => state.stats?.wins || 0, target: 5 }
     },
     tenWins: {
         id: 'tenWins',
@@ -121,7 +131,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🎖️',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.wins || 0) >= 10
+        check: (state) => (state.stats?.wins || 0) >= 10,
+        progress: { value: (state) => state.stats?.wins || 0, target: 10 }
     },
     twentyFiveWins: {
         id: 'twentyFiveWins',
@@ -130,7 +141,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🏅',
         reward: { playerXP: 60 },
-        check: (state) => (state.stats?.wins || 0) >= 25
+        check: (state) => (state.stats?.wins || 0) >= 25,
+        progress: { value: (state) => state.stats?.wins || 0, target: 25 }
     },
     fiftyWins: {
         id: 'fiftyWins',
@@ -139,7 +151,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🏅',
         reward: { playerXP: 100 },
-        check: (state) => (state.stats?.wins || 0) >= 50
+        check: (state) => (state.stats?.wins || 0) >= 50,
+        progress: { value: (state) => state.stats?.wins || 0, target: 50 }
     },
     hundredWins: {
         id: 'hundredWins',
@@ -148,7 +161,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '👑',
         reward: { playerXP: 250 },
-        check: (state) => (state.stats?.wins || 0) >= 100
+        check: (state) => (state.stats?.wins || 0) >= 100,
+        progress: { value: (state) => state.stats?.wins || 0, target: 100 }
     },
     threeWinsInRow: {
         id: 'threeWinsInRow',
@@ -157,7 +171,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🔥',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.currentWinStreak || 0) >= 3
+        check: (state) => (state.stats?.currentWinStreak || 0) >= 3,
+        progress: { value: (state) => state.stats?.currentWinStreak || 0, target: 3 }
     },
     fiveWinsInRow: {
         id: 'fiveWinsInRow',
@@ -166,7 +181,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '💪',
         reward: { playerXP: 75 },
-        check: (state) => (state.stats?.currentWinStreak || 0) >= 5
+        check: (state) => (state.stats?.currentWinStreak || 0) >= 5,
+        progress: { value: (state) => state.stats?.currentWinStreak || 0, target: 5 }
     },
     tenWinsInRow: {
         id: 'tenWinsInRow',
@@ -175,7 +191,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '💪',
         reward: { playerXP: 150 },
-        check: (state) => (state.stats?.bestWinStreak || 0) >= 10
+        check: (state) => (state.stats?.bestWinStreak || 0) >= 10,
+        progress: { value: (state) => state.stats?.bestWinStreak || 0, target: 10 }
     },
     unbeatenRun: {
         id: 'unbeatenRun',
@@ -184,7 +201,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🛡️',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.currentUnbeaten || 0) >= 5
+        check: (state) => (state.stats?.currentUnbeaten || 0) >= 5,
+        progress: { value: (state) => state.stats?.currentUnbeaten || 0, target: 5 }
     },
     tenUnbeaten: {
         id: 'tenUnbeaten',
@@ -193,7 +211,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🛡️',
         reward: { playerXP: 100 },
-        check: (state) => (state.stats?.bestUnbeaten || 0) >= 10
+        check: (state) => (state.stats?.bestUnbeaten || 0) >= 10,
+        progress: { value: (state) => state.stats?.bestUnbeaten || 0, target: 10 }
     },
     cleanSheet: {
         id: 'cleanSheet',
@@ -202,7 +221,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🧤',
         reward: { playerXP: 25 },
-        check: (state) => (state.stats?.cleanSheets || 0) >= 1
+        check: (state) => (state.stats?.cleanSheets || 0) >= 1,
+        progress: { value: (state) => state.stats?.cleanSheets || 0, target: 1 }
     },
     fiveCleanSheets: {
         id: 'fiveCleanSheets',
@@ -211,7 +231,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🧤',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.cleanSheets || 0) >= 5
+        check: (state) => (state.stats?.cleanSheets || 0) >= 5,
+        progress: { value: (state) => state.stats?.cleanSheets || 0, target: 5 }
     },
     tenCleanSheets: {
         id: 'tenCleanSheets',
@@ -220,7 +241,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🧱',
         reward: { playerXP: 75 },
-        check: (state) => (state.stats?.cleanSheets || 0) >= 10
+        check: (state) => (state.stats?.cleanSheets || 0) >= 10,
+        progress: { value: (state) => state.stats?.cleanSheets || 0, target: 10 }
     },
     comeback: {
         id: 'comeback',
@@ -229,7 +251,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🔄',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.comebacks || 0) >= 1
+        check: (state) => (state.stats?.comebacks || 0) >= 1,
+        progress: { value: (state) => state.stats?.comebacks || 0, target: 1 }
     },
     neverGiveUp: {
         id: 'neverGiveUp',
@@ -238,7 +261,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '💪',
         reward: { playerXP: 75 },
-        check: (state) => (state.stats?.comebacks || 0) >= 5
+        check: (state) => (state.stats?.comebacks || 0) >= 5,
+        progress: { value: (state) => state.stats?.comebacks || 0, target: 5 }
     },
     homeKing: {
         id: 'homeKing',
@@ -247,7 +271,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🏠',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.homeWins || 0) >= 10
+        check: (state) => (state.stats?.homeWins || 0) >= 10,
+        progress: { value: (state) => state.stats?.homeWins || 0, target: 10 }
     },
     awayWarrior: {
         id: 'awayWarrior',
@@ -256,7 +281,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🚌',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.awayWins || 0) >= 10
+        check: (state) => (state.stats?.awayWins || 0) >= 10,
+        progress: { value: (state) => state.stats?.awayWins || 0, target: 10 }
     },
     bigWin3: {
         id: 'bigWin3',
@@ -292,7 +318,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '🤝',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.draws || 0) >= 10
+        check: (state) => (state.stats?.draws || 0) >= 10,
+        progress: { value: (state) => state.stats?.draws || 0, target: 10 }
     },
     firstLoss: {
         id: 'firstLoss',
@@ -301,7 +328,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '📉',
         reward: { playerXP: 10 },
-        check: (state) => (state.stats?.losses || 0) >= 1
+        check: (state) => (state.stats?.losses || 0) >= 1,
+        progress: { value: (state) => state.stats?.losses || 0, target: 1 }
     },
     tenLosses: {
         id: 'tenLosses',
@@ -310,7 +338,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '📉',
         reward: { playerXP: 25 },
-        check: (state) => (state.stats?.losses || 0) >= 10
+        check: (state) => (state.stats?.losses || 0) >= 10,
+        progress: { value: (state) => state.stats?.losses || 0, target: 10 }
     },
     drawSpecialist: {
         id: 'drawSpecialist',
@@ -320,7 +349,8 @@ const ACHIEVEMENTS = {
         icon: '🤝',
         hidden: true,
         reward: { playerXP: 75 },
-        check: (state) => (state.stats?.drawStreak || 0) >= 5
+        check: (state) => (state.stats?.drawStreak || 0) >= 5,
+        progress: { value: (state) => state.stats?.drawStreak || 0, target: 5 }
     },
     lossStreak5: {
         id: 'lossStreak5',
@@ -330,7 +360,8 @@ const ACHIEVEMENTS = {
         icon: '📉',
         hidden: true,
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.lossStreak || 0) >= 5
+        check: (state) => (state.stats?.lossStreak || 0) >= 5,
+        progress: { value: (state) => state.stats?.lossStreak || 0, target: 5 }
     },
     saturdayTen: {
         id: 'saturdayTen',
@@ -339,7 +370,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.MATCHES,
         icon: '📅',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.saturdayMatches || 0) >= 10
+        check: (state) => (state.stats?.saturdayMatches || 0) >= 10,
+        progress: { value: (state) => state.stats?.saturdayMatches || 0, target: 10 }
     },
 
     // ================================================================
@@ -352,7 +384,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '⚽',
         reward: { playerXP: 15 },
-        check: (state) => (state.club.stats?.totalGoals || 0) >= 1
+        check: (state) => (state.club.stats?.totalGoals || 0) >= 1,
+        progress: { value: (state) => state.club.stats?.totalGoals || 0, target: 1 }
     },
     tenGoals: {
         id: 'tenGoals',
@@ -361,7 +394,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '⚽',
         reward: { playerXP: 30 },
-        check: (state) => (state.club.stats?.totalGoals || 0) >= 10
+        check: (state) => (state.club.stats?.totalGoals || 0) >= 10,
+        progress: { value: (state) => state.club.stats?.totalGoals || 0, target: 10 }
     },
     fiftyGoals: {
         id: 'fiftyGoals',
@@ -370,7 +404,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🎯',
         reward: { playerXP: 75 },
-        check: (state) => (state.club.stats?.totalGoals || 0) >= 50
+        check: (state) => (state.club.stats?.totalGoals || 0) >= 50,
+        progress: { value: (state) => state.club.stats?.totalGoals || 0, target: 50 }
     },
     hundredGoals: {
         id: 'hundredGoals',
@@ -379,7 +414,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '💯',
         reward: { playerXP: 150 },
-        check: (state) => (state.club.stats?.totalGoals || 0) >= 100
+        check: (state) => (state.club.stats?.totalGoals || 0) >= 100,
+        progress: { value: (state) => state.club.stats?.totalGoals || 0, target: 100 }
     },
     twoHundredGoals: {
         id: 'twoHundredGoals',
@@ -388,7 +424,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '👑',
         reward: { playerXP: 250 },
-        check: (state) => (state.club.stats?.totalGoals || 0) >= 200
+        check: (state) => (state.club.stats?.totalGoals || 0) >= 200,
+        progress: { value: (state) => state.club.stats?.totalGoals || 0, target: 200 }
     },
     fiveHundredGoals: {
         id: 'fiveHundredGoals',
@@ -397,7 +434,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🎆',
         reward: { playerXP: 250 },
-        check: (state) => (state.club.stats?.totalGoals || 0) >= 500
+        check: (state) => (state.club.stats?.totalGoals || 0) >= 500,
+        progress: { value: (state) => state.club.stats?.totalGoals || 0, target: 500 }
     },
     firstMyGoal: {
         id: 'firstMyGoal',
@@ -406,7 +444,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '⚽',
         reward: { playerXP: 25 },
-        check: (state) => (state.stats?.myPlayerGoals || 0) >= 1
+        check: (state) => (state.stats?.myPlayerGoals || 0) >= 1,
+        progress: { value: (state) => state.stats?.myPlayerGoals || 0, target: 1 }
     },
     fiveMyGoals: {
         id: 'fiveMyGoals',
@@ -415,7 +454,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🎯',
         reward: { playerXP: 40 },
-        check: (state) => (state.stats?.myPlayerGoals || 0) >= 5
+        check: (state) => (state.stats?.myPlayerGoals || 0) >= 5,
+        progress: { value: (state) => state.stats?.myPlayerGoals || 0, target: 5 }
     },
     tenMyGoals: {
         id: 'tenMyGoals',
@@ -424,7 +464,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🎯',
         reward: { playerXP: 60 },
-        check: (state) => (state.stats?.myPlayerGoals || 0) >= 10
+        check: (state) => (state.stats?.myPlayerGoals || 0) >= 10,
+        progress: { value: (state) => state.stats?.myPlayerGoals || 0, target: 10 }
     },
     twentyFiveMyGoals: {
         id: 'twentyFiveMyGoals',
@@ -433,7 +474,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🔥',
         reward: { playerXP: 100 },
-        check: (state) => (state.stats?.myPlayerGoals || 0) >= 25
+        check: (state) => (state.stats?.myPlayerGoals || 0) >= 25,
+        progress: { value: (state) => state.stats?.myPlayerGoals || 0, target: 25 }
     },
     fiftyMyGoals: {
         id: 'fiftyMyGoals',
@@ -442,7 +484,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '👑',
         reward: { playerXP: 200 },
-        check: (state) => (state.stats?.myPlayerGoals || 0) >= 50
+        check: (state) => (state.stats?.myPlayerGoals || 0) >= 50,
+        progress: { value: (state) => state.stats?.myPlayerGoals || 0, target: 50 }
     },
     firstAssist: {
         id: 'firstAssist',
@@ -451,7 +494,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🤝',
         reward: { playerXP: 25 },
-        check: (state) => (state.stats?.myPlayerAssists || 0) >= 1
+        check: (state) => (state.stats?.myPlayerAssists || 0) >= 1,
+        progress: { value: (state) => state.stats?.myPlayerAssists || 0, target: 1 }
     },
     fiveAssists: {
         id: 'fiveAssists',
@@ -460,7 +504,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🍞',
         reward: { playerXP: 40 },
-        check: (state) => (state.stats?.myPlayerAssists || 0) >= 5
+        check: (state) => (state.stats?.myPlayerAssists || 0) >= 5,
+        progress: { value: (state) => state.stats?.myPlayerAssists || 0, target: 5 }
     },
     tenAssists: {
         id: 'tenAssists',
@@ -469,7 +514,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🎨',
         reward: { playerXP: 60 },
-        check: (state) => (state.stats?.myPlayerAssists || 0) >= 10
+        check: (state) => (state.stats?.myPlayerAssists || 0) >= 10,
+        progress: { value: (state) => state.stats?.myPlayerAssists || 0, target: 10 }
     },
     twentyFiveAssists: {
         id: 'twentyFiveAssists',
@@ -478,7 +524,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🎬',
         reward: { playerXP: 100 },
-        check: (state) => (state.stats?.myPlayerAssists || 0) >= 25
+        check: (state) => (state.stats?.myPlayerAssists || 0) >= 25,
+        progress: { value: (state) => state.stats?.myPlayerAssists || 0, target: 25 }
     },
     hatTrick: {
         id: 'hatTrick',
@@ -487,7 +534,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🎩',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.hatTricks || 0) >= 1
+        check: (state) => (state.stats?.hatTricks || 0) >= 1,
+        progress: { value: (state) => state.stats?.hatTricks || 0, target: 1 }
     },
     threeHatTricks: {
         id: 'threeHatTricks',
@@ -496,7 +544,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🎩',
         reward: { playerXP: 100 },
-        check: (state) => (state.stats?.hatTricks || 0) >= 3
+        check: (state) => (state.stats?.hatTricks || 0) >= 3,
+        progress: { value: (state) => state.stats?.hatTricks || 0, target: 3 }
     },
     fiveGoalsMatch: {
         id: 'fiveGoalsMatch',
@@ -549,7 +598,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🎁',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.myGoalAndAssist || 0) >= 1
+        check: (state) => (state.stats?.myGoalAndAssist || 0) >= 1,
+        progress: { value: (state) => state.stats?.myGoalAndAssist || 0, target: 1 }
     },
     goalDrought: {
         id: 'goalDrought',
@@ -559,7 +609,8 @@ const ACHIEVEMENTS = {
         icon: '🏜️',
         hidden: true,
         reward: { playerXP: 25 },
-        check: (state) => (state.stats?.goalDrought || 0) >= 5
+        check: (state) => (state.stats?.goalDrought || 0) >= 5,
+        progress: { value: (state) => state.stats?.goalDrought || 0, target: 5 }
     },
     goalEveryMatch: {
         id: 'goalEveryMatch',
@@ -568,7 +619,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.GOALS,
         icon: '🎯',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.scoringStreak || 0) >= 5
+        check: (state) => (state.stats?.scoringStreak || 0) >= 5,
+        progress: { value: (state) => state.stats?.scoringStreak || 0, target: 5 }
     },
     hundredGoalsAgainst: {
         id: 'hundredGoalsAgainst',
@@ -578,7 +630,8 @@ const ACHIEVEMENTS = {
         icon: '🧺',
         hidden: true,
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.goalsAgainst || 0) >= 100
+        check: (state) => (state.stats?.goalsAgainst || 0) >= 100,
+        progress: { value: (state) => state.stats?.goalsAgainst || 0, target: 100 }
     },
 
     // ================================================================
@@ -591,7 +644,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SEASON,
         icon: '😅',
         reward: { playerXP: 25 },
-        check: (state) => (state.stats?.relegationEscapes || 0) >= 1
+        check: (state) => (state.stats?.relegationEscapes || 0) >= 1,
+        progress: { value: (state) => state.stats?.relegationEscapes || 0, target: 1 }
     },
     almostRelegation: {
         id: 'almostRelegation',
@@ -601,7 +655,8 @@ const ACHIEVEMENTS = {
         icon: '😱',
         hidden: true,
         reward: { playerXP: 100 },
-        check: (state) => (state.stats?.relegationEscapes || 0) >= 3
+        check: (state) => (state.stats?.relegationEscapes || 0) >= 3,
+        progress: { value: (state) => state.stats?.relegationEscapes || 0, target: 3 }
     },
     twoSeasons: {
         id: 'twoSeasons',
@@ -610,7 +665,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SEASON,
         icon: '📅',
         reward: { playerXP: 15 },
-        check: (state) => (state.season || 1) >= 2
+        check: (state) => (state.season || 1) >= 2,
+        progress: { value: (state) => state.season || 1, target: 2 }
     },
     fiveSeasons: {
         id: 'fiveSeasons',
@@ -619,7 +675,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SEASON,
         icon: '📅',
         reward: { playerXP: 50 },
-        check: (state) => (state.season || 1) >= 5
+        check: (state) => (state.season || 1) >= 5,
+        progress: { value: (state) => state.season || 1, target: 5 }
     },
     tenSeasons: {
         id: 'tenSeasons',
@@ -628,7 +685,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SEASON,
         icon: '🏛️',
         reward: { playerXP: 250 },
-        check: (state) => (state.season || 1) >= 10
+        check: (state) => (state.season || 1) >= 10,
+        progress: { value: (state) => state.season || 1, target: 10 }
     },
     twentySeasons: {
         id: 'twentySeasons',
@@ -637,7 +695,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SEASON,
         icon: '🏛️',
         reward: { playerXP: 500 },
-        check: (state) => (state.season || 1) >= 20
+        check: (state) => (state.season || 1) >= 20,
+        progress: { value: (state) => state.season || 1, target: 20 }
     },
     perfectSeason: {
         id: 'perfectSeason',
@@ -699,7 +758,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SEASON,
         icon: '❤️',
         reward: { playerXP: 100 },
-        check: (state) => (state.dailyRewards?.streak || 0) >= 7
+        check: (state) => (state.dailyRewards?.streak || 0) >= 7,
+        progress: { value: (state) => state.dailyRewards?.streak || 0, target: 7 }
     },
     twoWeekStreak: {
         id: 'twoWeekStreak',
@@ -708,7 +768,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SEASON,
         icon: '🔥',
         reward: { playerXP: 150 },
-        check: (state) => (state.dailyRewards?.streak || 0) >= 14
+        check: (state) => (state.dailyRewards?.streak || 0) >= 14,
+        progress: { value: (state) => state.dailyRewards?.streak || 0, target: 14 }
     },
     monthStreak: {
         id: 'monthStreak',
@@ -718,7 +779,8 @@ const ACHIEVEMENTS = {
         icon: '🔥',
         hidden: true,
         reward: { playerXP: 250 },
-        check: (state) => (state.dailyRewards?.streak || 0) >= 30
+        check: (state) => (state.dailyRewards?.streak || 0) >= 30,
+        progress: { value: (state) => state.dailyRewards?.streak || 0, target: 30 }
     },
     earlyBird: {
         id: 'earlyBird',
@@ -789,7 +851,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SPECIAL,
         icon: '🍺',
         reward: { playerXP: 50 },
-        check: (state) => (state.stats?.comebacks || 0) >= 10
+        check: (state) => (state.stats?.comebacks || 0) >= 10,
+        progress: { value: (state) => state.stats?.comebacks || 0, target: 10 }
     },
     kantinedienst: {
         id: 'kantinedienst',
@@ -807,7 +870,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SPECIAL,
         icon: '🏠',
         reward: { playerXP: 75 },
-        check: (state) => (state.stats?.homeWins || 0) >= 20
+        check: (state) => (state.stats?.homeWins || 0) >= 20,
+        progress: { value: (state) => state.stats?.homeWins || 0, target: 20 }
     },
     centurion: {
         id: 'centurion',
@@ -817,7 +881,8 @@ const ACHIEVEMENTS = {
         icon: '💯',
         hidden: true,
         reward: { playerXP: 250 },
-        check: (state) => (state.stats?.cleanSheets || 0) >= 100
+        check: (state) => (state.stats?.cleanSheets || 0) >= 100,
+        progress: { value: (state) => state.stats?.cleanSheets || 0, target: 100 }
     },
     ironDefense: {
         id: 'ironDefense',
@@ -827,7 +892,8 @@ const ACHIEVEMENTS = {
         icon: '🧱',
         hidden: true,
         reward: { playerXP: 100 },
-        check: (state) => (state.stats?.cleanSheetStreak || 0) >= 5
+        check: (state) => (state.stats?.cleanSheetStreak || 0) >= 5,
+        progress: { value: (state) => state.stats?.cleanSheetStreak || 0, target: 5 }
     },
     silentAssassin: {
         id: 'silentAssassin',
@@ -837,7 +903,8 @@ const ACHIEVEMENTS = {
         icon: '🤫',
         hidden: true,
         reward: { playerXP: 75 },
-        check: (state) => (state.stats?.oneNilWins || 0) >= 5
+        check: (state) => (state.stats?.oneNilWins || 0) >= 5,
+        progress: { value: (state) => state.stats?.oneNilWins || 0, target: 5 }
     },
     dedicatedManager: {
         id: 'dedicatedManager',
@@ -859,7 +926,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SPECIAL,
         icon: '⚽',
         reward: { playerXP: 15 },
-        check: (state) => (state.stats?.trainingSessions || 0) >= 1
+        check: (state) => (state.stats?.trainingSessions || 0) >= 1,
+        progress: { value: (state) => state.stats?.trainingSessions || 0, target: 1 }
     },
     tenTrainings: {
         id: 'tenTrainings',
@@ -868,7 +936,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SPECIAL,
         icon: '🏋️',
         reward: { playerXP: 40 },
-        check: (state) => (state.stats?.trainingSessions || 0) >= 10
+        check: (state) => (state.stats?.trainingSessions || 0) >= 10,
+        progress: { value: (state) => state.stats?.trainingSessions || 0, target: 10 }
     },
     fiftyTrainings: {
         id: 'fiftyTrainings',
@@ -877,7 +946,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SPECIAL,
         icon: '💦',
         reward: { playerXP: 100 },
-        check: (state) => (state.stats?.trainingSessions || 0) >= 50
+        check: (state) => (state.stats?.trainingSessions || 0) >= 50,
+        progress: { value: (state) => state.stats?.trainingSessions || 0, target: 50 }
     },
     playerLevelUp: {
         id: 'playerLevelUp',
@@ -947,7 +1017,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SPECIAL,
         icon: '⭐',
         reward: { playerXP: 25 },
-        check: (state) => (state.stats?.myPlayerMotm || 0) >= 1
+        check: (state) => (state.stats?.myPlayerMotm || 0) >= 1,
+        progress: { value: (state) => state.stats?.myPlayerMotm || 0, target: 1 }
     },
     motmFive: {
         id: 'motmFive',
@@ -956,7 +1027,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SPECIAL,
         icon: '⭐',
         reward: { playerXP: 75 },
-        check: (state) => (state.stats?.myPlayerMotm || 0) >= 5
+        check: (state) => (state.stats?.myPlayerMotm || 0) >= 5,
+        progress: { value: (state) => state.stats?.myPlayerMotm || 0, target: 5 }
     },
     motmTen: {
         id: 'motmTen',
@@ -965,7 +1037,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.SPECIAL,
         icon: '🌟',
         reward: { playerXP: 150 },
-        check: (state) => (state.stats?.myPlayerMotm || 0) >= 10
+        check: (state) => (state.stats?.myPlayerMotm || 0) >= 10,
+        progress: { value: (state) => state.stats?.myPlayerMotm || 0, target: 10 }
     },
     playAllPositions: {
         id: 'playAllPositions',
@@ -975,7 +1048,8 @@ const ACHIEVEMENTS = {
         icon: '🔄',
         hidden: true,
         reward: { playerXP: 75 },
-        check: (state) => (state.stats?.uniquePositions?.length || 0) >= 4
+        check: (state) => (state.stats?.uniquePositions?.length || 0) >= 4,
+        progress: { value: (state) => state.stats?.uniquePositions?.length || 0, target: 4 }
     },
     maxEnergy: {
         id: 'maxEnergy',
@@ -1113,7 +1187,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '⬆️',
         reward: { managerXP: 100 },
-        check: (state) => (state.stats?.promotions || 0) >= 1
+        check: (state) => (state.stats?.promotions || 0) >= 1,
+        progress: { value: (state) => state.stats?.promotions || 0, target: 1 }
     },
     twoPromotions: {
         id: 'twoPromotions',
@@ -1122,7 +1197,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '⬆️',
         reward: { managerXP: 150 },
-        check: (state) => (state.stats?.promotions || 0) >= 2
+        check: (state) => (state.stats?.promotions || 0) >= 2,
+        progress: { value: (state) => state.stats?.promotions || 0, target: 2 }
     },
     backToBack: {
         id: 'backToBack',
@@ -1131,7 +1207,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🔄',
         reward: { managerXP: 250 },
-        check: (state) => (state.stats?.consecutivePromotions || 0) >= 2
+        check: (state) => (state.stats?.consecutivePromotions || 0) >= 2,
+        progress: { value: (state) => state.stats?.consecutivePromotions || 0, target: 2 }
     },
     threePromotions: {
         id: 'threePromotions',
@@ -1140,7 +1217,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🌟',
         reward: { managerXP: 250 },
-        check: (state) => (state.stats?.promotions || 0) >= 3
+        check: (state) => (state.stats?.promotions || 0) >= 3,
+        progress: { value: (state) => state.stats?.promotions || 0, target: 3 }
     },
     fivePromotions: {
         id: 'fivePromotions',
@@ -1149,7 +1227,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🛗',
         reward: { managerXP: 500 },
-        check: (state) => (state.stats?.promotions || 0) >= 5
+        check: (state) => (state.stats?.promotions || 0) >= 5,
+        progress: { value: (state) => state.stats?.promotions || 0, target: 5 }
     },
     title: {
         id: 'title',
@@ -1158,7 +1237,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🏆',
         reward: { managerXP: 250 },
-        check: (state) => (state.club.stats?.titles || 0) >= 1
+        check: (state) => (state.club.stats?.titles || 0) >= 1,
+        progress: { value: (state) => state.club.stats?.titles || 0, target: 1 }
     },
     threeTitles: {
         id: 'threeTitles',
@@ -1167,7 +1247,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '👑',
         reward: { managerXP: 500 },
-        check: (state) => (state.club.stats?.titles || 0) >= 3
+        check: (state) => (state.club.stats?.titles || 0) >= 3,
+        progress: { value: (state) => state.club.stats?.titles || 0, target: 3 }
     },
     secondDivision: {
         id: 'secondDivision',
@@ -1214,7 +1295,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🛒',
         reward: { managerXP: 25 },
-        check: (state) => (state.stats?.totalTransfers || 0) >= 1
+        check: (state) => (state.stats?.totalTransfers || 0) >= 1,
+        progress: { value: (state) => state.stats?.totalTransfers || 0, target: 1 }
     },
     fiveTransfers: {
         id: 'fiveTransfers',
@@ -1223,7 +1305,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🚪',
         reward: { managerXP: 50 },
-        check: (state) => (state.stats?.totalTransfers || 0) >= 5
+        check: (state) => (state.stats?.totalTransfers || 0) >= 5,
+        progress: { value: (state) => state.stats?.totalTransfers || 0, target: 5 }
     },
     tenTransfers: {
         id: 'tenTransfers',
@@ -1232,7 +1315,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🚪',
         reward: { managerXP: 75 },
-        check: (state) => (state.stats?.totalTransfers || 0) >= 10
+        check: (state) => (state.stats?.totalTransfers || 0) >= 10,
+        progress: { value: (state) => state.stats?.totalTransfers || 0, target: 10 }
     },
     twentyFiveTransfers: {
         id: 'twentyFiveTransfers',
@@ -1241,7 +1325,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🏦',
         reward: { managerXP: 150 },
-        check: (state) => (state.stats?.totalTransfers || 0) >= 25
+        check: (state) => (state.stats?.totalTransfers || 0) >= 25,
+        progress: { value: (state) => state.stats?.totalTransfers || 0, target: 25 }
     },
     firstScout: {
         id: 'firstScout',
@@ -1250,7 +1335,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🔍',
         reward: { managerXP: 25 },
-        check: (state) => (state.stats?.totalScoutMissions || 0) >= 1
+        check: (state) => (state.stats?.totalScoutMissions || 0) >= 1,
+        progress: { value: (state) => state.stats?.totalScoutMissions || 0, target: 1 }
     },
     fiveScouts: {
         id: 'fiveScouts',
@@ -1259,7 +1345,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🕵️',
         reward: { managerXP: 40 },
-        check: (state) => (state.stats?.totalScoutMissions || 0) >= 5
+        check: (state) => (state.stats?.totalScoutMissions || 0) >= 5,
+        progress: { value: (state) => state.stats?.totalScoutMissions || 0, target: 5 }
     },
     twentyFiveScouts: {
         id: 'twentyFiveScouts',
@@ -1268,7 +1355,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🎯',
         reward: { managerXP: 100 },
-        check: (state) => (state.stats?.totalScoutMissions || 0) >= 25
+        check: (state) => (state.stats?.totalScoutMissions || 0) >= 25,
+        progress: { value: (state) => state.stats?.totalScoutMissions || 0, target: 25 }
     },
     hireFirstStaff: {
         id: 'hireFirstStaff',
@@ -1277,7 +1365,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '👤',
         reward: { managerXP: 25 },
-        check: (state) => (state.stats?.staffHired || 0) >= 1
+        check: (state) => (state.stats?.staffHired || 0) >= 1,
+        progress: { value: (state) => state.stats?.staffHired || 0, target: 1 }
     },
     hireFourStaff: {
         id: 'hireFourStaff',
@@ -1286,7 +1375,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '👥',
         reward: { managerXP: 100 },
-        check: (state) => (state.stats?.staffHired || 0) >= 4
+        check: (state) => (state.stats?.staffHired || 0) >= 4,
+        progress: { value: (state) => state.stats?.staffHired || 0, target: 4 }
     },
     fireStaff: {
         id: 'fireStaff',
@@ -1324,7 +1414,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '💰',
         reward: { managerXP: 25 },
-        check: (state) => (state.stats?.totalSales || 0) >= 1
+        check: (state) => (state.stats?.totalSales || 0) >= 1,
+        progress: { value: (state) => state.stats?.totalSales || 0, target: 1 }
     },
     fiveSales: {
         id: 'fiveSales',
@@ -1333,7 +1424,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🏷️',
         reward: { managerXP: 50 },
-        check: (state) => (state.stats?.totalSales || 0) >= 5
+        check: (state) => (state.stats?.totalSales || 0) >= 5,
+        progress: { value: (state) => state.stats?.totalSales || 0, target: 5 }
     },
     divisionChampion: {
         id: 'divisionChampion',
@@ -1342,7 +1434,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🥇',
         reward: { managerXP: 75 },
-        check: (state) => (state.stats?.champion || 0) >= 1
+        check: (state) => (state.stats?.champion || 0) >= 1,
+        progress: { value: (state) => state.stats?.champion || 0, target: 1 }
     },
     threeChampions: {
         id: 'threeChampions',
@@ -1351,7 +1444,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.CLUB,
         icon: '🏆',
         reward: { managerXP: 150 },
-        check: (state) => (state.stats?.champion || 0) >= 3
+        check: (state) => (state.stats?.champion || 0) >= 3,
+        progress: { value: (state) => state.stats?.champion || 0, target: 3 }
     },
     budgetPositive: {
         id: 'budgetPositive',
@@ -1373,7 +1467,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.PLAYERS,
         icon: '🌱',
         reward: { managerXP: 25 },
-        check: (state) => (state.stats?.youthGraduates || 0) >= 1
+        check: (state) => (state.stats?.youthGraduates || 0) >= 1,
+        progress: { value: (state) => state.stats?.youthGraduates || 0, target: 1 }
     },
     fiveYouthGrads: {
         id: 'fiveYouthGrads',
@@ -1382,7 +1477,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.PLAYERS,
         icon: '🏫',
         reward: { managerXP: 75 },
-        check: (state) => (state.stats?.youthGraduates || 0) >= 5
+        check: (state) => (state.stats?.youthGraduates || 0) >= 5,
+        progress: { value: (state) => state.stats?.youthGraduates || 0, target: 5 }
     },
     tenYouthGraduates: {
         id: 'tenYouthGraduates',
@@ -1391,7 +1487,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.PLAYERS,
         icon: '🏫',
         reward: { managerXP: 100 },
-        check: (state) => (state.stats?.youthGraduates || 0) >= 10
+        check: (state) => (state.stats?.youthGraduates || 0) >= 10,
+        progress: { value: (state) => state.stats?.youthGraduates || 0, target: 10 }
     },
     twentyYouthGrads: {
         id: 'twentyYouthGrads',
@@ -1400,7 +1497,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.PLAYERS,
         icon: '🎓',
         reward: { managerXP: 250 },
-        check: (state) => (state.stats?.youthGraduates || 0) >= 20
+        check: (state) => (state.stats?.youthGraduates || 0) >= 20,
+        progress: { value: (state) => state.stats?.youthGraduates || 0, target: 20 }
     },
     topScorer: {
         id: 'topScorer',
@@ -1445,7 +1543,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.PLAYERS,
         icon: '👥',
         reward: { managerXP: 50 },
-        check: (state) => state.players.length >= 22
+        check: (state) => state.players.length >= 22,
+        progress: { value: (state) => state.players?.length || 0, target: 22 }
     },
     squadDepth: {
         id: 'squadDepth',
@@ -1454,7 +1553,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.PLAYERS,
         icon: '👥',
         reward: { managerXP: 75 },
-        check: (state) => state.players.length >= 25
+        check: (state) => state.players.length >= 25,
+        progress: { value: (state) => state.players?.length || 0, target: 25 }
     },
     bigSale: {
         id: 'bigSale',
@@ -1569,7 +1669,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.PLAYERS,
         icon: '🎯',
         reward: { managerXP: 40 },
-        check: (state) => (state.stats?.exactScout || 0) >= 1
+        check: (state) => (state.stats?.exactScout || 0) >= 1,
+        progress: { value: (state) => state.stats?.exactScout || 0, target: 1 }
     },
     tenExactScouts: {
         id: 'tenExactScouts',
@@ -1578,7 +1679,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.PLAYERS,
         icon: '🎯',
         reward: { managerXP: 100 },
-        check: (state) => (state.stats?.exactScout || 0) >= 10
+        check: (state) => (state.stats?.exactScout || 0) >= 10,
+        progress: { value: (state) => state.stats?.exactScout || 0, target: 10 }
     },
     rejectPlayer: {
         id: 'rejectPlayer',
@@ -1730,7 +1832,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.STADIUM,
         icon: '🎉',
         reward: { managerXP: 50 },
-        check: (state) => state.stadium.capacity >= 1000
+        check: (state) => state.stadium.capacity >= 1000,
+        progress: { value: (state) => state.stadium?.capacity || 0, target: 1000 }
     },
     fiveThousandSeats: {
         id: 'fiveThousandSeats',
@@ -1739,7 +1842,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.STADIUM,
         icon: '🏟️',
         reward: { managerXP: 100 },
-        check: (state) => state.stadium.capacity >= 5000
+        check: (state) => state.stadium.capacity >= 5000,
+        progress: { value: (state) => state.stadium?.capacity || 0, target: 5000 }
     },
     tenThousandSeats: {
         id: 'tenThousandSeats',
@@ -1748,7 +1852,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.STADIUM,
         icon: '🏟️',
         reward: { managerXP: 150 },
-        check: (state) => state.stadium.capacity >= 10000
+        check: (state) => state.stadium.capacity >= 10000,
+        progress: { value: (state) => state.stadium?.capacity || 0, target: 10000 }
     },
     hugeStadium: {
         id: 'hugeStadium',
@@ -1757,7 +1862,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.STADIUM,
         icon: '🏛️',
         reward: { managerXP: 250 },
-        check: (state) => state.stadium.capacity >= 20000
+        check: (state) => state.stadium.capacity >= 20000,
+        progress: { value: (state) => state.stadium?.capacity || 0, target: 20000 }
     },
     stadiumFull: {
         id: 'stadiumFull',
@@ -1766,7 +1872,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.STADIUM,
         icon: '🏟️',
         reward: { managerXP: 50 },
-        check: (state) => (state.stats?.sellouts || 0) >= 1
+        check: (state) => (state.stats?.sellouts || 0) >= 1,
+        progress: { value: (state) => state.stats?.sellouts || 0, target: 1 }
     },
     selloutTen: {
         id: 'selloutTen',
@@ -1775,7 +1882,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.STADIUM,
         icon: '🎫',
         reward: { managerXP: 100 },
-        check: (state) => (state.stats?.sellouts || 0) >= 10
+        check: (state) => (state.stats?.sellouts || 0) >= 10,
+        progress: { value: (state) => state.stats?.sellouts || 0, target: 10 }
     },
     fullFacilities: {
         id: 'fullFacilities',
@@ -1838,7 +1946,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.STADIUM,
         icon: '🍽️',
         reward: { managerXP: 100 },
-        check: (state) => (state.stadium.horeca?.length || 0) >= 3
+        check: (state) => (state.stadium.horeca?.length || 0) >= 3,
+        progress: { value: (state) => state.stadium?.horeca?.length || 0, target: 3 }
     },
     buildFanshop: {
         id: 'buildFanshop',
@@ -1856,7 +1965,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.STADIUM,
         icon: '👕',
         reward: { managerXP: 100 },
-        check: (state) => (state.stadium.fanshop?.length || 0) >= 3
+        check: (state) => (state.stadium.fanshop?.length || 0) >= 3,
+        progress: { value: (state) => state.stadium?.fanshop?.length || 0, target: 3 }
     },
     fiveUpgrades: {
         id: 'fiveUpgrades',
@@ -1865,7 +1975,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.STADIUM,
         icon: '🔨',
         reward: { managerXP: 50 },
-        check: (state) => (state.stats?.stadiumUpgrades || 0) >= 5
+        check: (state) => (state.stats?.stadiumUpgrades || 0) >= 5,
+        progress: { value: (state) => state.stats?.stadiumUpgrades || 0, target: 5 }
     },
     tenUpgrades: {
         id: 'tenUpgrades',
@@ -1874,7 +1985,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.STADIUM,
         icon: '🏗️',
         reward: { managerXP: 100 },
-        check: (state) => (state.stats?.stadiumUpgrades || 0) >= 10
+        check: (state) => (state.stats?.stadiumUpgrades || 0) >= 10,
+        progress: { value: (state) => state.stats?.stadiumUpgrades || 0, target: 10 }
     },
     twentyUpgrades: {
         id: 'twentyUpgrades',
@@ -1883,7 +1995,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.STADIUM,
         icon: '🏗️',
         reward: { managerXP: 200 },
-        check: (state) => (state.stats?.stadiumUpgrades || 0) >= 20
+        check: (state) => (state.stats?.stadiumUpgrades || 0) >= 20,
+        progress: { value: (state) => state.stats?.stadiumUpgrades || 0, target: 20 }
     },
     lightingUpgrade: {
         id: 'lightingUpgrade',
@@ -1926,7 +2039,8 @@ const ACHIEVEMENTS = {
         category: CATEGORIES.STADIUM,
         icon: '🚧',
         reward: { managerXP: 40 },
-        check: (state) => (state.stats?.stadiumUpgrades || 0) >= 3
+        check: (state) => (state.stats?.stadiumUpgrades || 0) >= 3,
+        progress: { value: (state) => state.stats?.stadiumUpgrades || 0, target: 3 }
     },
     tenConstructions: {
         id: 'tenConstructions',
@@ -2151,12 +2265,25 @@ export function getAllAchievements(gameState) {
     const result = [];
 
     for (const [id, achievement] of Object.entries(ACHIEVEMENTS)) {
-        result.push({
+        const entry = {
             ...achievement,
             id,
             unlocked: gameState.achievements?.[id]?.unlocked || false,
             unlockedAt: gameState.achievements?.[id]?.unlockedAt || null
-        });
+        };
+
+        // Compute progress for achievements with numeric targets
+        if (achievement.progress && !entry.unlocked) {
+            try {
+                const current = Math.min(achievement.progress.value(gameState), achievement.progress.target);
+                entry.progressCurrent = current;
+                entry.progressTarget = achievement.progress.target;
+            } catch (e) {
+                // Ignore errors in progress computation
+            }
+        }
+
+        result.push(entry);
     }
 
     return result;

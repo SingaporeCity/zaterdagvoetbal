@@ -59,7 +59,7 @@ import {
 } from './storage.js';
 
 // Import multiplayer systems
-import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent } from './multiplayer.js';
+import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent, getClubPlayers } from './multiplayer.js';
 import { subscribeToLeague, unsubscribeAll, fetchStandings, startCountdown, stopCountdown } from './realtime.js';
 import { supabase, isSupabaseAvailable } from './supabase.js';
 
@@ -1095,10 +1095,12 @@ function renderStandings() {
     const promotionZone = 2;
     const relegationZone = totalTeams - 2;
 
+    const mp = isMultiplayer();
     let html = '';
     gameState.standings.forEach((team, index) => {
         const isPlayer = team.isPlayer;
         const position = index + 1;
+        const isClickable = mp && !isPlayer && !team.isAI && team.clubId;
 
         // Determine zone class
         let zoneClass = '';
@@ -1106,9 +1108,9 @@ function renderStandings() {
         else if (position > relegationZone) zoneClass = 'relegation-zone';
 
         html += `
-            <tr class="${isPlayer ? 'is-player' : ''} ${zoneClass}">
+            <tr class="${isPlayer ? 'is-player' : ''} ${zoneClass}${isClickable ? ' clickable-opponent' : ''}"${isClickable ? ` onclick="showOpponentSquad('${team.clubId}', '${team.name.replace(/'/g, "\\'")}')" style="cursor:pointer"` : ''}>
                 <td>${position}</td>
-                <td>${team.name}</td>
+                <td>${team.name}${isClickable ? ' <span style="opacity:0.4;font-size:0.8em">&#9656;</span>' : ''}</td>
                 <td>${team.wins || 0}</td>
                 <td>${team.draws || 0}</td>
                 <td>${team.losses || 0}</td>
@@ -1118,6 +1120,68 @@ function renderStandings() {
     });
 
     container.innerHTML = html;
+}
+
+async function showOpponentSquad(clubId, clubName) {
+    const modal = document.getElementById('player-modal');
+    const content = document.getElementById('player-detail-content');
+    if (!modal || !content) return;
+
+    content.innerHTML = `<h2 style="text-align:center;margin-bottom:1rem">Selectie van ${clubName}</h2><p style="text-align:center;opacity:0.6">Laden...</p>`;
+    modal.classList.add('active');
+
+    const players = await getClubPlayers(clubId);
+    if (!players || players.length === 0) {
+        content.innerHTML = `<h2 style="text-align:center;margin-bottom:1rem">Selectie van ${clubName}</h2><p style="text-align:center;opacity:0.6">Geen spelers gevonden.</p>`;
+        return;
+    }
+
+    // Map DB fields to card format
+    const mapped = players.map(p => ({
+        id: p.id,
+        name: p.name,
+        age: p.age,
+        position: p.position,
+        overall: p.overall,
+        stars: p.stars || 0,
+        nationality: p.nationality || { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
+        salary: p.salary || 0,
+        energy: p.energy || 75,
+        isMyPlayer: false
+    }));
+
+    // Group by position
+    const groups = {
+        attacker: { name: 'Aanvallers', icon: '⚽', color: '#9c27b0', players: [] },
+        midfielder: { name: 'Middenvelders', icon: '⚙️', color: '#4caf50', players: [] },
+        defender: { name: 'Verdedigers', icon: '🛡️', color: '#2196f3', players: [] },
+        goalkeeper: { name: 'Keepers', icon: '🧤', color: '#f9a825', players: [] }
+    };
+
+    mapped.forEach(player => {
+        const group = getPositionGroup(player.position);
+        if (groups[group]) groups[group].players.push(player);
+    });
+
+    Object.values(groups).forEach(g => g.players.sort((a, b) => b.overall - a.overall));
+
+    let html = `<h2 style="text-align:center;margin-bottom:1rem">Selectie van ${clubName}</h2>`;
+    for (const [, group] of Object.entries(groups)) {
+        if (group.players.length > 0) {
+            html += `<div class="squad-group">
+                <div class="squad-group-header" style="background: ${group.color}">
+                    <span class="squad-group-icon">${group.icon}</span>
+                    <span class="squad-group-name">${group.name}</span>
+                    <span class="squad-group-count">${group.players.length}</span>
+                </div>
+                <div class="squad-group-players">
+                    ${group.players.map(p => createPlayerCardHTML(p, false, true)).join('')}
+                </div>
+            </div>`;
+        }
+    }
+
+    content.innerHTML = html;
 }
 
 function renderTopScorers() {
@@ -1411,7 +1475,7 @@ function renderStarsRangeHTML(minStars, maxStars) {
     return renderStarsHTML(minStars, maxStars - minStars);
 }
 
-function createPlayerCardHTML(player, mini = false) {
+function createPlayerCardHTML(player, mini = false, readOnly = false) {
     const posData = POSITIONS[player.position] || { abbr: '??', color: '#666' };
     const photo = player.photo || generatePlayerPhoto(player.name, player.position);
     const isKeeper = player.position === 'keeper';
@@ -1436,7 +1500,7 @@ function createPlayerCardHTML(player, mini = false) {
 
     // Compact horizontal card - flat grid layout for equal column alignment
     return `
-        <div class="player-card${myPlayerClass}" data-player-id="${player.id}" onclick="if(!event.target.closest('.pc-buyout-btn,.pc-transfer-btn'))showPlayerDetail('${player.id}')">
+        <div class="player-card${myPlayerClass}" data-player-id="${player.id}"${readOnly ? '' : ` onclick="if(!event.target.closest('.pc-buyout-btn,.pc-transfer-btn'))showPlayerDetail('${player.id}')"`}>
             <div class="pc-left">
                 <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
                 <div class="pc-age-box">
@@ -1469,7 +1533,7 @@ function createPlayerCardHTML(player, mini = false) {
                     <span class="pc-potential-label">POT</span>
                 </div>
             </div>
-            ${!player.isMyPlayer ? (getPlayerMarketValue(player) > 0 ? `<button class="pc-transfer-btn" onclick="event.stopPropagation(); showTransferListPopup('${player.id}')" title="Zet op transfermarkt">💰</button>` : `<button class="pc-buyout-btn" onclick="event.stopPropagation(); buyoutPlayer('${player.id}')" title="Contract afkopen (${formatCurrency((player.salary || 0) * 10)})">✕</button>`) : '<span class="pc-buyout-placeholder"></span>'}
+            ${readOnly ? '' : (!player.isMyPlayer ? (getPlayerMarketValue(player) > 0 ? `<button class="pc-transfer-btn" onclick="event.stopPropagation(); showTransferListPopup('${player.id}')" title="Zet op transfermarkt">💰</button>` : `<button class="pc-buyout-btn" onclick="event.stopPropagation(); buyoutPlayer('${player.id}')" title="Contract afkopen (${formatCurrency((player.salary || 0) * 10)})">✕</button>`) : '<span class="pc-buyout-placeholder"></span>')}
         </div>
     `;
 }
@@ -1753,11 +1817,16 @@ function renderAchievementCards(achievements, filterCategories) {
                 const cls = a.unlocked ? 'ach-card unlocked' : (isHidden ? 'ach-card hidden-ach' : 'ach-card');
                 const xpBadge = a.reward?.playerXP ? `<span class="ach-xp-badge">+${a.reward.playerXP} XP</span>` :
                                 a.reward?.managerXP ? `<span class="ach-xp-badge mgr">+${a.reward.managerXP} XP</span>` : '';
+                const showProgress = !a.unlocked && !isHidden && a.progressTarget > 0;
+                const progressBar = showProgress
+                    ? `<div class="ach-progress"><div class="ach-progress-fill" style="width:${Math.round((a.progressCurrent / a.progressTarget) * 100)}%"></div><span class="ach-progress-text">${a.progressCurrent}/${a.progressTarget}</span></div>`
+                    : '';
                 return `<div class="${cls}">
                     <span class="ach-icon">${icon}</span>
                     <div class="ach-info">
                         <span class="ach-name">${name}${xpBadge}</span>
                         <span class="ach-desc">${desc}</span>
+                        ${progressBar}
                     </div>
                     ${a.unlocked ? '<span class="ach-check">✓</span>' : ''}
                 </div>`;
@@ -6981,6 +7050,7 @@ window.clearLineup = clearLineup;
 window.buyoutPlayer = buyoutPlayer;
 window.showTransferListPopup = showTransferListPopup;
 window.showPlayerDetail = showPlayerDetail;
+window.showOpponentSquad = showOpponentSquad;
 window.openLineupDropdown = openLineupDropdown;
 window.selectLineupPlayer = selectLineupPlayer;
 
@@ -7409,6 +7479,10 @@ function renderAchievementsSection() {
         const isHidden = achievement.hidden && !achievement.unlocked;
         const displayName = isHidden ? 'Verborgen' : achievement.name;
         const displayDesc = isHidden ? '???' : achievement.description;
+        const showProgress = !achievement.unlocked && !isHidden && achievement.progressTarget > 0;
+        const progressBar = showProgress
+            ? `<div class="ach-progress"><div class="ach-progress-fill" style="width:${Math.round((achievement.progressCurrent / achievement.progressTarget) * 100)}%"></div><span class="ach-progress-text">${achievement.progressCurrent}/${achievement.progressTarget}</span></div>`
+            : '';
 
         html += `
             <div class="achievement-item ${achievement.unlocked ? 'unlocked' : ''} ${achievement.hidden ? 'hidden-achievement' : ''}">
@@ -7416,6 +7490,7 @@ function renderAchievementsSection() {
                 <div class="achievement-info">
                     <span class="achievement-name">${displayName}</span>
                     <span class="achievement-desc">${displayDesc}</span>
+                    ${progressBar}
                 </div>
                 ${achievement.unlocked ? '<span class="achievement-check">✓</span>' : ''}
             </div>
@@ -10700,7 +10775,7 @@ async function syncStandingsFromSupabase() {
 
     const { data: standings } = await supabase
         .from('standings')
-        .select('*, clubs(name)')
+        .select('*, clubs(name, is_ai)')
         .eq('league_id', mp.leagueId)
         .eq('season', gameState.season || 1)
         .order('points', { ascending: false })
@@ -10717,7 +10792,10 @@ async function syncStandingsFromSupabase() {
             goalsAgainst: s.goals_against || 0,
             goalDiff: (s.goals_for || 0) - (s.goals_against || 0),
             points: s.points || 0,
-            position: idx + 1
+            position: idx + 1,
+            clubId: s.club_id,
+            isAI: s.clubs?.is_ai ?? true,
+            isPlayer: s.club_id === mp.clubId
         }));
     }
 }
