@@ -5806,11 +5806,10 @@ body {
 .pc-finance {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 4px 12px;
     font-size: 0.75rem;
     color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
+    flex-wrap: wrap;
 }
 
 .pc-salary::before {
