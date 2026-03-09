@@ -2330,7 +2330,24 @@ function renderAvailablePlayers() {
         goalkeeper: { name: 'Keepers', icon: '🧤', color: '#f9a825', players: [] }
     };
 
-    gameState.players.forEach(player => {
+    // Include "Mijn Speler" in available players
+    const mp = initMyPlayer();
+    const mpOverall = Math.round((mp.attributes.SNE + mp.attributes.TEC + mp.attributes.PAS + mp.attributes.SCH + mp.attributes.VER + mp.attributes.FYS) / 6);
+    const myPlayerEntry = {
+        id: 'myplayer',
+        name: mp.name,
+        age: mp.age,
+        position: mp.position,
+        overall: mpOverall,
+        stars: mp.stars || 1,
+        isMyPlayer: true,
+        energy: mp.energy || 100,
+        nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
+        attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
+    };
+
+    const allPlayers = [myPlayerEntry, ...gameState.players.filter(p => !p.isMyPlayer)];
+    allPlayers.forEach(player => {
         const group = getPositionGroup(player.position);
         if (groups[group]) groups[group].players.push(player);
     });
