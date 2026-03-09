@@ -13413,9 +13413,10 @@ function generateSponsorMarket() {
     const activeIds = Object.values(gameState.sponsorSlots || {}).filter(s => s).map(s => s.id);
     const available = SPONSOR_POOL.filter(s => s.minReputation <= rep && !activeIds.includes(s.id));
 
-    // Shuffle and pick max 2
-    const shuffled = available.sort(() => Math.random() - 0.5);
-    const offers = shuffled.slice(0, 3);
+    // Always include Intimico Admin if not already active
+    const intimico = available.find(s => s.id === 'bord_intimico_admin');
+    const rest = available.filter(s => s.id !== 'bord_intimico_admin').sort(() => Math.random() - 0.5);
+    const offers = intimico ? [intimico, ...rest.slice(0, 2)] : rest.slice(0, 3);
 
     gameState.sponsorMarket = {
         offers,
@@ -13463,14 +13464,12 @@ function renderBordSponsorSection() {
         gameState.sponsorMarket.offers = gameState.sponsorMarket.offers.slice(0, 3);
     }
     const offers = gameState.sponsorMarket.offers;
-    if (offers.length === 0) {
-        container.innerHTML = '<p class="sponsor-empty-msg">Geen aanbiedingen beschikbaar. Verhoog je reputatie!</p>';
-        return;
-    }
 
-    // Show active bordsponsor as first tile if present
-    let tilesHTML = '';
+    // Build tiles: active sponsor first (replaces one offer slot), then remaining offers
     const activeBord = gameState.sponsorSlots?.bord;
+    let tilesHTML = '';
+    let remainingSlots = 3;
+
     if (activeBord) {
         tilesHTML += `<div class="sponsor-option sponsor-option-market active">
             <div class="so-icon">${activeBord.icon}</div>
@@ -13483,9 +13482,15 @@ function renderBordSponsorSection() {
                 <div class="so-duration">${activeBord.weeksRemaining}w resterend</div>
             </div>
         </div>`;
+        remainingSlots = 2;
     }
 
-    tilesHTML += offers.map(offer => {
+    if (offers.length === 0 && !activeBord) {
+        container.innerHTML = '<p class="sponsor-empty-msg">Geen aanbiedingen beschikbaar. Verhoog je reputatie!</p>';
+        return;
+    }
+
+    tilesHTML += offers.slice(0, remainingSlots).map(offer => {
         return `<div class="sponsor-option sponsor-option-market" onclick="selectMarketSponsor('${offer.id}')">
             <div class="so-icon">${offer.icon}</div>
             <div class="so-body">
