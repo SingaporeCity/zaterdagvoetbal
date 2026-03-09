@@ -279,10 +279,11 @@ export function simulateAIMatches(standings) {
 
         const opponent = randomFromArray(opponents);
 
-        // Simulate simple result based on relative strength (position)
+        // Simulate simple result based on relative strength (position) + home advantage
         const strengthDiff = opponent.position - team.position;
-        let homeWinChance = 0.4 + (strengthDiff * 0.05);
+        let homeWinChance = 0.45 + (strengthDiff * 0.05);
         homeWinChance = Math.max(0.2, Math.min(0.7, homeWinChance));
+        const drawChance = 0.25;
 
         const roll = Math.random();
         let homeGoals, awayGoals;
@@ -291,7 +292,7 @@ export function simulateAIMatches(standings) {
             // Home win
             homeGoals = random(1, 4);
             awayGoals = random(0, homeGoals - 1);
-        } else if (roll < homeWinChance + 0.25) {
+        } else if (roll < homeWinChance + drawChance) {
             // Draw
             homeGoals = random(0, 3);
             awayGoals = homeGoals;

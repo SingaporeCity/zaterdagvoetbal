@@ -203,8 +203,7 @@ function supabasePlayerToLocal(p) {
         goals: p.goals || 0,
         assists: p.assists || 0,
         morale: p.morale,
-        fitness: p.fitness,
-        condition: p.fitness,
+        condition: p.condition ?? p.fitness ?? 80,
         energy: p.energy,
         matchesTogether: p.matches_together,
         listedForSale: p.listed_for_sale,
@@ -486,7 +485,6 @@ export function applyOfflineProgress(gameState, progress) {
     if (progress.energyRecovered > 0) {
         gameState.players.forEach(player => {
             player.energy = Math.min(100, (player.energy || 70) + progress.energyRecovered);
-            player.fitness = Math.min(100, (player.fitness || 80) + Math.floor(progress.energyRecovered / 2));
         });
     }
 }

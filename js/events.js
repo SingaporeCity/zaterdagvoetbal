@@ -41,7 +41,7 @@ const EVENTS = {
                 effect: (state, data) => {
                     data.player.injured = true;
                     data.player.injuryWeeks = data.weeks;
-                    data.player.fitness = Math.max(30, data.player.fitness - 20);
+                    data.player.energy = Math.max(30, (data.player.energy || 70) - 20);
                 }
             },
             {
@@ -454,7 +454,7 @@ const EVENTS = {
             {
                 text: 'Lachen, het hoort erbij',
                 effect: (state, data) => {
-                    data.player.fitness = Math.max(50, data.player.fitness - 10);
+                    data.player.energy = Math.max(50, (data.player.energy || 70) - 10);
                     data.player.morale = Math.min(100, data.player.morale + 5);
                 }
             },

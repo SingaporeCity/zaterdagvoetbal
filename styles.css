@@ -94,7 +94,7 @@
 }
 
 html {
-    font-size: 16px;
+    font-size: clamp(14.5px, 2.2vh, 17px);
     scroll-behavior: smooth;
 }
 
@@ -236,10 +236,10 @@ body {
 }
 
 .sidebar-header {
-    padding: 24px;
+    padding: clamp(10px, 2vh, 24px);
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: clamp(10px, 1.5vh, 16px);
     border-bottom: 1px solid rgba(46, 125, 50, 0.15);
     position: relative;
     z-index: 1;
@@ -247,8 +247,8 @@ body {
 }
 
 .club-badge {
-    width: 60px;
-    height: 72px;
+    width: clamp(40px, 6vh, 60px);
+    height: clamp(48px, 7vh, 72px);
     flex-shrink: 0;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
     animation: badgeFloat 3s ease-in-out infinite;
@@ -288,7 +288,7 @@ body {
 
 .nav-menu {
     list-style: none;
-    padding: 8px 0;
+    padding: clamp(2px, 0.5vh, 8px) 0;
     flex: 1;
     position: relative;
     z-index: 1;
@@ -301,7 +301,7 @@ body {
 }
 
 .nav-group-label {
-    padding: 8px 24px 2px;
+    padding: clamp(3px, 0.6vh, 8px) 24px clamp(1px, 0.3vh, 2px);
     font-size: 0.55rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -316,12 +316,12 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 7px 24px;
+    padding: clamp(4px, 0.7vh, 7px) 24px;
     cursor: pointer;
     transition: all var(--transition-normal);
     position: relative;
     font-weight: 500;
-    font-size: 0.85rem;
+    font-size: 0.88rem;
 }
 
 .nav-item::before {
@@ -355,16 +355,16 @@ body {
 }
 
 .nav-icon {
-    width: 24px;
-    height: 24px;
+    width: clamp(18px, 2.4vh, 24px);
+    height: clamp(18px, 2.4vh, 24px);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .nav-icon svg {
-    width: 20px;
-    height: 20px;
+    width: clamp(16px, 2vh, 20px);
+    height: clamp(16px, 2vh, 20px);
 }
 
 .nav-badge {
@@ -384,7 +384,7 @@ body {
 }
 
 .sidebar-footer {
-    padding: 20px;
+    padding: clamp(8px, 1.5vh, 20px);
     border-top: 1px solid rgba(46, 125, 50, 0.12);
     position: relative;
     z-index: 1;
@@ -394,13 +394,13 @@ body {
 .quick-stats {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: clamp(6px, 1vh, 12px);
 }
 
 .quick-stats .stat {
     text-align: center;
     background: linear-gradient(135deg, rgba(255, 248, 225, 0.04) 0%, rgba(255, 180, 50, 0.02) 100%);
-    padding: 12px;
+    padding: clamp(6px, 1vh, 12px);
     border-radius: 10px;
     border: 1px solid rgba(46, 125, 50, 0.10);
 }
@@ -424,7 +424,7 @@ body {
 .main-content {
     flex: 1;
     margin-left: var(--sidebar-width);
-    padding: 24px 32px;
+    padding: clamp(10px, 2vh, 24px) clamp(16px, 2.5vw, 32px);
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -452,7 +452,34 @@ body {
 }
 
 #tactics.page.active {
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#tactics .chairman-intro {
+    padding: 8px 14px;
+    margin-bottom: 6px;
+    gap: 10px;
+}
+
+#tactics .chairman-intro-avatar {
+    width: 34px;
+    height: 38px;
+}
+
+#tactics .chairman-intro-quote {
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+#tactics .page-header {
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+}
+
+#tactics .tactics-tabs {
+    margin-bottom: 8px;
 }
 
 #transfers.page.active {
@@ -496,8 +523,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
+    margin-bottom: clamp(4px, 1vh, 12px);
+    padding-bottom: clamp(4px, 1vh, 10px);
     border-bottom: 2px solid rgba(46, 125, 50, 0.25);
     flex-shrink: 0;
     position: relative;
@@ -3962,16 +3989,46 @@ body {
     cursor: not-allowed;
 }
 
-/* Squad Size Display */
-.squad-size-inline {
+/* Squad Size Badge */
+.squad-size-badge {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 1px;
+    background: rgba(46, 125, 50, 0.10);
+    border: 1px solid rgba(46, 125, 50, 0.20);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-family: var(--font-display);
     font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-muted);
-    margin-left: 6px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--accent-green);
+    margin-top: 2px;
 }
 
-.squad-size-inline #squad-count.squad-full {
+.squad-size-badge #squad-count {
+    font-size: 1rem;
+}
+
+.squad-size-sep {
+    opacity: 0.4;
+    margin: 0 1px;
+    font-weight: 400;
+}
+
+.squad-size-max {
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.5;
+}
+
+.squad-size-badge #squad-count.squad-full {
     color: #ef5350;
+}
+
+.squad-size-badge:has(#squad-count.squad-full) {
+    background: rgba(239, 83, 80, 0.08);
+    border-color: rgba(239, 83, 80, 0.25);
 }
 
 .personality-badge.bad {
@@ -12959,11 +13016,69 @@ body {
 #tactiek-panel.active {
     display: flex !important;
     flex-direction: column;
-    gap: 12px;
-    flex: none;
-    min-height: auto;
-    overflow: visible;
-    padding-bottom: 16px;
+    gap: 8px;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+#tactiek-panel .tactics-section-block {
+    padding: 10px 14px;
+    margin-bottom: 0;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+#tactiek-panel .section-block-title {
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
+#tactiek-panel .tactics-options-grid {
+    gap: 6px;
+}
+
+#tactiek-panel .tactic-category-row {
+    gap: 10px;
+}
+
+#tactiek-panel .tactic-category-label {
+    font-size: 0.82rem;
+}
+
+#tactiek-panel .tactic-label-wrap {
+    width: 120px;
+}
+
+#tactiek-panel .team-training-options {
+    gap: 6px;
+}
+
+#tactiek-panel .team-training-option {
+    padding: 8px 10px;
+    gap: 8px;
+}
+
+#tactiek-panel .tto-icon {
+    width: 30px;
+    height: 30px;
+}
+
+#tactiek-panel .tto-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+#tactiek-panel .tto-info h4 {
+    font-size: 0.85rem;
+}
+
+#tactiek-panel .tto-info p {
+    font-size: 0.75rem;
+}
+
+#tactiek-panel .training-header-row {
+    margin-bottom: 4px;
 }
 
 /* Opstelling panel fits in viewport */
@@ -14052,11 +14167,30 @@ body {
     overflow: hidden;
 }
 
+#jeugdteam .page-header {
+    padding: 8px 16px;
+    margin-bottom: 4px;
+}
+
+#jeugdteam .chairman-intro {
+    padding: 8px 14px;
+    margin-bottom: 6px;
+    gap: 10px;
+}
+#jeugdteam .chairman-intro-avatar {
+    width: 34px;
+    height: 38px;
+}
+#jeugdteam .chairman-intro-quote {
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
 /* Jeugdteam - Two column layout */
 .jeugdteam-layout {
     display: grid;
     grid-template-columns: 220px 1fr;
-    gap: 16px;
+    gap: clamp(6px, 1vh, 10px);
     flex: 1;
     min-height: 0;
     overflow: hidden;
@@ -14065,8 +14199,12 @@ body {
 .youth-sidebar {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    overflow: visible;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+.youth-capacity-card {
+    margin-top: auto;
 }
 
 .youth-scouting-card {
@@ -14085,8 +14223,8 @@ body {
     background: var(--bg-card);
     border: 2px solid var(--border);
     border-radius: var(--card-radius);
-    padding: 12px 14px;
-    margin-bottom: 10px;
+    padding: 10px 12px;
+    margin-bottom: 0;
 }
 
 .youth-academy-card,
@@ -14100,15 +14238,15 @@ body {
 
 /* Academy Current Level */
 .acad-current {
-    padding: 14px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--border);
 }
 
 .acad-current-top {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
+    gap: 8px;
+    margin-bottom: 6px;
 }
 
 .acad-icon {
@@ -14188,7 +14326,7 @@ body {
 
 .acad-cap-label {
     color: var(--text-secondary);
-    width: 70px;
+    width: 34px;
     flex-shrink: 0;
 }
 
@@ -14474,7 +14612,7 @@ body {
 .youth-main {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
     min-height: 0;
     overflow: hidden;
 }
@@ -14488,6 +14626,8 @@ body {
     border-radius: var(--radius-sm);
     width: fit-content;
     flex-shrink: 0;
+    margin-bottom: 8px;
+    margin-left: 230px;
 }
 
 .youth-tab {
@@ -14501,6 +14641,16 @@ body {
     color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+}
+
+.youth-tab-age {
+    font-size: 0.7rem;
+    font-weight: 400;
+    opacity: 0.7;
 }
 
 .youth-tab:hover {
@@ -14512,6 +14662,10 @@ body {
     background: var(--accent-green);
     color: white;
     font-weight: 600;
+}
+
+.youth-tab.active .youth-tab-age {
+    opacity: 0.85;
 }
 
 /* Youth Players Grid - Same as squad container */
@@ -14732,16 +14886,13 @@ body {
 .stadium-map {
     flex: 1;
     min-height: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     overflow: hidden;
 }
 
 .stadium-map svg {
     width: 100%;
     height: 100%;
-    max-height: 100%;
+    display: block;
 }
 
 /* Building hover/click */
@@ -16957,9 +17108,9 @@ body {
 .chairman-intro {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
-    margin-bottom: 12px;
+    gap: clamp(8px, 1vh, 14px);
+    padding: clamp(6px, 1.2vh, 14px) clamp(10px, 1.5vh, 18px);
+    margin-bottom: clamp(4px, 1vh, 12px);
     background: linear-gradient(135deg, rgba(25, 118, 210, 0.12) 0%, rgba(33, 150, 243, 0.08) 100%);
     border: 1px solid rgba(33, 150, 243, 0.2);
     border-radius: var(--card-radius);
@@ -18135,7 +18286,7 @@ body {
 }
 
 .training-sec-desc strong {
-    color: #64b5f6;
+    color: var(--text-primary);
     font-weight: 700;
 }
 
@@ -19100,8 +19251,8 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 1fr 1fr 1fr;
-    gap: 14px;
-    padding: 16px;
+    gap: clamp(6px, 1.2vh, 14px);
+    padding: clamp(8px, 1.4vh, 16px);
     min-height: 0;
     max-height: calc(100vh - 120px);
     overflow: hidden;

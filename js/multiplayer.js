@@ -919,7 +919,7 @@ async function generatePlayersForClub(clubId, leagueId, division) {
             potential: overall,
             attributes: { ...attributes, _stars: stars },
             morale: rnd(60, 90),
-            fitness: rnd(70, 100),
+            condition: rnd(70, 100),
             energy: rnd(60, 100),
             salary: Math.round(5 + (overall / 10) + stars * 3 + rnd(0, 3)),
             lineup_position: idx < 11 ? idx : null

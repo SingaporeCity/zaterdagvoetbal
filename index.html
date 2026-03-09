@@ -1103,6 +1103,12 @@
                     <p class="chairman-intro-quote">"De jeugd is de toekomst, trainer. Elke dag is er een kans dat nieuwe jeugdspelers instromen, zolang er plek is. Spelers worden elke dag een jaar ouder — vanaf 16 jaar kun je ze overhevelen naar de A-selectie. Als ze 18 worden verlaten ze automatisch de opleiding."</p>
                 </div>
 
+                <div class="youth-tabs">
+                    <button class="youth-tab active" data-age="12-13">Pupillen<span class="youth-tab-age">(12-13)</span></button>
+                    <button class="youth-tab" data-age="14-15">Junioren<span class="youth-tab-age">(14-15)</span></button>
+                    <button class="youth-tab" data-age="16-17">Aspiranten<span class="youth-tab-age">(16-17)</span></button>
+                </div>
+
                 <div class="jeugdteam-layout">
                     <!-- Left sidebar: Academy + Scouting -->
                     <div class="youth-sidebar">
@@ -1112,17 +1118,10 @@
                         <div class="youth-capacity-card" id="youth-capacity-card">
                             <!-- Filled by JS -->
                         </div>
-
                     </div>
 
                     <!-- Main content: Players -->
                     <div class="youth-main">
-                        <div class="youth-tabs">
-                            <button class="youth-tab active" data-age="12-13">Pupillen (12-13)</button>
-                            <button class="youth-tab" data-age="14-15">Junioren (14-15)</button>
-                            <button class="youth-tab" data-age="16-17">Aspiranten (16-17)</button>
-                        </div>
-
                         <div class="youth-players-grid" id="youth-players-grid">
                             <!-- Populated by JS -->
                         </div>
@@ -1140,7 +1139,8 @@
             <section id="squad" class="page">
                 <header class="page-header">
                     <div class="header-left">
-                        <h2 class="page-title">Selectie <span class="squad-size-inline"><span id="squad-count">0</span> / 18</span></h2>
+                        <h2 class="page-title">Selectie</h2>
+                        <div class="squad-size-badge"><span id="squad-count">0</span><span class="squad-size-sep">/</span><span class="squad-size-max">18</span></div>
                     </div>
                 </header>
 

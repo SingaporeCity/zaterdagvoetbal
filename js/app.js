@@ -618,6 +618,43 @@ function generatePersonality(division, quality) {
     }
 }
 
+/**
+ * Calculate salary based on division, age, stars — NOT directly on overall.
+ * This prevents salary from revealing exact player quality.
+ * Higher potential (stars) = more expensive (they know their worth).
+ */
+function calculateSalary(division, age, stars) {
+    const div = getDivision(division) || getDivision(8);
+    const salaryRange = div.salary;
+
+    // Base: random point in the division's salary range (wide spread)
+    const rangeSpread = salaryRange.max - salaryRange.min;
+    const base = salaryRange.min + rangeSpread * (0.2 + Math.random() * 0.6);
+
+    // Age factor: young players cheap, peak (27-31) expensive, old declining
+    let ageFactor;
+    if (age <= 19) ageFactor = 0.4 + Math.random() * 0.2;       // 0.4-0.6
+    else if (age <= 22) ageFactor = 0.55 + Math.random() * 0.25; // 0.55-0.8
+    else if (age <= 26) ageFactor = 0.75 + Math.random() * 0.25; // 0.75-1.0
+    else if (age <= 31) ageFactor = 0.9 + Math.random() * 0.3;   // 0.9-1.2
+    else if (age <= 34) ageFactor = 0.7 + Math.random() * 0.3;   // 0.7-1.0
+    else ageFactor = 0.5 + Math.random() * 0.3;                  // 0.5-0.8
+
+    // Stars: slight tendency for higher potential = more expensive, but with huge overlap
+    let starsMod = 1.0;
+    if (stars >= 4.5) starsMod = 1.0 + Math.random() * 0.4;       // 1.0-1.4x
+    else if (stars >= 3.5) starsMod = 0.9 + Math.random() * 0.4;  // 0.9-1.3x
+    else if (stars >= 2.5) starsMod = 0.8 + Math.random() * 0.4;  // 0.8-1.2x
+    else if (stars >= 1.5) starsMod = 0.7 + Math.random() * 0.4;  // 0.7-1.1x
+    else starsMod = 0.6 + Math.random() * 0.4;                    // 0.6-1.0x
+
+    // Big random noise — salary is unreliable as quality indicator
+    const noise = 0.6 + Math.random() * 0.8; // 0.6-1.4x
+
+    const salary = Math.round(base * ageFactor * starsMod * noise);
+    return Math.max(salaryRange.min || 5, salary);
+}
+
 function generatePlayer(division, position = null, minAge = 17, maxAge = 35) {
     if (!position) {
         // Use specific positions with weighted distribution
@@ -642,6 +679,8 @@ function generatePlayer(division, position = null, minAge = 17, maxAge = 35) {
     const tag = getPlayerTag(attributes, position);
     const playerName = generatePlayerName();
     const playerAge = random(minAge, maxAge);
+    const playerPersonality = generatePersonality(division, qualityPercentile);
+    const playerStars = assignPlayerStars(playerAge);
 
     return {
         id: Date.now() + Math.random(),
@@ -653,15 +692,14 @@ function generatePlayer(division, position = null, minAge = 17, maxAge = 35) {
         overall: overall,
         tag: tag.name,
         tagBonus: tag.bonus,
-        personality: generatePersonality(division, qualityPercentile),
-        salary: Math.round(div.salary.min + (div.salary.max - div.salary.min) * (overall / 100)),
+        personality: playerPersonality,
+        salary: calculateSalary(division, playerAge, playerStars),
         goals: random(0, 5),
         assists: random(0, 3),
         morale: random(60, 90),
-        fitness: random(80, 100),
         condition: random(70, 100),
         energy: random(60, 100),
-        stars: assignPlayerStars(playerAge),
+        stars: playerStars,
         photo: generatePlayerPhoto(playerName, position)
     };
 }
@@ -762,7 +800,6 @@ function createZaterdagPlayer(position, { young = false } = {}) {
         goals: 0,
         assists: 0,
         morale: random(60, 90),
-        fitness: random(80, 100),
         condition: random(70, 100),
         energy: random(60, 100),
         stars: playerStars,
@@ -1115,10 +1152,10 @@ function renderPlayerCards() {
 
     // Group players by position type (attackers first, keepers last)
     const groups = {
-        attacker: { name: 'Aanvallers', icon: '⚽', players: [] },
-        midfielder: { name: 'Middenvelders', icon: '⚙️', players: [] },
-        defender: { name: 'Verdedigers', icon: '🛡️', players: [] },
-        goalkeeper: { name: 'Keepers', icon: '🧤', players: [] }
+        attacker: { name: 'Aanvallers', icon: '⚽', color: '#9c27b0', players: [] },
+        midfielder: { name: 'Middenvelders', icon: '⚙️', color: '#4caf50', players: [] },
+        defender: { name: 'Verdedigers', icon: '🛡️', color: '#2196f3', players: [] },
+        goalkeeper: { name: 'Keepers', icon: '🧤', color: '#f9a825', players: [] }
     };
 
     // Add "Mijn Speler" to the squad list
@@ -1135,7 +1172,7 @@ function renderPlayerCards() {
         stars: mpSquadStars ? mpSquadStars.stars : (mp.stars || 1),
         isMyPlayer: true,
         nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
-        salary: Math.round(5 + (mpOverall / 10) + (mp.stars || 1) * 3),
+        salary: calculateSalary(gameState.club?.division || 8, mp.age || 20, mp.stars || 1),
         energy: mp.energy || 100,
         attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
     };
@@ -1157,7 +1194,7 @@ function renderPlayerCards() {
     for (const [key, group] of Object.entries(groups)) {
         if (group.players.length > 0) {
             html += `<div class="squad-group">
-                <div class="squad-group-header">
+                <div class="squad-group-header" style="background: ${group.color}">
                     <span class="squad-group-icon">${group.icon}</span>
                     <span class="squad-group-name">${group.name}</span>
                     <span class="squad-group-count">${group.players.length}</span>
@@ -1179,32 +1216,6 @@ function renderPlayerCards() {
         squadCount.classList.toggle('squad-full', count >= 18);
     }
 
-    // Add click handlers
-    document.querySelectorAll('#player-cards .player-card').forEach(card => {
-        card.addEventListener('click', (e) => {
-            if (e.target.closest('.pc-buyout-btn') || e.target.closest('.pc-transfer-btn')) return;
-            const playerId = parsePlayerId(card.dataset.playerId);
-            showPlayerDetail(playerId);
-        });
-    });
-
-    // Transfer list buttons (players with market value > 0)
-    document.querySelectorAll('#player-cards .pc-transfer-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const playerId = parseFloat(btn.dataset.transferId);
-            showTransferListPopup(playerId);
-        });
-    });
-
-    // Buyout buttons (players with market value 0)
-    document.querySelectorAll('#player-cards .pc-buyout-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const playerId = parseFloat(btn.dataset.buyoutId);
-            buyoutPlayer(playerId);
-        });
-    });
 
 }
 
@@ -1335,8 +1346,7 @@ function createScoutedPlayer(scoutLevel) {
     const playerName = generatePlayerName();
     const playerAge = random(16, 45);
 
-    // Salary based on overall and potential (stars)
-    const salary = Math.round(5 + (overall / 10) + (stars || 0) * 3 + random(0, 3));
+    const scoutPersonality = generatePersonality(8, 0.5);
 
     return {
         id: Date.now() + Math.random(),
@@ -1348,12 +1358,11 @@ function createScoutedPlayer(scoutLevel) {
         overall: overall,
         tag: tag.name,
         tagBonus: tag.bonus,
-        personality: generatePersonality(8, 0.5),
-        salary: salary,
+        personality: scoutPersonality,
+        salary: calculateSalary(8, playerAge, stars),
         goals: 0,
         assists: 0,
         morale: random(60, 90),
-        fitness: random(80, 100),
         condition: random(70, 100),
         energy: random(60, 100),
         stars: stars,
@@ -1427,7 +1436,7 @@ function createPlayerCardHTML(player, mini = false) {
 
     // Compact horizontal card - flat grid layout for equal column alignment
     return `
-        <div class="player-card${myPlayerClass}" data-player-id="${player.id}">
+        <div class="player-card${myPlayerClass}" data-player-id="${player.id}" onclick="if(!event.target.closest('.pc-buyout-btn,.pc-transfer-btn'))showPlayerDetail('${player.id}')">
             <div class="pc-left">
                 <span class="pc-pos" style="background: ${posData.color}">${posData.abbr}</span>
                 <div class="pc-age-box">
@@ -1460,7 +1469,7 @@ function createPlayerCardHTML(player, mini = false) {
                     <span class="pc-potential-label">POT</span>
                 </div>
             </div>
-            ${!player.isMyPlayer ? (getPlayerMarketValue(player) > 0 ? `<button class="pc-transfer-btn" data-transfer-id="${player.id}" title="Zet op transfermarkt">💰</button>` : `<button class="pc-buyout-btn" data-buyout-id="${player.id}" title="Contract afkopen (${formatCurrency((player.salary || 0) * 10)})">✕</button>`) : '<span class="pc-buyout-placeholder"></span>'}
+            ${!player.isMyPlayer ? (getPlayerMarketValue(player) > 0 ? `<button class="pc-transfer-btn" onclick="event.stopPropagation(); showTransferListPopup('${player.id}')" title="Zet op transfermarkt">💰</button>` : `<button class="pc-buyout-btn" onclick="event.stopPropagation(); buyoutPlayer('${player.id}')" title="Contract afkopen (${formatCurrency((player.salary || 0) * 10)})">✕</button>`) : '<span class="pc-buyout-placeholder"></span>'}
         </div>
     `;
 }
@@ -2216,7 +2225,6 @@ function renderLineupPitch() {
                          draggable="true"
                          data-player-id="${player.id}"
                          style="background: ${POSITIONS[player.position]?.color || slotColor}">
-                        <span class="lp-flag">${nationalityFlag}</span>
                         <span class="lp-overall">${player.overall + chemistryBonus}${chemistryBonus > 0 ? '<span class="chemistry-boost">+' + chemistryBonus + '</span>' : ''}</span>
                         <span class="lp-name">${player.name.split(' ')[0]}</span>
                         <span class="lp-position">${POSITIONS[player.position]?.abbr || player.position}</span>
@@ -2245,10 +2253,10 @@ function renderAvailablePlayers() {
     const lineupIds = new Set(gameState.lineup.filter(p => p).map(p => p.id));
 
     const groups = {
-        attacker: { name: 'Aanvallers', icon: '⚽', players: [] },
-        midfielder: { name: 'Middenvelders', icon: '⚙️', players: [] },
-        defender: { name: 'Verdedigers', icon: '🛡️', players: [] },
-        goalkeeper: { name: 'Keepers', icon: '🧤', players: [] }
+        attacker: { name: 'Aanvallers', icon: '⚽', color: '#9c27b0', players: [] },
+        midfielder: { name: 'Middenvelders', icon: '⚙️', color: '#4caf50', players: [] },
+        defender: { name: 'Verdedigers', icon: '🛡️', color: '#2196f3', players: [] },
+        goalkeeper: { name: 'Keepers', icon: '🧤', color: '#f9a825', players: [] }
     };
 
     gameState.players.forEach(player => {
@@ -2265,7 +2273,7 @@ function renderAvailablePlayers() {
 
         html += `
             <div class="player-group">
-                <div class="player-group-header">${group.icon} ${group.name}</div>
+                <div class="player-group-header" style="background: ${group.color}; color: white; padding: 4px 8px; border-radius: 4px;">${group.icon} ${group.name}</div>
                 <div class="player-group-list">
         `;
 
@@ -2425,6 +2433,19 @@ function handleLineupDrop(targetSlotIndex) {
 
     // Place dragged player in target slot
     gameState.lineup[targetSlotIndex] = lineupDragData.player;
+
+    // Achievement: check if player placed on wrong position
+    if (lineupDragData.player) {
+        const formation = FORMATIONS[gameState.formation];
+        if (formation) {
+            const requiredPos = formation.positions[targetSlotIndex];
+            const posGroup = POSITIONS[requiredPos]?.group;
+            const playerGroup = POSITIONS[lineupDragData.player.position]?.group;
+            if (posGroup && playerGroup && posGroup !== playerGroup) {
+                gameState.stats.placedWrongPosition = true;
+            }
+        }
+    }
 
     // If swapping from another slot, put the existing player there
     if (lineupDragData.fromSlot !== null && existingPlayer) {
@@ -2756,6 +2777,20 @@ window.handleDrop = function(e, targetIndex) {
         gameState.lineup[dragState.sourceIndex] = temp;
     }
 
+    // Achievement: check if player placed on wrong position
+    const placedPlayer = gameState.lineup[targetIndex];
+    if (placedPlayer) {
+        const formation = FORMATIONS[gameState.formation];
+        if (formation) {
+            const requiredPos = formation.positions[targetIndex];
+            const posGroup = POSITIONS[requiredPos]?.group;
+            const playerGroup = POSITIONS[placedPlayer.position]?.group;
+            if (posGroup && playerGroup && posGroup !== playerGroup) {
+                gameState.stats.placedWrongPosition = true;
+            }
+        }
+    }
+
     // Reset drag state
     resetDragState();
 
@@ -2763,6 +2798,10 @@ window.handleDrop = function(e, targetIndex) {
     renderPitch();
     renderTacticsBench();
     updateTacticsFitDisplay();
+
+    // Check achievements (wrong position)
+    const achNew = checkAchievements(gameState);
+    if (achNew.length > 0) setTimeout(() => queueAchievements(achNew), 500);
 };
 
 // ================================================
@@ -3653,6 +3692,8 @@ function hireScoutedPlayer(playerId) {
     gameState.stats.seasonSpending = (gameState.stats.seasonSpending || 0) + player.price;
     if (player.price < 200) gameState.stats.cheapTransfer = true;
     if (player.price >= 1000000) gameState.stats.expensiveTransfer = true;
+    // Achievement: signed high potential (stars ≥ 0.5)
+    if ((player.stars || 0) >= 0.5) gameState.stats.signedHighPotential = true;
 
     updateBudgetDisplays();
     renderScoutPage();
@@ -3679,27 +3720,51 @@ window.acceptScoutTip = async function(playerId) {
     }
     if (!player) return;
 
-    // Confirmation popup with salary
+    // Contract negotiation (same flow as transfer market)
     const salary = player.salary || 0;
-    if (!await showConfirm(`Wil je ${player.name} contracteren voor ${formatCurrency(salary)} per week?`)) return;
+    const bonus = player.signingBonus || 0;
+    const choice = await showContractOffer(player, salary, bonus);
+
+    if (choice === 'refuse') {
+        // Player is offended and leaves
+        removeScoutPlayer(player, source);
+        renderScoutPage();
+        await showAlert(`${player.name} is beledigd en vertrekt.`);
+        return;
+    }
+
+    let finalSalary = salary;
+    if (choice === 'negotiate') {
+        if (Math.random() < 0.75) {
+            const discount = 0.05 + Math.random() * 0.25;
+            const newSalary = Math.max(1, Math.round(salary * (1 - discount)));
+            const accepted = await showNegotiationResult(player, salary, bonus, newSalary, 0);
+            if (!accepted) {
+                showNotification(`Onderhandeling met ${player.name} afgebroken.`, 'info');
+                return;
+            }
+            finalSalary = newSalary;
+        } else {
+            // Player refuses to negotiate and leaves
+            removeScoutPlayer(player, source);
+            renderScoutPage();
+            await showAlert(`${player.name} voelt zich niet gewaardeerd en vertrekt.`);
+            return;
+        }
+    }
 
     // Capture uncertainty before removing it
     const uncertainty = getScoutUncertainty(player);
     const hasUncertainty = !uncertainty.isExact;
 
-    // Now remove from the list
-    if (source === 'tips') {
-        const idx = gameState.scoutTips.findIndex(p => String(p.id) === String(playerId));
-        if (idx !== -1) gameState.scoutTips.splice(idx, 1);
-    } else {
-        const idx = gameState.scoutHistory.findIndex(p => String(p.id) === String(playerId));
-        if (idx !== -1) gameState.scoutHistory.splice(idx, 1);
-    }
+    // Remove from scout list
+    removeScoutPlayer(player, source);
 
     // Remove scout uncertainty fields so real values are shown
     delete player.scoutUncertainty;
     delete player.scoutedAtWeek;
 
+    player.salary = finalSalary;
     player.energy = 100;
     player.condition = 100;
     gameState.players.push(player);
@@ -3707,6 +3772,8 @@ window.acceptScoutTip = async function(playerId) {
     gameState.stats.signedScouted = (gameState.stats.signedScouted || 0) + 1;
     gameState.stats.totalTransfers = (gameState.stats.totalTransfers || 0) + 1;
     if (!hasUncertainty) gameState.stats.exactScout = (gameState.stats.exactScout || 0) + 1;
+    // Achievement: signed high potential (stars ≥ 0.5)
+    if ((player.stars || 0) >= 0.5) gameState.stats.signedHighPotential = true;
     saveGame();
     renderScoutPage();
     renderPlayerCards();
@@ -3717,6 +3784,16 @@ window.acceptScoutTip = async function(playerId) {
     }
     showNotification(`${player.name} is toegevoegd aan je selectie!`, 'success');
 };
+
+function removeScoutPlayer(player, source) {
+    if (source === 'tips') {
+        const idx = gameState.scoutTips.findIndex(p => String(p.id) === String(player.id));
+        if (idx !== -1) gameState.scoutTips.splice(idx, 1);
+    } else {
+        const idx = gameState.scoutHistory.findIndex(p => String(p.id) === String(player.id));
+        if (idx !== -1) gameState.scoutHistory.splice(idx, 1);
+    }
+}
 
 window.declineScoutTip = function(playerId) {
     // Permanent verwijderen uit scoutTips of scoutHistory
@@ -5304,7 +5381,8 @@ function updateMatchTimer() {
 // ================================================
 
 function showPlayerDetail(playerId) {
-    const player = gameState.players.find(p => p.id === playerId);
+    playerId = parsePlayerId(playerId);
+    const player = gameState.players.find(p => String(p.id) === String(playerId));
     if (!player) return;
 
     const modal = document.getElementById('player-modal');
@@ -5413,7 +5491,7 @@ function showPlayerDetail(playerId) {
 }
 
 async function buyoutPlayer(playerId) {
-    const playerIndex = gameState.players.findIndex(p => p.id === playerId);
+    const playerIndex = gameState.players.findIndex(p => String(p.id) === String(playerId));
     if (playerIndex === -1) return;
 
     const player = gameState.players[playerIndex];
@@ -5427,13 +5505,15 @@ async function buyoutPlayer(playerId) {
     if (!await showConfirm(`Wil je het contract van ${player.name} afkopen?\n\nAfkoopsom: ${formatCurrency(cost)} (10x weeksalaris van ${formatCurrency(player.salary || 0)})`)) return;
 
     gameState.club.budget -= cost;
+    // Achievement: fired player older than 45
+    if (player.age > 45) gameState.stats.firedOldPlayer = true;
     gameState.players.splice(playerIndex, 1);
     gameState.stats.released = (gameState.stats.released || 0) + 1;
 
     // Remove from lineup if present
-    for (const pos of Object.keys(gameState.lineup)) {
-        if (gameState.lineup[pos] === playerId) {
-            gameState.lineup[pos] = null;
+    for (let i = 0; i < gameState.lineup.length; i++) {
+        if (gameState.lineup[i] && String(gameState.lineup[i].id) === String(playerId)) {
+            gameState.lineup[i] = null;
         }
     }
 
@@ -5447,7 +5527,7 @@ async function buyoutPlayer(playerId) {
 }
 
 function showTransferListPopup(playerId) {
-    const player = gameState.players.find(p => p.id === playerId);
+    const player = gameState.players.find(p => String(p.id) === String(playerId));
     if (!player) return;
 
     const marketValue = getPlayerMarketValue(player);
@@ -5617,9 +5697,18 @@ function navigateToPage(page) {
     if (page === 'jeugdteam') renderJeugdteamPage();
     if (page === 'kantine') renderKantineDashboard();
     if (page === 'wedstrijden') renderMatchesPage();
-    if (page === 'bugs') renderBugHistory();
+    if (page === 'bugs') {
+        gameState.stats.visitedBugsTab = true;
+        renderBugHistory();
+    }
 
     updateNavBadges();
+
+    // Check achievements on page navigation
+    const newAchievements = checkAchievements(gameState);
+    if (newAchievements.length > 0) {
+        setTimeout(() => queueAchievements(newAchievements), 500);
+    }
 }
 
 function updateNavBadges() {
@@ -5801,6 +5890,8 @@ function initTrainingButton() {
 
 function updateBudgetDisplays() {
     const budget = gameState.club.budget;
+    // Achievement: budget below €1000
+    if (budget < 1000) gameState.stats.budgetBelow1000 = true;
     const formattedBudget = formatCurrency(budget);
 
     // Update all budget displays
@@ -5930,22 +6021,15 @@ function generateTransferPlayer(division, forcePosition) {
         player.overall = random(Math.max(divInfo.minAttr, divInfo.maxAttr - 3), divInfo.maxAttr);
     }
 
-    // 6e Klasse: gratis agenten, hoge ALG = duurder tekengeld
+    // 6e Klasse: gratis agenten, tekengeld op basis van leeftijd/persoonlijkheid
     if (playerDiv === 8) {
         player.price = 0;
         player.stars = player.overall < 5 ? 0.5 : 0;
         player.starsMin = player.stars;
         player.starsMax = Math.min(5, player.stars + 1);
-        if (player.overall >= 7) {
-            player.signingBonus = random(1600, 2400);
-            player.salary = 50;
-        } else if (player.overall >= 5) {
-            player.signingBonus = random(600, 1200);
-            player.salary = random(20, 35);
-        } else {
-            player.signingBonus = random(100, 300);
-            player.salary = random(5, 15);
-        }
+        player.salary = calculateSalary(8, player.age, player.stars);
+        // Tekengeld: gebaseerd op salary (niet overall)
+        player.signingBonus = Math.round(player.salary * (3 + random(0, 5) + (player.age >= 28 ? 3 : 0)));
         player.isFreeAgent = true;
     } else {
         if (Math.random() < 0.20) {
@@ -5972,12 +6056,10 @@ function generateTransferPlayer(division, forcePosition) {
     player.overallMin = Math.max(1, player.overall - rangeBelow);
     player.overallMax = Math.min(99, player.overall + rangeAbove);
 
-    // Salary/price based on top of range (skip for 6e Klasse)
+    // Price based on estimated overall (skip for 6e Klasse) — salary already set by generatePlayer/calculateSalary
     if (playerDiv !== 8) {
-        const inflatedOverall = Math.round((player.overallMin + player.overallMax * 3) / 4);
-        const divSalary = divInfo.salary || { min: 15, max: 80 };
-        player.salary = Math.round(divSalary.min + (divSalary.max - divSalary.min) * (inflatedOverall / 100));
         if (player.price > 0) {
+            const inflatedOverall = Math.round((player.overallMin + player.overallMax * 3) / 4);
             const origPlayer = { ...player, overall: inflatedOverall };
             player.price = calculatePlayerValue(origPlayer, playerDiv);
         }
@@ -6087,10 +6169,10 @@ function renderTransferMarket() {
 
     // Group by position (like squad page)
     const groups = {
-        attacker: { name: 'Aanvallers', icon: '⚽', players: [] },
-        midfielder: { name: 'Middenvelders', icon: '⚙️', players: [] },
-        defender: { name: 'Verdedigers', icon: '🛡️', players: [] },
-        goalkeeper: { name: 'Keepers', icon: '🧤', players: [] }
+        attacker: { name: 'Aanvallers', icon: '⚽', color: '#9c27b0', players: [] },
+        midfielder: { name: 'Middenvelders', icon: '⚙️', color: '#4caf50', players: [] },
+        defender: { name: 'Verdedigers', icon: '🛡️', color: '#2196f3', players: [] },
+        goalkeeper: { name: 'Keepers', icon: '🧤', color: '#f9a825', players: [] }
     };
 
     players.forEach(player => {
@@ -6103,7 +6185,7 @@ function renderTransferMarket() {
         if (group.players.length === 0) continue;
 
         html += `<div class="squad-group">
-            <div class="squad-group-header">
+            <div class="squad-group-header" style="background: ${group.color}">
                 <span class="squad-group-icon">${group.icon}</span>
                 <span class="squad-group-name">${group.name}</span>
                 <span class="squad-group-count">${group.players.length}</span>
@@ -6274,6 +6356,12 @@ async function handleTransferBuy(playerId) {
             gameState.stats.seasonSpending = (gameState.stats.seasonSpending || 0) + totalCost;
             if (totalCost < 200) gameState.stats.cheapTransfer = true;
             if (totalCost >= 1000000) gameState.stats.expensiveTransfer = true;
+            // Achievement: bought a bad player (overall ≤ 5)
+            if (realVal <= 5) gameState.stats.boughtBadPlayer = true;
+            // Achievement: signed unscouted (transfer market = no scouting)
+            gameState.stats.signedUnscouted = true;
+            // Achievement: signed high potential (stars ≥ 0.5)
+            if ((sReal || 0) >= 0.5) gameState.stats.signedHighPotential = true;
             updateBudgetDisplays();
             renderTransferMarket();
             if (hasRange) await showOverallReveal(player.name, minVal, maxVal, realVal, sMin, sMax, sReal);
@@ -6343,6 +6431,12 @@ async function finalizeFreeAgentTransfer(player, salary, bonus) {
     gameState.club.budget -= bonus;
     gameState.players.push(player);
     gameState.transferMarket.players = gameState.transferMarket.players.filter(p => p.id !== player.id);
+    // Achievement: bought a bad player (overall ≤ 5)
+    if (realVal <= 5) gameState.stats.boughtBadPlayer = true;
+    // Achievement: signed unscouted (transfer market = no scouting)
+    gameState.stats.signedUnscouted = true;
+    // Achievement: signed high potential (stars ≥ 0.5)
+    if ((sReal || 0) >= 0.5) gameState.stats.signedHighPotential = true;
     updateBudgetDisplays();
     renderTransferMarket();
 
@@ -6660,10 +6754,10 @@ function renderLineupBuilder() {
 
     // Render bench grouped by position
     const groups = {
-        attacker: { label: 'AAN', players: [] },
-        midfielder: { label: 'MID', players: [] },
-        defender: { label: 'DEF', players: [] },
-        goalkeeper: { label: 'KEE', players: [] }
+        attacker: { label: 'AAN', color: '#9c27b0', players: [] },
+        midfielder: { label: 'MID', color: '#4caf50', players: [] },
+        defender: { label: 'DEF', color: '#2196f3', players: [] },
+        goalkeeper: { label: 'KEE', color: '#f9a825', players: [] }
     };
 
     // Get players not in lineup
@@ -6681,7 +6775,7 @@ function renderLineupBuilder() {
     Object.entries(groups).forEach(([group, data]) => {
         benchHTML += `
             <div class="sidebar-group ${data.players.length === 0 ? 'empty' : ''}">
-                <div class="sidebar-group-header">${data.label}</div>
+                <div class="sidebar-group-header" style="background: ${data.color}; color: white; padding: 2px 6px; border-radius: 4px;">${data.label}</div>
                 <div class="sidebar-players">
                     ${data.players.map(player => {
                         const posData = POSITIONS[player.position];
@@ -6881,6 +6975,9 @@ window.handleDragEnd = handleDragEnd;
 window.handleDrop = handleDrop;
 window.removeFromLineup = removeFromLineup;
 window.clearLineup = clearLineup;
+window.buyoutPlayer = buyoutPlayer;
+window.showTransferListPopup = showTransferListPopup;
+window.showPlayerDetail = showPlayerDetail;
 window.openLineupDropdown = openLineupDropdown;
 window.selectLineupPlayer = selectLineupPlayer;
 
@@ -7443,9 +7540,9 @@ function updateAcademyUI() {
     const maxPerCat = getYouthMaxPerCategory();
 
     const groups = [
-        { label: 'Pupillen (12-13)', age: '12-13' },
-        { label: 'Junioren (14-15)', age: '14-15' },
-        { label: 'Aspiranten (16-17)', age: '16-17' }
+        { label: 'Pupillen', shortLabel: '12-13', age: '12-13' },
+        { label: 'Junioren', shortLabel: '14-15', age: '14-15' },
+        { label: 'Aspiranten', shortLabel: '16-17', age: '16-17' }
     ];
 
     // Capacity card (separate tile above)
@@ -7456,7 +7553,7 @@ function updateAcademyUI() {
                 const count = getYouthCategoryCount(g.age);
                 const full = count >= maxPerCat;
                 return `<div class="acad-cap-row ${full ? 'full' : ''}">
-                    <span class="acad-cap-label">${g.label}</span>
+                    <span class="acad-cap-label">${g.shortLabel}</span>
                     <span class="acad-cap-bar"><span class="acad-cap-fill" style="width: ${Math.min(100, Math.round(count / maxPerCat * 100))}%"></span></span>
                     <span class="acad-cap-count">${count}/${maxPerCat}</span>
                 </div>`;
@@ -7483,7 +7580,7 @@ function updateAcademyUI() {
             <div class="acad-upgrade-block">
                 <div class="acad-upgrade-header">Upgrade naar Lvl ${nextLevelNum}</div>
                 <div class="acad-upgrade-stars">
-                    <span class="acad-upgrade-stars-label">Max potentieel instroom</span>
+                    <span class="acad-upgrade-stars-label">Max instroom</span>
                     <span class="pc-stars">${nextStarsHtml}</span>
                 </div>
                 ${reqHtml}
@@ -7508,7 +7605,7 @@ function updateAcademyUI() {
                 </div>
             </div>
             <div class="acad-current-stars">
-                <span class="acad-stars-label">Max potentieel instroom</span>
+                <span class="acad-stars-label">Max instroom</span>
                 <span class="pc-stars">${currentStarsHtml}</span>
             </div>
             <div class="acad-running-cost">Kosten: <strong>${formatCurrency(250)}/week</strong></div>
@@ -7832,33 +7929,32 @@ async function signYouthContract(playerId) {
         return;
     }
 
-    // Calculate salary based on stars and division
+    // Calculate salary — youth players are cheap (eager to play)
     const division = gameState.club.division;
-    const divData = getDivision(division);
-    const baseSalary = divData ? divData.salary.avg : 50;
-    const starsBonus = ((youthPlayer.potentialStars || 1) - 1) * 20;
-    const salary = Math.max(divData?.salary.min || 25, Math.round(baseSalary * 0.5 + starsBonus));
+    const salary = calculateSalary(division, youthPlayer.age, youthPlayer.potentialStars || 1);
+    const youthDiscount = 0.5 + Math.random() * 0.2; // 50-70% of normal
+    const finalSalary = Math.max(5, Math.round(salary * youthDiscount));
 
-    // Tekenbonus: salary * (2 + potentialStars)
-    const bonus = Math.round(salary * (2 + (youthPlayer.potentialStars || 1)) / 10) * 10;
+    // Tekenbonus: based on salary, not quality
+    const bonus = Math.round(finalSalary * (2 + random(0, 4)));
 
     // Show contract offer modal
-    const choice = await showContractOffer(youthPlayer, salary, bonus);
+    const choice = await showContractOffer(youthPlayer, finalSalary, bonus);
 
     // Re-find index (in case anything changed during modal)
     const currentIndex = gameState.youthPlayers.findIndex(p => p.id === playerId);
     if (currentIndex === -1) return;
 
     if (choice === 'accept') {
-        createProfessionalFromYouth(currentIndex, salary, bonus);
+        createProfessionalFromYouth(currentIndex, finalSalary, bonus);
     } else if (choice === 'negotiate') {
         // 75% chance of successful negotiation, 25% player refuses
         if (Math.random() < 0.75) {
             const discount = 0.05 + Math.random() * 0.25; // 5-30% korting
-            const newSalary = Math.max(1, Math.round(salary * (1 - discount)));
+            const newSalary = Math.max(1, Math.round(finalSalary * (1 - discount)));
             const newBonus = Math.round(bonus * (1 - discount) / 10) * 10;
 
-            const accepted = await showNegotiationResult(youthPlayer, salary, bonus, newSalary, newBonus);
+            const accepted = await showNegotiationResult(youthPlayer, finalSalary, bonus, newSalary, newBonus);
             const idx = gameState.youthPlayers.findIndex(p => p.id === playerId);
             if (idx === -1) return;
 
@@ -7928,6 +8024,9 @@ function createProfessionalFromYouth(playerIndex, salary, bonus) {
     gameState.players.push(professionalPlayer);
     gameState.youthPlayers.splice(playerIndex, 1);
 
+    // Achievement: signed high potential (stars ≥ 0.5)
+    if ((professionalPlayer.stars || 0) >= 0.5) gameState.stats.signedHighPotential = true;
+
     renderYouthPlayers(currentYouthAgeGroup);
     updateAcademyCapacity();
     updateYouthTabBadges();
@@ -7941,6 +8040,9 @@ function dismissYouthPlayer(playerId) {
 
     const player = gameState.youthPlayers[playerIndex];
     gameState.youthPlayers.splice(playerIndex, 1);
+
+    // Achievement: dismissed a youth player
+    gameState.stats.dismissedYouth = true;
 
     renderYouthPlayers(currentYouthAgeGroup);
     updateAcademyCapacity();
@@ -9176,6 +9278,7 @@ function initGame(mode = 'local') {
     } else {
         // New game - generate initial data
         gameState.players = generateSquad(gameState.club.division);
+        gameState.lineup = new Array(11).fill(null);
         gameState.standings = generateNewStandings(gameState.club.name, gameState.club.division);
         gameState.achievements = initAchievements();
 
@@ -9599,7 +9702,7 @@ function renderDashboardFinances() {
             </tbody>
             <tfoot>
                 <tr class="fin-table-result ${weekly >= 0 ? 'fin-result-positive' : 'fin-result-negative'}">
-                    <td class="fin-table-label">Resultaat volgende week</td>
+                    <td class="fin-table-label">Resultaat deze week</td>
                     <td class="fin-table-val">${sign}${formatCurrency(weekly)}</td>
                 </tr>
             </tfoot>
@@ -9959,8 +10062,12 @@ function playMatch() {
     const grassLevel = getGrassLevel();
     const teamTrainingBonus = gameState.training?.teamTraining?.bonus || null;
 
+    // Achievement: played with 0% formation drive
+    if (formationDrive === 0) gameState.stats.playedZeroDrive = true;
+
     // Simulate match
     const strengthOptions = { formationDrive, teamTrainingBonus };
+    const spyBonus = gameState.nextMatchBonus || 0;
     const result = simulateMatch(
         { name: gameState.club.name, strength: calculateTeamStrength(gameState.lineup, gameState.formation, gameState.tactics, gameState.lineup, strengthOptions) },
         opponent,
@@ -9968,8 +10075,10 @@ function playMatch() {
         gameState.formation,
         gameState.tactics,
         isHome,
-        { grassLevel }
+        { grassLevel, playerTeamBonus: 1.10, spyBonus, specialists: gameState.specialists || {} }
     );
+    // Reset spy bonus after use
+    gameState.nextMatchBonus = 0;
 
     // Determine scores from player's perspective
     const playerScore = isHome ? result.homeScore : result.awayScore;
@@ -10450,7 +10559,7 @@ async function playMultiplayerMatch() {
         const matchData = existingResult.match_data || {};
         const resultType = getMatchResultType(existingResult.home_score, existingResult.away_score, isHome);
 
-        // Apply match results to player stats (morale, fitness, energy, cards, etc.)
+        // Apply match results to player stats (morale, energy, cards, etc.)
         applyMatchResults(gameState.lineup, {
             homeScore: existingResult.home_score,
             awayScore: existingResult.away_score,
@@ -13089,6 +13198,12 @@ function selectSponsor(sponsorId) {
     renderShirtSponsorSection();
     saveGame();
     updateNavBadges();
+
+    // Check achievements (sponsor-related)
+    const newAchievements = checkAchievements(gameState);
+    if (newAchievements.length > 0) {
+        setTimeout(() => queueAchievements(newAchievements), 500);
+    }
     renderDashboardChecklist();
 }
 
@@ -13881,17 +13996,17 @@ function renderStadiumMap() {
     }
 
     // ===== LAYOUT =====
-    const cx = 340, cy = 180;
-    const fieldW = 130, fieldH = 74;
+    const cy = 200;
+    const fieldW = 170, fieldH = 96;
 
     const tribuneConfig = STADIUM_TILE_CONFIG.tribune;
     const tribuneId = gameState.stadium[tribuneConfig.stateKey];
     const tribuneLevel = Math.max(0, tribuneConfig.levels.findIndex(l => l.id === tribuneId));
-    const ringThickness = [0, 14, 22, 32, 42, 48, 54, 58, 62, 66][tribuneLevel] || 0;
+    const ringThickness = [0, 16, 26, 36, 48, 54, 60, 66, 72, 78][tribuneLevel] || 0;
     const stadW = fieldW + ringThickness * 2;
     const stadH = fieldH + ringThickness * 2;
 
-    const bw = 82, bh = 50;
+    const bw = 90, bh = 58;
 
     function getLevel(key) {
         const config = STADIUM_TILE_CONFIG[key];
@@ -13900,34 +14015,44 @@ function renderStadiumMap() {
     }
 
     // Road ring around stadium (scales with tribune size)
-    const roadMargin = 22;
-    const roadAreaW = Math.max(200, stadW + roadMargin * 2);
-    const roadAreaH = Math.max(120, stadH + roadMargin * 2 + 16);
-    const roadLeft = cx - roadAreaW / 2;
-    const roadRight = cx + roadAreaW / 2;
+    const roadMargin = 26;
+    const roadAreaW = Math.max(240, stadW + roadMargin * 2);
+    const roadAreaH = Math.max(150, stadH + roadMargin * 2 + 16);
     const roadTop = cy - roadAreaH / 2;
     const roadBottom = cy + roadAreaH / 2;
 
-    // Building positions — scale with stadium size
-    const buildingY = Math.max(roadTop - 30, 12);
-    const positions = {
-        kantine:  { x: roadLeft + 30, y: buildingY, w: 74, h: 46 },
-        scouting: { x: roadRight - 30, y: buildingY, w: 74, h: 46 },
-        medical:  { x: roadLeft - 45, y: cy },
-        perszaal: { x: roadRight + 45, y: cy },
-    };
-
-    // Training & Academy field positions (below stadium road ring)
-    const trainW = 110, trainH = 62;
-    const acadW = 90, acadH = 50;
-    const trainY = Math.max(290, roadBottom + 16);
-    const trainX = cx - trainW - 8;
-    const acadX = cx + 8, acadY = trainY;
+    // Training & Academy field dimensions
+    const trainW = 140, trainH = 78;
+    const acadW = 110, acadH = 60;
+    const trainY = Math.max(320, roadBottom + 20);
 
     const constructionData = gameState.stadium.construction;
 
-    const viewH = Math.max(400, trainY + trainH + 40);
-    let svg = `<svg viewBox="0 0 620 ${viewH}" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Inter', system-ui, sans-serif;">`;
+    // Dynamic viewBox: match container aspect ratio so SVG fills perfectly
+    const viewH = Math.max(460, trainY + trainH + 50);
+    const containerRect = container.getBoundingClientRect();
+    const viewW = (containerRect.width && containerRect.height)
+        ? Math.max(700, Math.round(viewH * (containerRect.width / containerRect.height)))
+        : 700;
+    const cx = viewW / 2;
+
+    // Positions derived from cx
+    const roadLeft = cx - roadAreaW / 2;
+    const roadRight = cx + roadAreaW / 2;
+
+    // Building positions — spread wide to fill the map
+    const buildingSideOffset = Math.min(140, (viewW - roadAreaW) / 2 - 50);
+    const positions = {
+        kantine:  { x: roadLeft - buildingSideOffset, y: cy - 32, w: 90, h: 58 },
+        medical:  { x: roadLeft - buildingSideOffset, y: cy + 38, w: 90, h: 58 },
+        scouting: { x: roadRight + buildingSideOffset, y: cy - 32, w: 90, h: 58 },
+        perszaal: { x: roadRight + buildingSideOffset, y: cy + 38, w: 90, h: 58 },
+    };
+
+    const trainX = cx - trainW - 14;
+    const acadX = cx + 14, acadY = trainY;
+
+    let svg = `<svg viewBox="0 0 ${viewW} ${viewH}" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Inter', system-ui, sans-serif;">`;
 
     // ===== DEFS =====
     svg += `<defs>
@@ -13958,26 +14083,26 @@ function renderStadiumMap() {
         overlay += `<text x="${iconX}" y="${iconY}" text-anchor="middle" font-size="14" fill="rgba(255,165,0,0.9)">🏗️</text>`;
         // Timer badge
         overlay += `<rect x="${x + w/2 - 22}" y="${y + h/2 + 2}" width="44" height="14" fill="rgba(0,0,0,0.7)" rx="7"/>`;
-        overlay += `<text id="construction-timer-map" x="${x + w/2}" y="${y + h/2 + 12}" text-anchor="middle" fill="#ffa500" font-size="8" font-weight="bold">--:--</text>`;
+        overlay += `<text id="construction-timer-map" x="${x + w/2}" y="${y + h/2 + 12}" text-anchor="middle" fill="#ffa500" font-size="10" font-weight="bold">--:--</text>`;
         return overlay;
     }
 
     // ===== BACKGROUND =====
-    svg += `<rect width="620" height="${viewH}" fill="url(#grass-pattern)" rx="12"/>`;
+    svg += `<rect width="${viewW}" height="${viewH}" fill="url(#grass-pattern)" rx="12"/>`;
     // Subtle grass texture lines
-    for (let i = 0; i < 31; i++) {
+    for (let i = 0; i < Math.ceil(viewW / 20) + 1; i++) {
         const x = i * 20;
         svg += `<line x1="${x}" y1="0" x2="${x}" y2="${viewH}" stroke="rgba(255,255,255,0.015)" stroke-width="1"/>`;
     }
 
-    // ===== ROADS (ring around stadium + spur to training) =====
+    // ===== ROADS (ring around stadium + spurs to buildings & training) =====
     const roadW = 10;
     const roadColor = 'url(#road-grad)';
     const lineColor = 'rgba(255,255,200,0.25)';
 
     // Top road (extends to edges as main approach)
-    svg += `<rect x="30" y="${roadTop - roadW/2}" width="560" height="${roadW}" fill="${roadColor}" rx="5"/>`;
-    for (let dx = 35; dx < 585; dx += 18) svg += `<rect x="${dx}" y="${roadTop - 0.5}" width="10" height="1" fill="${lineColor}" rx="0.5"/>`;
+    svg += `<rect x="30" y="${roadTop - roadW/2}" width="${viewW - 60}" height="${roadW}" fill="${roadColor}" rx="5"/>`;
+    for (let dx = 35; dx < viewW - 35; dx += 18) svg += `<rect x="${dx}" y="${roadTop - 0.5}" width="10" height="1" fill="${lineColor}" rx="0.5"/>`;
     // Bottom road
     svg += `<rect x="${roadLeft}" y="${roadBottom - roadW/2}" width="${roadAreaW}" height="${roadW}" fill="${roadColor}" rx="5"/>`;
     for (let dx = roadLeft + 5; dx < roadRight - 5; dx += 18) svg += `<rect x="${dx}" y="${roadBottom - 0.5}" width="10" height="1" fill="${lineColor}" rx="0.5"/>`;
@@ -13990,8 +14115,18 @@ function renderStadiumMap() {
     // Spur to training fields
     svg += `<rect x="${cx - roadW/2}" y="${roadBottom}" width="${roadW}" height="${trainY - roadBottom + trainH/2 + 10}" fill="${roadColor}" rx="5"/>`;
     for (let dy = roadBottom + 8; dy < trainY + trainH/2; dy += 18) svg += `<rect x="${cx - 0.5}" y="${dy}" width="1" height="10" fill="${lineColor}" rx="0.5"/>`;
+
+    // Left spur road — from ring to left buildings
+    const leftBuildX = positions.kantine.x;
+    svg += `<rect x="${leftBuildX}" y="${cy - roadW/2}" width="${roadLeft - leftBuildX}" height="${roadW}" fill="${roadColor}" rx="5"/>`;
+    for (let dx = leftBuildX + 5; dx < roadLeft - 5; dx += 18) svg += `<rect x="${dx}" y="${cy - 0.5}" width="10" height="1" fill="${lineColor}" rx="0.5"/>`;
+    // Right spur road — from ring to right buildings
+    const rightBuildX = positions.scouting.x;
+    svg += `<rect x="${roadRight}" y="${cy - roadW/2}" width="${rightBuildX - roadRight}" height="${roadW}" fill="${roadColor}" rx="5"/>`;
+    for (let dx = roadRight + 5; dx < rightBuildX - 5; dx += 18) svg += `<rect x="${dx}" y="${cy - 0.5}" width="10" height="1" fill="${lineColor}" rx="0.5"/>`;
+
     // Road circles at corners and junctions
-    [[roadLeft, roadTop], [roadRight, roadTop], [roadLeft, roadBottom], [roadRight, roadBottom], [cx, roadBottom]].forEach(([ix, iy]) => {
+    [[roadLeft, roadTop], [roadRight, roadTop], [roadLeft, roadBottom], [roadRight, roadBottom], [cx, roadBottom], [roadLeft, cy], [roadRight, cy]].forEach(([ix, iy]) => {
         svg += `<circle cx="${ix}" cy="${iy}" r="7" fill="#555" stroke="#666" stroke-width="0.5"/>`;
     });
 
@@ -14063,12 +14198,12 @@ function renderStadiumMap() {
     }
     const labelY = tribuneLevel === 0 ? cy - fieldH/2 - 16 : cy - stadH/2 - 8;
     const tribuneLevelName = tribuneConfig.levels[tribuneLevel]?.name || 'Stadion';
-    const tribTextW = tribuneLevelName.length * 4.5;
+    const tribTextW = tribuneLevelName.length * 5.5;
     const tribTextX = cx - tribTextW / 2;
-    const tribBadgeX = cx + tribTextW / 2 + 4;
-    svg += `<text x="${cx}" y="${labelY}" text-anchor="middle" fill="white" font-size="8" font-weight="bold">${tribuneLevelName}</text>`;
-    svg += `<rect x="${tribBadgeX}" y="${labelY - 10}" width="22" height="12" fill="${tColors[1]}" rx="6"/>`;
-    svg += `<text x="${tribBadgeX + 11}" y="${labelY - 1}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${tribuneLevel + 1}</text>`;
+    const tribBadgeX = cx + tribTextW / 2 + 5;
+    svg += `<text x="${cx}" y="${labelY}" text-anchor="middle" fill="white" font-size="11" font-weight="bold">${tribuneLevelName}</text>`;
+    svg += `<rect x="${tribBadgeX}" y="${labelY - 12}" width="28" height="14" fill="${tColors[1]}" rx="7"/>`;
+    svg += `<text x="${tribBadgeX + 14}" y="${labelY - 1}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${tribuneLevel + 1}</text>`;
     // Construction overlay for tribune
     if (constructionData && constructionData.category === 'tribune') {
         const ox = cx - stadW/2, oy = cy - stadH/2;
@@ -14101,13 +14236,13 @@ function renderStadiumMap() {
     svg += `<rect x="${cx-fieldW/2-4}" y="${cy-6}" width="4" height="12" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="0.8" rx="1"/>`;
     svg += `<rect x="${cx+fieldW/2}" y="${cy-6}" width="4" height="12" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="0.8" rx="1"/>`;
     const grassLevelName = STADIUM_TILE_CONFIG.grass.levels[grassLevel]?.name || 'Wedstrijdveld';
-    const grassTextW = grassLevelName.length * 4.2;
+    const grassTextW = grassLevelName.length * 5.2;
     const grassCenterX = cx;
-    const grassBadgeX = grassCenterX + grassTextW / 2 + 4;
+    const grassBadgeX = grassCenterX + grassTextW / 2 + 5;
     const grassLabelY = cy + fieldH/2 - 5;
-    svg += `<text x="${grassCenterX}" y="${grassLabelY}" text-anchor="middle" fill="white" font-size="7" font-weight="600" letter-spacing="1">${grassLevelName}</text>`;
-    svg += `<rect x="${grassBadgeX}" y="${grassLabelY - 8}" width="22" height="12" fill="${gColors[1]}" rx="6"/>`;
-    svg += `<text x="${grassBadgeX + 11}" y="${grassLabelY + 1}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${grassLevel + 1}</text>`;
+    svg += `<text x="${grassCenterX}" y="${grassLabelY}" text-anchor="middle" fill="white" font-size="10" font-weight="600" letter-spacing="1">${grassLevelName}</text>`;
+    svg += `<rect x="${grassBadgeX}" y="${grassLabelY - 10}" width="28" height="14" fill="${gColors[1]}" rx="7"/>`;
+    svg += `<text x="${grassBadgeX + 14}" y="${grassLabelY + 1}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${grassLevel + 1}</text>`;
     // Construction overlay for grass
     if (constructionData && constructionData.category === 'grass') {
         svg += renderConstructionOverlay(cx-fieldW/2, cy-fieldH/2, fieldW, fieldH, 2);
@@ -14145,16 +14280,16 @@ function renderStadiumMap() {
             const line1 = fieldWords.slice(0, mid).join(' ');
             const line2 = fieldWords.slice(mid).join(' ');
             const longestLine = Math.max(line1.length, line2.length);
-            const fieldBadgeX = fieldCenterX + longestLine * 4.5 / 2 + 4;
-            svg += `<text x="${fieldCenterX}" y="${y-14}" text-anchor="middle" fill="${lc[1]}" font-size="8" font-weight="bold"><tspan x="${fieldCenterX}" dy="0">${line1}</tspan><tspan x="${fieldCenterX}" dy="10">${line2}</tspan></text>`;
-            svg += `<rect x="${fieldBadgeX}" y="${y-22}" width="22" height="12" fill="${lc[1]}" rx="6"/>`;
-            svg += `<text x="${fieldBadgeX + 11}" y="${y-13}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level+1}</text>`;
+            const fieldBadgeX = fieldCenterX + longestLine * 5.5 / 2 + 5;
+            svg += `<text x="${fieldCenterX}" y="${y-16}" text-anchor="middle" fill="${lc[1]}" font-size="11" font-weight="bold"><tspan x="${fieldCenterX}" dy="0">${line1}</tspan><tspan x="${fieldCenterX}" dy="12">${line2}</tspan></text>`;
+            svg += `<rect x="${fieldBadgeX}" y="${y-24}" width="28" height="14" fill="${lc[1]}" rx="7"/>`;
+            svg += `<text x="${fieldBadgeX + 14}" y="${y-14}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${level+1}</text>`;
         } else {
-            const fieldTextW = fieldLabel.length * 4.5;
-            const fieldBadgeX = fieldCenterX + fieldTextW / 2 + 4;
-            svg += `<text x="${fieldCenterX}" y="${y-6}" text-anchor="middle" fill="${lc[1]}" font-size="8" font-weight="bold">${fieldLabel}</text>`;
-            svg += `<rect x="${fieldBadgeX}" y="${y-16}" width="22" height="12" fill="${lc[1]}" rx="6"/>`;
-            svg += `<text x="${fieldBadgeX + 11}" y="${y-7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level+1}</text>`;
+            const fieldTextW = fieldLabel.length * 5.5;
+            const fieldBadgeX = fieldCenterX + fieldTextW / 2 + 5;
+            svg += `<text x="${fieldCenterX}" y="${y-8}" text-anchor="middle" fill="${lc[1]}" font-size="11" font-weight="bold">${fieldLabel}</text>`;
+            svg += `<rect x="${fieldBadgeX}" y="${y-18}" width="28" height="14" fill="${lc[1]}" rx="7"/>`;
+            svg += `<text x="${fieldBadgeX + 14}" y="${y-8}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${level+1}</text>`;
         }
         // Construction overlay for training/academy fields
         if (constructionData && constructionData.category === key) {
@@ -14169,7 +14304,7 @@ function renderStadiumMap() {
     renderField(trainX, trainY, trainW, trainH, trainLevel, 'training', trainLevelName, '', levelColors[Math.min(trainLevel, 4)]);
 
     // Academy: 2 small fields side by side
-    const acadSmallW = 52, acadSmallH = 62, acadGap = 8;
+    const acadSmallW = 64, acadSmallH = 78, acadGap = 10;
     const isAcadActive = currentStadiumCategory === 'academy';
     const acadGreens = ['#3a6a3a','#3a7a3a','#2a8a2a','#1a9a1a'];
     const acFg = acadGreens[Math.min(acadLevel, acadGreens.length-1)];
@@ -14212,16 +14347,16 @@ function renderStadiumMap() {
         const acadLine1 = acadWords.slice(0, acadMid).join(' ');
         const acadLine2 = acadWords.slice(acadMid).join(' ');
         const acadLongest = Math.max(acadLine1.length, acadLine2.length);
-        const acadBadgeX = acadCenterX + acadLongest * 4.5 / 2 + 4;
-        svg += `<text x="${acadCenterX}" y="${f1y-14}" text-anchor="middle" fill="${acColors[1]}" font-size="8" font-weight="bold"><tspan x="${acadCenterX}" dy="0">${acadLine1}</tspan><tspan x="${acadCenterX}" dy="10">${acadLine2}</tspan></text>`;
-        svg += `<rect x="${acadBadgeX}" y="${f1y-22}" width="22" height="12" fill="${acColors[1]}" rx="6"/>`;
-        svg += `<text x="${acadBadgeX + 11}" y="${f1y-13}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${acadLevel}</text>`;
+        const acadBadgeX = acadCenterX + acadLongest * 5.5 / 2 + 5;
+        svg += `<text x="${acadCenterX}" y="${f1y-16}" text-anchor="middle" fill="${acColors[1]}" font-size="11" font-weight="bold"><tspan x="${acadCenterX}" dy="0">${acadLine1}</tspan><tspan x="${acadCenterX}" dy="12">${acadLine2}</tspan></text>`;
+        svg += `<rect x="${acadBadgeX}" y="${f1y-24}" width="28" height="14" fill="${acColors[1]}" rx="7"/>`;
+        svg += `<text x="${acadBadgeX + 14}" y="${f1y-14}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${acadLevel}</text>`;
     } else {
-        const acadTextW = acadLevelName.length * 4.5;
-        const acadBadgeX = acadCenterX + acadTextW / 2 + 4;
-        svg += `<text x="${acadCenterX}" y="${f1y-6}" text-anchor="middle" fill="${acColors[1]}" font-size="8" font-weight="bold">${acadLevelName}</text>`;
-        svg += `<rect x="${acadBadgeX}" y="${f1y-16}" width="22" height="12" fill="${acColors[1]}" rx="6"/>`;
-        svg += `<text x="${acadBadgeX + 11}" y="${f1y-7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${acadLevel}</text>`;
+        const acadTextW = acadLevelName.length * 5.5;
+        const acadBadgeX = acadCenterX + acadTextW / 2 + 5;
+        svg += `<text x="${acadCenterX}" y="${f1y-8}" text-anchor="middle" fill="${acColors[1]}" font-size="11" font-weight="bold">${acadLevelName}</text>`;
+        svg += `<rect x="${acadBadgeX}" y="${f1y-18}" width="28" height="14" fill="${acColors[1]}" rx="7"/>`;
+        svg += `<text x="${acadBadgeX + 14}" y="${f1y-8}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${acadLevel}</text>`;
     }
     // Construction overlay for academy
     if (constructionData && constructionData.category === 'academy') {
@@ -14292,10 +14427,10 @@ function renderStadiumMap() {
             svg += `<circle cx="${bx+cbw-20}" cy="${by+cbh-18}" r="5" fill="#56472e" opacity="0.4"/>`;
             svg += `<circle cx="${bx+cbw/2+8}" cy="${by+12}" r="3" fill="#56472e" opacity="0.3"/>`;
             svg += `<circle cx="${pos.x}" cy="${pos.y-2}" r="12" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>`;
-            svg += `<text x="${pos.x}" y="${pos.y+3}" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="13" font-weight="300">+</text>`;
-            svg += `<text x="${pos.x}" y="${by+cbh-5}" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="7" font-weight="600">${displayName}</text>`;
-            svg += `<rect x="${bx+cbw-24}" y="${by+2}" width="24" height="12" fill="#9e9e9e" rx="6"/>`;
-            svg += `<text x="${bx+cbw-12}" y="${by+11}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv0</text>`;
+            svg += `<text x="${pos.x}" y="${pos.y+3}" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="15" font-weight="300">+</text>`;
+            svg += `<text x="${pos.x}" y="${by+cbh-5}" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10" font-weight="600">${displayName}</text>`;
+            svg += `<rect x="${bx+cbw-28}" y="${by+2}" width="28" height="14" fill="#9e9e9e" rx="7"/>`;
+            svg += `<text x="${bx+cbw-14}" y="${by+12}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv0</text>`;
         } else {
             const darkBase = { medical:'#3a1a1a', kantine:'#3a2a1a', scouting:'#1a2a3a', perszaal:'#1a1a2a' };
             const roofColor = { medical:'#c03030', kantine:'#a07820', scouting:'#2a5a9a', perszaal:'#475569' };
@@ -14303,9 +14438,9 @@ function renderStadiumMap() {
             svg += `<rect x="${bx}" y="${by}" width="${cbw}" height="7" fill="${roofColor[key]}" rx="8"/>`;
             svg += `<rect x="${bx}" y="${by+5}" width="${cbw}" height="2" fill="${roofColor[key]}"/>`;
             svg += buildingDetails[key](bx, by, cbw, cbh, level);
-            svg += `<text x="${pos.x}" y="${by+cbh-5}" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="7" font-weight="600">${displayName}</text>`;
-            svg += `<rect x="${bx+cbw-24}" y="${by-2}" width="24" height="12" fill="${meta.accent}" rx="6"/>`;
-            svg += `<text x="${bx+cbw-12}" y="${by+7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${level}</text>`;
+            svg += `<text x="${pos.x}" y="${by+cbh-5}" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="10" font-weight="600">${displayName}</text>`;
+            svg += `<rect x="${bx+cbw-28}" y="${by-2}" width="28" height="14" fill="${meta.accent}" rx="7"/>`;
+            svg += `<text x="${bx+cbw-14}" y="${by+8}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${level}</text>`;
         }
 
         // Construction overlay
@@ -14316,66 +14451,111 @@ function renderStadiumMap() {
         svg += `</g>`;
     });
 
-    // ===== TREES (decoration) =====
+    // ===== TREES (decoration) — scattered around the complex =====
     const bottomY = trainY + trainH;
-    [[22,40],[598,40],[22,bottomY+10],[598,bottomY+10],[170,bottomY+5],[450,bottomY+5],[25,200],[595,200]].forEach(([tx,ty]) => {
-        svg += `<circle cx="${tx}" cy="${ty}" r="8" fill="#1a4a1a" opacity="0.5"/>`;
-        svg += `<circle cx="${tx}" cy="${ty-3}" r="6" fill="#2a6a2a" opacity="0.5"/>`;
-        svg += `<circle cx="${tx}" cy="${ty-5}" r="4" fill="#3a8a3a" opacity="0.4"/>`;
-    });
+    // Tree clusters: edges, between buildings, around training
+    function drawTree(tx, ty, scale = 1) {
+        const r1 = 10 * scale, r2 = 7 * scale, r3 = 5 * scale;
+        svg += `<circle cx="${tx}" cy="${ty}" r="${r1}" fill="#1a4a1a" opacity="0.5"/>`;
+        svg += `<circle cx="${tx}" cy="${ty-4*scale}" r="${r2}" fill="#2a6a2a" opacity="0.5"/>`;
+        svg += `<circle cx="${tx}" cy="${ty-7*scale}" r="${r3}" fill="#3a8a3a" opacity="0.4"/>`;
+    }
+    // Corner clusters
+    drawTree(20, 35); drawTree(38, 28, 0.7); drawTree(12, 55, 0.8);
+    drawTree(viewW - 20, 35); drawTree(viewW - 38, 28, 0.7); drawTree(viewW - 12, 55, 0.8);
+    drawTree(20, bottomY + 15); drawTree(38, bottomY + 8, 0.7);
+    drawTree(viewW - 20, bottomY + 15); drawTree(viewW - 38, bottomY + 8, 0.7);
+    // Between buildings and ring
+    drawTree(roadLeft - buildingSideOffset/2, roadTop + 15, 0.8);
+    drawTree(roadRight + buildingSideOffset/2, roadTop + 15, 0.8);
+    drawTree(roadLeft - buildingSideOffset/2, roadBottom - 15, 0.7);
+    drawTree(roadRight + buildingSideOffset/2, roadBottom - 15, 0.7);
+    // Around training area
+    drawTree(trainX - 16, trainY + trainH/2, 0.9);
+    drawTree(acadX + acadSmallW*2 + acadGap + 16, trainY + trainH/2, 0.9);
+    // Extra trees along the edges
+    drawTree(20, cy, 0.9); drawTree(viewW - 20, cy, 0.9);
+    drawTree(cx - viewW*0.35, bottomY + 5, 0.6);
+    drawTree(cx + viewW*0.35, bottomY + 5, 0.6);
 
-    // ===== PARKING LINES (near top road) =====
+    // ===== PARKING LOT (left of top road) =====
+    const parkX = 30, parkY = roadTop + 10;
+    svg += `<rect x="${parkX}" y="${parkY}" width="52" height="32" fill="#3a3a3a" rx="3" opacity="0.4"/>`;
     for (let p = 0; p < 4; p++) {
-        svg += `<rect x="${40+p*14}" y="${roadTop+8}" width="10" height="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" rx="1"/>`;
-        svg += `<rect x="${540+p*14}" y="${roadTop+8}" width="10" height="6" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" rx="1"/>`;
+        svg += `<rect x="${parkX+4+p*12}" y="${parkY+4}" width="10" height="7" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.6" rx="1"/>`;
+        svg += `<rect x="${parkX+4+p*12}" y="${parkY+18}" width="10" height="7" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.6" rx="1"/>`;
+    }
+    // Right parking
+    const parkX2 = viewW - 82, parkY2 = roadTop + 10;
+    svg += `<rect x="${parkX2}" y="${parkY2}" width="52" height="32" fill="#3a3a3a" rx="3" opacity="0.4"/>`;
+    for (let p = 0; p < 4; p++) {
+        svg += `<rect x="${parkX2+4+p*12}" y="${parkY2+4}" width="10" height="7" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.6" rx="1"/>`;
+        svg += `<rect x="${parkX2+4+p*12}" y="${parkY2+18}" width="10" height="7" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.6" rx="1"/>`;
     }
 
     // ===== VILLAGE HOUSES (dorpshuisjes) =====
-    const houseBaseY = bottomY - 50;
     const houses = [
-        // Left top houses
-        { x: 38, y: 60, w: 18, h: 14, roof: '#8b4513', wall: '#d2b48c' },
-        { x: 60, y: 55, w: 14, h: 12, roof: '#a0522d', wall: '#deb887' },
-        { x: 42, y: 82, w: 16, h: 13, roof: '#6b3a1a', wall: '#c4a67a' },
-        // Right bottom houses
-        { x: 550, y: houseBaseY, w: 18, h: 14, roof: '#a0522d', wall: '#d2b48c' },
-        { x: 572, y: houseBaseY + 15, w: 14, h: 11, roof: '#8b4513', wall: '#deb887' },
-        { x: 555, y: houseBaseY + 35, w: 16, h: 13, roof: '#6b3a1a', wall: '#c4a67a' },
+        // Top-left cluster
+        { x: 30, y: 55, w: 22, h: 16, roof: '#8b4513', wall: '#d2b48c' },
+        { x: 58, y: 50, w: 18, h: 14, roof: '#a0522d', wall: '#deb887' },
+        { x: 34, y: 78, w: 20, h: 15, roof: '#6b3a1a', wall: '#c4a67a' },
+        // Top-right cluster
+        { x: viewW - 52, y: 55, w: 22, h: 16, roof: '#a0522d', wall: '#d2b48c' },
+        { x: viewW - 78, y: 50, w: 18, h: 14, roof: '#8b4513', wall: '#deb887' },
+        { x: viewW - 56, y: 78, w: 20, h: 15, roof: '#6b3a1a', wall: '#c4a67a' },
+        // Bottom-left
+        { x: 30, y: bottomY - 20, w: 20, h: 14, roof: '#8b4513', wall: '#d2b48c' },
+        { x: 55, y: bottomY - 15, w: 16, h: 12, roof: '#a0522d', wall: '#deb887' },
+        // Bottom-right
+        { x: viewW - 50, y: bottomY - 20, w: 20, h: 14, roof: '#a0522d', wall: '#d2b48c' },
+        { x: viewW - 72, y: bottomY - 15, w: 16, h: 12, roof: '#8b4513', wall: '#deb887' },
     ];
     houses.forEach(h => {
-        // Wall
         svg += `<rect x="${h.x}" y="${h.y}" width="${h.w}" height="${h.h}" fill="${h.wall}" rx="1" opacity="0.7"/>`;
-        // Roof (triangle)
-        svg += `<polygon points="${h.x-2},${h.y} ${h.x+h.w/2},${h.y-6} ${h.x+h.w+2},${h.y}" fill="${h.roof}" opacity="0.8"/>`;
-        // Window
-        svg += `<rect x="${h.x+h.w/2-2}" y="${h.y+3}" width="4" height="3" fill="rgba(255,220,100,0.5)" rx="0.5"/>`;
-        // Door
-        svg += `<rect x="${h.x+h.w/2-1.5}" y="${h.y+h.h-5}" width="3" height="5" fill="${h.roof}" opacity="0.6" rx="0.5"/>`;
+        svg += `<polygon points="${h.x-2},${h.y} ${h.x+h.w/2},${h.y-7} ${h.x+h.w+2},${h.y}" fill="${h.roof}" opacity="0.8"/>`;
+        svg += `<rect x="${h.x+h.w/2-3}" y="${h.y+3}" width="5" height="4" fill="rgba(255,220,100,0.5)" rx="0.5"/>`;
+        svg += `<rect x="${h.x+h.w/2-2}" y="${h.y+h.h-6}" width="4" height="6" fill="${h.roof}" opacity="0.6" rx="0.5"/>`;
     });
 
-    // ===== WINDMILL (molen, rechts boven) =====
-    const mx = 580, my = houseBaseY + 30;
-    // Tower
-    svg += `<polygon points="${mx-5},${my} ${mx-3},${my-22} ${mx+3},${my-22} ${mx+5},${my}" fill="#8b7355" opacity="0.8"/>`;
-    // Cap/roof
-    svg += `<polygon points="${mx-4},${my-22} ${mx},${my-27} ${mx+4},${my-22}" fill="#5a4a3a" opacity="0.8"/>`;
-    // Blades (4 wieken)
-    svg += `<line x1="${mx}" y1="${my-24}" x2="${mx-14}" y2="${my-36}" stroke="#7a6a5a" stroke-width="1.5" opacity="0.7"/>`;
-    svg += `<line x1="${mx}" y1="${my-24}" x2="${mx+14}" y2="${my-12}" stroke="#7a6a5a" stroke-width="1.5" opacity="0.7"/>`;
-    svg += `<line x1="${mx}" y1="${my-24}" x2="${mx+12}" y2="${my-38}" stroke="#7a6a5a" stroke-width="1.5" opacity="0.7"/>`;
-    svg += `<line x1="${mx}" y1="${my-24}" x2="${mx-12}" y2="${my-10}" stroke="#7a6a5a" stroke-width="1.5" opacity="0.7"/>`;
-    // Blade sails
-    svg += `<polygon points="${mx},${my-24} ${mx-14},${my-36} ${mx-12},${my-35}" fill="rgba(255,255,255,0.2)"/>`;
-    svg += `<polygon points="${mx},${my-24} ${mx+14},${my-12} ${mx+12},${my-13}" fill="rgba(255,255,255,0.2)"/>`;
-    svg += `<polygon points="${mx},${my-24} ${mx+12},${my-38} ${mx+11},${my-36}" fill="rgba(255,255,255,0.2)"/>`;
-    svg += `<polygon points="${mx},${my-24} ${mx-12},${my-10} ${mx-11},${my-12}" fill="rgba(255,255,255,0.2)"/>`;
-    // Center hub
-    svg += `<circle cx="${mx}" cy="${my-24}" r="1.5" fill="#5a4a3a" opacity="0.8"/>`;
-    // Door
-    svg += `<rect x="${mx-2}" y="${my-5}" width="4" height="5" fill="#5a4a3a" opacity="0.6" rx="1"/>`;
+    // ===== WINDMILL (molen, rechts) =====
+    const mx = viewW - 35, my = cy + 60;
+    svg += `<polygon points="${mx-7},${my} ${mx-4},${my-30} ${mx+4},${my-30} ${mx+7},${my}" fill="#8b7355" opacity="0.8"/>`;
+    svg += `<polygon points="${mx-5},${my-30} ${mx},${my-36} ${mx+5},${my-30}" fill="#5a4a3a" opacity="0.8"/>`;
+    const bladLen = 20;
+    svg += `<line x1="${mx}" y1="${my-32}" x2="${mx-bladLen}" y2="${my-32-bladLen*0.8}" stroke="#7a6a5a" stroke-width="1.8" opacity="0.7"/>`;
+    svg += `<line x1="${mx}" y1="${my-32}" x2="${mx+bladLen}" y2="${my-32+bladLen*0.8}" stroke="#7a6a5a" stroke-width="1.8" opacity="0.7"/>`;
+    svg += `<line x1="${mx}" y1="${my-32}" x2="${mx+bladLen*0.8}" y2="${my-32-bladLen}" stroke="#7a6a5a" stroke-width="1.8" opacity="0.7"/>`;
+    svg += `<line x1="${mx}" y1="${my-32}" x2="${mx-bladLen*0.8}" y2="${my-32+bladLen}" stroke="#7a6a5a" stroke-width="1.8" opacity="0.7"/>`;
+    svg += `<polygon points="${mx},${my-32} ${mx-bladLen},${my-32-bladLen*0.8} ${mx-bladLen+3},${my-32-bladLen*0.8+2}" fill="rgba(255,255,255,0.2)"/>`;
+    svg += `<polygon points="${mx},${my-32} ${mx+bladLen},${my-32+bladLen*0.8} ${mx+bladLen-3},${my-32+bladLen*0.8-2}" fill="rgba(255,255,255,0.2)"/>`;
+    svg += `<polygon points="${mx},${my-32} ${mx+bladLen*0.8},${my-32-bladLen} ${mx+bladLen*0.8-2},${my-32-bladLen+3}" fill="rgba(255,255,255,0.2)"/>`;
+    svg += `<polygon points="${mx},${my-32} ${mx-bladLen*0.8},${my-32+bladLen} ${mx-bladLen*0.8+2},${my-32+bladLen-3}" fill="rgba(255,255,255,0.2)"/>`;
+    svg += `<circle cx="${mx}" cy="${my-32}" r="2" fill="#5a4a3a" opacity="0.8"/>`;
+    svg += `<rect x="${mx-3}" y="${my-6}" width="6" height="6" fill="#5a4a3a" opacity="0.6" rx="1"/>`;
+
+    // ===== SECOND WINDMILL (links) =====
+    const mx2 = 35, my2 = cy - 50;
+    svg += `<polygon points="${mx2-6},${my2} ${mx2-3},${my2-26} ${mx2+3},${my2-26} ${mx2+6},${my2}" fill="#8b7355" opacity="0.7"/>`;
+    svg += `<polygon points="${mx2-4},${my2-26} ${mx2},${my2-31} ${mx2+4},${my2-26}" fill="#5a4a3a" opacity="0.7"/>`;
+    const bl2 = 16;
+    svg += `<line x1="${mx2}" y1="${my2-28}" x2="${mx2-bl2}" y2="${my2-28-bl2*0.8}" stroke="#7a6a5a" stroke-width="1.5" opacity="0.6"/>`;
+    svg += `<line x1="${mx2}" y1="${my2-28}" x2="${mx2+bl2}" y2="${my2-28+bl2*0.8}" stroke="#7a6a5a" stroke-width="1.5" opacity="0.6"/>`;
+    svg += `<line x1="${mx2}" y1="${my2-28}" x2="${mx2+bl2*0.8}" y2="${my2-28-bl2}" stroke="#7a6a5a" stroke-width="1.5" opacity="0.6"/>`;
+    svg += `<line x1="${mx2}" y1="${my2-28}" x2="${mx2-bl2*0.8}" y2="${my2-28+bl2}" stroke="#7a6a5a" stroke-width="1.5" opacity="0.6"/>`;
+    svg += `<polygon points="${mx2},${my2-28} ${mx2-bl2},${my2-28-bl2*0.8} ${mx2-bl2+2},${my2-28-bl2*0.8+2}" fill="rgba(255,255,255,0.15)"/>`;
+    svg += `<polygon points="${mx2},${my2-28} ${mx2+bl2},${my2-28+bl2*0.8} ${mx2+bl2-2},${my2-28+bl2*0.8-2}" fill="rgba(255,255,255,0.15)"/>`;
+    svg += `<circle cx="${mx2}" cy="${my2-28}" r="1.5" fill="#5a4a3a" opacity="0.7"/>`;
+    svg += `<rect x="${mx2-2}" y="${my2-5}" width="4" height="5" fill="#5a4a3a" opacity="0.5" rx="1"/>`;
+
+    // ===== FENCES along training area =====
+    const fenceY = trainY - 6;
+    for (let fx = trainX; fx < acadX + acadSmallW*2 + acadGap; fx += 8) {
+        svg += `<line x1="${fx}" y1="${fenceY}" x2="${fx}" y2="${fenceY-4}" stroke="rgba(255,255,255,0.06)" stroke-width="0.6"/>`;
+    }
+    svg += `<line x1="${trainX}" y1="${fenceY-2}" x2="${acadX + acadSmallW*2 + acadGap}" y2="${fenceY-2}" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>`;
 
     // Subtitle
-    svg += `<text x="310" y="${viewH - 7}" text-anchor="middle" fill="rgba(255,255,255,0.12)" font-size="8" font-style="italic" letter-spacing="2">Het Dorpsveld</text>`;
+    svg += `<text x="${viewW / 2}" y="${viewH - 8}" text-anchor="middle" fill="rgba(255,255,255,0.12)" font-size="9" font-style="italic" letter-spacing="2">Het Dorpsveld</text>`;
 
     svg += `</svg>`;
     container.innerHTML = svg;

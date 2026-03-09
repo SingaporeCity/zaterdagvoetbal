@@ -144,7 +144,7 @@ export function calculateTeamStrength(lineup, formation, tactics, players, optio
 
         // Energy factor: 100% energy = ×1.0, 50% = ×0.85, 30% = ×0.79
         const energyFactor = 0.7 + ((player.energy || 100) / 100) * 0.3;
-        const playerStrength = player.overall * fitMultiplier * (player.fitness / 100) * energyFactor;
+        const playerStrength = player.overall * fitMultiplier * energyFactor;
 
         switch (positionGroup) {
             case 'goalkeeper':
@@ -251,7 +251,7 @@ export function generateOpponent(division, position = null) {
 
     // Calculate base strength for division
     const divisionStrengths = {
-        8: { base: 25, variance: 10 },
+        8: { base: 5, variance: 2 },
         7: { base: 35, variance: 10 },
         6: { base: 45, variance: 10 },
         5: { base: 52, variance: 10 },
@@ -316,15 +316,33 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
     const roll = Math.random() * 100;
 
     // Determine event type based on team strength and random factors
-    const attackChance = strength.attack / (strength.attack + opposingStrength.defense * 1.2) * 100;
+    const attackChance = strength.attack / (strength.attack + opposingStrength.defense * 1.1) * 100;
     const chanceCreated = roll < attackChance;
+
+    // Chaos factor — kelderklasse: anything can happen (lucky goal without a real chance)
+    if (!chanceCreated && Math.random() < 0.03) {
+        const luckyScorer = players ? selectScorer(players) : null;
+        events.push({
+            minute,
+            type: EVENT_TYPES.GOAL,
+            team,
+            player: luckyScorer?.name || 'Speler',
+            playerId: luckyScorer?.id,
+            commentary: formatCommentary('goal', {
+                player: luckyScorer?.name || 'Speler',
+                minute: `${minute}'`,
+                score: `${currentScore.home + (isHome ? 1 : 0)}-${currentScore.away + (isHome ? 0 : 1)}`
+            })
+        });
+        return events;
+    }
 
     if (chanceCreated) {
         // Direct goal probability based on attack vs defense advantage
-        // Equal teams: ~25% goal, mismatch: up to 40%, underdog: down to 5%
+        // Equal teams: ~25% goal, mismatch: up to 45%, underdog: down to 5%
         const shotRoll = Math.random() * 100;
         const attackAdvantage = strength.attack - opposingStrength.defense;
-        const goalProb = Math.max(5, Math.min(40, 25 + attackAdvantage * 0.4));
+        const goalProb = Math.max(5, Math.min(45, 25 + attackAdvantage * 1.0));
 
         if (shotRoll < goalProb) {
             // GOAL!
@@ -510,11 +528,84 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
     const homeStrength = isHomeGame ? { ...homeTeam.strength } : { ...awayTeam.strength };
     const awayStrength = isHomeGame ? { ...awayTeam.strength } : { ...homeTeam.strength };
 
-    // Home advantage — scales with grass level (0=+2, 3=+5, 9=+11)
+    // Player bonus vs AI — gives a slight edge to the human player
+    if (options.playerTeamBonus) {
+        const pb = options.playerTeamBonus;
+        if (isHomeGame) {
+            homeStrength.attack = Math.round(homeStrength.attack * pb);
+            homeStrength.defense = Math.round(homeStrength.defense * pb);
+            homeStrength.midfield = Math.round(homeStrength.midfield * pb);
+        } else {
+            awayStrength.attack = Math.round(awayStrength.attack * pb);
+            awayStrength.defense = Math.round(awayStrength.defense * pb);
+            awayStrength.midfield = Math.round(awayStrength.midfield * pb);
+        }
+    }
+
+    // Spy bonus — scouting the opponent gives a tactical edge
+    const spyBonus = options.spyBonus || 0;
+    if (spyBonus > 0) {
+        const spyMultiplier = 1 + spyBonus * 0.01; // +3 → ×1.03
+        if (isHomeGame) {
+            homeStrength.attack = Math.round(homeStrength.attack * spyMultiplier);
+            homeStrength.defense = Math.round(homeStrength.defense * spyMultiplier);
+            homeStrength.midfield = Math.round(homeStrength.midfield * spyMultiplier);
+        } else {
+            awayStrength.attack = Math.round(awayStrength.attack * spyMultiplier);
+            awayStrength.defense = Math.round(awayStrength.defense * spyMultiplier);
+            awayStrength.midfield = Math.round(awayStrength.midfield * spyMultiplier);
+        }
+    }
+
+    // Specialists bonus — captain and set piece takers
+    const specialists = options.specialists || {};
+    const lineupIds = homeLineup ? homeLineup.filter(p => p).map(p => String(p.id)) : [];
+    if (specialists.captain && lineupIds.includes(String(specialists.captain))) {
+        // Captain in lineup: +3% team boost (leadership)
+        const captainBonus = 1.03;
+        if (isHomeGame) {
+            homeStrength.attack = Math.round(homeStrength.attack * captainBonus);
+            homeStrength.defense = Math.round(homeStrength.defense * captainBonus);
+            homeStrength.midfield = Math.round(homeStrength.midfield * captainBonus);
+        } else {
+            awayStrength.attack = Math.round(awayStrength.attack * captainBonus);
+            awayStrength.defense = Math.round(awayStrength.defense * captainBonus);
+            awayStrength.midfield = Math.round(awayStrength.midfield * captainBonus);
+        }
+    }
+    // Each set piece specialist in lineup: +1% attack (set piece threat)
+    let setPieceBonus = 0;
+    ['cornerTaker', 'penaltyTaker', 'freekickTaker'].forEach(role => {
+        if (specialists[role] && lineupIds.includes(String(specialists[role]))) {
+            setPieceBonus += 0.01;
+        }
+    });
+    if (setPieceBonus > 0) {
+        if (isHomeGame) {
+            homeStrength.attack = Math.round(homeStrength.attack * (1 + setPieceBonus));
+        } else {
+            awayStrength.attack = Math.round(awayStrength.attack * (1 + setPieceBonus));
+        }
+    }
+
+    // Mentaliteit — affects strength balance (not just fouls/cards)
+    const mentaliteitId = tactics?.mentaliteit || 'normaal';
+    const mentaliteitStrength = { rustig: { attack: -1, defense: 2 }, normaal: { attack: 0, defense: 0 }, hard: { attack: 1.5, defense: -1 }, extreem: { attack: 3, defense: -3 } };
+    const mentMod = mentaliteitStrength[mentaliteitId] || { attack: 0, defense: 0 };
+    if (isHomeGame) {
+        homeStrength.attack += mentMod.attack;
+        homeStrength.defense += mentMod.defense;
+    } else {
+        awayStrength.attack += mentMod.attack;
+        awayStrength.defense += mentMod.defense;
+    }
+
+    // Home advantage — percentage-based, scales with grass level
     const grassLevel = options.grassLevel || 0;
-    const homeBonus = 2 + grassLevel;
-    homeStrength.attack += homeBonus;
-    homeStrength.defense += homeBonus;
+    const homeMultiplier = 1.06 + grassLevel * 0.01;
+    homeStrength.attack = Math.round(homeStrength.attack * homeMultiplier);
+    homeStrength.defense = Math.round(homeStrength.defense * homeMultiplier);
+    homeStrength.midfield = Math.round(homeStrength.midfield * (1 + (homeMultiplier - 1) * 0.5));
 
     // Calculate possession based on midfield strength
     const totalMidfield = homeStrength.midfield + awayStrength.midfield;
@@ -783,9 +874,6 @@ export function applyMatchResults(players, matchResult, isHomeGame, currentWeek)
         else if (rating.rating < 5.5) moraleDelta -= 2;
 
         player.morale = Math.max(20, Math.min(100, (player.morale || 70) + moraleDelta));
-
-        // Reduce fitness from playing
-        player.fitness = Math.max(50, (player.fitness || 90) - random(5, 15));
 
         // Reduce energy
         player.energy = Math.max(30, (player.energy || 80) - random(10, 25));

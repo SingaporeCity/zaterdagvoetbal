@@ -1945,6 +1945,122 @@ const ACHIEVEMENTS = {
         icon: '💸',
         reward: { managerXP: 75 },
         check: (state) => (state.stats?.stadiumSpending || 0) >= 50000
+    },
+
+    // ================================================================
+    // MANAGER — SPECIAL (11) — managerXP
+    // ================================================================
+    joseMourinho: {
+        id: 'joseMourinho',
+        name: 'I am Jose Mourinho',
+        description: 'Speel een wedstrijd met 0% tactische bekendheid',
+        category: CATEGORIES.SPECIAL,
+        icon: '🧠',
+        hidden: true,
+        reward: { managerXP: 25 },
+        check: (state) => state.stats?.playedZeroDrive === true
+    },
+    rinusMichels: {
+        id: 'rinusMichels',
+        name: 'Rinus Michels zei dat het kon',
+        description: 'Zet een speler op een verkeerde positie in de opstelling',
+        category: CATEGORIES.SPECIAL,
+        icon: '🔀',
+        hidden: true,
+        reward: { managerXP: 15 },
+        check: (state) => state.stats?.placedWrongPosition === true
+    },
+    slechtGokje: {
+        id: 'slechtGokje',
+        name: 'Hmm, dat was een slecht gokje',
+        description: 'Koop een speler van de transfermarkt die slecht blijkt te zijn',
+        category: CATEGORIES.SPECIAL,
+        icon: '🎰',
+        hidden: true,
+        reward: { managerXP: 25 },
+        check: (state) => state.stats?.boughtBadPlayer === true
+    },
+    louterUpside: {
+        id: 'louterUpside',
+        name: 'Louter upside',
+        description: 'Upgrade je jeugdacademie',
+        category: CATEGORIES.SPECIAL,
+        icon: '🎓',
+        reward: { managerXP: 25 },
+        check: (state) => {
+            const acad = state.stadium?.academy || 'acad_1';
+            const level = parseInt(acad.split('_')[1]) || 1;
+            return level >= 2;
+        }
+    },
+    thanksFrans: {
+        id: 'thanksFrans',
+        name: 'Thanks Frans',
+        description: 'Klik op het Bugs-tabblad',
+        category: CATEGORIES.SPECIAL,
+        icon: '🐛',
+        hidden: true,
+        reward: { managerXP: 10 },
+        check: (state) => state.stats?.visitedBugsTab === true
+    },
+    halloDavid: {
+        id: 'halloDavid',
+        name: 'Hallo David',
+        description: 'Budget zakt onder \u20ac1.000',
+        category: CATEGORIES.SPECIAL,
+        icon: '💸',
+        hidden: true,
+        reward: { managerXP: 25 },
+        check: (state) => state.stats?.budgetBelow1000 === true
+    },
+    ikNoemJouMessi: {
+        id: 'ikNoemJouMessi',
+        name: 'Ik noem jou\u2026. Messi',
+        description: 'Contracteer een speler met minstens \u00bd ster potentieel',
+        category: CATEGORIES.SPECIAL,
+        icon: '⭐',
+        reward: { managerXP: 20 },
+        check: (state) => state.stats?.signedHighPotential === true
+    },
+    watIsEenScout: {
+        id: 'watIsEenScout',
+        name: 'Wat is een scout?',
+        description: 'Contracteer een speler zonder te scouten',
+        category: CATEGORIES.SPECIAL,
+        icon: '🔍',
+        hidden: true,
+        reward: { managerXP: 15 },
+        check: (state) => state.stats?.signedUnscouted === true
+    },
+    vaderTeleurgesteld: {
+        id: 'vaderTeleurgesteld',
+        name: 'Wat zal je vader teleurgesteld zijn',
+        description: 'Ontsla een jeugdspeler',
+        category: CATEGORIES.SPECIAL,
+        icon: '😢',
+        hidden: true,
+        reward: { managerXP: 15 },
+        check: (state) => state.stats?.dismissedYouth === true
+    },
+    pardonOpa: {
+        id: 'pardonOpa',
+        name: 'Pardon opa, mensen proberen te voetballen',
+        description: 'Ontsla een speler ouder dan 45',
+        category: CATEGORIES.SPECIAL,
+        icon: '👴',
+        hidden: true,
+        reward: { managerXP: 20 },
+        check: (state) => state.stats?.firedOldPlayer === true
+    },
+    tevredenKlant: {
+        id: 'tevredenKlant',
+        name: 'En weer een tevreden klant',
+        description: 'Kies intimico als shirtsponsor',
+        category: CATEGORIES.SPECIAL,
+        icon: '👔',
+        hidden: true,
+        reward: { managerXP: 25 },
+        check: (state) => state.sponsor?.id === 'intimico'
     }
 };
 

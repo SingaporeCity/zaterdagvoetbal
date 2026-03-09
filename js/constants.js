@@ -507,7 +507,7 @@ export const STADIUM_UPGRADES = {
         { id: 'kantine_3', name: 'Basis Kantine', effect: '+5% morale', cost: 15000, buildTime: 7, required: 500 },
         { id: 'kantine_4', name: 'Moderne Kantine', effect: '+8% morale', cost: 50000, buildTime: 14, required: 2000 },
         { id: 'kantine_5', name: 'Luxe Kantine', effect: '+12% morale', cost: 150000, buildTime: 21, required: 6000 },
-        { id: 'kantine_6', name: 'Restaurant Kwaliteit', effect: '+15% morale, +5% fitness', cost: 400000, buildTime: 30, required: 15000 }
+        { id: 'kantine_6', name: 'Restaurant Kwaliteit', effect: '+15% morale, +5% energy recovery', cost: 400000, buildTime: 30, required: 15000 }
     ],
     perszaal: [
         { id: 'pers_1', name: 'Geen', effect: 'geen bonus', cost: 0, buildTime: 0, required: 0 },
@@ -519,11 +519,11 @@ export const STADIUM_UPGRADES = {
     ],
     hotel: [
         { id: 'hotel_1', name: 'Geen', effect: 'geen bonus', cost: 0, buildTime: 0, required: 0 },
-        { id: 'hotel_2', name: 'Slaapzaal', effect: '+3% fitness recovery', cost: 25000, buildTime: 14, required: 2000 },
-        { id: 'hotel_3', name: 'Basis Kamers', effect: '+5% fitness recovery', cost: 80000, buildTime: 21, required: 6000 },
-        { id: 'hotel_4', name: 'Comfort Suites', effect: '+8% fitness recovery', cost: 200000, buildTime: 30, required: 15000 },
-        { id: 'hotel_5', name: 'Luxe Appartementen', effect: '+12% fitness recovery', cost: 500000, buildTime: 45, required: 25000 },
-        { id: 'hotel_6', name: 'Vijfsterren Resort', effect: '+15% fitness, +5% morale', cost: 1500000, buildTime: 60, required: 40000 }
+        { id: 'hotel_2', name: 'Slaapzaal', effect: '+3% energy recovery', cost: 25000, buildTime: 14, required: 2000 },
+        { id: 'hotel_3', name: 'Basis Kamers', effect: '+5% energy recovery', cost: 80000, buildTime: 21, required: 6000 },
+        { id: 'hotel_4', name: 'Comfort Suites', effect: '+8% energy recovery', cost: 200000, buildTime: 30, required: 15000 },
+        { id: 'hotel_5', name: 'Luxe Appartementen', effect: '+12% energy recovery', cost: 500000, buildTime: 45, required: 25000 },
+        { id: 'hotel_6', name: 'Vijfsterren Resort', effect: '+15% energy recovery, +5% morale', cost: 1500000, buildTime: 60, required: 40000 }
     ]
 };
 
