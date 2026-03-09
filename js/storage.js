@@ -4,6 +4,7 @@
  */
 
 import { supabase, isSupabaseAvailable } from './supabase.js';
+import { getGameState } from './state.js';
 
 const SAVE_KEY = 'zaterdagvoetbal_save';
 const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
@@ -383,7 +384,8 @@ async function loadMultiplayer() {
 /**
  * Save game state (routes to localStorage or Supabase)
  */
-export function saveGame(gameState) {
+export function saveGame(gs) {
+    const gameState = gs || getGameState();
     if (storageMode === 'multiplayer') {
         // Debounced save to Supabase
         if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
@@ -601,7 +603,7 @@ export function importSave(file) {
 /**
  * Force sync to Supabase (immediate, no debounce)
  */
-export async function forceSyncToSupabase(gameState) {
+export async function forceSyncToSupabase(gs) {
     if (storageMode !== 'multiplayer') return;
-    return await saveMultiplayer(gameState);
+    return await saveMultiplayer(gs || getGameState());
 }
