@@ -881,10 +881,11 @@ async function generatePlayersForClub(clubId, leagueId, division) {
     const firstNames = ['Jan', 'Kees', 'Pieter', 'Henk', 'Willem', 'Jaap', 'Sander', 'Erik', 'Bas', 'Tom', 'Mark', 'Joost', 'Frank', 'Daan', 'Lars', 'Bram'];
     const lastNames = ['de Jong', 'Bakker', 'Visser', 'Smit', 'Meijer', 'de Boer', 'Mulder', 'de Groot', 'Bos', 'Vos', 'Peters', 'Hendriks', 'van Dijk', 'Janssen', 'van den Berg', 'Vermeer'];
 
-    // Pick 3 random non-keeper indices to be young players
+    // Pick 1-2 random non-keeper indices to be young players with 0.5 POT
+    const youngCount = 1 + Math.floor(Math.random() * 2); // 1 or 2
     const nonKeeperIndices = positions.map((p, i) => p !== 'keeper' ? i : -1).filter(i => i >= 0);
     const youngIndices = new Set();
-    while (youngIndices.size < 3 && nonKeeperIndices.length > 0) {
+    while (youngIndices.size < youngCount && nonKeeperIndices.length > 0) {
         const pick = nonKeeperIndices.splice(Math.floor(Math.random() * nonKeeperIndices.length), 1)[0];
         youngIndices.add(pick);
     }
