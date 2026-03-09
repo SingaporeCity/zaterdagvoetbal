@@ -449,13 +449,17 @@ async function joinActiveLeague(league, user) {
                 .eq('league_id', leagueId);
 
             const humanClubIds = humanClubs.map(c => c.id);
-            await generateSchedule(leagueId, 1, allClubs.map(c => c.id), humanClubIds);
+            const success = await generateSchedule(leagueId, 1, allClubs.map(c => c.id), humanClubIds);
 
-            // Set week to 1 — competition starts!
-            await supabase
-                .from('leagues')
-                .update({ week: 1 })
-                .eq('id', leagueId);
+            if (success) {
+                // Set week to 1 — competition starts!
+                await supabase
+                    .from('leagues')
+                    .update({ week: 1 })
+                    .eq('id', leagueId);
+            } else {
+                console.error('[joinActiveLeague] Schedule generation failed');
+            }
         }
     }
 
@@ -970,6 +974,8 @@ async function generateSchedule(leagueId, season, clubIds, humanClubIds = []) {
     const n = clubIds.length;
     const rounds = (n - 1) * 2; // Home + away
 
+    console.log(`[generateSchedule] ${n} clubs, ${humanClubIds.length} human, season ${season}`);
+
     // Build rounds as arrays of match objects
     const roundMatches = [];
     for (let round = 0; round < rounds; round++) {
@@ -1001,9 +1007,19 @@ async function generateSchedule(leagueId, season, clubIds, humanClubIds = []) {
             )
         );
 
-        // Swap first-half human match to week 1
-        if (firstHalfIdx > 0) {
-            [roundMatches[0], roundMatches[firstHalfIdx]] = [roundMatches[firstHalfIdx], roundMatches[0]];
+        if (firstHalfIdx >= 0) {
+            console.log(`[generateSchedule] Human match at round ${firstHalfIdx}, swapping to week 1`);
+            if (firstHalfIdx > 0) {
+                [roundMatches[0], roundMatches[firstHalfIdx]] = [roundMatches[firstHalfIdx], roundMatches[0]];
+            }
+
+            // Also swap the corresponding second-half round to keep home/away balanced
+            const secondHalfIdx = firstHalfIdx + halfSize;
+            if (secondHalfIdx < rounds && halfSize < rounds) {
+                [roundMatches[halfSize], roundMatches[secondHalfIdx]] = [roundMatches[secondHalfIdx], roundMatches[halfSize]];
+            }
+        } else {
+            console.warn('[generateSchedule] Could not find human match in first half!');
         }
     }
 
@@ -1023,10 +1039,23 @@ async function generateSchedule(leagueId, season, clubIds, humanClubIds = []) {
     });
 
     // Insert in batches
+    let insertFailed = false;
     const batchSize = 50;
     for (let i = 0; i < matches.length; i += batchSize) {
-        await supabase.from('schedule').insert(matches.slice(i, i + batchSize));
+        const { error } = await supabase.from('schedule').insert(matches.slice(i, i + batchSize));
+        if (error) {
+            console.error('[generateSchedule] Insert failed:', error.message);
+            insertFailed = true;
+        }
     }
+
+    if (insertFailed) {
+        console.error('[generateSchedule] Schedule insert failed — check RLS policies');
+        return false;
+    }
+
+    console.log(`[generateSchedule] Inserted ${matches.length} matches for ${rounds} rounds`);
+    return true;
 }
 
 /**
