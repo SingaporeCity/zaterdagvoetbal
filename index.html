@@ -16,62 +16,210 @@
 
     <!-- Auth Screen: Login / Signup -->
     <div id="auth-screen" class="mp-overlay" style="display:none;">
-        <div class="mp-card">
-            <div class="mp-logo">
-                <div class="mp-logo-badge">
-                    <svg viewBox="0 0 200 240" width="160" height="192" class="kelderklasse-logo">
-                        <defs>
-                            <linearGradient id="kk-shield" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="#1e3a2a"/>
-                                <stop offset="100%" stop-color="#0f1c14"/>
-                            </linearGradient>
-                            <linearGradient id="kk-green" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="#5ce065"/>
-                                <stop offset="100%" stop-color="#3db847"/>
-                            </linearGradient>
-                        </defs>
 
-                        <!-- Shield -->
-                        <path d="M100 8 L190 40 L190 130 Q190 200 100 232 Q10 200 10 130 L10 40 Z" fill="url(#kk-shield)" stroke="#5ce065" stroke-width="3"/>
-                        <path d="M100 18 L180 46 L180 128 Q180 192 100 222 Q20 192 20 128 L20 46 Z" fill="none" stroke="#5ce065" stroke-width="0.8" opacity="0.2"/>
+        <!-- Background illustrations -->
+        <div class="mp-bg-details" aria-hidden="true">
+            <!-- Beer glass — top left -->
+            <svg class="mp-bg-item mp-bg-beer" viewBox="0 0 80 120">
+                <rect x="16" y="22" width="42" height="68" rx="5" fill="#d4920a" stroke="#ffb300" stroke-width="3"/>
+                <rect x="19" y="30" width="36" height="57" rx="3" fill="#e8a817" opacity="0.6"/>
+                <ellipse cx="25" cy="24" rx="8" ry="6" fill="#fff8e1"/>
+                <ellipse cx="37" cy="21" rx="10" ry="7" fill="#fffde7"/>
+                <ellipse cx="50" cy="24" rx="8" ry="6" fill="#fff8e1"/>
+                <path d="M58 34 Q74 34 74 52 Q74 70 58 70" fill="none" stroke="#ffb300" stroke-width="3.5" stroke-linecap="round"/>
+                <circle cx="30" cy="55" r="2.5" fill="#ffe082" opacity="0.5"/>
+                <circle cx="42" cy="65" r="2" fill="#ffe082" opacity="0.4"/>
+                <circle cx="35" cy="45" r="3" fill="#ffe082" opacity="0.35"/>
+                <circle cx="46" cy="52" r="1.8" fill="#ffe082" opacity="0.45"/>
+            </svg>
+            <!-- Player avatar — top right -->
+            <svg class="mp-bg-item mp-bg-player" viewBox="0 0 100 180">
+                <!-- Shadow -->
+                <ellipse cx="50" cy="174" rx="22" ry="5" fill="#000" opacity="0.15"/>
+                <!-- Legs -->
+                <rect x="34" y="118" width="12" height="40" rx="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <rect x="54" y="118" width="12" height="40" rx="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <!-- Socks -->
+                <rect x="32" y="145" width="16" height="16" rx="3" fill="#1a6b2a" stroke="#145522" stroke-width="1"/>
+                <rect x="52" y="145" width="16" height="16" rx="3" fill="#1a6b2a" stroke="#145522" stroke-width="1"/>
+                <!-- Boots -->
+                <path d="M30,158 L30,168 Q30,172 34,172 L50,172 Q54,172 54,168 L54,162 L48,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M50,158 L50,168 Q50,172 54,172 L70,172 Q74,172 74,168 L74,162 L68,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <!-- Shorts -->
+                <path d="M28,104 L72,104 L68,128 Q64,132 54,132 L50,132 L46,132 Q36,132 32,128 Z" fill="#fff" stroke="#ddd" stroke-width="1.5"/>
+                <line x1="50" y1="104" x2="50" y2="130" stroke="#ddd" stroke-width="1" opacity="0.5"/>
+                <!-- Shirt body -->
+                <path d="M30,50 L30,106 Q30,110 34,110 L66,110 Q70,110 70,106 L70,50" fill="#1a6b2a" stroke="#145522" stroke-width="1.5"/>
+                <!-- Collar -->
+                <path d="M38,48 Q50,52 62,48" fill="#145522" stroke="#0f4a1a" stroke-width="1.5"/>
+                <!-- Sleeves -->
+                <path d="M30,50 L14,62 Q10,64 12,68 L18,80 Q20,84 24,82 L30,74 Z" fill="#1a6b2a" stroke="#145522" stroke-width="1.5"/>
+                <path d="M70,50 L86,62 Q90,64 88,68 L82,80 Q80,84 76,82 L70,74 Z" fill="#1a6b2a" stroke="#145522" stroke-width="1.5"/>
+                <!-- Arms -->
+                <path d="M18,78 L22,92" stroke="#e8c9a0" stroke-width="6" stroke-linecap="round"/>
+                <path d="M82,78 L78,92" stroke="#e8c9a0" stroke-width="6" stroke-linecap="round"/>
+                <!-- Shirt number -->
+                <text x="50" y="88" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#fff" opacity="0.9">9</text>
+                <!-- Shirt stripes -->
+                <line x1="30" y1="60" x2="70" y2="60" stroke="#145522" stroke-width="1" opacity="0.3"/>
+                <line x1="30" y1="70" x2="70" y2="70" stroke="#145522" stroke-width="1" opacity="0.3"/>
+                <!-- Head -->
+                <ellipse cx="50" cy="34" rx="16" ry="18" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1.5"/>
+                <!-- Hair -->
+                <path d="M34,30 Q34,14 50,14 Q66,14 66,30 L66,24 Q66,16 50,16 Q34,16 34,24 Z" fill="#3a2a1a"/>
+                <!-- Eyes -->
+                <ellipse cx="43" cy="34" rx="2" ry="2.5" fill="#2a2a2a"/>
+                <ellipse cx="57" cy="34" rx="2" ry="2.5" fill="#2a2a2a"/>
+                <!-- Eyebrows -->
+                <path d="M39,30 L47,29" stroke="#3a2a1a" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M53,29 L61,30" stroke="#3a2a1a" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Mouth — grin -->
+                <path d="M44,40 Q50,44 56,40" fill="none" stroke="#c9a87c" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Ears -->
+                <ellipse cx="34" cy="35" rx="3" ry="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <ellipse cx="66" cy="35" rx="3" ry="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+            </svg>
+            <!-- Player 2 avatar — top right, different kit -->
+            <svg class="mp-bg-item mp-bg-player2" viewBox="0 0 100 180">
+                <ellipse cx="50" cy="174" rx="22" ry="5" fill="#000" opacity="0.15"/>
+                <!-- Legs -->
+                <rect x="34" y="118" width="12" height="40" rx="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <rect x="54" y="118" width="12" height="40" rx="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <!-- Socks -->
+                <rect x="32" y="145" width="16" height="16" rx="3" fill="#c62828" stroke="#a11d1d" stroke-width="1"/>
+                <rect x="52" y="145" width="16" height="16" rx="3" fill="#c62828" stroke="#a11d1d" stroke-width="1"/>
+                <line x1="32" y1="150" x2="48" y2="150" stroke="#fff" stroke-width="1" opacity="0.4"/>
+                <line x1="52" y1="150" x2="68" y2="150" stroke="#fff" stroke-width="1" opacity="0.4"/>
+                <!-- Boots -->
+                <path d="M30,158 L30,168 Q30,172 34,172 L50,172 Q54,172 54,168 L54,162 L48,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M50,158 L50,168 Q50,172 54,172 L70,172 Q74,172 74,168 L74,162 L68,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <!-- Shorts -->
+                <path d="M28,104 L72,104 L68,128 Q64,132 54,132 L50,132 L46,132 Q36,132 32,128 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <!-- Shirt body — red -->
+                <path d="M30,50 L30,106 Q30,110 34,110 L66,110 Q70,110 70,106 L70,50" fill="#c62828" stroke="#a11d1d" stroke-width="1.5"/>
+                <!-- Collar — white -->
+                <path d="M38,48 Q50,52 62,48" fill="#fff" stroke="#ddd" stroke-width="1.5"/>
+                <!-- Sleeves -->
+                <path d="M30,50 L14,62 Q10,64 12,68 L18,80 Q20,84 24,82 L30,74 Z" fill="#c62828" stroke="#a11d1d" stroke-width="1.5"/>
+                <path d="M70,50 L86,62 Q90,64 88,68 L82,80 Q80,84 76,82 L70,74 Z" fill="#c62828" stroke="#a11d1d" stroke-width="1.5"/>
+                <!-- Arms -->
+                <path d="M18,78 L14,92" stroke="#d4a574" stroke-width="6" stroke-linecap="round"/>
+                <path d="M82,78 L86,92" stroke="#d4a574" stroke-width="6" stroke-linecap="round"/>
+                <!-- Shirt number -->
+                <text x="50" y="88" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#fff" opacity="0.9">5</text>
+                <!-- White side stripe -->
+                <line x1="30" y1="54" x2="30" y2="106" stroke="#fff" stroke-width="2" opacity="0.3"/>
+                <line x1="70" y1="54" x2="70" y2="106" stroke="#fff" stroke-width="2" opacity="0.3"/>
+                <!-- Head -->
+                <ellipse cx="50" cy="34" rx="16" ry="18" fill="#d4a574" stroke="#b8906a" stroke-width="1.5"/>
+                <!-- Hair — short buzz cut -->
+                <path d="M34,30 Q34,15 50,14 Q66,15 66,30" fill="#1a1a1a" stroke="#111" stroke-width="1"/>
+                <path d="M36,28 Q36,17 50,16 Q64,17 64,28" fill="#2a2a2a"/>
+                <!-- Eyes -->
+                <ellipse cx="43" cy="34" rx="2" ry="2.5" fill="#1a1a1a"/>
+                <ellipse cx="57" cy="34" rx="2" ry="2.5" fill="#1a1a1a"/>
+                <!-- Eyebrows -->
+                <path d="M39,30 L47,29" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M53,29 L61,30" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round"/>
+                <!-- Mouth — determined -->
+                <path d="M44,41 Q50,43 56,41" fill="none" stroke="#b8906a" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Ears -->
+                <ellipse cx="34" cy="35" rx="3" ry="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <ellipse cx="66" cy="35" rx="3" ry="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+            </svg>
+            <!-- Dugout bench — right side (kept) -->
+            <svg class="mp-bg-item mp-bg-dugout" viewBox="0 0 140 90">
+                <path d="M5,25 L70,5 L135,25 L135,33 L70,13 L5,33 Z" fill="#5d8aa8" stroke="#4a7a98" stroke-width="2"/>
+                <line x1="15" y1="30" x2="15" y2="78" stroke="#8a7e6b" stroke-width="4" stroke-linecap="round"/>
+                <line x1="125" y1="30" x2="125" y2="78" stroke="#8a7e6b" stroke-width="4" stroke-linecap="round"/>
+                <rect x="12" y="52" width="116" height="7" rx="3" fill="#8B4513" stroke="#6d3510" stroke-width="2"/>
+                <line x1="28" y1="59" x2="28" y2="78" stroke="#8a7e6b" stroke-width="3"/>
+                <line x1="70" y1="59" x2="70" y2="78" stroke="#8a7e6b" stroke-width="3"/>
+                <line x1="112" y1="59" x2="112" y2="78" stroke="#8a7e6b" stroke-width="3"/>
+                <path d="M2,78 L138,78" stroke="#4a7a48" stroke-width="2" stroke-dasharray="6 4"/>
+                <path d="M8,78 Q10,70 12,78" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+                <path d="M50,78 Q52,72 54,78" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+                <path d="M100,78 Q102,71 104,78" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+            </svg>
+            <!-- Mud splatters — organic splat shapes -->
+            <svg class="mp-bg-item mp-bg-mud1" viewBox="0 0 100 70">
+                <path d="M50,35 Q30,15 20,30 Q8,40 18,48 Q25,58 40,55 Q55,60 65,50 Q80,45 75,32 Q72,18 55,22 Z" fill="#5c3d1a" opacity="0.65"/>
+                <path d="M45,35 Q35,28 32,35 Q28,42 38,44 Q48,48 52,40 Q54,32 45,35 Z" fill="#7a5a2e" opacity="0.5"/>
+                <circle cx="12" cy="18" r="4" fill="#5c3d1a" opacity="0.5"/>
+                <circle cx="82" cy="22" r="3" fill="#5c3d1a" opacity="0.4"/>
+                <circle cx="90" cy="48" r="3.5" fill="#5c3d1a" opacity="0.4"/>
+                <path d="M18,30 Q10,22 12,18" stroke="#5c3d1a" stroke-width="2" fill="none" opacity="0.4" stroke-linecap="round"/>
+                <path d="M70,35 Q80,28 82,22" stroke="#5c3d1a" stroke-width="1.5" fill="none" opacity="0.35" stroke-linecap="round"/>
+            </svg>
+            <svg class="mp-bg-item mp-bg-mud2" viewBox="0 0 70 55">
+                <path d="M35,28 Q20,12 15,25 Q8,35 20,40 Q32,48 45,42 Q58,38 52,26 Q48,16 35,28 Z" fill="#5c3d1a" opacity="0.55"/>
+                <circle cx="10" cy="15" r="3.5" fill="#6d4c1d" opacity="0.4"/>
+                <circle cx="58" cy="42" r="3" fill="#5c3d1a" opacity="0.35"/>
+                <path d="M15,25 Q8,18 10,15" stroke="#5c3d1a" stroke-width="1.5" fill="none" opacity="0.35" stroke-linecap="round"/>
+            </svg>
+            <!-- Corner flag — bottom right (kept) -->
+            <svg class="mp-bg-item mp-bg-flag" viewBox="0 0 60 120">
+                <line x1="30" y1="12" x2="30" y2="112" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+                <path d="M30,12 L56,20 L30,30 Z" fill="#ff5252" stroke="#d32f2f" stroke-width="2"/>
+                <path d="M10,112 Q30,92 50,112" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="5 3"/>
+                <circle cx="30" cy="112" r="4" fill="#4caf50"/>
+                <path d="M18,112 Q20,104 22,112" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+                <path d="M38,112 Q40,105 42,112" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+            </svg>
+            <!-- Whistle — realistic metal with gold lanyard -->
+            <svg class="mp-bg-item mp-bg-whistle" viewBox="0 0 100 55">
+                <ellipse cx="50" cy="50" rx="35" ry="4" fill="#000" opacity="0.08"/>
+                <path d="M18,24 Q18,14 30,14 L58,13 Q66,13 70,18 L82,28 Q88,34 82,40 L68,42 Q60,42 56,38 L53,34 L30,35 Q18,35 18,24 Z" fill="#c0c0c0" stroke="#999" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M24,17 L62,16" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+                <path d="M20,28 L55,29" stroke="#a8a8a8" stroke-width="1.5" opacity="0.5"/>
+                <path d="M22,32 L53,33" stroke="#909090" stroke-width="1" opacity="0.4"/>
+                <ellipse cx="83" cy="33" rx="4.5" ry="5" fill="#555" stroke="#444" stroke-width="1.5"/>
+                <ellipse cx="83" cy="32" rx="2" ry="2.5" fill="#333"/>
+                <circle cx="18" cy="24" r="7" fill="none" stroke="#d4af37" stroke-width="3"/>
+                <circle cx="18" cy="24" r="4" fill="none" stroke="#d4af37" stroke-width="1" opacity="0.4"/>
+                <path d="M11,24 Q2,14 6,4 Q8,0 14,2" stroke="#d4af37" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <path d="M14,2 Q20,4 18,10" stroke="#d4af37" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <ellipse cx="42" cy="20" rx="12" ry="3" fill="#fff" opacity="0.15" transform="rotate(-2 42 20)"/>
+            </svg>
+        </div>
 
-                        <!-- Dividers -->
-                        <line x1="35" y1="72" x2="165" y2="72" stroke="#5ce065" stroke-width="1" opacity="0.3"/>
-                        <line x1="30" y1="168" x2="170" y2="168" stroke="#5ce065" stroke-width="1" opacity="0.3"/>
-
-                        <!-- KELDER -->
-                        <text x="100" y="62" text-anchor="middle" fill="url(#kk-green)" font-family="'Bebas Neue',sans-serif" font-size="38" letter-spacing="8">KELDER</text>
-
-                        <!-- Stairs going down -->
-                        <g transform="translate(58, 80)" opacity="0.85">
-                            <rect x="0" y="0" width="24" height="6" rx="1" fill="#f5f2ea" opacity="0.9"/>
-                            <rect x="14" y="14" width="24" height="6" rx="1" fill="#f5f2ea" opacity="0.7"/>
-                            <rect x="28" y="28" width="24" height="6" rx="1" fill="#f5f2ea" opacity="0.55"/>
-                            <rect x="42" y="42" width="24" height="6" rx="1" fill="#f5f2ea" opacity="0.4"/>
-                            <rect x="22" y="6" width="2" height="8" fill="#f5f2ea" opacity="0.45"/>
-                            <rect x="36" y="20" width="2" height="8" fill="#f5f2ea" opacity="0.35"/>
-                            <rect x="50" y="34" width="2" height="8" fill="#f5f2ea" opacity="0.25"/>
-                        </g>
-
-                        <!-- Football bouncing down -->
-                        <circle cx="80" cy="138" r="13" fill="#f5f2ea" stroke="#5ce065" stroke-width="1.5"/>
-                        <path d="M80,131 L85.4,134.9 L83.3,141.3 L76.7,141.3 L74.6,134.9 Z" fill="#1e3a2a" opacity="0.5"/>
-                        <path d="M72 100 Q79 116 86 124 Q92 131 82 138" stroke="#ff9020" stroke-width="1.5" fill="none" stroke-dasharray="3 3" opacity="0.5"/>
-
-                        <!-- Down arrow -->
-                        <path d="M100 150 L108 158 L103 158 L103 164 L97 164 L97 158 L92 158 Z" fill="#ff9020" opacity="0.5"/>
-
-                        <!-- KLASSE -->
-                        <text x="100" y="190" text-anchor="middle" fill="#ff9020" font-family="'Bebas Neue',sans-serif" font-size="38" letter-spacing="8">KLASSE</text>
-
-                        <!-- Decorative stars -->
-                        <text x="52" y="212" text-anchor="middle" fill="#5ce065" font-size="10" opacity="0.35">&#9733;</text>
-                        <text x="100" y="216" text-anchor="middle" fill="#ff9020" font-size="13" opacity="0.45">&#9733;</text>
-                        <text x="148" y="212" text-anchor="middle" fill="#5ce065" font-size="10" opacity="0.35">&#9733;</text>
-                    </svg>
-                </div>
-                <h1>Kelderklasse</h1>
-                <p class="mp-subtitle">Amateurvoetbal Manager</p>
+        <div class="mp-card mp-card-with-logo">
+            <!-- Shield logo above card -->
+            <div class="kk-logo-above">
+                <svg viewBox="0 0 120 145" width="90" height="108">
+                    <defs>
+                        <linearGradient id="kk-sh1" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#1a3a24"/><stop offset="100%" stop-color="#0c1a0f"/>
+                        </linearGradient>
+                        <linearGradient id="kk-gd1" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#ffd54f"/><stop offset="100%" stop-color="#ff9800"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Shield -->
+                    <path d="M60,4 L112,22 L112,78 Q112,120 60,140 Q8,120 8,78 L8,22 Z" fill="url(#kk-sh1)" stroke="#5ce065" stroke-width="2.5"/>
+                    <path d="M60,10 L106,26 L106,76 Q106,115 60,134 Q14,115 14,76 L14,26 Z" fill="none" stroke="#5ce065" stroke-width="0.7" opacity="0.2"/>
+                    <!-- KELDER banner -->
+                    <rect x="14" y="32" width="92" height="16" rx="1" fill="#5ce065"/>
+                    <text x="60" y="44.5" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="15" letter-spacing="3" fill="#0c1a0f">KELDER</text>
+                    <!-- Stairs + ball -->
+                    <g transform="translate(30, 54)">
+                        <rect x="0" y="0" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.9"/>
+                        <rect x="9" y="9" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.7"/>
+                        <rect x="18" y="18" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.5"/>
+                        <rect x="27" y="27" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.35"/>
+                        <rect x="12" y="4" width="2" height="5" fill="#f5f2ea" opacity="0.4"/>
+                        <rect x="21" y="13" width="2" height="5" fill="#f5f2ea" opacity="0.3"/>
+                        <rect x="30" y="22" width="2" height="5" fill="#f5f2ea" opacity="0.2"/>
+                    </g>
+                    <circle cx="72" cy="92" r="7" fill="#f5f2ea" stroke="#ddd" stroke-width="1"/>
+                    <path d="M72,88 L74.5,90 L73.5,93 L70.5,93 L69.5,90 Z" fill="#1a3a24" opacity="0.5"/>
+                    <path d="M40,62 Q50,74 60,82 Q66,88 70,92" stroke="#ff9020" stroke-width="1" fill="none" stroke-dasharray="2 2" opacity="0.5"/>
+                    <!-- KLASSE banner -->
+                    <rect x="18" y="104" width="84" height="16" rx="1" fill="url(#kk-gd1)"/>
+                    <text x="60" y="116.5" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="15" letter-spacing="3" fill="#0c1a0f">KLASSE</text>
+                    <!-- Star -->
+                    <polygon points="60,12 62,18 68,18 63,22 65,28 60,25 55,28 57,22 52,18 58,18" fill="#ffd54f" opacity="0.7"/>
+                </svg>
             </div>
 
             <!-- Login Form -->
@@ -117,40 +265,205 @@
 
     <!-- League Lobby Screen -->
     <div id="lobby-screen" class="mp-overlay" style="display:none;">
-        <div class="mp-card">
-            <div class="mp-logo mp-logo-sm">
-                <div class="mp-logo-badge">
-                    <svg viewBox="0 0 200 240" width="100" height="120" class="kelderklasse-logo">
-                        <defs>
-                            <linearGradient id="kk-shield2" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="#1e3a2a"/>
-                                <stop offset="100%" stop-color="#0f1c14"/>
-                            </linearGradient>
-                            <linearGradient id="kk-green2" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="#5ce065"/>
-                                <stop offset="100%" stop-color="#3db847"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M100 8 L190 40 L190 130 Q190 200 100 232 Q10 200 10 130 L10 40 Z" fill="url(#kk-shield2)" stroke="#5ce065" stroke-width="3"/>
-                        <path d="M100 18 L180 46 L180 128 Q180 192 100 222 Q20 192 20 128 L20 46 Z" fill="none" stroke="#5ce065" stroke-width="0.8" opacity="0.2"/>
-                        <line x1="35" y1="72" x2="165" y2="72" stroke="#5ce065" stroke-width="1" opacity="0.3"/>
-                        <line x1="30" y1="168" x2="170" y2="168" stroke="#5ce065" stroke-width="1" opacity="0.3"/>
-                        <text x="100" y="62" text-anchor="middle" fill="url(#kk-green2)" font-family="'Bebas Neue',sans-serif" font-size="38" letter-spacing="8">KELDER</text>
-                        <g transform="translate(58, 80)" opacity="0.85">
-                            <rect x="0" y="0" width="24" height="6" rx="1" fill="#f5f2ea" opacity="0.9"/>
-                            <rect x="14" y="14" width="24" height="6" rx="1" fill="#f5f2ea" opacity="0.7"/>
-                            <rect x="28" y="28" width="24" height="6" rx="1" fill="#f5f2ea" opacity="0.55"/>
-                            <rect x="42" y="42" width="24" height="6" rx="1" fill="#f5f2ea" opacity="0.4"/>
-                            <rect x="22" y="6" width="2" height="8" fill="#f5f2ea" opacity="0.45"/>
-                            <rect x="36" y="20" width="2" height="8" fill="#f5f2ea" opacity="0.35"/>
-                            <rect x="50" y="34" width="2" height="8" fill="#f5f2ea" opacity="0.25"/>
-                        </g>
-                        <circle cx="80" cy="138" r="13" fill="#f5f2ea" stroke="#5ce065" stroke-width="1.5"/>
-                        <path d="M80,131 L85.4,134.9 L83.3,141.3 L76.7,141.3 L74.6,134.9 Z" fill="#1e3a2a" opacity="0.5"/>
-                        <path d="M100 150 L108 158 L103 158 L103 164 L97 164 L97 158 L92 158 Z" fill="#ff9020" opacity="0.5"/>
-                        <text x="100" y="190" text-anchor="middle" fill="#ff9020" font-family="'Bebas Neue',sans-serif" font-size="38" letter-spacing="8">KLASSE</text>
-                    </svg>
-                </div>
+
+        <!-- Background illustrations -->
+        <div class="mp-bg-details" aria-hidden="true">
+            <!-- Beer glass — top left -->
+            <svg class="mp-bg-item mp-bg-beer" viewBox="0 0 80 120">
+                <!-- Glass body -->
+                <rect x="16" y="22" width="42" height="68" rx="5" fill="#d4920a" stroke="#ffb300" stroke-width="3"/>
+                <!-- Beer liquid -->
+                <rect x="19" y="30" width="36" height="57" rx="3" fill="#e8a817" opacity="0.6"/>
+                <!-- Foam -->
+                <ellipse cx="25" cy="24" rx="8" ry="6" fill="#fff8e1"/>
+                <ellipse cx="37" cy="21" rx="10" ry="7" fill="#fffde7"/>
+                <ellipse cx="50" cy="24" rx="8" ry="6" fill="#fff8e1"/>
+                <!-- Handle -->
+                <path d="M58 34 Q74 34 74 52 Q74 70 58 70" fill="none" stroke="#ffb300" stroke-width="3.5" stroke-linecap="round"/>
+                <!-- Bubbles -->
+                <circle cx="30" cy="55" r="2.5" fill="#ffe082" opacity="0.5"/>
+                <circle cx="42" cy="65" r="2" fill="#ffe082" opacity="0.4"/>
+                <circle cx="35" cy="45" r="3" fill="#ffe082" opacity="0.35"/>
+                <circle cx="46" cy="52" r="1.8" fill="#ffe082" opacity="0.45"/>
+            </svg>
+
+            <!-- Player avatar — top right -->
+            <svg class="mp-bg-item mp-bg-player" viewBox="0 0 100 180">
+                <ellipse cx="50" cy="174" rx="22" ry="5" fill="#000" opacity="0.15"/>
+                <rect x="34" y="118" width="12" height="40" rx="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <rect x="54" y="118" width="12" height="40" rx="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <rect x="32" y="145" width="16" height="16" rx="3" fill="#1a6b2a" stroke="#145522" stroke-width="1"/>
+                <rect x="52" y="145" width="16" height="16" rx="3" fill="#1a6b2a" stroke="#145522" stroke-width="1"/>
+                <path d="M30,158 L30,168 Q30,172 34,172 L50,172 Q54,172 54,168 L54,162 L48,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M50,158 L50,168 Q50,172 54,172 L70,172 Q74,172 74,168 L74,162 L68,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M28,104 L72,104 L68,128 Q64,132 54,132 L50,132 L46,132 Q36,132 32,128 Z" fill="#fff" stroke="#ddd" stroke-width="1.5"/>
+                <line x1="50" y1="104" x2="50" y2="130" stroke="#ddd" stroke-width="1" opacity="0.5"/>
+                <path d="M30,50 L30,106 Q30,110 34,110 L66,110 Q70,110 70,106 L70,50" fill="#1a6b2a" stroke="#145522" stroke-width="1.5"/>
+                <path d="M38,48 Q50,52 62,48" fill="#145522" stroke="#0f4a1a" stroke-width="1.5"/>
+                <path d="M30,50 L14,62 Q10,64 12,68 L18,80 Q20,84 24,82 L30,74 Z" fill="#1a6b2a" stroke="#145522" stroke-width="1.5"/>
+                <path d="M70,50 L86,62 Q90,64 88,68 L82,80 Q80,84 76,82 L70,74 Z" fill="#1a6b2a" stroke="#145522" stroke-width="1.5"/>
+                <path d="M18,78 L22,92" stroke="#e8c9a0" stroke-width="6" stroke-linecap="round"/>
+                <path d="M82,78 L78,92" stroke="#e8c9a0" stroke-width="6" stroke-linecap="round"/>
+                <text x="50" y="88" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#fff" opacity="0.9">9</text>
+                <line x1="30" y1="60" x2="70" y2="60" stroke="#145522" stroke-width="1" opacity="0.3"/>
+                <line x1="30" y1="70" x2="70" y2="70" stroke="#145522" stroke-width="1" opacity="0.3"/>
+                <ellipse cx="50" cy="34" rx="16" ry="18" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1.5"/>
+                <path d="M34,30 Q34,14 50,14 Q66,14 66,30 L66,24 Q66,16 50,16 Q34,16 34,24 Z" fill="#3a2a1a"/>
+                <ellipse cx="43" cy="34" rx="2" ry="2.5" fill="#2a2a2a"/>
+                <ellipse cx="57" cy="34" rx="2" ry="2.5" fill="#2a2a2a"/>
+                <path d="M39,30 L47,29" stroke="#3a2a1a" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M53,29 L61,30" stroke="#3a2a1a" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M44,40 Q50,44 56,40" fill="none" stroke="#c9a87c" stroke-width="1.5" stroke-linecap="round"/>
+                <ellipse cx="34" cy="35" rx="3" ry="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <ellipse cx="66" cy="35" rx="3" ry="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+            </svg>
+
+            <!-- Player 2 avatar — top right, different kit -->
+            <svg class="mp-bg-item mp-bg-player2" viewBox="0 0 100 180">
+                <ellipse cx="50" cy="174" rx="22" ry="5" fill="#000" opacity="0.15"/>
+                <!-- Legs -->
+                <rect x="34" y="118" width="12" height="40" rx="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <rect x="54" y="118" width="12" height="40" rx="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <!-- Socks -->
+                <rect x="32" y="145" width="16" height="16" rx="3" fill="#c62828" stroke="#a11d1d" stroke-width="1"/>
+                <rect x="52" y="145" width="16" height="16" rx="3" fill="#c62828" stroke="#a11d1d" stroke-width="1"/>
+                <line x1="32" y1="150" x2="48" y2="150" stroke="#fff" stroke-width="1" opacity="0.4"/>
+                <line x1="52" y1="150" x2="68" y2="150" stroke="#fff" stroke-width="1" opacity="0.4"/>
+                <!-- Boots -->
+                <path d="M30,158 L30,168 Q30,172 34,172 L50,172 Q54,172 54,168 L54,162 L48,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M50,158 L50,168 Q50,172 54,172 L70,172 Q74,172 74,168 L74,162 L68,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <!-- Shorts -->
+                <path d="M28,104 L72,104 L68,128 Q64,132 54,132 L50,132 L46,132 Q36,132 32,128 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <!-- Shirt body — red -->
+                <path d="M30,50 L30,106 Q30,110 34,110 L66,110 Q70,110 70,106 L70,50" fill="#c62828" stroke="#a11d1d" stroke-width="1.5"/>
+                <!-- Collar — white -->
+                <path d="M38,48 Q50,52 62,48" fill="#fff" stroke="#ddd" stroke-width="1.5"/>
+                <!-- Sleeves -->
+                <path d="M30,50 L14,62 Q10,64 12,68 L18,80 Q20,84 24,82 L30,74 Z" fill="#c62828" stroke="#a11d1d" stroke-width="1.5"/>
+                <path d="M70,50 L86,62 Q90,64 88,68 L82,80 Q80,84 76,82 L70,74 Z" fill="#c62828" stroke="#a11d1d" stroke-width="1.5"/>
+                <!-- Arms -->
+                <path d="M18,78 L14,92" stroke="#d4a574" stroke-width="6" stroke-linecap="round"/>
+                <path d="M82,78 L86,92" stroke="#d4a574" stroke-width="6" stroke-linecap="round"/>
+                <!-- Shirt number -->
+                <text x="50" y="88" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#fff" opacity="0.9">5</text>
+                <!-- White side stripe -->
+                <line x1="30" y1="54" x2="30" y2="106" stroke="#fff" stroke-width="2" opacity="0.3"/>
+                <line x1="70" y1="54" x2="70" y2="106" stroke="#fff" stroke-width="2" opacity="0.3"/>
+                <!-- Head -->
+                <ellipse cx="50" cy="34" rx="16" ry="18" fill="#d4a574" stroke="#b8906a" stroke-width="1.5"/>
+                <!-- Hair — short buzz cut -->
+                <path d="M34,30 Q34,15 50,14 Q66,15 66,30" fill="#1a1a1a" stroke="#111" stroke-width="1"/>
+                <path d="M36,28 Q36,17 50,16 Q64,17 64,28" fill="#2a2a2a"/>
+                <!-- Eyes -->
+                <ellipse cx="43" cy="34" rx="2" ry="2.5" fill="#1a1a1a"/>
+                <ellipse cx="57" cy="34" rx="2" ry="2.5" fill="#1a1a1a"/>
+                <!-- Eyebrows -->
+                <path d="M39,30 L47,29" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M53,29 L61,30" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round"/>
+                <!-- Mouth — determined -->
+                <path d="M44,41 Q50,43 56,41" fill="none" stroke="#b8906a" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Ears -->
+                <ellipse cx="34" cy="35" rx="3" ry="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <ellipse cx="66" cy="35" rx="3" ry="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+            </svg>
+            <!-- Dugout bench — right side (kept) -->
+            <svg class="mp-bg-item mp-bg-dugout" viewBox="0 0 140 90">
+                <path d="M5,25 L70,5 L135,25 L135,33 L70,13 L5,33 Z" fill="#5d8aa8" stroke="#4a7a98" stroke-width="2"/>
+                <line x1="15" y1="30" x2="15" y2="78" stroke="#8a7e6b" stroke-width="4" stroke-linecap="round"/>
+                <line x1="125" y1="30" x2="125" y2="78" stroke="#8a7e6b" stroke-width="4" stroke-linecap="round"/>
+                <rect x="12" y="52" width="116" height="7" rx="3" fill="#8B4513" stroke="#6d3510" stroke-width="2"/>
+                <line x1="28" y1="59" x2="28" y2="78" stroke="#8a7e6b" stroke-width="3"/>
+                <line x1="70" y1="59" x2="70" y2="78" stroke="#8a7e6b" stroke-width="3"/>
+                <line x1="112" y1="59" x2="112" y2="78" stroke="#8a7e6b" stroke-width="3"/>
+                <path d="M2,78 L138,78" stroke="#4a7a48" stroke-width="2" stroke-dasharray="6 4"/>
+                <path d="M8,78 Q10,70 12,78" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+                <path d="M50,78 Q52,72 54,78" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+                <path d="M100,78 Q102,71 104,78" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+            </svg>
+
+            <!-- Mud splatters — organic splat shapes -->
+            <svg class="mp-bg-item mp-bg-mud1" viewBox="0 0 100 70">
+                <path d="M50,35 Q30,15 20,30 Q8,40 18,48 Q25,58 40,55 Q55,60 65,50 Q80,45 75,32 Q72,18 55,22 Z" fill="#5c3d1a" opacity="0.65"/>
+                <path d="M45,35 Q35,28 32,35 Q28,42 38,44 Q48,48 52,40 Q54,32 45,35 Z" fill="#7a5a2e" opacity="0.5"/>
+                <circle cx="12" cy="18" r="4" fill="#5c3d1a" opacity="0.5"/>
+                <circle cx="82" cy="22" r="3" fill="#5c3d1a" opacity="0.4"/>
+                <circle cx="90" cy="48" r="3.5" fill="#5c3d1a" opacity="0.4"/>
+                <path d="M18,30 Q10,22 12,18" stroke="#5c3d1a" stroke-width="2" fill="none" opacity="0.4" stroke-linecap="round"/>
+                <path d="M70,35 Q80,28 82,22" stroke="#5c3d1a" stroke-width="1.5" fill="none" opacity="0.35" stroke-linecap="round"/>
+            </svg>
+            <svg class="mp-bg-item mp-bg-mud2" viewBox="0 0 70 55">
+                <path d="M35,28 Q20,12 15,25 Q8,35 20,40 Q32,48 45,42 Q58,38 52,26 Q48,16 35,28 Z" fill="#5c3d1a" opacity="0.55"/>
+                <circle cx="10" cy="15" r="3.5" fill="#6d4c1d" opacity="0.4"/>
+                <circle cx="58" cy="42" r="3" fill="#5c3d1a" opacity="0.35"/>
+                <path d="M15,25 Q8,18 10,15" stroke="#5c3d1a" stroke-width="1.5" fill="none" opacity="0.35" stroke-linecap="round"/>
+            </svg>
+
+            <!-- Corner flag — bottom right (kept) -->
+            <svg class="mp-bg-item mp-bg-flag" viewBox="0 0 60 120">
+                <line x1="30" y1="12" x2="30" y2="112" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+                <path d="M30,12 L56,20 L30,30 Z" fill="#ff5252" stroke="#d32f2f" stroke-width="2"/>
+                <path d="M10,112 Q30,92 50,112" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="5 3"/>
+                <circle cx="30" cy="112" r="4" fill="#4caf50"/>
+                <path d="M18,112 Q20,104 22,112" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+                <path d="M38,112 Q40,105 42,112" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+            </svg>
+
+            <!-- Whistle — realistic metal with gold lanyard -->
+            <svg class="mp-bg-item mp-bg-whistle" viewBox="0 0 100 55">
+                <ellipse cx="50" cy="50" rx="35" ry="4" fill="#000" opacity="0.08"/>
+                <!-- Main body — chrome -->
+                <path d="M18,24 Q18,14 30,14 L58,13 Q66,13 70,18 L82,28 Q88,34 82,40 L68,42 Q60,42 56,38 L53,34 L30,35 Q18,35 18,24 Z" fill="#c0c0c0" stroke="#999" stroke-width="2" stroke-linejoin="round"/>
+                <!-- Top highlight -->
+                <path d="M24,17 L62,16" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+                <!-- Body shading -->
+                <path d="M20,28 L55,29" stroke="#a8a8a8" stroke-width="1.5" opacity="0.5"/>
+                <path d="M22,32 L53,33" stroke="#909090" stroke-width="1" opacity="0.4"/>
+                <!-- Air hole -->
+                <ellipse cx="83" cy="33" rx="4.5" ry="5" fill="#555" stroke="#444" stroke-width="1.5"/>
+                <ellipse cx="83" cy="32" rx="2" ry="2.5" fill="#333"/>
+                <!-- Gold ring -->
+                <circle cx="18" cy="24" r="7" fill="none" stroke="#d4af37" stroke-width="3"/>
+                <circle cx="18" cy="24" r="4" fill="none" stroke="#d4af37" stroke-width="1" opacity="0.4"/>
+                <!-- Gold lanyard -->
+                <path d="M11,24 Q2,14 6,4 Q8,0 14,2" stroke="#d4af37" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <path d="M14,2 Q20,4 18,10" stroke="#d4af37" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <!-- Metal shine -->
+                <ellipse cx="42" cy="20" rx="12" ry="3" fill="#fff" opacity="0.15" transform="rotate(-2 42 20)"/>
+            </svg>
+        </div>
+
+        <div class="mp-card mp-card-with-logo">
+            <!-- Shield logo above card -->
+            <div class="kk-logo-above">
+                <svg viewBox="0 0 120 145" width="90" height="108">
+                    <defs>
+                        <linearGradient id="kk-sh2" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#1a3a24"/><stop offset="100%" stop-color="#0c1a0f"/>
+                        </linearGradient>
+                        <linearGradient id="kk-gd2" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#ffd54f"/><stop offset="100%" stop-color="#ff9800"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M60,4 L112,22 L112,78 Q112,120 60,140 Q8,120 8,78 L8,22 Z" fill="url(#kk-sh2)" stroke="#5ce065" stroke-width="2.5"/>
+                    <path d="M60,10 L106,26 L106,76 Q106,115 60,134 Q14,115 14,76 L14,26 Z" fill="none" stroke="#5ce065" stroke-width="0.7" opacity="0.2"/>
+                    <rect x="14" y="32" width="92" height="16" rx="1" fill="#5ce065"/>
+                    <text x="60" y="44.5" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="15" letter-spacing="3" fill="#0c1a0f">KELDER</text>
+                    <g transform="translate(30, 54)">
+                        <rect x="0" y="0" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.9"/>
+                        <rect x="9" y="9" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.7"/>
+                        <rect x="18" y="18" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.5"/>
+                        <rect x="27" y="27" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.35"/>
+                        <rect x="12" y="4" width="2" height="5" fill="#f5f2ea" opacity="0.4"/>
+                        <rect x="21" y="13" width="2" height="5" fill="#f5f2ea" opacity="0.3"/>
+                        <rect x="30" y="22" width="2" height="5" fill="#f5f2ea" opacity="0.2"/>
+                    </g>
+                    <circle cx="72" cy="92" r="7" fill="#f5f2ea" stroke="#ddd" stroke-width="1"/>
+                    <path d="M72,88 L74.5,90 L73.5,93 L70.5,93 L69.5,90 Z" fill="#1a3a24" opacity="0.5"/>
+                    <path d="M40,62 Q50,74 60,82 Q66,88 70,92" stroke="#ff9020" stroke-width="1" fill="none" stroke-dasharray="2 2" opacity="0.5"/>
+                    <rect x="18" y="104" width="84" height="16" rx="1" fill="url(#kk-gd2)"/>
+                    <text x="60" y="116.5" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="15" letter-spacing="3" fill="#0c1a0f">KLASSE</text>
+                    <polygon points="60,12 62,18 68,18 63,22 65,28 60,25 55,28 57,22 52,18 58,18" fill="#ffd54f" opacity="0.7"/>
+                </svg>
             </div>
 
             <!-- My Leagues List (shown first when user has leagues) -->
@@ -862,7 +1175,7 @@
                 <div class="tactics-panel active" id="opstelling-panel">
                     <div class="lineup-container">
                         <div class="lineup-players-panel">
-                            <h4>Beschikbare Spelers</h4>
+                            <div class="lineup-panel-header"><h4>Beschikbare Spelers</h4><button class="btn btn-sm btn-outline lineup-clear-btn" onclick="clearLineup()" title="Opstelling leegmaken">✕ Leegmaken</button></div>
                             <div class="lineup-player-groups" id="lineup-available-players"></div>
                         </div>
                         <div class="lineup-pitch-panel">

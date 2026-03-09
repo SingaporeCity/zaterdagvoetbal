@@ -1239,10 +1239,9 @@ function getPotentialDisplay(potential, age) {
 
 // Get bar color based on fill percentage
 function getBarColor(percentage) {
-    if (percentage <= 25) return '#f44336'; // Red
-    if (percentage <= 50) return '#ff9800'; // Orange
-    if (percentage <= 75) return '#4caf50'; // Green
-    return '#2e7d32'; // Dark green
+    if (percentage < 30) return '#f44336'; // Red
+    if (percentage < 70) return '#ff9800'; // Orange
+    return '#4caf50'; // Green
 }
 
 // Convert potential (1-99) to 1-5 whole stars
@@ -1542,8 +1541,8 @@ function renderMijnSpelerPage() {
 
     // --- Energie ---
     const energy = mp.energy ?? 100;
-    const energyColor = energy > 70 ? '#4caf50' : energy >= 40 ? '#ff9800' : '#ef5350';
-    const energyLabel = energy > 70 ? 'Fit' : energy >= 40 ? 'Vermoeid' : 'Uitgeput';
+    const energyColor = energy >= 70 ? '#4caf50' : energy >= 30 ? '#ff9800' : '#f44336';
+    const energyLabel = energy >= 70 ? 'Fit' : energy >= 30 ? 'Vermoeid' : 'Uitgeput';
 
     // --- Seizoensstatistieken ---
     const history = gameState.matchHistory || [];
@@ -2273,7 +2272,7 @@ function renderAvailablePlayers() {
         group.players.forEach(player => {
             const posData = POSITIONS[player.position];
             const energy = player.energy || 75;
-            const energyColor = energy > 70 ? '#4caf50' : energy >= 40 ? '#ff9800' : '#ef5350';
+            const energyColor = energy >= 70 ? '#4caf50' : energy >= 30 ? '#ff9800' : '#f44336';
             const stars = player.stars || 0;
             const inLineup = lineupIds.has(player.id);
 
@@ -2800,7 +2799,7 @@ function renderStadiumMobileFacilities() {
         const currentId = gameState.stadium[config.stateKey];
         const currentIndex = config.levels.findIndex(l => l.id === currentId);
         const currentLevel = config.levels[currentIndex] || config.levels[0];
-        const levelOffset = config.levels[0].id.match(/_0$/) ? 0 : 1;
+        const levelOffset = config.levels[0].effect === 'Niet gebouwd' ? 0 : 1;
 
         html += `
             <div class="stadium-mobile-facility-btn" onclick="selectStadiumCategory('${key}')">
@@ -6769,6 +6768,13 @@ function removeFromLineup(index) {
     renderPitch();
 }
 
+function clearLineup() {
+    gameState.lineup = gameState.lineup.map(() => null);
+    renderLineupPitch();
+    renderAvailablePlayers();
+    saveGame();
+}
+
 // Lineup dropdown functions
 function openLineupDropdown(event, positionIndex, role) {
     event.stopPropagation();
@@ -6874,6 +6880,7 @@ window.handleDragOver = handleDragOver;
 window.handleDragEnd = handleDragEnd;
 window.handleDrop = handleDrop;
 window.removeFromLineup = removeFromLineup;
+window.clearLineup = clearLineup;
 window.openLineupDropdown = openLineupDropdown;
 window.selectLineupPlayer = selectLineupPlayer;
 
@@ -7288,6 +7295,13 @@ function renderAchievementsSection() {
             <div class="progress-fill" style="width: ${stats.progress}%"></div>
         </div>
     `;
+
+    // Sort: visible achievements first, hidden (??) ones at the bottom
+    allAchievements.sort((a, b) => {
+        const aHidden = a.hidden && !a.unlocked ? 1 : 0;
+        const bHidden = b.hidden && !b.unlocked ? 1 : 0;
+        return aHidden - bHidden;
+    });
 
     // Render achievements grid
     let html = '';
@@ -9909,7 +9923,7 @@ function playMatch() {
     // Check if match is available
     const now = Date.now();
     if (gameState.nextMatch.time > now) {
-        showNotification('De wedstrijd is nog niet beschikbaar!', 'warning');
+        showNotification('🎩 Voorzitter: "Ik snap dat je snel wil beginnen, maar de tegenstander staat nog niet op het veld."', 'warning');
         return;
     }
 
@@ -13307,7 +13321,24 @@ function renderBordSponsorSection() {
         return;
     }
 
-    container.innerHTML = offers.map(offer => {
+    // Show active bordsponsor as first tile if present
+    let tilesHTML = '';
+    const activeBord = gameState.sponsorSlots?.bord;
+    if (activeBord) {
+        tilesHTML += `<div class="sponsor-option sponsor-option-market active">
+            <div class="so-icon">${activeBord.icon}</div>
+            <div class="so-body">
+                <div class="so-name">${activeBord.name}</div>
+                <div class="so-tagline">Actieve sponsor</div>
+            </div>
+            <div class="so-footer">
+                <div class="so-pay">${formatCurrency(activeBord.weeklyIncome)}/thuiswedstrijd</div>
+                <div class="so-duration">${activeBord.weeksRemaining}w resterend</div>
+            </div>
+        </div>`;
+    }
+
+    tilesHTML += offers.map(offer => {
         return `<div class="sponsor-option sponsor-option-market" onclick="selectMarketSponsor('${offer.id}')">
             <div class="so-icon">${offer.icon}</div>
             <div class="so-body">
@@ -13320,6 +13351,8 @@ function renderBordSponsorSection() {
             </div>
         </div>`;
     }).join('');
+
+    container.innerHTML = tilesHTML;
 }
 
 function selectMarketSponsor(id) {
@@ -13780,7 +13813,7 @@ function openSpecialistDropdown(roleKey, roleLabel, lineupPlayers) {
             const color = posColor(p.position);
             const isSelected = String(p.id) === String(selectedId);
             const energy = p.energy || 75;
-            const energyColor = energy > 70 ? '#4caf50' : energy >= 40 ? '#ff9800' : '#ef5350';
+            const energyColor = energy >= 70 ? '#4caf50' : energy >= 30 ? '#ff9800' : '#f44336';
             html += `
                 <div class="spec-dropdown-item available-player ${isSelected ? 'selected' : ''}" data-player-id="${p.id}">
                     <span class="ap-pos" style="background:${color};color:#fff">${posAbbr(p.position)}</span>
@@ -14182,13 +14215,13 @@ function renderStadiumMap() {
         const acadBadgeX = acadCenterX + acadLongest * 4.5 / 2 + 4;
         svg += `<text x="${acadCenterX}" y="${f1y-14}" text-anchor="middle" fill="${acColors[1]}" font-size="8" font-weight="bold"><tspan x="${acadCenterX}" dy="0">${acadLine1}</tspan><tspan x="${acadCenterX}" dy="10">${acadLine2}</tspan></text>`;
         svg += `<rect x="${acadBadgeX}" y="${f1y-22}" width="22" height="12" fill="${acColors[1]}" rx="6"/>`;
-        svg += `<text x="${acadBadgeX + 11}" y="${f1y-13}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${acadLevel+1}</text>`;
+        svg += `<text x="${acadBadgeX + 11}" y="${f1y-13}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${acadLevel}</text>`;
     } else {
         const acadTextW = acadLevelName.length * 4.5;
         const acadBadgeX = acadCenterX + acadTextW / 2 + 4;
         svg += `<text x="${acadCenterX}" y="${f1y-6}" text-anchor="middle" fill="${acColors[1]}" font-size="8" font-weight="bold">${acadLevelName}</text>`;
         svg += `<rect x="${acadBadgeX}" y="${f1y-16}" width="22" height="12" fill="${acColors[1]}" rx="6"/>`;
-        svg += `<text x="${acadBadgeX + 11}" y="${f1y-7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${acadLevel+1}</text>`;
+        svg += `<text x="${acadBadgeX + 11}" y="${f1y-7}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Nv${acadLevel}</text>`;
     }
     // Construction overlay for academy
     if (constructionData && constructionData.category === 'academy') {
@@ -14373,7 +14406,7 @@ const STADIUM_TILE_CONFIG = {
     grass: {
         description: 'Beter gras geeft je team een thuisvoordeel tijdens wedstrijden.',
         levels: [
-            { id: 'grass_0', name: 'Basis Gras', cost: 0, effect: 'Geen bonus' },
+            { id: 'grass_0', name: 'Basis Gras', cost: 0, effect: '+5% thuisvoordeel' },
             { id: 'grass_1', name: 'Onderhouden Gras', cost: 3000, effect: '+5% thuisvoordeel' },
             { id: 'grass_2', name: 'Professioneel Gras', cost: 8000, effect: '+10% thuisvoordeel', reqCapacity: 500 },
             { id: 'grass_3', name: 'Kunstgras', cost: 20000, effect: '+15% thuisvoordeel', reqCapacity: 1000 },
@@ -14708,7 +14741,7 @@ function updateStadiumUpgradePanel(category) {
     const currentIndex = config.levels.findIndex(l => l.id === currentId);
     const currentLevel = config.levels[currentIndex] || config.levels[0];
     const totalLevels = config.levels.length;
-    const levelOffset = config.levels[0].id.match(/_0$/) ? 0 : 1;
+    const levelOffset = config.levels[0].effect === 'Niet gebouwd' ? 0 : 1;
 
     const currentCapacity = STADIUM_TILE_CONFIG.tribune.levels.find(
         l => l.id === gameState.stadium.tribune

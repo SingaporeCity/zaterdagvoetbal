@@ -12282,15 +12282,31 @@ body {
     overflow: hidden;
 }
 
+.lineup-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: var(--bg-card);
+    border-bottom: 2px solid var(--border);
+    flex-shrink: 0;
+}
+
 .lineup-players-panel h4 {
-    padding: 10px 12px;
+    padding: 0;
     margin: 0;
     font-family: var(--font-display);
     font-size: 0.85rem;
     color: var(--accent-green-dim);
-    background: var(--bg-card);
-    border-bottom: 2px solid var(--border);
-    flex-shrink: 0;
+}
+
+.lineup-clear-btn {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    opacity: 0.7;
+}
+.lineup-clear-btn:hover {
+    opacity: 1;
 }
 
 .lineup-player-groups {
@@ -25308,12 +25324,82 @@ body {
     align-items: center;
     justify-content: center;
     background:
-        radial-gradient(ellipse at 30% 20%, rgba(92,224,101,0.06), transparent 55%),
-        radial-gradient(ellipse at 70% 80%, rgba(255,144,32,0.04), transparent 55%),
-        repeating-conic-gradient(rgba(92,224,101,0.012) 0% 25%, transparent 0% 50%) 0 0 / 6px 6px,
-        #0e1a12;
+        /* Stadium floodlights */
+        radial-gradient(ellipse 600px 400px at 15% 0%, rgba(255,201,64,0.18), transparent),
+        radial-gradient(ellipse 600px 400px at 85% 0%, rgba(255,201,64,0.14), transparent),
+        /* Green pitch glow */
+        radial-gradient(ellipse 800px 500px at 50% 55%, rgba(30,100,40,0.4), transparent),
+        /* Warm kantine glow at bottom */
+        radial-gradient(ellipse 600px 300px at 50% 100%, rgba(255,144,32,0.12), transparent),
+        /* Grass stripe pattern */
+        repeating-linear-gradient(
+            90deg,
+            rgba(40,120,50,0.06) 0px,
+            rgba(40,120,50,0.06) 50px,
+            rgba(20,70,25,0.06) 50px,
+            rgba(20,70,25,0.06) 100px
+        ),
+        /* Vignette */
+        radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.5) 100%),
+        /* Dark green base */
+        linear-gradient(175deg, #0d1f13 0%, #122a18 35%, #0f2215 65%, #081209 100%);
     padding: 1rem;
     overflow-y: auto;
+}
+
+/* Pitch markings as background decoration */
+.mp-overlay::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        /* Center circle */
+        radial-gradient(circle 80px at 50% 55%, transparent 78px, rgba(255,255,255,0.04) 79px, rgba(255,255,255,0.04) 81px, transparent 82px),
+        /* Center dot */
+        radial-gradient(circle 3px at 50% 55%, rgba(255,255,255,0.06), transparent),
+        /* Halfway line */
+        linear-gradient(90deg, transparent 20%, rgba(255,255,255,0.03) 20%, rgba(255,255,255,0.03) 20.3%, transparent 20.3%, transparent 80%, rgba(255,255,255,0.03) 80%, rgba(255,255,255,0.03) 80.3%, transparent 80.3%),
+        /* Top penalty area */
+        linear-gradient(180deg,
+            transparent 8%,
+            rgba(255,255,255,0.025) 8%, rgba(255,255,255,0.025) 8.3%, transparent 8.3%,
+            transparent 92%,
+            rgba(255,255,255,0.025) 92%, rgba(255,255,255,0.025) 92.3%, transparent 92.3%
+        );
+}
+
+.mp-overlay > *:not(.mp-bg-details) {
+    position: relative;
+    z-index: 3;
+}
+
+/* Floating light particles */
+.mp-overlay::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background:
+        radial-gradient(2px 2px at 15% 20%, rgba(255,201,64,0.4), transparent 8px),
+        radial-gradient(2px 2px at 55% 12%, rgba(92,224,101,0.35), transparent 8px),
+        radial-gradient(3px 3px at 82% 35%, rgba(255,144,32,0.3), transparent 10px),
+        radial-gradient(2px 2px at 25% 65%, rgba(92,224,101,0.3), transparent 8px),
+        radial-gradient(2px 2px at 70% 78%, rgba(255,201,64,0.25), transparent 8px),
+        radial-gradient(3px 3px at 8% 48%, rgba(255,144,32,0.2), transparent 10px),
+        radial-gradient(2px 2px at 92% 60%, rgba(92,224,101,0.25), transparent 8px),
+        radial-gradient(2px 2px at 45% 88%, rgba(255,201,64,0.3), transparent 8px),
+        radial-gradient(2px 2px at 38% 42%, rgba(255,201,64,0.2), transparent 8px),
+        radial-gradient(3px 3px at 65% 52%, rgba(92,224,101,0.15), transparent 10px);
+    animation: mp-dust 25s ease-in-out infinite alternate;
+}
+
+@keyframes mp-dust {
+    0% { transform: translateY(0); opacity: 0.7; }
+    50% { transform: translateY(-20px); opacity: 1; }
+    100% { transform: translateY(10px); opacity: 0.6; }
 }
 
 /* ---- Card ---- */
@@ -25328,6 +25414,22 @@ body {
         0 0 0 1px rgba(92,224,101,0.1),
         inset 0 1px 0 rgba(255,255,255,0.04);
     position: relative;
+}
+
+/* Card with logo — extra top padding for floating logo */
+.mp-card-with-logo {
+    padding-top: 5rem;
+    overflow: visible;
+}
+
+/* Logo floating above card */
+.kk-logo-above {
+    position: absolute;
+    top: -54px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
 }
 
 /* ---- Logo ---- */
@@ -25350,6 +25452,99 @@ body {
 
 .kelderklasse-logo {
     filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.4));
+}
+
+/* ---- Background illustrations ---- */
+.mp-bg-details {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.mp-bg-item {
+    position: absolute;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+}
+
+/* Beer — top left, tilted */
+.mp-bg-beer {
+    width: 100px;
+    top: 6%;
+    left: 6%;
+    transform: rotate(-12deg);
+    opacity: 0.7;
+}
+
+/* Player avatar — bottom left */
+.mp-bg-player {
+    width: 110px;
+    bottom: 4%;
+    left: 6%;
+    opacity: 0.65;
+}
+
+/* Player 2 avatar — top right */
+.mp-bg-player2 {
+    width: 100px;
+    top: 4%;
+    right: 6%;
+    opacity: 0.6;
+}
+
+/* Dugout — right side */
+.mp-bg-dugout {
+    width: 160px;
+    top: 50%;
+    right: 4%;
+    transform: translateY(-50%);
+    opacity: 0.55;
+}
+
+/* Mud splatters */
+.mp-bg-mud1 {
+    width: 140px;
+    bottom: 20%;
+    left: 25%;
+    opacity: 0.5;
+}
+
+.mp-bg-mud2 {
+    width: 100px;
+    top: 22%;
+    right: 18%;
+    opacity: 0.45;
+}
+
+/* Corner flag — bottom right */
+.mp-bg-flag {
+    width: 65px;
+    bottom: 6%;
+    right: 10%;
+    opacity: 0.65;
+}
+
+/* Whistle — left center area */
+.mp-bg-whistle {
+    width: 100px;
+    top: 40%;
+    left: 4%;
+    transform: rotate(-20deg);
+    opacity: 0.55;
+}
+
+/* Responsive: hide on small screens to avoid clutter */
+@media (max-width: 768px) {
+    .mp-bg-dugout,
+    .mp-bg-whistle,
+    .mp-bg-mud2 {
+        display: none;
+    }
+    .mp-bg-beer { width: 60px; top: 4%; left: 4%; }
+    .mp-bg-player { width: 70px; bottom: 3%; left: 4%; }
+    .mp-bg-player2 { width: 60px; top: 3%; right: 4%; }
+    .mp-bg-flag { width: 40px; }
 }
 
 .mp-logo h1 {
