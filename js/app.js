@@ -2435,7 +2435,7 @@ function handleLineupDrop(targetSlotIndex) {
     gameState.lineup[targetSlotIndex] = lineupDragData.player;
 
     // Achievement: check if player placed on wrong position
-    if (lineupDragData.player) {
+    if (lineupDragData.player && !gameState.stats.placedWrongPosition) {
         const formation = FORMATIONS[gameState.formation];
         if (formation) {
             const requiredPos = formation.positions[targetSlotIndex];
@@ -2443,6 +2443,7 @@ function handleLineupDrop(targetSlotIndex) {
             const playerGroup = POSITIONS[lineupDragData.player.position]?.group;
             if (posGroup && playerGroup && posGroup !== playerGroup) {
                 gameState.stats.placedWrongPosition = true;
+                triggerAchievementCheck();
             }
         }
     }
@@ -2779,7 +2780,7 @@ window.handleDrop = function(e, targetIndex) {
 
     // Achievement: check if player placed on wrong position
     const placedPlayer = gameState.lineup[targetIndex];
-    if (placedPlayer) {
+    if (placedPlayer && !gameState.stats.placedWrongPosition) {
         const formation = FORMATIONS[gameState.formation];
         if (formation) {
             const requiredPos = formation.positions[targetIndex];
@@ -2787,6 +2788,7 @@ window.handleDrop = function(e, targetIndex) {
             const playerGroup = POSITIONS[placedPlayer.position]?.group;
             if (posGroup && playerGroup && posGroup !== playerGroup) {
                 gameState.stats.placedWrongPosition = true;
+                triggerAchievementCheck();
             }
         }
     }
@@ -2798,10 +2800,6 @@ window.handleDrop = function(e, targetIndex) {
     renderPitch();
     renderTacticsBench();
     updateTacticsFitDisplay();
-
-    // Check achievements (wrong position)
-    const achNew = checkAchievements(gameState);
-    if (achNew.length > 0) setTimeout(() => queueAchievements(achNew), 500);
 };
 
 // ================================================
@@ -3694,6 +3692,7 @@ function hireScoutedPlayer(playerId) {
     if (player.price >= 1000000) gameState.stats.expensiveTransfer = true;
     // Achievement: signed high potential (stars ≥ 0.5)
     if ((player.stars || 0) >= 0.5) gameState.stats.signedHighPotential = true;
+    triggerAchievementCheck();
 
     updateBudgetDisplays();
     renderScoutPage();
@@ -3782,6 +3781,7 @@ window.acceptScoutTip = async function(playerId) {
     if (hasUncertainty) {
         await showOverallReveal(player.name, uncertainty.overallMin, uncertainty.overallMax, player.overall, uncertainty.starsMin, uncertainty.starsMax, player.stars);
     }
+    triggerAchievementCheck();
     showNotification(`${player.name} is toegevoegd aan je selectie!`, 'success');
 };
 
@@ -5506,7 +5506,10 @@ async function buyoutPlayer(playerId) {
 
     gameState.club.budget -= cost;
     // Achievement: fired player older than 45
-    if (player.age > 45) gameState.stats.firedOldPlayer = true;
+    if (player.age > 45) {
+        gameState.stats.firedOldPlayer = true;
+        triggerAchievementCheck();
+    }
     gameState.players.splice(playerIndex, 1);
     gameState.stats.released = (gameState.stats.released || 0) + 1;
 
@@ -5698,17 +5701,14 @@ function navigateToPage(page) {
     if (page === 'kantine') renderKantineDashboard();
     if (page === 'wedstrijden') renderMatchesPage();
     if (page === 'bugs') {
-        gameState.stats.visitedBugsTab = true;
+        if (!gameState.stats.visitedBugsTab) {
+            gameState.stats.visitedBugsTab = true;
+            triggerAchievementCheck();
+        }
         renderBugHistory();
     }
 
     updateNavBadges();
-
-    // Check achievements on page navigation
-    const newAchievements = checkAchievements(gameState);
-    if (newAchievements.length > 0) {
-        setTimeout(() => queueAchievements(newAchievements), 500);
-    }
 }
 
 function updateNavBadges() {
@@ -5891,7 +5891,10 @@ function initTrainingButton() {
 function updateBudgetDisplays() {
     const budget = gameState.club.budget;
     // Achievement: budget below €1000
-    if (budget < 1000) gameState.stats.budgetBelow1000 = true;
+    if (budget < 1000 && !gameState.stats.budgetBelow1000) {
+        gameState.stats.budgetBelow1000 = true;
+        triggerAchievementCheck();
+    }
     const formattedBudget = formatCurrency(budget);
 
     // Update all budget displays
@@ -6356,15 +6359,14 @@ async function handleTransferBuy(playerId) {
             gameState.stats.seasonSpending = (gameState.stats.seasonSpending || 0) + totalCost;
             if (totalCost < 200) gameState.stats.cheapTransfer = true;
             if (totalCost >= 1000000) gameState.stats.expensiveTransfer = true;
-            // Achievement: bought a bad player (overall ≤ 5)
+            // Achievement flags
             if (realVal <= 5) gameState.stats.boughtBadPlayer = true;
-            // Achievement: signed unscouted (transfer market = no scouting)
             gameState.stats.signedUnscouted = true;
-            // Achievement: signed high potential (stars ≥ 0.5)
             if ((sReal || 0) >= 0.5) gameState.stats.signedHighPotential = true;
             updateBudgetDisplays();
             renderTransferMarket();
             if (hasRange) await showOverallReveal(player.name, minVal, maxVal, realVal, sMin, sMax, sReal);
+            triggerAchievementCheck();
             showNotification(`${player.name} is toegevoegd aan je selectie!`, 'success');
         }
 
@@ -6431,16 +6433,15 @@ async function finalizeFreeAgentTransfer(player, salary, bonus) {
     gameState.club.budget -= bonus;
     gameState.players.push(player);
     gameState.transferMarket.players = gameState.transferMarket.players.filter(p => p.id !== player.id);
-    // Achievement: bought a bad player (overall ≤ 5)
+    // Achievement flags
     if (realVal <= 5) gameState.stats.boughtBadPlayer = true;
-    // Achievement: signed unscouted (transfer market = no scouting)
     gameState.stats.signedUnscouted = true;
-    // Achievement: signed high potential (stars ≥ 0.5)
     if ((sReal || 0) >= 0.5) gameState.stats.signedHighPotential = true;
     updateBudgetDisplays();
     renderTransferMarket();
 
     if (hasRange) await showOverallReveal(player.name, minVal, maxVal, realVal, sMin, sMax, sReal);
+    triggerAchievementCheck();
     showNotification(`${player.name} heeft getekend! Tekengeld: ${formatCurrency(bonus)}`, 'success');
     saveGame();
 }
@@ -8026,6 +8027,7 @@ function createProfessionalFromYouth(playerIndex, salary, bonus) {
 
     // Achievement: signed high potential (stars ≥ 0.5)
     if ((professionalPlayer.stars || 0) >= 0.5) gameState.stats.signedHighPotential = true;
+    triggerAchievementCheck();
 
     renderYouthPlayers(currentYouthAgeGroup);
     updateAcademyCapacity();
@@ -8043,6 +8045,7 @@ function dismissYouthPlayer(playerId) {
 
     // Achievement: dismissed a youth player
     gameState.stats.dismissedYouth = true;
+    triggerAchievementCheck();
 
     renderYouthPlayers(currentYouthAgeGroup);
     updateAcademyCapacity();
@@ -12186,6 +12189,11 @@ function queueAchievements(achievements) {
     if (!achievementModalOpen && !levelUpModalOpen) {
         showNextAchievement();
     }
+}
+
+function triggerAchievementCheck() {
+    const newAchievements = checkAchievements(gameState);
+    if (newAchievements.length > 0) queueAchievements(newAchievements);
 }
 
 function showNextAchievement() {
