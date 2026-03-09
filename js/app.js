@@ -2474,6 +2474,8 @@ function initLineupDragDrop() {
 }
 
 function parsePlayerId(raw) {
+    // UUIDs (from Supabase) must stay as strings
+    if (typeof raw === 'string' && raw.includes('-')) return raw;
     const num = parseFloat(raw);
     return isNaN(num) ? raw : num;
 }
