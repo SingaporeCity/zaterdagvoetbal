@@ -1398,15 +1398,6 @@ const ACHIEVEMENTS = {
         reward: { managerXP: 25 },
         check: (state) => state.club.budget < 100 && state.club.budget >= 0
     },
-    tacticsChanged: {
-        id: 'tacticsChanged',
-        name: 'Tactische Masterclass',
-        description: 'Pas je tactiek aan',
-        category: CATEGORIES.CLUB,
-        icon: '📋',
-        reward: { managerXP: 15 },
-        check: (state) => state.stats?.tacticsChanged === true
-    },
     sellPlayer: {
         id: 'sellPlayer',
         name: 'Kassa!',
