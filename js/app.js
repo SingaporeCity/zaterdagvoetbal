@@ -1819,7 +1819,7 @@ function renderAchievementCards(achievements, filterCategories) {
                                 a.reward?.managerXP ? `<span class="ach-xp-badge mgr">+${a.reward.managerXP} XP</span>` : '';
                 const showProgress = !a.unlocked && !isHidden && a.progressTarget > 0;
                 const progressBar = showProgress
-                    ? `<div class="ach-progress"><div class="ach-progress-fill" style="width:${Math.round((a.progressCurrent / a.progressTarget) * 100)}%"></div><span class="ach-progress-text">${a.progressCurrent}/${a.progressTarget}</span></div>`
+                    ? `<div class="ach-card-progress"><div class="ach-card-progress-fill" style="width:${Math.round((a.progressCurrent / a.progressTarget) * 100)}%"></div><span class="ach-card-progress-text">${a.progressCurrent}/${a.progressTarget}</span></div>`
                     : '';
                 return `<div class="${cls}">
                     <span class="ach-icon">${icon}</span>
@@ -7481,7 +7481,7 @@ function renderAchievementsSection() {
         const displayDesc = isHidden ? '???' : achievement.description;
         const showProgress = !achievement.unlocked && !isHidden && achievement.progressTarget > 0;
         const progressBar = showProgress
-            ? `<div class="ach-progress"><div class="ach-progress-fill" style="width:${Math.round((achievement.progressCurrent / achievement.progressTarget) * 100)}%"></div><span class="ach-progress-text">${achievement.progressCurrent}/${achievement.progressTarget}</span></div>`
+            ? `<div class="ach-card-progress"><div class="ach-card-progress-fill" style="width:${Math.round((achievement.progressCurrent / achievement.progressTarget) * 100)}%"></div><span class="ach-card-progress-text">${achievement.progressCurrent}/${achievement.progressTarget}</span></div>`
             : '';
 
         html += `

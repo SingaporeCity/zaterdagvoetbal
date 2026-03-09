@@ -22605,7 +22605,7 @@ body {
     line-height: 1.3;
 }
 
-.ach-progress {
+.ach-card-progress {
     position: relative;
     height: 14px;
     background: rgba(255,255,255,0.08);
@@ -22614,7 +22614,7 @@ body {
     overflow: hidden;
 }
 
-.ach-progress-fill {
+.ach-card-progress-fill {
     height: 100%;
     background: linear-gradient(90deg, var(--accent-green), #66bb6a);
     border-radius: 7px;
@@ -22622,7 +22622,7 @@ body {
     min-width: 0;
 }
 
-.ach-progress-text {
+.ach-card-progress-text {
     position: absolute;
     top: 0;
     left: 0;
