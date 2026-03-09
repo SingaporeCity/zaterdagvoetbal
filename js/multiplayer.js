@@ -419,6 +419,12 @@ async function joinActiveLeague(league, user) {
 
     const aiClubId = replacedClubId;
 
+    // Clear lineup positions so the new player starts with an empty lineup
+    await supabase
+        .from('players')
+        .update({ lineup_position: null })
+        .eq('club_id', aiClubId);
+
     // Add to feed
     await supabase.from('league_feed').insert({
         league_id: leagueId,
