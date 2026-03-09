@@ -4179,6 +4179,12 @@ function renderProfileTraining() {
     const container = document.getElementById('training-content');
     if (!container) return;
 
+    // Migrate old saves: onboarding used to set spentSkillPoints=10, those should be free
+    if (!mp._spMigrated) {
+        mp.spentSkillPoints = Math.max(0, (mp.spentSkillPoints || 0) - 10);
+        mp._spMigrated = true;
+    }
+
     // --- Player XP ---
     const playerXP = mp.xp || 0;
     const pLevel = getPlayerLevel(playerXP, mp.stars || 1);
@@ -9164,7 +9170,7 @@ function showOnboarding() {
         gameState.myPlayer.name = playerName;
         gameState.myPlayer.position = position;
         gameState.myPlayer.attributes = { ...skillPoints };
-        gameState.myPlayer.spentSkillPoints = 10;
+        gameState.myPlayer.spentSkillPoints = 0;
         gameState.myPlayer.overall = Math.round(Object.values(skillPoints).reduce((s, v) => s + v, 0) / 6);
 
         // Sync myPlayer in players array
@@ -12647,9 +12653,10 @@ function showLevelUpModal(type, data) {
     const label = isManager ? 'Manager' : 'Speler';
     const color = isManager ? '#1565c0' : '#2e7d32';
     const colorLight = isManager ? '#42a5f5' : '#66bb6a';
+    const spPerLevel = isManager ? 0 : getSPPerLevel(gameState.myPlayer?.stars || 1);
     const rewardText = isManager
         ? `+${formatCurrency(data.cashReward)}`
-        : `+5 Skillpunten`;
+        : `+${spPerLevel} Skillpunten`;
     const rewardIcon = isManager ? '💰' : '⚡';
     const progressPct = Math.round((data.progress || 0) * 100);
     const oldProgressPct = Math.round((data.oldProgress || 0) * 100);
