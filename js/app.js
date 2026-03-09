@@ -16198,6 +16198,14 @@ async function initMultiplayerGame(detail) {
         initSaveLoadButtons();
         initBugReports();
 
+        // Generate youth players if none loaded (Supabase doesn't store them yet)
+        if (!gameState.youthPlayers || gameState.youthPlayers.length === 0) {
+            gameState.youthPlayers = [];
+            if (gameState.stadium?.academy !== 'acad_0') {
+                generateInitialYouthPlayers();
+            }
+        }
+
         // Render everything
         renderStandings();
         renderTopScorers();
