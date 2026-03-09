@@ -12,6 +12,7 @@ const SYNC_DEBOUNCE = 2000; // 2 seconds debounce for multiplayer sync
 
 let autoSaveTimer = null;
 let syncDebounceTimer = null;
+let savingInProgress = false;
 
 // Current storage mode
 let storageMode = 'local'; // 'local' | 'multiplayer'
@@ -387,13 +388,15 @@ async function loadMultiplayer() {
 export function saveGame(gs) {
     const gameState = gs || getGameState();
     if (storageMode === 'multiplayer') {
-        // Debounced save to Supabase
-        if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
-        syncDebounceTimer = setTimeout(() => {
-            saveMultiplayer(gameState);
-        }, SYNC_DEBOUNCE);
-        // Also save locally as backup
+        // Save to localStorage immediately as backup
         saveLocal(gameState);
+        // Save to Supabase (with lock to prevent concurrent saves)
+        if (!savingInProgress) {
+            savingInProgress = true;
+            saveMultiplayer(gameState).finally(() => {
+                savingInProgress = false;
+            });
+        }
         return true;
     }
     return saveLocal(gameState);
@@ -404,7 +407,48 @@ export function saveGame(gs) {
  */
 export async function loadGame() {
     if (storageMode === 'multiplayer') {
-        return await loadMultiplayer();
+        const mpState = await loadMultiplayer();
+        if (!mpState) return null;
+
+        // Merge localStorage backup for state that might not have synced to Supabase
+        const localBackup = loadLocal();
+        if (localBackup?.multiplayer?.clubId === currentClubId) {
+            // Stadium (including construction)
+            if (localBackup.stadium?.construction && !mpState.stadium?.construction) {
+                mpState.stadium = localBackup.stadium;
+            }
+            // Lineup from localStorage if Supabase has none
+            const hasLineup = mpState.lineup?.some(p => p !== null);
+            const localHasLineup = localBackup.lineup?.some(p => p !== null);
+            if (!hasLineup && localHasLineup) {
+                mpState.lineup = localBackup.lineup;
+            }
+            // Client-side state that lives in client_state column
+            const clientFields = ['hiredStaff', 'staffHiredAt', 'myPlayer', 'matchHistory',
+                'lastMatch', 'scoutTips', 'scoutHistory', 'scoutTipClaimed', 'scoutMission',
+                'sponsorSlots', 'stadiumSponsor', 'youthPlayers', 'formationDrives',
+                'nextMatchBonus', 'activeEvent', 'sponsorMarket'];
+            for (const field of clientFields) {
+                const mpVal = mpState[field];
+                const localVal = localBackup[field];
+                // Use localStorage if Supabase has default/empty value but localStorage has real data
+                const mpEmpty = mpVal === null || mpVal === undefined ||
+                    (Array.isArray(mpVal) && mpVal.length === 0) ||
+                    (typeof mpVal === 'object' && !Array.isArray(mpVal) && mpVal !== null && Object.keys(mpVal).length === 0);
+                const localHasData = localVal !== null && localVal !== undefined &&
+                    !(Array.isArray(localVal) && localVal.length === 0) &&
+                    !(typeof localVal === 'object' && !Array.isArray(localVal) && localVal !== null && Object.keys(localVal).length === 0);
+                if (mpEmpty && localHasData) {
+                    mpState[field] = localVal;
+                }
+            }
+            // Fans
+            if ((!mpState.club?.fans || mpState.club.fans === 50) && localBackup.club?.fans > 50) {
+                mpState.club.fans = localBackup.club.fans;
+            }
+        }
+
+        return mpState;
     }
     return loadLocal();
 }
