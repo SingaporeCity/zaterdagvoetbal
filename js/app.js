@@ -317,6 +317,10 @@ function showNegotiationResult(player, oldSalary, oldBonus, newSalary, newBonus)
 }
 
 function showOverallReveal(playerName, minVal, maxVal, realVal, starsMin, starsMax, realStars) {
+    // Clamp realVal within the displayed range to prevent animation issues
+    const safeMin = Math.min(minVal, realVal);
+    const safeMax = Math.max(maxVal, realVal);
+
     const hasStars = starsMin !== undefined && starsMax !== undefined && realStars !== undefined;
     // Build star slots: each uncertain star that will be revealed one by one
     const starSlotCount = hasStars ? Math.ceil(starsMax) : 0;
@@ -336,9 +340,9 @@ function showOverallReveal(playerName, minVal, maxVal, realVal, starsMin, starsM
             <div class="chairman-modal" style="max-width: 340px; text-align: center;">
                 <div class="reveal-player-name">${playerName}</div>
                 <div class="reveal-overall-box">
-                    <span class="reveal-number" id="reveal-min">${minVal}</span>
+                    <span class="reveal-number" id="reveal-min">${safeMin}</span>
                     <span class="reveal-dash">-</span>
-                    <span class="reveal-number" id="reveal-max">${maxVal}</span>
+                    <span class="reveal-number" id="reveal-max">${safeMax}</span>
                 </div>
                 <div class="reveal-label">ALG</div>
                 ${hasStars ? `
@@ -355,9 +359,9 @@ function showOverallReveal(playerName, minVal, maxVal, realVal, starsMin, starsM
         const minEl = document.getElementById('reveal-min');
         const maxEl = document.getElementById('reveal-max');
         const effectsEl = document.getElementById('reveal-effects');
-        let currentMin = minVal;
-        let currentMax = maxVal;
-        const totalSteps = Math.max(maxVal - realVal, realVal - minVal);
+        let currentMin = safeMin;
+        let currentMax = safeMax;
+        const totalSteps = Math.max(safeMax - realVal, realVal - safeMin);
         let step = 0;
 
         function getDelay() {
@@ -5881,8 +5885,10 @@ function generateTransferMarket() {
         starPlayer.stars = 0.5;
         starPlayer.starsMin = 0.5;
         starPlayer.starsMax = 1.5;
-        // Star player has lower overall
+        // Star player has lower overall — recalculate range to match
         starPlayer.overall = random(1, 4);
+        starPlayer.overallMin = Math.max(1, starPlayer.overall - random(1, 3));
+        starPlayer.overallMax = Math.min(99, starPlayer.overall + random(3, 8));
         starPlayer.signingBonus = random(100, 300);
         starPlayer.salary = random(5, 15);
     }
@@ -13704,112 +13710,114 @@ function populateSpecialistSelects() {
     const posAbbr = (pos) => POSITIONS[pos]?.abbr || pos;
     const posColor = (pos) => POSITIONS[pos]?.color || '#666';
 
-    const primary = gameState.club.colors.primary || '#1b5e20';
-    const secondary = gameState.club.colors.secondary || '#f5f0e1';
-
-    function renderShirtSvg(name, overall) {
-        const lastName = name.includes(' ') ? name.split(' ').pop() : name;
-        return `<svg viewBox="0 0 120 140" class="spec-shirt-svg">
-            <path d="M30,8 L20,12 L4,28 L14,38 L24,28 L24,130 L96,130 L96,28 L106,38 L116,28 L100,12 L90,8 C85,20 75,26 60,26 C45,26 35,20 30,8Z"
-                  fill="${primary}" stroke="${secondary}" stroke-width="2"/>
-            <path d="M30,8 C35,20 45,26 60,26 C75,26 85,20 90,8"
-                  fill="none" stroke="${secondary}" stroke-width="1.5"/>
-            <text x="60" y="72" text-anchor="middle" font-size="36" font-weight="900"
-                  fill="${secondary}" font-family="sans-serif">${overall}</text>
-            <text x="60" y="104" text-anchor="middle" font-size="${lastName.length > 10 ? 9 : lastName.length > 7 ? 11 : 13}" font-weight="800"
-                  fill="${secondary}" font-family="sans-serif" text-transform="uppercase"
-                  letter-spacing="1">${lastName.toUpperCase()}</text>
-        </svg>`;
-    }
-
-    function renderPlayerRow(p, isSelected) {
-        const color = posColor(p.position);
-        const energy = p.energy || 75;
-        const energyColor = energy > 70 ? '#4caf50' : energy >= 40 ? '#ff9800' : '#ef5350';
-        const stars = p.stars || 0;
-        return `
-            <div class="spec-player-row available-player ${isSelected ? 'selected' : ''}" data-player-id="${p.id}">
-                <span class="ap-pos" style="background:${color};color:#fff">${posAbbr(p.position)}</span>
-                <span class="ap-age">${p.age}j</span>
-                <span class="ap-name">${p.name}</span>
-                <span class="ap-energy"><span class="ap-energy-bar" style="width:${energy}%;background:${energyColor}"></span></span>
-                <span class="ap-overall" style="background:${color}">${p.overall}</span>
-                <span class="ap-stars">${renderStarsHTML(stars)}</span>
-            </div>
-        `;
-    }
-
-    const cards = document.querySelectorAll('.spec-card');
-    const dropdownMap = {
-        cornerTaker: 'corner-taker',
-        penaltyTaker: 'penalty-taker',
-        freekickTaker: 'freekick-taker',
-        captain: 'captain-select'
+    const roleLabels = {
+        captain: 'Aanvoerder',
+        penaltyTaker: 'Strafschopnemer',
+        cornerTaker: 'Cornernemer',
+        freekickTaker: 'Vrije trap nemer'
     };
 
-    for (const card of cards) {
-        const key = card.dataset.role;
+    // Update each row
+    const rows = document.querySelectorAll('.spec-row');
+    for (const row of rows) {
+        const key = row.dataset.role;
         if (!key) continue;
 
-        const dropdownId = dropdownMap[key];
-        const dropdown = document.getElementById(dropdownId);
-        if (!dropdown) continue;
+        const displayEl = document.getElementById(`spec-display-${key}`);
+        if (!displayEl) continue;
 
-        const emptyEl = card.querySelector('.spec-card-empty');
-        const shirtEl = card.querySelector('.spec-card-shirt');
-        const selectedEl = dropdown.querySelector('.spec-selected');
-        const optionsEl = dropdown.querySelector('.spec-options');
         const selectedId = gameState.specialists[key];
         const selectedPlayer = lineupPlayers.find(p => String(p.id) === String(selectedId));
 
-        // Show shirt or empty state
         if (selectedPlayer) {
-            card.classList.add('has-player');
-            shirtEl.innerHTML = renderShirtSvg(selectedPlayer.name, selectedPlayer.overall) +
-                `<span class="spec-shirt-role">${card.dataset.label}</span>`;
-            selectedEl.innerHTML = `<span class="spec-change-text">Wijzig</span><span class="spec-chevron"></span>`;
+            row.classList.add('has-player');
+            const color = posColor(selectedPlayer.position);
+            displayEl.innerHTML = `
+                <div class="spec-player-chip" data-role="${key}">
+                    <span class="spec-chip-pos" style="background:${color}">${posAbbr(selectedPlayer.position)}</span>
+                    <span class="spec-chip-name">${selectedPlayer.name}</span>
+                    <span class="spec-chip-overall" style="background:${color}">${selectedPlayer.overall}</span>
+                </div>`;
         } else {
-            card.classList.remove('has-player');
-            shirtEl.innerHTML = '';
-            selectedEl.innerHTML = `<span class="spec-change-text">Selecteer</span><span class="spec-chevron"></span>`;
+            row.classList.remove('has-player');
+            displayEl.innerHTML = `<button class="btn btn-secondary btn-small">Selecteer</button>`;
         }
 
-        // Render options list
-        let optionsHtml = `<div class="spec-player-row spec-clear-option" data-player-id="">
-            <span class="spec-clear-text">Geen specialist</span>
-        </div>`;
-        for (const p of lineupPlayers) {
-            optionsHtml += renderPlayerRow(p, String(p.id) === String(selectedId));
-        }
-        optionsEl.innerHTML = optionsHtml;
+        // Click row to open dropdown
+        row.onclick = () => openSpecialistDropdown(key, roleLabels[key], lineupPlayers);
+    }
+}
 
-        // Click on card opens dropdown
-        card.onclick = (e) => {
-            if (e.target.closest('.spec-options')) return;
-            e.stopPropagation();
-            document.querySelectorAll('.spec-dropdown.open').forEach(d => {
-                if (d !== dropdown) d.classList.remove('open');
-            });
-            dropdown.classList.toggle('open');
-        };
+function openSpecialistDropdown(roleKey, roleLabel, lineupPlayers) {
+    const overlay = document.getElementById('spec-dropdown-overlay');
+    const titleEl = document.getElementById('spec-dropdown-title');
+    const listEl = document.getElementById('spec-dropdown-list');
+    if (!overlay || !listEl) return;
 
-        // Option click handlers
-        optionsEl.querySelectorAll('.spec-player-row').forEach(row => {
-            row.onclick = (e) => {
-                e.stopPropagation();
-                const playerId = row.dataset.playerId;
-                gameState.specialists[key] = playerId || null;
-                dropdown.classList.remove('open');
-                saveGame();
-                populateSpecialistSelects();
-            };
-        });
+    const posAbbr = (pos) => POSITIONS[pos]?.abbr || pos;
+    const posColor = (pos) => POSITIONS[pos]?.color || '#666';
+    const selectedId = gameState.specialists[roleKey];
+
+    titleEl.textContent = roleLabel;
+
+    const groupOrder = ['attacker', 'midfielder', 'defender', 'goalkeeper'];
+    const groupLabels = { attacker: 'Aanval', midfielder: 'Middenveld', defender: 'Verdediging', goalkeeper: 'Keeper' };
+
+    // Group players by position group
+    const grouped = {};
+    for (const g of groupOrder) grouped[g] = [];
+    for (const p of lineupPlayers) {
+        const group = POSITIONS[p.position]?.group || 'midfielder';
+        if (grouped[group]) grouped[group].push(p);
     }
 
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.spec-dropdown.open').forEach(d => d.classList.remove('open'));
-    }, { once: true });
+    let html = `<div class="spec-dropdown-item clear-option" data-player-id="">Geen specialist</div>`;
+    for (const group of groupOrder) {
+        const players = grouped[group];
+        if (players.length === 0) continue;
+        html += `<div class="spec-dropdown-group-header">${groupLabels[group]}</div>`;
+        for (const p of players) {
+            const color = posColor(p.position);
+            const isSelected = String(p.id) === String(selectedId);
+            const energy = p.energy || 75;
+            const energyColor = energy > 70 ? '#4caf50' : energy >= 40 ? '#ff9800' : '#ef5350';
+            html += `
+                <div class="spec-dropdown-item available-player ${isSelected ? 'selected' : ''}" data-player-id="${p.id}">
+                    <span class="ap-pos" style="background:${color};color:#fff">${posAbbr(p.position)}</span>
+                    <span class="ap-age">${p.age}j</span>
+                    <span class="ap-name">${p.name}</span>
+                    <span class="ap-energy"><span class="ap-energy-bar" style="width:${energy}%;background:${energyColor}"></span></span>
+                    <span class="ap-overall" style="background:${color}">${p.overall}</span>
+                    <span class="ap-stars">${renderStarsHTML(p.stars || 0)}</span>
+                </div>`;
+        }
+    }
+    listEl.innerHTML = html;
+
+    // Show overlay
+    overlay.style.display = 'flex';
+
+    // Close button
+    document.getElementById('spec-dropdown-close').onclick = () => {
+        overlay.style.display = 'none';
+    };
+
+    // Click backdrop to close
+    overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.style.display = 'none';
+    };
+
+    // Player selection
+    listEl.querySelectorAll('.spec-dropdown-item').forEach(item => {
+        item.onclick = (e) => {
+            e.stopPropagation();
+            const playerId = item.dataset.playerId;
+            gameState.specialists[roleKey] = playerId || null;
+            overlay.style.display = 'none';
+            saveGame();
+            populateSpecialistSelects();
+        };
+    });
 }
 
 // ================================================

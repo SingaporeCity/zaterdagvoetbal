@@ -157,6 +157,12 @@ export function initMultiplayerUI(onStartGame) {
     document.getElementById('lobby-join-code')?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') document.getElementById('lobby-join-btn')?.click();
     });
+
+    // Toggle create/join section when user has leagues
+    document.getElementById('lobby-new-toggle')?.addEventListener('click', () => {
+        const choiceEl = document.getElementById('lobby-choice');
+        if (choiceEl) choiceEl.classList.toggle('expanded');
+    });
 }
 
 // ============================================
@@ -562,10 +568,19 @@ async function loadMyLeagues() {
         .eq('owner_id', user.id)
         .eq('is_ai', false);
 
+    const myLeaguesEl = document.getElementById('lobby-my-leagues');
+    const choiceEl = document.getElementById('lobby-choice');
+
     if (!clubs || clubs.length === 0) {
-        listEl.innerHTML = '<p class="mp-empty">Nog geen competities</p>';
+        if (myLeaguesEl) myLeaguesEl.style.display = 'none';
+        if (choiceEl) choiceEl.classList.remove('has-leagues');
+        listEl.innerHTML = '';
         return;
     }
+
+    // User has leagues — show "Mijn competities" prominently
+    if (myLeaguesEl) myLeaguesEl.style.display = 'block';
+    if (choiceEl) choiceEl.classList.add('has-leagues');
 
     listEl.innerHTML = clubs.map(c => {
         const league = c.leagues;
