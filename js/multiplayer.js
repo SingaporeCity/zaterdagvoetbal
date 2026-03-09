@@ -1141,6 +1141,57 @@ export async function getWeekSchedule(leagueId, season, week) {
 }
 
 /**
+ * Get the full season schedule with club names
+ * Returns array of rounds, each containing match objects with home/away names
+ */
+export async function getFullSchedule(leagueId, season) {
+    // Fetch schedule with club names via foreign key joins
+    const { data } = await supabase
+        .from('schedule')
+        .select('week, home_club_id, away_club_id, played, clubs_home:clubs!schedule_home_club_id_fkey(name), clubs_away:clubs!schedule_away_club_id_fkey(name)')
+        .eq('league_id', leagueId)
+        .eq('season', season)
+        .order('week', { ascending: true });
+
+    if (!data || data.length === 0) return [];
+
+    // Fetch match results for played matches
+    const { data: results } = await supabase
+        .from('match_results')
+        .select('week, home_club_id, away_club_id, home_score, away_score')
+        .eq('league_id', leagueId)
+        .eq('season', season);
+
+    // Index results by week+home+away for quick lookup
+    const resultMap = {};
+    (results || []).forEach(r => {
+        resultMap[`${r.week}_${r.home_club_id}_${r.away_club_id}`] = r;
+    });
+
+    // Group by week
+    const byWeek = {};
+    data.forEach(m => {
+        if (!byWeek[m.week]) byWeek[m.week] = [];
+        const result = resultMap[`${m.week}_${m.home_club_id}_${m.away_club_id}`];
+        byWeek[m.week].push({
+            home: m.clubs_home?.name || '?',
+            away: m.clubs_away?.name || '?',
+            homeScore: result?.home_score,
+            awayScore: result?.away_score,
+            played: m.played || !!result
+        });
+    });
+
+    // Convert to ordered array of rounds
+    const maxWeek = Math.max(...Object.keys(byWeek).map(Number));
+    const rounds = [];
+    for (let w = 1; w <= maxWeek; w++) {
+        rounds.push(byWeek[w] || []);
+    }
+    return rounds;
+}
+
+/**
  * Get club data (name, tactics, etc) by ID
  */
 export async function getClubData(clubId) {

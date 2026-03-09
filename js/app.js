@@ -59,7 +59,7 @@ import {
 } from './storage.js';
 
 // Import multiplayer systems
-import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent, getClubPlayers, insertPlayerToSupabase } from './multiplayer.js';
+import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent, getClubPlayers, insertPlayerToSupabase, getFullSchedule } from './multiplayer.js';
 import { subscribeToLeague, unsubscribeAll, fetchStandings, startCountdown, stopCountdown } from './realtime.js';
 import { supabase, isSupabaseAvailable } from './supabase.js';
 
@@ -11366,7 +11366,7 @@ function renderPlayerRatingsTab() {
     `;
 }
 
-function renderMatchProgram() {
+async function renderMatchProgram() {
     const container = document.getElementById('programma-schedule');
     if (!container || !gameState.standings || gameState.standings.length === 0) {
         if (container) container.innerHTML = '<p>Geen competitieschema beschikbaar.</p>';
@@ -11378,7 +11378,16 @@ function renderMatchProgram() {
     const standContainer = document.getElementById('programma-standings');
     if (standContainer) standContainer.innerHTML = renderCompactStandings(divisionNames);
 
-    const schedule = getSeasonSchedule(gameState.standings, gameState.week);
+    // In multiplayer, use real schedule from Supabase
+    let schedule;
+    if (isMultiplayer() && gameState.multiplayer?.leagueId) {
+        schedule = await getFullSchedule(gameState.multiplayer.leagueId, gameState.season || 1);
+    }
+    // Fallback to generated schedule for singleplayer or if Supabase fetch fails
+    if (!schedule || schedule.length === 0) {
+        schedule = getSeasonSchedule(gameState.standings, gameState.week);
+    }
+
     const playerTeam = gameState.standings.find(t => t.isPlayer)?.name || gameState.club.name;
     const currentWeek = gameState.week;
     const history = gameState.matchHistory || [];
@@ -11399,7 +11408,10 @@ function renderMatchProgram() {
             const historyEntry = isPlayerMatch ? currentSeasonHistory.find(h => h.week === weekNum) : null;
 
             let scoreHtml = '';
-            if (historyEntry) {
+            if (match.played) {
+                // Multiplayer: use scores from schedule table
+                scoreHtml = `<span class="program-result program-result-played">${match.homeScore ?? 0} - ${match.awayScore ?? 0}</span>`;
+            } else if (historyEntry) {
                 const homeScore = match.home === playerTeam ? historyEntry.playerScore : historyEntry.opponentScore;
                 const awayScore = match.away === playerTeam ? historyEntry.playerScore : historyEntry.opponentScore;
                 const resultClass = historyEntry.resultType === 'win' ? 'program-result-win' : historyEntry.resultType === 'loss' ? 'program-result-loss' : 'program-result-draw';
