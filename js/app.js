@@ -3515,6 +3515,42 @@ function renderScoutPage() {
     const scoutLevel = hasScout ? 1 : 0;
     const hasCentrum = gameState.club.division <= 5;
 
+    // Initialize scout tips early (before UI checks)
+    if (!gameState.scoutTips) gameState.scoutTips = [];
+    if (!gameState.scoutHistory) gameState.scoutHistory = [];
+
+    // Seed first tip for new games (voorzitter's son)
+    if (gameState.scoutTips.length === 0 && !gameState.scoutTipClaimed) {
+        const chairmanSon = createScoutedPlayer(0);
+        chairmanSon.name = `${randomFromArray(DUTCH_FIRST_NAMES)} Bakker`;
+        chairmanSon.age = 18;
+        chairmanSon.nationality = NATIONALITIES[0];
+        chairmanSon.tipSource = 'voorzitter';
+        gameState.scoutTips.push(chairmanSon);
+        saveGame();
+    }
+
+    // Voorzitter tip every 5 days (no scout hired)
+    if (scoutLevel === 0 && gameState.scoutTips.length === 0 && gameState.scoutTipClaimed) {
+        const mission = gameState.scoutMission;
+        const today = getTodayString();
+        const lastDate = mission.lastScoutDate;
+        let daysPassed = 999;
+        if (lastDate) {
+            const last = new Date(lastDate);
+            const now = new Date(today);
+            daysPassed = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+        }
+        if (daysPassed >= 5) {
+            const player = createScoutedPlayer(0);
+            player.tipSource = 'voorzitter';
+            gameState.scoutTips.push(player);
+            mission.lastScoutDate = today;
+            saveGame();
+            showNotification('De voorzitter heeft een tip voor je!', 'info');
+        }
+    }
+
     // Update header labels
     const levelLabel = document.getElementById('scout-level-label');
     if (levelLabel) levelLabel.textContent = '';
@@ -3632,47 +3668,6 @@ function renderScoutPage() {
                     <span>🔒</span> Vereist: 5e Klasse
                 </div>
             `;
-        }
-    }
-
-    // Initialize scout tips
-    if (!gameState.scoutTips) {
-        gameState.scoutTips = [];
-    }
-    if (!gameState.scoutHistory) {
-        gameState.scoutHistory = [];
-    }
-
-    // First tip is now seeded in initGame() for new games.
-    // For old saves that never got a tip, generate one:
-    if (gameState.scoutTips.length === 0 && !gameState.scoutTipClaimed) {
-        const chairmanSon = createScoutedPlayer(0);
-        chairmanSon.name = `${randomFromArray(DUTCH_FIRST_NAMES)} Bakker`;
-        chairmanSon.age = 18;
-        chairmanSon.nationality = NATIONALITIES[0];
-        chairmanSon.tipSource = 'voorzitter';
-        gameState.scoutTips.push(chairmanSon);
-        saveGame();
-    }
-
-    // Without scout: voorzitter tip every 5 days
-    if (scoutLevel === 0 && gameState.scoutTips.length === 0 && gameState.scoutTipClaimed) {
-        const mission = gameState.scoutMission;
-        const today = getTodayString();
-        const lastDate = mission.lastScoutDate;
-        let daysPassed = 999;
-        if (lastDate) {
-            const last = new Date(lastDate);
-            const now = new Date(today);
-            daysPassed = Math.floor((now - last) / (1000 * 60 * 60 * 24));
-        }
-        if (daysPassed >= 5) {
-            const player = createScoutedPlayer(0);
-            player.tipSource = 'voorzitter';
-            gameState.scoutTips.push(player);
-            mission.lastScoutDate = today;
-            saveGame();
-            showNotification('De voorzitter heeft een tip voor je!', 'info');
         }
     }
 
