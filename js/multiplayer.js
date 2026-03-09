@@ -333,7 +333,13 @@ async function joinLeague(code) {
             return;
         }
 
-        // Check player count
+        if (league.status === 'active') {
+            // Join an active league: replace an AI team via RPC
+            await joinActiveLeague(league, user);
+            return;
+        }
+
+        // Lobby: check player count (RLS allows viewing clubs in lobby leagues)
         const { count } = await supabase
             .from('clubs')
             .select('id', { count: 'exact', head: true })
@@ -347,10 +353,7 @@ async function joinLeague(code) {
             return;
         }
 
-        if (league.status === 'active') {
-            // Join an active league: replace an AI team
-            await joinActiveLeague(league, user);
-        } else {
+        {
             // Join lobby as normal
             console.log('[joinLeague] Inserting club for user', user.id);
             const { error: clubError } = await supabase
@@ -395,29 +398,26 @@ async function joinLeague(code) {
 async function joinActiveLeague(league, user) {
     const leagueId = league.id;
 
-    // Find an AI club to replace
-    const { data: aiClub } = await supabase
-        .from('clubs')
-        .select('id')
-        .eq('league_id', leagueId)
-        .eq('is_ai', true)
-        .limit(1)
-        .single();
+    // Replace an AI club via RPC (bypasses RLS, atomic with row lock)
+    const { data: replacedClubId, error: rpcError } = await supabase
+        .rpc('replace_ai_club', {
+            p_league_id: leagueId,
+            p_user_id: user.id,
+            p_club_name: 'FC Nieuw Team'
+        });
 
-    if (!aiClub) {
+    if (rpcError) {
+        console.error('[joinActiveLeague] RPC error:', rpcError);
+        document.getElementById('lobby-error').textContent = 'Er ging iets mis bij het deelnemen.';
+        return;
+    }
+
+    if (!replacedClubId) {
         document.getElementById('lobby-error').textContent = 'Geen plek meer in deze competitie.';
         return;
     }
 
-    // Take over the AI club: set owner, mark as human, rename
-    await supabase
-        .from('clubs')
-        .update({
-            owner_id: user.id,
-            is_ai: false,
-            name: 'FC Nieuw Team'
-        })
-        .eq('id', aiClub.id);
+    const aiClubId = replacedClubId;
 
     // Add to feed
     await supabase.from('league_feed').insert({
@@ -460,7 +460,7 @@ async function joinActiveLeague(league, user) {
     }
 
     // Enter the game directly
-    await enterLeague(leagueId, aiClub.id);
+    await enterLeague(leagueId, aiClubId);
 }
 
 /**
