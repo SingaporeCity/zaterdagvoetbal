@@ -1411,6 +1411,7 @@ function createScoutedPlayer(scoutLevel) {
     const playerAge = random(16, 45);
 
     const scoutPersonality = generatePersonality(8, 0.5);
+    const salary = calculateSalary(8, playerAge, stars);
 
     return {
         id: Date.now() + Math.random(),
@@ -1423,7 +1424,7 @@ function createScoutedPlayer(scoutLevel) {
         tag: tag.name,
         tagBonus: tag.bonus,
         personality: scoutPersonality,
-        salary: calculateSalary(8, playerAge, stars),
+        salary: salary,
         goals: 0,
         assists: 0,
         morale: random(60, 90),
