@@ -281,11 +281,14 @@ async function saveMultiplayer(gameState) {
 
         if (error) throw error;
 
+        // Helper: check if ID is a valid UUID (skip numeric IDs from singleplayer)
+        const isUUID = (id) => typeof id === 'string' && id.includes('-');
+
         // Sync player lineup positions
         if (gameState.lineup) {
             for (let i = 0; i < gameState.lineup.length; i++) {
                 const player = gameState.lineup[i];
-                if (player?.id) {
+                if (player?.id && isUUID(player.id)) {
                     await supabase
                         .from('players')
                         .update({ lineup_position: i })
@@ -293,7 +296,7 @@ async function saveMultiplayer(gameState) {
                 }
             }
             // Clear lineup_position for benched players
-            const lineupIds = gameState.lineup.filter(p => p).map(p => p.id);
+            const lineupIds = gameState.lineup.filter(p => p && isUUID(p.id)).map(p => p.id);
             if (lineupIds.length > 0) {
                 await supabase
                     .from('players')
@@ -306,7 +309,7 @@ async function saveMultiplayer(gameState) {
         // Sync player stats back to DB
         if (gameState.players?.length > 0) {
             for (const p of gameState.players) {
-                if (!p?.id) continue;
+                if (!p?.id || !isUUID(p.id)) continue;
                 await supabase
                     .from('players')
                     .update({

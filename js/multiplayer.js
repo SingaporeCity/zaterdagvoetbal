@@ -879,6 +879,17 @@ async function startLeague(onStartGame) {
  * Generate initial players for a club
  */
 async function generatePlayersForClub(clubId, leagueId, division) {
+    // Guard: don't generate if club already has players
+    const { data: existing } = await supabase
+        .from('players')
+        .select('id')
+        .eq('club_id', clubId)
+        .limit(1);
+    if (existing && existing.length > 0) {
+        console.log(`Club ${clubId} already has players, skipping generation`);
+        return;
+    }
+
     // Kelderklasse: old-timers squad (40-55yr, ALG 3-7) with 3 young guys (20-27yr, ALG 2-3)
     const positions = [
         'keeper', 'keeper',

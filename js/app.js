@@ -6471,7 +6471,8 @@ async function handleTransferBuy(playerId) {
             gameState.club.budget -= totalCost;
             gameState.players.push(player);
             if (isMultiplayer()) {
-                insertPlayerToSupabase(player, gameState.multiplayer.clubId, gameState.multiplayer.leagueId);
+                const dbPlayer = await insertPlayerToSupabase(player, gameState.multiplayer.clubId, gameState.multiplayer.leagueId);
+                if (dbPlayer) player.id = dbPlayer.id; // sync local ID with DB UUID
             }
             gameState.transferMarket.players = gameState.transferMarket.players.filter(p => p.id !== player.id);
             gameState.stats.totalTransfers = (gameState.stats.totalTransfers || 0) + 1;
@@ -6552,7 +6553,8 @@ async function finalizeFreeAgentTransfer(player, salary, bonus) {
     gameState.club.budget -= bonus;
     gameState.players.push(player);
     if (isMultiplayer()) {
-        insertPlayerToSupabase(player, gameState.multiplayer.clubId, gameState.multiplayer.leagueId);
+        const dbPlayer = await insertPlayerToSupabase(player, gameState.multiplayer.clubId, gameState.multiplayer.leagueId);
+        if (dbPlayer) player.id = dbPlayer.id;
     }
     gameState.transferMarket.players = gameState.transferMarket.players.filter(p => p.id !== player.id);
     // Achievement flags
