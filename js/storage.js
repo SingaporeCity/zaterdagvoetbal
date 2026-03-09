@@ -107,6 +107,25 @@ function gameStateToClubRecord(gameState) {
         daily_checklist: gameState.dailyChecklist || {},
         scouting_network: gameState.scoutingNetwork || 'none',
         onboarding_completed: gameState.onboardingCompleted || false,
+        client_state: {
+            hiredStaff: gameState.hiredStaff || { trainers: [], medisch: [] },
+            staffHiredAt: gameState.staffHiredAt || {},
+            myPlayer: gameState.myPlayer || null,
+            matchHistory: gameState.matchHistory || [],
+            lastMatch: gameState.lastMatch || null,
+            scoutTips: gameState.scoutTips || [],
+            scoutHistory: gameState.scoutHistory || [],
+            scoutTipClaimed: gameState.scoutTipClaimed || false,
+            scoutMission: gameState.scoutMission || null,
+            sponsorSlots: gameState.sponsorSlots || { bord: null },
+            stadiumSponsor: gameState.stadiumSponsor || null,
+            youthPlayers: gameState.youthPlayers || [],
+            formationDrives: gameState.formationDrives || {},
+            nextMatchBonus: gameState.nextMatchBonus || 0,
+            fans: gameState.club?.fans || 50,
+            activeEvent: gameState.activeEvent || null,
+            sponsorMarket: gameState.sponsorMarket || { offers: [], generatedForWeek: 0 },
+        },
         updated_at: new Date().toISOString()
     };
 }
@@ -115,6 +134,7 @@ function gameStateToClubRecord(gameState) {
  * Transform Supabase club record + players to gameState
  */
 function clubRecordToGameState(club, players, standings, leagueData) {
+    const cs = club.client_state || {};
     return {
         club: {
             name: club.name,
@@ -122,6 +142,7 @@ function clubRecordToGameState(club, players, standings, leagueData) {
             budget: Number(club.budget),
             reputation: club.reputation,
             position: 3,
+            fans: cs.fans || 50,
             colors: club.colors || { primary: '#1b5e20', secondary: '#f5f0e1', accent: '#ff9800' },
             settingsChangedThisSeason: false,
             stats: club.stats?.founded ? club.stats : {
@@ -135,12 +156,12 @@ function clubRecordToGameState(club, players, standings, leagueData) {
         eventHistory: club.event_history || { events: [], lastEventTime: null },
         stats: club.stats || {},
         seasonHistory: club.season_history || [],
-        activeEvent: null,
-        lastMatch: null,
-        matchHistory: [],
+        activeEvent: cs.activeEvent || null,
+        lastMatch: cs.lastMatch || null,
+        matchHistory: cs.matchHistory || [],
         stadium: club.stadium || {},
         players: players.map(supabasePlayerToLocal),
-        youthPlayers: [], // loaded separately
+        youthPlayers: cs.youthPlayers || [],
         lineup: buildLineupFromPlayers(players),
         formation: club.formation || '4-4-2',
         tactics: club.tactics || { mentaliteit: 'normaal', offensief: 'gebalanceerd', speltempo: 'normaal', veldbreedte: 'gebalanceerd', dekking: 'zone' },
@@ -153,14 +174,22 @@ function clubRecordToGameState(club, players, standings, leagueData) {
         nextMatch: { opponent: 'TBD', time: Date.now() },
         standings: standings || [],
         scoutSearch: { minAge: 16, maxAge: 35, position: 'all', results: [] },
-        scoutMission: { active: false, startTime: null, duration: 3600000, pendingPlayer: null, lastScoutDate: null },
+        scoutMission: cs.scoutMission || { active: false, startTime: null, duration: 3600000, pendingPlayer: null, lastScoutDate: null },
+        scoutTips: cs.scoutTips || [],
+        scoutHistory: cs.scoutHistory || [],
+        scoutTipClaimed: cs.scoutTipClaimed || false,
         finances: club.finances || { history: [] },
         staff: club.staff || { fysio: null, scout: null, dokter: null },
+        hiredStaff: cs.hiredStaff || { trainers: [], medisch: [] },
+        staffHiredAt: cs.staffHiredAt || {},
         assistantTrainers: club.assistant_trainers || {},
         sponsor: club.sponsor,
-        stadiumSponsor: null,
-        sponsorSlots: { bord: null },
-        sponsorMarket: { offers: [], generatedForWeek: 0 },
+        stadiumSponsor: cs.stadiumSponsor || null,
+        sponsorSlots: cs.sponsorSlots || { bord: null },
+        sponsorMarket: cs.sponsorMarket || { offers: [], generatedForWeek: 0 },
+        formationDrives: cs.formationDrives || {},
+        nextMatchBonus: cs.nextMatchBonus || 0,
+        myPlayer: cs.myPlayer || null,
         scoutingNetwork: club.scouting_network || 'none',
         dailyChecklist: club.daily_checklist || {},
         onboardingCompleted: club.onboarding_completed || false,
@@ -233,14 +262,24 @@ async function saveMultiplayer(gameState) {
 
     try {
         const clubData = gameStateToClubRecord(gameState);
-        const { error } = await supabase
+        let { error } = await supabase
             .from('clubs')
             .update(clubData)
             .eq('id', currentClubId);
 
+        // If client_state column doesn't exist yet, retry without it
+        if (error && error.message?.includes('client_state')) {
+            delete clubData.client_state;
+            const retry = await supabase
+                .from('clubs')
+                .update(clubData)
+                .eq('id', currentClubId);
+            error = retry.error;
+        }
+
         if (error) throw error;
 
-        // Also sync player lineup positions
+        // Sync player lineup positions
         if (gameState.lineup) {
             for (let i = 0; i < gameState.lineup.length; i++) {
                 const player = gameState.lineup[i];
@@ -259,6 +298,29 @@ async function saveMultiplayer(gameState) {
                     .update({ lineup_position: null })
                     .eq('club_id', currentClubId)
                     .not('id', 'in', `(${lineupIds.join(',')})`);
+            }
+        }
+
+        // Sync player stats back to DB
+        if (gameState.players?.length > 0) {
+            for (const p of gameState.players) {
+                if (!p?.id) continue;
+                await supabase
+                    .from('players')
+                    .update({
+                        morale: p.morale,
+                        energy: p.energy,
+                        fitness: p.condition ?? p.fitness ?? 80,
+                        goals: p.goals || 0,
+                        assists: p.assists || 0,
+                        salary: p.salary,
+                        contract_weeks: p.contractWeeks,
+                        xp: p.xp || 0,
+                        overall: p.overall,
+                        listed_for_sale: p.listedForSale || false,
+                        matches_together: p.matchesTogether || 0,
+                    })
+                    .eq('id', p.id);
             }
         }
 

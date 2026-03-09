@@ -5628,6 +5628,13 @@ async function buyoutPlayer(playerId) {
         }
     }
 
+    // Remove from Supabase in multiplayer
+    if (isMultiplayer()) {
+        supabase.from('players').delete().eq('id', playerId).then(({ error }) => {
+            if (error) console.error('Failed to delete player from DB:', error);
+        });
+    }
+
     const modal = document.getElementById('player-modal');
     if (modal) modal.classList.remove('active');
 
@@ -6462,6 +6469,9 @@ async function handleTransferBuy(playerId) {
             player.energy = 100;
             gameState.club.budget -= totalCost;
             gameState.players.push(player);
+            if (isMultiplayer()) {
+                insertPlayerToSupabase(player, gameState.multiplayer.clubId, gameState.multiplayer.leagueId);
+            }
             gameState.transferMarket.players = gameState.transferMarket.players.filter(p => p.id !== player.id);
             gameState.stats.totalTransfers = (gameState.stats.totalTransfers || 0) + 1;
             gameState.stats.seasonSpending = (gameState.stats.seasonSpending || 0) + totalCost;
@@ -6540,6 +6550,9 @@ async function finalizeFreeAgentTransfer(player, salary, bonus) {
     delete player.starsMax;
     gameState.club.budget -= bonus;
     gameState.players.push(player);
+    if (isMultiplayer()) {
+        insertPlayerToSupabase(player, gameState.multiplayer.clubId, gameState.multiplayer.leagueId);
+    }
     gameState.transferMarket.players = gameState.transferMarket.players.filter(p => p.id !== player.id);
     // Achievement flags
     if (realVal <= 5) gameState.stats.boughtBadPlayer = true;
