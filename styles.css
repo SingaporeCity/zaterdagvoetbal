@@ -2360,50 +2360,55 @@ body {
     gap: 32px;
 }
 
-.stadium-fans {
-    text-align: center;
-    background: var(--bg-card);
-    padding: 8px 16px;
-    border-radius: var(--card-radius);
-    border: 2px solid var(--border);
-    flex: 1;
-    min-width: 0;
+/* Stadium map overlay — fans & capacity badge */
+.stadium-map-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    background: rgba(10, 18, 10, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 248, 225, 0.08);
+    border-radius: 10px;
+    padding: 6px 14px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
 }
 
-.fans-number {
-    display: block;
-    font-family: var(--font-display);
-    font-size: 1.5rem;
-    color: var(--accent-green-dim);
-    line-height: 1.2;
+.smo-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
-.fans-label {
-    font-size: 0.7rem;
+.smo-icon {
+    width: 14px;
+    height: 14px;
     color: var(--text-muted);
+    flex-shrink: 0;
 }
 
-.stadium-capacity {
-    text-align: center;
-    background: var(--bg-card);
-    padding: 8px 16px;
-    border-radius: var(--card-radius);
-    border: 2px solid var(--border);
-    flex: 1;
-    min-width: 0;
-}
-
-.capacity-number {
-    display: block;
+.smo-value {
     font-family: var(--font-display);
-    font-size: 1.5rem;
+    font-size: 1.05rem;
     color: var(--accent-green-dim);
-    line-height: 1.2;
+    line-height: 1;
 }
 
-.capacity-label {
-    font-size: 0.7rem;
+.smo-label {
+    font-size: 0.58rem;
     color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.smo-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(255, 248, 225, 0.1);
+    margin: 0 10px;
 }
 
 /* Stadium Floor Plan */
@@ -16983,10 +16988,7 @@ body {
 }
 
 .stadium-intro-stats {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
-    margin-left: auto;
+    display: none; /* moved to map overlay */
 }
 
 
@@ -27740,12 +27742,17 @@ body {
         aspect-ratio: auto;
         gap: 4px;
     }
-    .stadium-intro-stats {
-        flex-wrap: wrap;
-        gap: 8px;
-    }
     .stadium-map-container {
         min-height: auto;
+    }
+    .stadium-map-overlay {
+        top: 6px;
+        left: 6px;
+        padding: 4px 10px;
+        border-radius: 8px;
+    }
+    .smo-value {
+        font-size: 0.9rem;
     }
     .stadium-upgrade-panel {
         position: fixed !important;
