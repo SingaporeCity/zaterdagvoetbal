@@ -25591,27 +25591,20 @@ body {
     opacity: 0.55;
 }
 
-/* Mud splatters */
-.mp-bg-mud1 {
-    width: 140px;
-    bottom: 20%;
-    left: 25%;
+/* Player 3 — keeper, bottom right */
+.mp-bg-player3 {
+    width: 95px;
+    bottom: 4%;
+    right: 6%;
+    opacity: 0.6;
+}
+
+/* Player 4 — blue kit, bottom center-left */
+.mp-bg-player4 {
+    width: 85px;
+    bottom: 12%;
+    left: 22%;
     opacity: 0.5;
-}
-
-.mp-bg-mud2 {
-    width: 100px;
-    top: 22%;
-    right: 18%;
-    opacity: 0.45;
-}
-
-/* Corner flag — bottom right */
-.mp-bg-flag {
-    width: 65px;
-    bottom: 6%;
-    right: 10%;
-    opacity: 0.65;
 }
 
 /* Whistle — left center area */
@@ -25627,13 +25620,13 @@ body {
 @media (max-width: 768px) {
     .mp-bg-dugout,
     .mp-bg-whistle,
-    .mp-bg-mud2 {
+    .mp-bg-player3,
+    .mp-bg-player4 {
         display: none;
     }
     .mp-bg-beer { width: 60px; top: 4%; left: 4%; }
     .mp-bg-player { width: 70px; bottom: 3%; left: 4%; }
     .mp-bg-player2 { width: 60px; top: 3%; right: 4%; }
-    .mp-bg-flag { width: 40px; }
 }
 
 .mp-logo h1 {
