@@ -16582,21 +16582,22 @@ async function initMultiplayerGame(detail) {
         gameState.nextMatch = gameState.nextMatch || {};
         gameState.nextMatch.time = Date.now() - 1000;
 
-        // Fetch scheduled opponent from Supabase
+        // Fetch scheduled opponent from Supabase (await so it's ready before rendering)
         if (gameState.multiplayer.clubId) {
-            getScheduledOpponent(
-                leagueId,
-                gameState.season || 1,
-                gameState.week || 1,
-                gameState.multiplayer.clubId
-            ).then(opp => {
+            try {
+                const opp = await getScheduledOpponent(
+                    leagueId,
+                    gameState.season || 1,
+                    gameState.week || 1,
+                    gameState.multiplayer.clubId
+                );
                 if (opp) {
                     gameState.nextMatch.opponent = opp.name;
                     gameState.nextMatch.isHome = opp.isHome;
-                    const awayTeamName = document.getElementById('away-team-name');
-                    if (awayTeamName) awayTeamName.textContent = opp.name;
                 }
-            }).catch(() => {});
+            } catch (e) {
+                console.warn('Could not fetch scheduled opponent:', e);
+            }
         }
 
         // Move global tiles into dashboard header
