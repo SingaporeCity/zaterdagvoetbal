@@ -10723,6 +10723,28 @@ async function syncStandingsFromSupabase() {
 }
 
 function setNextMatch() {
+    if (isMultiplayer() && gameState.multiplayer?.clubId) {
+        // Multiplayer: fetch opponent from Supabase schedule
+        gameState.nextMatch = {
+            opponent: 'Laden...',
+            time: Date.now() - 1000
+        };
+        getScheduledOpponent(
+            gameState.multiplayer.leagueId,
+            gameState.season || 1,
+            gameState.week || 1,
+            gameState.multiplayer.clubId
+        ).then(opp => {
+            if (opp) {
+                gameState.nextMatch.opponent = opp.name;
+                gameState.nextMatch.isHome = opp.isHome;
+                const awayTeamName = document.getElementById('away-team-name');
+                if (awayTeamName) awayTeamName.textContent = opp.name;
+            }
+        }).catch(() => {});
+        return;
+    }
+
     const nextOpponent = getNextOpponent(gameState.standings, gameState.week);
     if (nextOpponent) {
         gameState.nextMatch = {
