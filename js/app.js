@@ -2448,8 +2448,12 @@ function initLineupDragDrop() {
         el.addEventListener('dragstart', (e) => {
             const playerId = parsePlayerId(el.dataset.playerId);
             const slotIndex = parseInt(el.closest('.lineup-slot').dataset.slotIndex);
+            let player = gameState.players.find(p => p.id === playerId);
+            if (!player && playerId === 'myplayer') {
+                player = gameState.lineup[slotIndex]; // already in lineup
+            }
             lineupDragData = {
-                player: gameState.players.find(p => p.id === playerId),
+                player: player,
                 fromSlot: slotIndex
             };
             el.classList.add('dragging');
@@ -2499,7 +2503,18 @@ function parsePlayerId(raw) {
 
 function handleAvailablePlayerDragStart(e) {
     const playerId = parsePlayerId(e.target.dataset.playerId);
-    const player = gameState.players.find(p => p.id === playerId);
+    let player = gameState.players.find(p => p.id === playerId);
+    if (!player && playerId === 'myplayer') {
+        const mp = initMyPlayer();
+        const mpOverall = Math.round((mp.attributes.SNE + mp.attributes.TEC + mp.attributes.PAS + mp.attributes.SCH + mp.attributes.VER + mp.attributes.FYS) / 6);
+        player = {
+            id: 'myplayer', name: mp.name, age: mp.age, position: mp.position,
+            overall: mpOverall, stars: mp.stars || 1, isMyPlayer: true,
+            energy: mp.energy || 100,
+            nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
+            attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
+        };
+    }
     lineupDragData = {
         player: player,
         fromSlot: null
