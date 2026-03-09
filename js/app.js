@@ -2091,10 +2091,12 @@ function renderFormationDropdown() {
 
         gameState.formation = newFormation;
         gameState.lineup = newLineup;
+        gameState.stats.changedFormation = true;
         renderLineupPitch();
         renderAvailablePlayers();
         updateLineupFit();
         updateFormationDrive();
+        triggerAchievementCheck();
     };
 
     updateFormationDrive();

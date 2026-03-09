@@ -2052,6 +2052,15 @@ const ACHIEVEMENTS = {
         reward: { managerXP: 20 },
         check: (state) => state.stats?.firedOldPlayer === true
     },
+    alsofVerstand: {
+        id: 'alsofVerstand',
+        name: 'Ik doe net alsof ik er verstand van heb',
+        description: 'Pas je formatie aan',
+        category: CATEGORIES.SPECIAL,
+        icon: '📋',
+        reward: { managerXP: 15 },
+        check: (state) => state.stats?.changedFormation === true
+    },
     tevredenKlant: {
         id: 'tevredenKlant',
         name: 'En weer een tevreden klant',
