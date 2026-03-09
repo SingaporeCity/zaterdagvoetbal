@@ -59,7 +59,7 @@ import {
 } from './storage.js';
 
 // Import multiplayer systems
-import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent, getClubPlayers } from './multiplayer.js';
+import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent, getClubPlayers, insertPlayerToSupabase } from './multiplayer.js';
 import { subscribeToLeague, unsubscribeAll, fetchStandings, startCountdown, stopCountdown } from './realtime.js';
 import { supabase, isSupabaseAvailable } from './supabase.js';
 
@@ -3837,6 +3837,15 @@ window.acceptScoutTip = async function(playerId) {
     player.salary = finalSalary;
     player.energy = 100;
     player.condition = 100;
+
+    // In multiplayer, insert the player into Supabase
+    if (isMultiplayer() && gameState.multiplayer?.clubId && gameState.multiplayer?.leagueId) {
+        const dbPlayer = await insertPlayerToSupabase(player, gameState.multiplayer.clubId, gameState.multiplayer.leagueId);
+        if (dbPlayer) {
+            player.id = dbPlayer.id; // Use the DB-generated UUID
+        }
+    }
+
     gameState.players.push(player);
     gameState.scoutTipClaimed = true;
     gameState.stats.signedScouted = (gameState.stats.signedScouted || 0) + 1;

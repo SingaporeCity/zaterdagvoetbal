@@ -923,7 +923,7 @@ async function generatePlayersForClub(clubId, leagueId, division) {
             potential: overall,
             attributes: { ...attributes, _stars: stars },
             morale: rnd(60, 90),
-            condition: rnd(70, 100),
+            fitness: rnd(70, 100),
             energy: rnd(60, 100),
             salary: Math.round(5 + (overall / 10) + stars * 3 + rnd(0, 3)),
             lineup_position: idx < 11 ? idx : null
@@ -1156,6 +1156,50 @@ export async function getClubPlayers(clubId) {
         .eq('club_id', clubId)
         .order('lineup_position', { ascending: true, nullsFirst: false });
     return data || [];
+}
+
+/**
+ * Insert a single player into the Supabase players table
+ * Used when contracting a scouted player in multiplayer
+ */
+export async function insertPlayerToSupabase(player, clubId, leagueId) {
+    const natCode = typeof player.nationality === 'object'
+        ? (player.nationality.code || 'nl').toLowerCase()
+        : (player.nationality || 'nl');
+
+    const record = {
+        club_id: clubId,
+        league_id: leagueId,
+        name: player.name,
+        age: player.age,
+        position: player.position,
+        nationality: natCode,
+        overall: player.overall,
+        potential: player.potential || player.overall,
+        attributes: player.attributes || {},
+        personality: player.personality || null,
+        tag: player.tag || null,
+        salary: player.salary || 0,
+        stars: player.stars || 0,
+        goals: player.goals || 0,
+        assists: player.assists || 0,
+        morale: player.morale || 70,
+        fitness: player.condition || 90,
+        energy: player.energy || 80,
+        lineup_position: null
+    };
+
+    const { data, error } = await supabase
+        .from('players')
+        .insert(record)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Failed to insert player:', error);
+        return null;
+    }
+    return data;
 }
 
 /**
