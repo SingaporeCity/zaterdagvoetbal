@@ -13346,7 +13346,7 @@ const SPONSORS = {
         name: 'Café Het Gouden Paard',
         tagline: 'Soms is het druk, soms niet',
         description: 'Gezellig kroegje met een gokkast achter. Winnen levert bonusrondes op.',
-        matchIncome: 30,
+        matchIncome: 40,
         winBonus: 25,
         icon: '🍺',
         duration: 10
@@ -13354,8 +13354,8 @@ const SPONSORS = {
     intimico: {
         name: 'intimico.nl',
         tagline: 'Ontdek Je Sensualiteit',
-        description: 'Chique lingerielabel. Betaalt bescheiden, maar bij winst gaat de champagne open.',
-        matchIncome: 15,
+        description: 'Chique lingerielabel. Betaalt goed en bij winst gaat de champagne open.',
+        matchIncome: 50,
         winBonus: 75,
         icon: '💗',
         shirtName: 'Intimico 💗',
