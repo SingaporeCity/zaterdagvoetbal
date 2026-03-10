@@ -1033,32 +1033,32 @@ async function generateSchedule(leagueId, season, clubIds, humanClubIds = []) {
         roundMatches.push(roundArr);
     }
 
-    // If exactly 2 human players, ensure they face each other in week 1
-    if (humanClubIds.length === 2) {
-        const [h1, h2] = humanClubIds;
+    // Prioritize human-vs-human matches early in the season
+    // Sort rounds within each half so rounds with more human matches come first
+    if (humanClubIds.length >= 2) {
+        const humanSet = new Set(humanClubIds);
         const halfSize = n - 1; // rounds per half (7 for 8 teams)
 
-        // Find round in first half where h1 vs h2
-        const firstHalfIdx = roundMatches.findIndex((round, idx) =>
-            idx < halfSize && round.some(m =>
-                (m.home === h1 && m.away === h2) || (m.home === h2 && m.away === h1)
-            )
-        );
-
-        if (firstHalfIdx >= 0) {
-            console.log(`[generateSchedule] Human match at round ${firstHalfIdx}, swapping to week 1`);
-            if (firstHalfIdx > 0) {
-                [roundMatches[0], roundMatches[firstHalfIdx]] = [roundMatches[firstHalfIdx], roundMatches[0]];
-            }
-
-            // Also swap the corresponding second-half round to keep home/away balanced
-            const secondHalfIdx = firstHalfIdx + halfSize;
-            if (secondHalfIdx < rounds && halfSize < rounds) {
-                [roundMatches[halfSize], roundMatches[secondHalfIdx]] = [roundMatches[secondHalfIdx], roundMatches[halfSize]];
-            }
-        } else {
-            console.warn('[generateSchedule] Could not find human match in first half!');
+        function countHumanMatches(round) {
+            return round.filter(m => humanSet.has(m.home) && humanSet.has(m.away)).length;
         }
+
+        // Sort first half (indices 0..halfSize-1): most human matches first
+        const firstHalf = roundMatches.slice(0, halfSize);
+        const secondHalf = roundMatches.slice(halfSize);
+
+        // Create paired indices so we can keep first/second half rounds linked
+        const paired = firstHalf.map((round, i) => ({ first: round, second: secondHalf[i], humanCount: countHumanMatches(round) }));
+        paired.sort((a, b) => b.humanCount - a.humanCount);
+
+        // Write back sorted order
+        for (let i = 0; i < paired.length; i++) {
+            roundMatches[i] = paired[i].first;
+            roundMatches[i + halfSize] = paired[i].second;
+        }
+
+        const totalHumanFirst = paired.reduce((s, p) => s + p.humanCount, 0);
+        console.log(`[generateSchedule] ${humanClubIds.length} humans, ${totalHumanFirst} human-vs-human matches in first half, reordered`);
     }
 
     // Flatten to match records with correct week numbers
