@@ -3957,7 +3957,10 @@ window.keepScouting = function(playerId) {
     const player = gameState.scoutTips.splice(idx, 1)[0];
     gameState.scoutHistory.push(player);
     gameState.scoutTipClaimed = true;
-    gameState.scoutMission.lastScoutDate = getTodayString();
+    // Only mark scout as "used today" if this was an actual scout tip (not voorzitter)
+    if (player.tipSource !== 'voorzitter') {
+        gameState.scoutMission.lastScoutDate = getTodayString();
+    }
     saveGame();
     renderScoutPage();
     showNotification('Speler toegevoegd aan de scoutinglijst. Na elke wedstrijd wordt het rapport nauwkeuriger.', 'success');
