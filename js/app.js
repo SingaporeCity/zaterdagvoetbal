@@ -13346,7 +13346,7 @@ const SPONSORS = {
         name: 'Café Het Gouden Paard',
         tagline: 'Soms is het druk, soms niet',
         description: 'Gezellig kroegje met een gokkast achter. Winnen levert bonusrondes op.',
-        matchIncome: 40,
+        matchIncome: 30,
         winBonus: 25,
         icon: '🍺',
         duration: 10
@@ -13354,8 +13354,8 @@ const SPONSORS = {
     intimico: {
         name: 'intimico.nl',
         tagline: 'Ontdek Je Sensualiteit',
-        description: 'Chique lingerielabel. Betaalt goed en bij winst gaat de champagne open.',
-        matchIncome: 50,
+        description: 'Chique lingerielabel. Betaalt bescheiden, maar bij winst gaat de champagne open.',
+        matchIncome: 15,
         winBonus: 75,
         icon: '💗',
         shirtName: 'Intimico 💗',
@@ -13396,7 +13396,7 @@ const SPONSOR_POOL = [
     { id: 'bord_fysiotherapie', slot: 'bord', name: 'Fysio Topfit', tagline: 'Snel terug op het veld', icon: '💪', weeklyIncome: 20, minReputation: 5, duration: 4 },
     { id: 'bord_accountant', slot: 'bord', name: 'Boekhouder Balans BV', tagline: 'De cijfers kloppen altijd', icon: '📊', weeklyIncome: 50, minReputation: 25, duration: 10 },
     { id: 'bord_tuincentrum', slot: 'bord', name: 'Tuincentrum Groen & Groei', tagline: 'Het gras is hier altijd groener', icon: '🌿', weeklyIncome: 30, minReputation: 8, duration: 6 },
-    { id: 'bord_intimico_admin', slot: 'bord', name: 'Intimico Admin', tagline: 'Sexy data in een oogopslag', icon: '💚', weeklyIncome: 10, minReputation: 0, duration: 6 },
+    { id: 'bord_intimico_admin', slot: 'bord', name: 'Intimico Admin', tagline: 'Sexy data in een oogopslag', icon: '💚', weeklyIncome: 50, minReputation: 0, duration: 6 },
 ];
 
 const SCOUTING_NETWORKS = {
@@ -14412,7 +14412,7 @@ function renderStadiumMap() {
     // ===== STADIUM (tribune) =====
     const tribuneColors = ['#6a4a2a', '#5a5a5a', '#4a4a6a', '#3a3a7a', '#8a6a0a', '#2a5a8a', '#1a4a6a', '#3a3a5a', '#4a2a5a', '#6a3a1a'];
     const tc = tribuneColors[Math.min(tribuneLevel, tribuneColors.length - 1)];
-    const levelColors = [['#2e7d32','#4ade80'],['#1b5e20','#4ade80'],['#1565c0','#42a5f5'],['#6a1b9a','#ce93d8'],['#e65100','#ffd54f'],['#0d47a1','#64b5f6'],['#1a237e','#7986cb'],['#4a148c','#b39ddb'],['#b71c1c','#ef9a9a'],['#f57f17','#ffd54f']];
+    const levelColors = [['#2e7d32','#90a4ae'],['#1b5e20','#b0bec5'],['#1565c0','#42a5f5'],['#6a1b9a','#ce93d8'],['#e65100','#ffd54f'],['#0d47a1','#64b5f6'],['#1a237e','#7986cb'],['#4a148c','#b39ddb'],['#b71c1c','#ef9a9a'],['#f57f17','#ffd54f']];
     const tColors = levelColors[Math.min(tribuneLevel, levelColors.length - 1)];
     const isStadActive = currentStadiumCategory === 'tribune';
 
