@@ -4256,10 +4256,9 @@ function renderProfileTraining() {
                     <div class="training-actions-header">Dagelijkse actie <span class="training-actions-hint ${!trainedToday ? 'training-hint-urgent' : ''}">${trainedToday ? '(vandaag al gebruikt)' : '(1 per dag — kies slim!)'}</span></div>
                     <div class="training-actions-col">
                         <div class="training-action-card ${!hasIndividualTrainer ? 'locked' : ''} ${canTrain ? 'action-available' : ''}">
-                            <div class="training-sec-icon">${hasIndividualTrainer ? '&#127939;' : '&#128274;'}</div>
                             <div class="training-action-info">
                                 <div class="training-sec-title">Trainen</div>
-                                <div class="training-sec-desc">De manier om je speler beter te maken. Verdien <strong>+25 XP</strong> en werk naar meer skill punten.</div>
+                                <div class="training-sec-desc">De manier om je speler beter te maken. Verdien <strong>+100 XP</strong> en werk naar meer skill punten.</div>
                                 ${!hasIndividualTrainer ? '<div class="training-sec-warning">Je hebt een individuele trainer nodig!</div>' : ''}
                             </div>
                             ${hasIndividualTrainer
@@ -4267,7 +4266,6 @@ function renderProfileTraining() {
                                 : `<button class="btn btn-sm btn-primary" onclick="window.navigateTo('staff')">Aannemen</button>`}
                         </div>
                         <div class="training-action-card ${canSpy ? 'action-available' : ''}">
-                            <div class="training-sec-icon">&#128373;</div>
                             <div class="training-action-info">
                                 <div class="training-sec-title">Spioneren</div>
                                 <div class="training-sec-desc">Gluur vanuit de bosjes naar de training van <strong>${opponentName}</strong> en ontdek hun opstelling en zwakke plekken. Geeft een <strong>bonus voor de volgende wedstrijd</strong>.</div>
@@ -4275,7 +4273,6 @@ function renderProfileTraining() {
                             <button class="btn btn-sm ${canSpy ? 'btn-primary' : 'btn-secondary'}" onclick="trainMyPlayer('spy')" ${!canSpy ? 'disabled' : ''}>Spioneer</button>
                         </div>
                         <div class="training-action-card ${!hasFysio ? 'locked' : ''} ${canMassage ? 'action-available' : ''} ${hasFysio && mp.energy >= 100 ? 'action-done' : ''}">
-                            <div class="training-sec-icon">${!hasFysio ? '&#128274;' : mp.energy >= 100 ? '&#9989;' : '&#128134;'}</div>
                             <div class="training-action-info">
                                 <div class="training-sec-title">Massage</div>
                                 <div class="training-sec-desc">${!hasFysio
@@ -5373,8 +5370,8 @@ window.trainMyPlayer = function(key) {
         }
         mp.lastTrainingDate = getTodayString();
         gameState.stats.trainingSessions = (gameState.stats.trainingSessions || 0) + 1;
-        showPlayerXPPopup([{ reason: 'Training', amount: 25 }], () => {
-            awardPlayerXP(gameState, 'training', 25);
+        showPlayerXPPopup([{ reason: 'Training', amount: 100 }], () => {
+            awardPlayerXP(gameState, 'training', 100);
         });
     } else if (key === 'massage') {
         mp.energy = Math.min(100, mp.energy + 50);
@@ -5655,6 +5652,7 @@ async function buyoutPlayer(playerId) {
     }
     gameState.players.splice(playerIndex, 1);
     gameState.stats.released = (gameState.stats.released || 0) + 1;
+    triggerAchievementCheck();
 
     // Remove from lineup if present
     for (let i = 0; i < gameState.lineup.length; i++) {
