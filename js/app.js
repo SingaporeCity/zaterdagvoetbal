@@ -4008,6 +4008,7 @@ window.startScoutMission = function() {
     gameState.stats.totalScoutMissions = (gameState.stats.totalScoutMissions || 0) + 1;
 
     saveGame();
+    triggerAchievementCheck();
     renderScoutPage();
     updateNavBadges();
 };
