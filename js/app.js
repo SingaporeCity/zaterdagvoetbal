@@ -13876,14 +13876,14 @@ const STAFF_MEMBERS = [
         id: 'st_scout_senior', name: 'Scout', salary: 200,
         effect: 'Speurt dagelijks nieuw talent op voor jouw club',
         color: '#2e7d32',
-        bonuses: ['Dagelijks nieuw talent', 'Ontgrendelt scouting-pagina'],
+        bonuses: ['Ontgrendelt scouting-pagina'],
         svg: `<svg viewBox="0 0 48 48" fill="none"><circle cx="20" cy="13" r="7" fill="#fff3" stroke="white" stroke-width="1.8"/><path d="M10 42c0-9 4.5-15 10-15s10 6 10 15" fill="#fff2" stroke="white" stroke-width="1.8"/><path d="M16 11.5c1-2 3-3.5 5.5-3.5" stroke="white" stroke-width="1" stroke-linecap="round" opacity=".5"/><circle cx="34" cy="16" r="6" stroke="white" stroke-width="2" fill="none"/><circle cx="34" cy="16" r="2.5" stroke="white" stroke-width="1.2" fill="none"/><line x1="38.2" y1="20.2" x2="43" y2="25" stroke="white" stroke-width="2.5" stroke-linecap="round"/><path d="M22 20c2-1 4-1 6 0" stroke="white" stroke-width="1" stroke-linecap="round" opacity=".6"/></svg>`
     },
     {
         id: 'st_trainer', name: 'Individuele Trainer', salary: 120,
         effect: 'Geeft je spelers persoonlijke trainingssessies',
         color: '#1565c0',
-        bonuses: ['+25 Skill Points per training', 'Spelers groeien sneller'],
+        bonuses: ['+100 XP per training'],
         svg: `<svg viewBox="0 0 48 48" fill="none"><circle cx="18" cy="12" r="7" fill="#fff3" stroke="white" stroke-width="1.8"/><path d="M8 42c0-9 4.5-15 10-15s10 6 10 15" fill="#fff2" stroke="white" stroke-width="1.8"/><path d="M14 10c1-2 3-3.5 5.5-3.5" stroke="white" stroke-width="1" stroke-linecap="round" opacity=".5"/><rect x="31" y="10" width="11" height="15" rx="2" fill="#fff2" stroke="white" stroke-width="1.8"/><line x1="33.5" y1="14.5" x2="39.5" y2="14.5" stroke="white" stroke-width="1.2" stroke-linecap="round"/><line x1="33.5" y1="18" x2="39.5" y2="18" stroke="white" stroke-width="1.2" stroke-linecap="round"/><line x1="33.5" y1="21.5" x2="37" y2="21.5" stroke="white" stroke-width="1.2" stroke-linecap="round"/><circle cx="36.5" cy="7" r="1" fill="white" opacity=".5"/><path d="M35.5 8 L36.5 10 L37.5 8" stroke="white" stroke-width=".8" opacity=".5"/></svg>`
     },
     {
