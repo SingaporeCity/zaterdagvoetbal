@@ -1574,6 +1574,7 @@ function initMyPlayer() {
     // Migrate player XP fields
     if (gameState.myPlayer.xp === undefined) gameState.myPlayer.xp = 0;
     if (gameState.myPlayer.spentSkillPoints === undefined) gameState.myPlayer.spentSkillPoints = 0;
+    if (!gameState.myPlayer.stars) gameState.myPlayer.stars = 1;
     // Migrate very old saves where attributes were set high without skill point tracking
     // Only run once, tracked by _attrCapMigrated flag (the old !spentSkillPoints check was broken: 0 is falsy)
     if (!gameState.myPlayer._attrCapMigrated) {
@@ -4308,7 +4309,7 @@ function renderProfileTraining() {
                                 <span class="training-tile-lbl">ALG</span>
                             </div>
                             <div class="training-tile training-tile-pot training-tile-pot-my" style="cursor: pointer;" onclick="showTileTooltip(this, 'pot_my')">
-                                <span class="training-tile-stars">${renderStarsHTML(mp.stars || 0)}</span>
+                                <span class="training-tile-stars">${renderStarsHTML(mp.stars || 1)}</span>
                                 <span class="training-tile-lbl">Potentie</span>
                             </div>
                         </div>
