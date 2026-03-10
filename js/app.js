@@ -2628,6 +2628,14 @@ function renderTacticsOptions() {
 
             gameState.tactics[category] = option;
             gameState.stats.tacticsChanged = true;
+            if (category === 'offensief' && option === 'zeer_verdedigend' && !gameState.stats.usedZeerVerdedigend) {
+                gameState.stats.usedZeerVerdedigend = true;
+                triggerAchievementCheck();
+            }
+            if (category === 'offensief' && option === 'leeroy' && !gameState.stats.usedLeeroy) {
+                gameState.stats.usedLeeroy = true;
+                triggerAchievementCheck();
+            }
             saveGame();
         });
     });
@@ -5832,7 +5840,13 @@ function navigateToPage(page) {
     if (page === 'stadium') renderStadiumPage();
     if (page === 'scout') renderScoutPage();
     if (page === 'transfers') renderTransferMarket();
-    if (page === 'finances') renderDailyFinances();
+    if (page === 'finances') {
+        if (!gameState.stats.visitedFinances) {
+            gameState.stats.visitedFinances = true;
+            triggerAchievementCheck();
+        }
+        renderDailyFinances();
+    }
     if (page === 'sponsors') renderSponsorsPage();
     // activities page removed
     if (page === 'staff') renderStaffCenterPage();
@@ -13283,6 +13297,10 @@ function initBugReports() {
             statusEl.style.color = 'var(--accent-green)';
             titleEl.value = '';
             descEl.value = '';
+            if (!gameState.stats.submittedBugReport) {
+                gameState.stats.submittedBugReport = true;
+                triggerAchievementCheck();
+            }
             renderBugHistory();
         }
         submitBtn.disabled = false;
@@ -14479,7 +14497,7 @@ function renderStadiumMap() {
     const tribuneLevelName = tribuneConfig.levels[tribuneLevel]?.name || 'Stadion';
     const tribTextW = tribuneLevelName.length * 5.5;
     const tribTextX = cx - tribTextW / 2;
-    const tribBadgeX = cx + tribTextW / 2 + 5;
+    const tribBadgeX = cx + tribTextW / 2 + 8;
     svg += `<text x="${cx}" y="${labelY}" text-anchor="middle" fill="white" font-size="11" font-weight="bold">${tribuneLevelName}</text>`;
     svg += `<rect x="${tribBadgeX}" y="${labelY - 12}" width="28" height="14" fill="${tColors[1]}" rx="7"/>`;
     svg += `<text x="${tribBadgeX + 14}" y="${labelY - 1}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${tribuneLevel + 1}</text>`;
@@ -14515,11 +14533,11 @@ function renderStadiumMap() {
     svg += `<rect x="${cx-fieldW/2-4}" y="${cy-6}" width="4" height="12" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="0.8" rx="1"/>`;
     svg += `<rect x="${cx+fieldW/2}" y="${cy-6}" width="4" height="12" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="0.8" rx="1"/>`;
     const grassLevelName = STADIUM_TILE_CONFIG.grass.levels[grassLevel]?.name || 'Wedstrijdveld';
-    const grassTextW = grassLevelName.length * 5.2;
+    const grassTextW = grassLevelName.length * 5.5;
     const grassCenterX = cx;
-    const grassBadgeX = grassCenterX + grassTextW / 2 + 5;
+    const grassBadgeX = grassCenterX + grassTextW / 2 + 8;
     const grassLabelY = cy + fieldH/2 - 5;
-    svg += `<text x="${grassCenterX}" y="${grassLabelY}" text-anchor="middle" fill="white" font-size="10" font-weight="600" letter-spacing="1">${grassLevelName}</text>`;
+    svg += `<text x="${grassCenterX}" y="${grassLabelY}" text-anchor="middle" fill="white" font-size="11" font-weight="bold">${grassLevelName}</text>`;
     svg += `<rect x="${grassBadgeX}" y="${grassLabelY - 10}" width="28" height="14" fill="${gColors[1]}" rx="7"/>`;
     svg += `<text x="${grassBadgeX + 14}" y="${grassLabelY + 1}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${grassLevel + 1}</text>`;
     // Construction overlay for grass
@@ -14559,13 +14577,13 @@ function renderStadiumMap() {
             const line1 = fieldWords.slice(0, mid).join(' ');
             const line2 = fieldWords.slice(mid).join(' ');
             const longestLine = Math.max(line1.length, line2.length);
-            const fieldBadgeX = fieldCenterX + longestLine * 5.5 / 2 + 5;
+            const fieldBadgeX = fieldCenterX + longestLine * 5.5 / 2 + 8;
             svg += `<text x="${fieldCenterX}" y="${y-16}" text-anchor="middle" fill="${lc[1]}" font-size="11" font-weight="bold"><tspan x="${fieldCenterX}" dy="0">${line1}</tspan><tspan x="${fieldCenterX}" dy="12">${line2}</tspan></text>`;
             svg += `<rect x="${fieldBadgeX}" y="${y-24}" width="28" height="14" fill="${lc[1]}" rx="7"/>`;
             svg += `<text x="${fieldBadgeX + 14}" y="${y-14}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${level+1}</text>`;
         } else {
             const fieldTextW = fieldLabel.length * 5.5;
-            const fieldBadgeX = fieldCenterX + fieldTextW / 2 + 5;
+            const fieldBadgeX = fieldCenterX + fieldTextW / 2 + 8;
             svg += `<text x="${fieldCenterX}" y="${y-8}" text-anchor="middle" fill="${lc[1]}" font-size="11" font-weight="bold">${fieldLabel}</text>`;
             svg += `<rect x="${fieldBadgeX}" y="${y-18}" width="28" height="14" fill="${lc[1]}" rx="7"/>`;
             svg += `<text x="${fieldBadgeX + 14}" y="${y-8}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${level+1}</text>`;
@@ -14626,13 +14644,13 @@ function renderStadiumMap() {
         const acadLine1 = acadWords.slice(0, acadMid).join(' ');
         const acadLine2 = acadWords.slice(acadMid).join(' ');
         const acadLongest = Math.max(acadLine1.length, acadLine2.length);
-        const acadBadgeX = acadCenterX + acadLongest * 5.5 / 2 + 5;
+        const acadBadgeX = acadCenterX + acadLongest * 5.5 / 2 + 8;
         svg += `<text x="${acadCenterX}" y="${f1y-16}" text-anchor="middle" fill="${acColors[1]}" font-size="11" font-weight="bold"><tspan x="${acadCenterX}" dy="0">${acadLine1}</tspan><tspan x="${acadCenterX}" dy="12">${acadLine2}</tspan></text>`;
         svg += `<rect x="${acadBadgeX}" y="${f1y-24}" width="28" height="14" fill="${acColors[1]}" rx="7"/>`;
         svg += `<text x="${acadBadgeX + 14}" y="${f1y-14}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${acadLevel}</text>`;
     } else {
         const acadTextW = acadLevelName.length * 5.5;
-        const acadBadgeX = acadCenterX + acadTextW / 2 + 5;
+        const acadBadgeX = acadCenterX + acadTextW / 2 + 8;
         svg += `<text x="${acadCenterX}" y="${f1y-8}" text-anchor="middle" fill="${acColors[1]}" font-size="11" font-weight="bold">${acadLevelName}</text>`;
         svg += `<rect x="${acadBadgeX}" y="${f1y-18}" width="28" height="14" fill="${acColors[1]}" rx="7"/>`;
         svg += `<text x="${acadBadgeX + 14}" y="${f1y-8}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Nv${acadLevel}</text>`;

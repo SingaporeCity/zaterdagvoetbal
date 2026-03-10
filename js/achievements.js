@@ -2175,6 +2175,46 @@ const ACHIEVEMENTS = {
         hidden: true,
         reward: { managerXP: 25 },
         check: (state) => state.sponsor?.id === 'intimico'
+    },
+    lafaard: {
+        id: 'lafaard',
+        name: 'Lafaard',
+        description: 'Zet de tactiek op Zeer Verdedigend',
+        category: CATEGORIES.SPECIAL,
+        icon: '🐔',
+        hidden: true,
+        reward: { managerXP: 15 },
+        check: (state) => state.stats?.usedZeerVerdedigend === true
+    },
+    dezeManSnapt: {
+        id: 'dezeManSnapt',
+        name: 'Deze man snapt het',
+        description: 'Zet de tactiek op Leeroy Jenkins',
+        category: CATEGORIES.SPECIAL,
+        icon: '⚔️',
+        hidden: true,
+        reward: { managerXP: 15 },
+        check: (state) => state.stats?.usedLeeroy === true
+    },
+    ditVoeltAlsWerk: {
+        id: 'ditVoeltAlsWerk',
+        name: 'Dit voelt als werk',
+        description: 'Bekijk de financiën',
+        category: CATEGORIES.SPECIAL,
+        icon: '📊',
+        hidden: true,
+        reward: { managerXP: 10 },
+        check: (state) => state.stats?.visitedFinances === true
+    },
+    loveYouFrans: {
+        id: 'loveYouFrans',
+        name: 'Love you Frans xxx',
+        description: 'Verstuur een bugreport',
+        category: CATEGORIES.SPECIAL,
+        icon: '💌',
+        hidden: true,
+        reward: { managerXP: 20 },
+        check: (state) => state.stats?.submittedBugReport === true
     }
 };
 
