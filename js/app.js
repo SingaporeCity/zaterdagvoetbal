@@ -5896,7 +5896,12 @@ function updateNavBadges() {
     if (scoutBadge) scoutBadge.style.display = scoutNeedsAttention ? '' : 'none';
 }
 
+let navigationInitialized = false;
 function initNavigation() {
+    // Guard: only attach listeners once (initNavigation can be called multiple times in multiplayer)
+    if (navigationInitialized) return;
+    navigationInitialized = true;
+
     // Position fixed submenus on hover
     document.querySelectorAll('.nav-item.has-submenu').forEach(item => {
         item.addEventListener('mouseenter', () => {
@@ -5946,13 +5951,12 @@ function initNavigation() {
         sidebarHeaderBtn.addEventListener('click', () => openClubIdentityModal());
     }
 
-    // Mobile hamburger menu (guard against duplicate listeners from multiple initNavigation calls)
+    // Mobile hamburger menu
     const hamburgerBtn = document.getElementById('hamburger-btn');
     const sidebar = document.querySelector('.sidebar');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-    if (hamburgerBtn && !hamburgerBtn._listenerAttached) {
-        hamburgerBtn._listenerAttached = true;
+    if (hamburgerBtn) {
         hamburgerBtn.addEventListener('click', () => {
             sidebar.classList.toggle('sidebar-open');
             sidebarOverlay.classList.toggle('active');
@@ -5960,8 +5964,7 @@ function initNavigation() {
         });
     }
 
-    if (sidebarOverlay && !sidebarOverlay._listenerAttached) {
-        sidebarOverlay._listenerAttached = true;
+    if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', () => {
             sidebar.classList.remove('sidebar-open');
             sidebarOverlay.classList.remove('active');
@@ -12487,6 +12490,8 @@ function showAchievementModal(achievement) {
 }
 
 function claimAchievement(btn) {
+    if (btn.disabled) return;
+    btn.disabled = true;
     const overlay = btn.closest('.achievement-modal-overlay');
     const reward = overlay._achievementReward || {};
     const playerXP = reward.playerXP || 0;
@@ -12792,6 +12797,8 @@ function showLevelUpModal(type, data) {
     }, 2900);
 
     overlay.querySelector('.levelup-claim-btn').addEventListener('click', () => {
+        if (claimBtn.disabled) return;
+        claimBtn.disabled = true;
         // Apply reward on claim
         if (isManager && data.cashReward && gameState.club) {
             gameState.club.budget += data.cashReward;
@@ -12992,6 +12999,8 @@ function showXPModal(type, reasons, onDone, onClaim) {
 
     overlay.querySelector('.xp-modal-claim').addEventListener('click', function() {
         const btn = this;
+        if (btn.disabled) return;
+        btn.disabled = true;
         const target = document.getElementById(btn.dataset.target);
         if (!target) { overlay.remove(); return; }
 

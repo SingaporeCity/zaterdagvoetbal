@@ -143,8 +143,17 @@ export function initMultiplayerUI(onStartGame) {
         setTimeout(() => { btn.textContent = 'Kopieer'; }, 2000);
     });
 
-    document.getElementById('waiting-start-btn')?.addEventListener('click', async () => {
-        await startLeague(onStartGame);
+    document.getElementById('waiting-start-btn')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = 'Starten...';
+        try {
+            await startLeague(onStartGame);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Start competitie';
+        }
     });
 
     // Enter key on login/signup forms
@@ -800,6 +809,18 @@ async function startLeague(onStartGame) {
     if (!myClub) return;
 
     const leagueId = myClub.league_id;
+
+    // Guard: check if league is already active (prevents double-tap creating duplicate teams)
+    const { data: leagueCheck } = await supabase
+        .from('leagues')
+        .select('status')
+        .eq('id', leagueId)
+        .single();
+    if (leagueCheck?.status === 'active') {
+        // Already started — just enter it
+        await enterLeague(leagueId, null);
+        return;
+    }
 
     // Get all human clubs
     const { data: humanClubs } = await supabase
