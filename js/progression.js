@@ -619,7 +619,7 @@ export function awardPlayerXP(gameState, action, amount = null) {
         oldTitle: oldLevel.title,
         newTitle: newLevel.title,
         nextTitle: nextAfter?.title || null,
-        skillPoints: (newLevel.level - 1) * 5,
+        skillPoints: (newLevel.level - 1) * getSPPerLevel(stars),
         progress: newLevel.progress,
         xpToNext: newLevel.xpToNext
     };

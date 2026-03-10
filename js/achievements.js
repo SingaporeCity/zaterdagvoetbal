@@ -2159,7 +2159,7 @@ const ACHIEVEMENTS = {
     },
     alsofVerstand: {
         id: 'alsofVerstand',
-        name: 'Ik doe net alsof ik er verstand van heb',
+        name: 'Mijn naam is Louis van Gaal',
         description: 'Pas je formatie aan',
         category: CATEGORIES.SPECIAL,
         icon: '📋',

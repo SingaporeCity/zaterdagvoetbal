@@ -5,14 +5,14 @@
 
 import { supabase, isSupabaseAvailable } from './supabase.js';
 import { getGameState } from './state.js';
+import { NATIONALITIES } from './constants.js';
 
 const SAVE_KEY = 'zaterdagvoetbal_save';
 const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
-const SYNC_DEBOUNCE = 2000; // 2 seconds debounce for multiplayer sync
-
 let autoSaveTimer = null;
-let syncDebounceTimer = null;
 let savingInProgress = false;
+let pendingSave = false; // Re-save after current save completes
+let beforeUnloadRegistered = false;
 
 // Current storage mode
 let storageMode = 'local'; // 'local' | 'multiplayer'
@@ -127,6 +127,7 @@ function gameStateToClubRecord(gameState) {
             fans: gameState.club?.fans || 50,
             activeEvent: gameState.activeEvent || null,
             sponsorMarket: gameState.sponsorMarket || { offers: [], generatedForWeek: 0 },
+            clubStats: gameState.club?.stats || { founded: 1, titles: 0, highestDivision: 8, totalGoals: 0, totalMatches: 0 },
         },
         updated_at: new Date().toISOString()
     };
@@ -147,10 +148,10 @@ function clubRecordToGameState(club, players, standings, leagueData) {
             fans: cs.fans || 50,
             colors: club.colors || { primary: '#1b5e20', secondary: '#f5f0e1', accent: '#ff9800' },
             settingsChangedThisSeason: false,
-            stats: club.stats?.founded ? club.stats : {
+            stats: cs.clubStats || (club.stats?.founded ? club.stats : {
                 founded: 1, titles: 0, highestDivision: club.division,
-                totalGoals: 0, totalMatches: 0, ...club.stats
-            }
+                totalGoals: 0, totalMatches: 0
+            })
         },
         manager: club.manager || { xp: 0, level: 1 },
         dailyRewards: club.daily_rewards || { lastLogin: null, lastClaimDate: null, streak: 0 },
@@ -214,7 +215,9 @@ function supabasePlayerToLocal(p) {
     // Convert nationality string to object if needed
     let nat = p.nationality;
     if (typeof nat === 'string') {
-        nat = { code: nat.toUpperCase(), flag: '🇳🇱', name: 'Nederlands' };
+        const code = nat.toUpperCase();
+        const found = NATIONALITIES.find(n => n.code === code);
+        nat = found || { code, flag: '🏳️', name: code };
     }
 
     return {
@@ -239,7 +242,10 @@ function supabasePlayerToLocal(p) {
         matchesTogether: p.matches_together,
         listedForSale: p.listed_for_sale,
         xp: p.xp || 0,
-        fixedMarketValue: 0
+        fixedMarketValue: 0,
+        injuredUntil: p.injured_until || null,
+        suspendedUntil: p.suspended_until || null,
+        yellowCards: p.yellow_cards || 0,
     };
 }
 
@@ -324,6 +330,12 @@ async function saveMultiplayer(gameState) {
                         overall: p.overall,
                         listed_for_sale: p.listedForSale || false,
                         matches_together: p.matchesTogether || 0,
+                        attributes: p.attributes || {},
+                        stars: p.stars ?? 0,
+                        age: p.age,
+                        injured_until: p.injuredUntil || null,
+                        suspended_until: p.suspendedUntil || null,
+                        yellow_cards: p.yellowCards || 0,
                     })
                     .eq('id', p.id);
             }
@@ -393,12 +405,20 @@ export function saveGame(gs) {
     if (storageMode === 'multiplayer') {
         // Save to localStorage immediately as backup
         saveLocal(gameState);
-        // Save to Supabase (with lock to prevent concurrent saves)
+        // Save to Supabase (with lock; re-queue if save already in progress)
         if (!savingInProgress) {
             savingInProgress = true;
+            pendingSave = false;
             saveMultiplayer(gameState).finally(() => {
                 savingInProgress = false;
+                // If a save was requested while we were saving, do it now
+                if (pendingSave) {
+                    pendingSave = false;
+                    saveGame();
+                }
             });
+        } else {
+            pendingSave = true; // Will re-save after current save completes
         }
         return true;
     }
@@ -502,23 +522,25 @@ export function getSaveInfo() {
 /**
  * Start auto-save timer
  */
-export function startAutoSave(gameState) {
+export function startAutoSave() {
     if (autoSaveTimer) {
         clearInterval(autoSaveTimer);
     }
 
+    // Use getGameState() to always save the current state (not a stale closure)
     autoSaveTimer = setInterval(() => {
-        saveGame(gameState);
+        saveGame();
     }, AUTO_SAVE_INTERVAL);
 
-    // Save on page close
-    window.addEventListener('beforeunload', () => {
-        // Force immediate save (no debounce) on page close
-        if (storageMode === 'multiplayer') {
-            saveMultiplayer(gameState);
-        }
-        saveLocal(gameState);
-    });
+    // Save on page close (register only once)
+    if (!beforeUnloadRegistered) {
+        beforeUnloadRegistered = true;
+        window.addEventListener('beforeunload', () => {
+            const gs = getGameState();
+            saveLocal(gs);
+            // Note: async saveMultiplayer won't reliably complete in beforeunload
+        });
+    }
 
     console.log('Auto-save enabled (every 30 seconds)');
 }

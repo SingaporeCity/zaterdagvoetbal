@@ -1111,9 +1111,9 @@ function renderStandings() {
             <tr class="${isPlayer ? 'is-player' : ''} ${zoneClass}${isClickable ? ' clickable-opponent' : ''}"${isClickable ? ` onclick="showOpponentSquad('${team.clubId}', '${team.name.replace(/'/g, "\\'")}')" style="cursor:pointer"` : ''}>
                 <td>${position}</td>
                 <td>${team.name}${isClickable ? ' <span style="opacity:0.4;font-size:0.8em">&#9656;</span>' : ''}</td>
-                <td>${team.wins || 0}</td>
-                <td>${team.draws || 0}</td>
-                <td>${team.losses || 0}</td>
+                <td>${team.won || team.wins || 0}</td>
+                <td>${team.drawn || team.draws || 0}</td>
+                <td>${team.lost || team.losses || 0}</td>
                 <td><strong>${team.points}</strong>${isPlayer && gameState.club.pointsDeducted ? ` <span style="color: #f44336; font-size: 0.7em;">(-${gameState.club.pointsDeducted})</span>` : ''}</td>
             </tr>
         `;
@@ -1571,10 +1571,15 @@ function initMyPlayer() {
     // Migrate player XP fields
     if (gameState.myPlayer.xp === undefined) gameState.myPlayer.xp = 0;
     if (gameState.myPlayer.spentSkillPoints === undefined) gameState.myPlayer.spentSkillPoints = 0;
-    // Migrate old saves: cap initial attributes at 5 (only if no skill points spent yet)
-    if (!gameState.myPlayer.spentSkillPoints) {
-        const attrKeys = ['SNE', 'TEC', 'PAS', 'SCH', 'VER', 'FYS'];
-        attrKeys.forEach(k => { if (a[k] > 5) a[k] = 5; });
+    // Migrate very old saves where attributes were set high without skill point tracking
+    // Only run once, tracked by _attrCapMigrated flag (the old !spentSkillPoints check was broken: 0 is falsy)
+    if (!gameState.myPlayer._attrCapMigrated) {
+        gameState.myPlayer._attrCapMigrated = true;
+        // Only cap if spentSkillPoints was never set (truly old saves from before the SP system)
+        if (gameState.myPlayer.spentSkillPoints === undefined || gameState.myPlayer.spentSkillPoints === null) {
+            const attrKeys = ['SNE', 'TEC', 'PAS', 'SCH', 'VER', 'FYS'];
+            attrKeys.forEach(k => { if (a[k] > 5) a[k] = 5; });
+        }
     }
     // Sync overall from attributes
     gameState.myPlayer.overall = Math.round((a.SNE + a.TEC + a.PAS + a.SCH + a.VER + a.FYS) / 6);
@@ -2018,9 +2023,9 @@ function renderCompactStandings(divisionNames) {
             <td>${pos}</td>
             <td>${team.name}</td>
             <td>${team.played || 0}</td>
-            <td>${team.wins || 0}</td>
-            <td>${team.draws || 0}</td>
-            <td>${team.losses || 0}</td>
+            <td>${team.won || team.wins || 0}</td>
+            <td>${team.drawn || team.draws || 0}</td>
+            <td>${team.lost || team.losses || 0}</td>
             <td>${gf}-${ga}</td>
             <td><strong>${team.points}</strong></td>
         </tr>`;
@@ -9683,7 +9688,7 @@ function initGame(mode = 'local') {
     startTimers();
 
     // Start auto-save
-    startAutoSave(gameState);
+    startAutoSave();
 
     // Random events disabled - no popups on dashboard load
 
@@ -16515,9 +16520,9 @@ function renderKantineStandings() {
         html += `<tr class="${isPlayer ? 'is-player' : ''} ${isPromo ? 'promo' : ''} ${isRelegation ? 'relegation' : ''}">
             <td>${index + 1}</td>
             <td>${team.name}</td>
-            <td>${team.wins || 0}</td>
-            <td>${team.draws || 0}</td>
-            <td>${team.losses || 0}</td>
+            <td>${team.won || team.wins || 0}</td>
+            <td>${team.drawn || team.draws || 0}</td>
+            <td>${team.lost || team.losses || 0}</td>
             <td>${team.points}</td>
         </tr>`;
     });
@@ -16727,7 +16732,7 @@ async function initMultiplayerGame(detail) {
         startCountdown(league.match_time || '20:00');
 
         // Start auto-save to sync
-        startAutoSave(gameState);
+        startAutoSave();
 
         // Trigger onboarding for first-time multiplayer players
         if (!gameState.onboardingCompleted) {

@@ -1085,10 +1085,16 @@ export async function checkAuthAndRoute(onStartGame) {
         return;
     }
 
-    const session = await getSession();
-    if (session) {
-        showModeScreen();
-    } else {
+    try {
+        const session = await getSession();
+        if (session) {
+            showModeScreen();
+        } else {
+            showAuthScreen();
+        }
+    } catch (err) {
+        console.error('Auth check failed:', err);
+        // Network error or expired token — show login screen
         showAuthScreen();
     }
 }
