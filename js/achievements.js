@@ -323,7 +323,7 @@ const ACHIEVEMENTS = {
     },
     firstLoss: {
         id: 'firstLoss',
-        name: 'Leergeld',
+        name: 'Het ligt aan de scheids',
         description: 'Verlies je eerste wedstrijd',
         category: CATEGORIES.MATCHES,
         icon: '📉',
@@ -1096,7 +1096,7 @@ const ACHIEVEMENTS = {
     },
     firstSponsor: {
         id: 'firstSponsor',
-        name: 'Eerste Sponsor',
+        name: 'Geef me brood b*tch',
         description: 'Teken je eerste sponsor',
         category: CATEGORIES.CLUB,
         icon: '🤝',
@@ -2159,7 +2159,7 @@ const ACHIEVEMENTS = {
     },
     alsofVerstand: {
         id: 'alsofVerstand',
-        name: 'Mijn naam is Louis van Gaal',
+        name: 'You are smart, got it',
         description: 'Pas je formatie aan',
         category: CATEGORIES.SPECIAL,
         icon: '📋',

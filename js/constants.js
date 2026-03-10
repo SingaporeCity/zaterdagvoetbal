@@ -135,8 +135,104 @@ export const DUTCH_LAST_NAMES = [
     'de Jong', 'Jansen', 'de Vries', 'van den Berg', 'Bakker', 'Visser', 'Smit', 'Meijer',
     'de Boer', 'Mulder', 'de Groot', 'Bos', 'Vos', 'Peters', 'Hendriks', 'van Dijk',
     'Vermeer', 'Dekker', 'Brouwer', 'de Wit', 'Dijkstra', 'Koster', 'Willems', 'van Leeuwen',
-    'El Amrani', 'Özdemir', 'Silva', 'Santos', 'Garcia', 'Martinez', 'Andersen', 'Nielsen'
+    'El Amrani', 'Özdemir', 'van der Linden', 'Kuiper', 'Scholten', 'Hofman'
 ];
+
+export const NAMES_BY_NATIONALITY = {
+    NL: { first: DUTCH_FIRST_NAMES, last: DUTCH_LAST_NAMES },
+    BE: {
+        first: ['Kevin', 'Thibaut', 'Eden', 'Romelu', 'Axel', 'Youri', 'Dries', 'Nacer', 'Thomas', 'Jan', 'Leander', 'Toby', 'Simon', 'Michy', 'Hans'],
+        last: ['Peeters', 'Janssens', 'Maes', 'Jacobs', 'Willems', 'Claes', 'Mertens', 'Goossens', 'Wouters', 'De Smet', 'Dubois', 'Lambert', 'Dupont', 'Hendrickx', 'Cools']
+    },
+    DE: {
+        first: ['Lukas', 'Maximilian', 'Felix', 'Leon', 'Jonas', 'Florian', 'Tobias', 'Niklas', 'Kai', 'Marco', 'Julian', 'Bastian', 'Miroslav', 'Thomas', 'Manuel'],
+        last: ['Müller', 'Schmidt', 'Schneider', 'Fischer', 'Weber', 'Meyer', 'Wagner', 'Becker', 'Schulz', 'Hoffmann', 'Koch', 'Richter', 'Klein', 'Schwarz', 'Krause']
+    },
+    BR: {
+        first: ['Lucas', 'Gabriel', 'Rafael', 'Matheus', 'Thiago', 'Bruno', 'Pedro', 'Felipe', 'Vinícius', 'Gustavo', 'Leonardo', 'Diego', 'Marcos', 'Anderson', 'Ronaldo'],
+        last: ['Silva', 'Santos', 'Oliveira', 'Souza', 'Costa', 'Pereira', 'Almeida', 'Ferreira', 'Rodrigues', 'Lima', 'Carvalho', 'Nascimento', 'Barbosa', 'Ribeiro', 'Araújo']
+    },
+    AR: {
+        first: ['Lionel', 'Diego', 'Gonzalo', 'Sergio', 'Ángel', 'Nicolás', 'Pablo', 'Javier', 'Martín', 'Alejandro', 'Maximiliano', 'Leandro', 'Emiliano', 'Julián', 'Lautaro'],
+        last: ['González', 'Rodríguez', 'Fernández', 'López', 'Martínez', 'García', 'Pérez', 'Romero', 'Díaz', 'Álvarez', 'Acosta', 'Gutiérrez', 'Moreno', 'Aguirre', 'Sosa']
+    },
+    ES: {
+        first: ['Carlos', 'Sergio', 'Álvaro', 'Pablo', 'Iker', 'Andrés', 'Fernando', 'Marcos', 'Raúl', 'David', 'Jorge', 'Alejandro', 'Miguel', 'Pedro', 'Daniel'],
+        last: ['García', 'Rodríguez', 'Martínez', 'López', 'Hernández', 'González', 'Pérez', 'Sánchez', 'Romero', 'Torres', 'Ramos', 'Ruiz', 'Moreno', 'Muñoz', 'Jiménez']
+    },
+    GB: {
+        first: ['James', 'Harry', 'Jack', 'Oliver', 'George', 'Charlie', 'Thomas', 'William', 'Daniel', 'Joshua', 'Ryan', 'Jordan', 'Adam', 'Lewis', 'Ben'],
+        last: ['Smith', 'Jones', 'Williams', 'Taylor', 'Brown', 'Wilson', 'Johnson', 'Walker', 'Robinson', 'Wright', 'Thompson', 'White', 'Hughes', 'Edwards', 'Green']
+    },
+    FR: {
+        first: ['Antoine', 'Kylian', 'Hugo', 'Lucas', 'Raphaël', 'Adrien', 'Olivier', 'Mathieu', 'Moussa', 'Ousmane', 'Paul', 'Thomas', 'Julien', 'Alexandre', 'Karim'],
+        last: ['Martin', 'Bernard', 'Dubois', 'Thomas', 'Robert', 'Petit', 'Richard', 'Durand', 'Moreau', 'Laurent', 'Simon', 'Michel', 'Lefèvre', 'Leroy', 'Girard']
+    },
+    PT: {
+        first: ['Cristiano', 'Bruno', 'Bernardo', 'Diogo', 'Gonçalo', 'Rúben', 'André', 'João', 'Nuno', 'Pedro', 'Ricardo', 'Rui', 'Hugo', 'Tiago', 'Miguel'],
+        last: ['Silva', 'Santos', 'Ferreira', 'Pereira', 'Oliveira', 'Costa', 'Rodrigues', 'Martins', 'Sousa', 'Fernandes', 'Gonçalves', 'Gomes', 'Lopes', 'Marques', 'Alves']
+    },
+    IT: {
+        first: ['Marco', 'Andrea', 'Luca', 'Francesco', 'Alessandro', 'Matteo', 'Lorenzo', 'Fabio', 'Giuseppe', 'Stefano', 'Simone', 'Daniele', 'Roberto', 'Paolo', 'Giorgio'],
+        last: ['Rossi', 'Russo', 'Ferrari', 'Esposito', 'Bianchi', 'Romano', 'Colombo', 'Ricci', 'Marino', 'Greco', 'Bruno', 'Gallo', 'Conti', 'De Luca', 'Mancini']
+    },
+    PL: {
+        first: ['Robert', 'Jakub', 'Kamil', 'Piotr', 'Krzysztof', 'Arkadiusz', 'Grzegorz', 'Łukasz', 'Bartosz', 'Wojciech', 'Mateusz', 'Dawid', 'Tomasz', 'Maciej', 'Paweł'],
+        last: ['Nowak', 'Kowalski', 'Wiśniewski', 'Wójcik', 'Kamiński', 'Lewandowski', 'Zieliński', 'Szymański', 'Woźniak', 'Dąbrowski', 'Kozłowski', 'Jankowski', 'Mazur', 'Kwiatkowski', 'Krawczyk']
+    },
+    HR: {
+        first: ['Luka', 'Ivan', 'Mateo', 'Mario', 'Ante', 'Josip', 'Marcelo', 'Dejan', 'Nikola', 'Domagoj', 'Andrej', 'Šime', 'Marko', 'Bruno', 'Mislav'],
+        last: ['Horvat', 'Kovačević', 'Babić', 'Marić', 'Jurić', 'Novak', 'Kovačić', 'Knežević', 'Vuković', 'Matić', 'Tomić', 'Pavlović', 'Perić', 'Božić', 'Radić']
+    },
+    RS: {
+        first: ['Dušan', 'Nemanja', 'Aleksandar', 'Nikola', 'Stefan', 'Filip', 'Luka', 'Branislav', 'Dejan', 'Predrag', 'Miloš', 'Dragan', 'Marko', 'Sergej', 'Uroš'],
+        last: ['Jovanović', 'Petrović', 'Nikolić', 'Marković', 'Đorđević', 'Stojanović', 'Ilić', 'Stanković', 'Pavlović', 'Milošević', 'Tomović', 'Savić', 'Kostić', 'Tadić', 'Subotić']
+    },
+    DK: {
+        first: ['Christian', 'Kasper', 'Simon', 'Andreas', 'Mikkel', 'Thomas', 'Pierre', 'Mathias', 'Rasmus', 'Nicklas', 'Martin', 'Daniel', 'Yussuf', 'Joakim', 'Viktor'],
+        last: ['Jensen', 'Nielsen', 'Hansen', 'Andersen', 'Pedersen', 'Christensen', 'Larsen', 'Sørensen', 'Rasmussen', 'Poulsen', 'Jørgensen', 'Petersen', 'Madsen', 'Olsen', 'Eriksen']
+    },
+    SE: {
+        first: ['Emil', 'Viktor', 'Alexander', 'Sebastian', 'Zlatan', 'Albin', 'Ludwig', 'Kristoffer', 'Dejan', 'Markus', 'Robin', 'Gustav', 'Pontus', 'Filip', 'Oscar'],
+        last: ['Andersson', 'Johansson', 'Karlsson', 'Nilsson', 'Eriksson', 'Larsson', 'Olsson', 'Persson', 'Svensson', 'Gustafsson', 'Pettersson', 'Jonsson', 'Lindberg', 'Forsberg', 'Claesson']
+    },
+    NO: {
+        first: ['Erling', 'Martin', 'Sander', 'Joshua', 'Jonas', 'Morten', 'Stefan', 'Ole', 'Kristian', 'Fredrik', 'Alexander', 'Birger', 'Eirik', 'Jens', 'Håvard'],
+        last: ['Hansen', 'Johansen', 'Olsen', 'Larsen', 'Andersen', 'Pedersen', 'Nilsen', 'Kristiansen', 'Karlsen', 'Johnsen', 'Haugen', 'Berge', 'Solbakken', 'Ødegaard', 'Haaland']
+    },
+    GH: {
+        first: ['Kwame', 'Kofi', 'Asamoah', 'Thomas', 'André', 'Michael', 'Sulley', 'Kevin', 'Jordan', 'Daniel', 'Samuel', 'Jeffrey', 'Emmanuel', 'Isaac', 'Joseph'],
+        last: ['Mensah', 'Owusu', 'Boateng', 'Appiah', 'Yeboah', 'Adu', 'Asante', 'Gyan', 'Ayew', 'Amoah', 'Essien', 'Annan', 'Badu', 'Acquah', 'Partey']
+    },
+    NG: {
+        first: ['Victor', 'Ahmed', 'Kelechi', 'Wilfred', 'Alex', 'John', 'Samuel', 'Kenneth', 'Emmanuel', 'Odion', 'Moses', 'Ola', 'Taiwo', 'Chidera', 'Oghenekaro'],
+        last: ['Okocha', 'Obi', 'Musa', 'Iheanacho', 'Ndidi', 'Osimhen', 'Ighalo', 'Kanu', 'Onyekuru', 'Chukwueze', 'Ajayi', 'Awoniyi', 'Bassey', 'Ekong', 'Iwobi']
+    },
+    CM: {
+        first: ['Samuel', 'Eric', 'Vincent', 'André', 'Benjamin', 'Karl', 'Nicolas', 'Christian', 'Bryan', 'Jean', 'Pierre', 'Collins', 'Franck', 'Maxim', 'Clinton'],
+        last: ["Eto'o", 'Mboma', 'Ekambi', 'Onana', 'Njie', 'Bassogog', 'Aboubakar', 'Choupo-Moting', 'Nkoulou', 'Kunde', 'Ngamaleu', 'Toko', 'Song', 'Mbia', 'Fai']
+    },
+    MA: {
+        first: ['Achraf', 'Hakim', 'Youssef', 'Sofiane', 'Noussair', 'Mehdi', 'Amine', 'Nabil', 'Sofyan', 'Jawad', 'Munir', 'Aziz', 'Adel', 'Karim', 'Zakaria'],
+        last: ['Hakimi', 'Ziyech', 'Bounou', 'Mazraoui', 'Amrabat', 'El Nesyri', 'Boufal', 'Dirar', 'Saïss', 'Aguerd', 'Bennasser', 'Taarabt', 'Belhanda', 'Fajr', 'Louza']
+    },
+    TR: {
+        first: ['Hakan', 'Burak', 'Arda', 'Emre', 'Cenk', 'Cengiz', 'Yusuf', 'Ozan', 'İrfan', 'Kerem', 'Ferdi', 'Orkun', 'Mert', 'Serdar', 'Umut'],
+        last: ['Yılmaz', 'Çalhanoğlu', 'Tosun', 'Ünder', 'Söyüncü', 'Yazıcı', 'Karaman', 'Demir', 'Türkmen', 'Aktürkoğlu', 'Kabak', 'Özcan', 'Güler', 'Çelik', 'Kökcü']
+    },
+    JP: {
+        first: ['Takumi', 'Wataru', 'Daichi', 'Kaoru', 'Junya', 'Takehiro', 'Ritsu', 'Ao', 'Yuto', 'Shinji', 'Keisuke', 'Takefusa', 'Hiroki', 'Gaku', 'Koji'],
+        last: ['Tanaka', 'Suzuki', 'Takahashi', 'Watanabe', 'Itō', 'Yamamoto', 'Nakamura', 'Kobayashi', 'Katō', 'Minamino', 'Kamada', 'Endo', 'Tomiyasu', 'Doan', 'Mitoma']
+    },
+    KR: {
+        first: ['Heung-min', 'Jae-sung', 'Min-jae', 'Woo-young', 'In-beom', 'Chang-hoon', 'Ui-jo', 'Gue-sung', 'Seung-ho', 'Young-gwon', 'Jin-su', 'Hee-chan', 'Dong-jun', 'Sang-ho', 'Tae-hwan'],
+        last: ['Kim', 'Lee', 'Park', 'Choi', 'Jung', 'Kang', 'Cho', 'Yoon', 'Jang', 'Lim', 'Shin', 'Kwon', 'Hwang', 'Son', 'Seo']
+    },
+    US: {
+        first: ['Christian', 'Tyler', 'Weston', 'Giovanni', 'Brenden', 'Tim', 'Matt', 'DeAndre', 'Josh', 'Chris', 'Ricardo', 'Jesús', 'Brandon', 'Reggie', 'Malik'],
+        last: ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor', 'Adams', 'Pulisic', 'McKennie', 'Reyna', 'Robinson']
+    }
+};
 
 export const TACTICS = {
     mentaliteit: [

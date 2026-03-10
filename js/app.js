@@ -12,6 +12,7 @@ import {
     PERSONALITIES,
     DUTCH_FIRST_NAMES,
     DUTCH_LAST_NAMES,
+    NAMES_BY_NATIONALITY,
     TACTICS,
     STAFF_TYPES,
     ASSISTANT_TRAINERS,
@@ -519,13 +520,15 @@ function getTrainingTimeRemaining() {
 // PLAYER GENERATION
 // ================================================
 
-function generatePlayerName() {
-    return `${randomFromArray(DUTCH_FIRST_NAMES)} ${randomFromArray(DUTCH_LAST_NAMES)}`;
+function generatePlayerName(nationality) {
+    const code = nationality?.code || 'NL';
+    const names = NAMES_BY_NATIONALITY[code] || NAMES_BY_NATIONALITY.NL;
+    return `${randomFromArray(names.first)} ${randomFromArray(names.last)}`;
 }
 
 function generateNationality() {
-    // Weighted towards Dutch
-    const weights = [40, 8, 8, 5, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 1, 3, 3, 1, 1, 2];
+    // ~70% Dutch, rest proportionally distributed
+    const weights = [170, 8, 8, 5, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 1, 3, 3, 1, 1, 2];
     const total = weights.reduce((a, b) => a + b, 0);
     let roll = Math.random() * total;
 
@@ -677,7 +680,7 @@ function generatePlayer(division, position = null, minAge = 17, maxAge = 35) {
     const qualityPercentile = (overall - div.minAttr) / (div.maxAttr - div.minAttr);
     const nationality = generateNationality();
     const tag = getPlayerTag(attributes, position);
-    const playerName = generatePlayerName();
+    const playerName = generatePlayerName(nationality);
     const playerAge = random(minAge, maxAge);
     const playerPersonality = generatePersonality(division, qualityPercentile);
     const playerStars = assignPlayerStars(playerAge);
@@ -780,7 +783,7 @@ function createZaterdagPlayer(position, { young = false } = {}) {
 
     const nationality = Math.random() < 0.90 ? NATIONALITIES[0] : generateNationality();
     const tag = getPlayerTag(attributes, position);
-    const playerName = generatePlayerName();
+    const playerName = generatePlayerName(nationality);
     const playerAge = young ? random(20, 27) : random(40, 55);
     const playerStars = young ? 0.5 : 0;
     const calculatedSalary = Math.round(5 + (overall / 10) + playerStars * 3 + random(0, 3));
@@ -1407,7 +1410,7 @@ function createScoutedPlayer(scoutLevel) {
 
     const nationality = Math.random() < 0.90 ? NATIONALITIES[0] : generateNationality();
     const tag = getPlayerTag(attributes, pos);
-    const playerName = generatePlayerName();
+    const playerName = generatePlayerName(nationality);
     const playerAge = random(16, 45);
 
     const scoutPersonality = generatePersonality(8, 0.5);
@@ -5943,12 +5946,13 @@ function initNavigation() {
         sidebarHeaderBtn.addEventListener('click', () => openClubIdentityModal());
     }
 
-    // Mobile hamburger menu
+    // Mobile hamburger menu (guard against duplicate listeners from multiple initNavigation calls)
     const hamburgerBtn = document.getElementById('hamburger-btn');
     const sidebar = document.querySelector('.sidebar');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-    if (hamburgerBtn) {
+    if (hamburgerBtn && !hamburgerBtn._listenerAttached) {
+        hamburgerBtn._listenerAttached = true;
         hamburgerBtn.addEventListener('click', () => {
             sidebar.classList.toggle('sidebar-open');
             sidebarOverlay.classList.toggle('active');
@@ -5956,7 +5960,8 @@ function initNavigation() {
         });
     }
 
-    if (sidebarOverlay) {
+    if (sidebarOverlay && !sidebarOverlay._listenerAttached) {
+        sidebarOverlay._listenerAttached = true;
         sidebarOverlay.addEventListener('click', () => {
             sidebar.classList.remove('sidebar-open');
             sidebarOverlay.classList.remove('active');
@@ -6168,8 +6173,10 @@ function generateTransferPlayer(division, forcePosition) {
         player.starsMin = player.stars;
         player.starsMax = Math.min(5, player.stars + 1);
         player.salary = calculateSalary(8, player.age, player.stars);
-        // Tekengeld: gebaseerd op salary (niet overall)
-        player.signingBonus = Math.round(player.salary * (3 + random(0, 5) + (player.age >= 28 ? 3 : 0)));
+        // Tekengeld: gemiddeld ~1000, gebaseerd op overall
+        const basBonus = player.overall * 150 + random(100, 400);
+        const leeftijdsBonus = player.age >= 28 ? 100 : 0;
+        player.signingBonus = Math.round((basBonus + leeftijdsBonus) / 10) * 10;
         player.isFreeAgent = true;
     } else {
         if (Math.random() < 0.20) {
@@ -7927,8 +7934,9 @@ function generateInitialYouthPlayers() {
 function generateYouthPlayer(minAge, maxAge) {
     const age = random(minAge, maxAge);
     const nationality = NATIONALITIES[Math.random() < 0.7 ? 0 : random(0, NATIONALITIES.length - 1)];
-    const firstName = DUTCH_FIRST_NAMES[random(0, DUTCH_FIRST_NAMES.length - 1)];
-    const lastName = DUTCH_LAST_NAMES[random(0, DUTCH_LAST_NAMES.length - 1)];
+    const names = NAMES_BY_NATIONALITY[nationality.code] || NAMES_BY_NATIONALITY.NL;
+    const firstName = randomFromArray(names.first);
+    const lastName = randomFromArray(names.last);
 
     // Positions for youth - no keeper in younger ages
     const availablePositions = Object.keys(POSITIONS).filter(pos => {
@@ -14394,7 +14402,7 @@ function renderStadiumMap() {
     // ===== STADIUM (tribune) =====
     const tribuneColors = ['#6a4a2a', '#5a5a5a', '#4a4a6a', '#3a3a7a', '#8a6a0a', '#2a5a8a', '#1a4a6a', '#3a3a5a', '#4a2a5a', '#6a3a1a'];
     const tc = tribuneColors[Math.min(tribuneLevel, tribuneColors.length - 1)];
-    const levelColors = [['#6b6b6b','#ef5350'],['#1b5e20','#4ade80'],['#1565c0','#42a5f5'],['#6a1b9a','#ce93d8'],['#e65100','#ffd54f'],['#0d47a1','#64b5f6'],['#1a237e','#7986cb'],['#4a148c','#b39ddb'],['#b71c1c','#ef9a9a'],['#f57f17','#ffd54f']];
+    const levelColors = [['#2e7d32','#4ade80'],['#1b5e20','#4ade80'],['#1565c0','#42a5f5'],['#6a1b9a','#ce93d8'],['#e65100','#ffd54f'],['#0d47a1','#64b5f6'],['#1a237e','#7986cb'],['#4a148c','#b39ddb'],['#b71c1c','#ef9a9a'],['#f57f17','#ffd54f']];
     const tColors = levelColors[Math.min(tribuneLevel, levelColors.length - 1)];
     const isStadActive = currentStadiumCategory === 'tribune';
 
