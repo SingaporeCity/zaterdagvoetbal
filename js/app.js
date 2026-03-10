@@ -5370,6 +5370,7 @@ window.trainMyPlayer = function(key) {
         }
         mp.lastTrainingDate = getTodayString();
         gameState.stats.trainingSessions = (gameState.stats.trainingSessions || 0) + 1;
+        triggerAchievementCheck();
         showPlayerXPPopup([{ reason: 'Training', amount: 100 }], () => {
             awardPlayerXP(gameState, 'training', 100);
         });
@@ -13789,6 +13790,7 @@ function selectMarketSponsor(id) {
     showNotification(`${offer.name} is nu je bordsponsor voor ${offer.duration || 8} weken!`, 'success');
     renderBordSponsorSection();
     saveGame();
+    triggerAchievementCheck();
 }
 
 function clearSponsorSlot(slotType) {
