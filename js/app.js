@@ -56,7 +56,8 @@ import {
     importSave,
     setStorageMode,
     isMultiplayer,
-    forceSyncToSupabase
+    forceSyncToSupabase,
+    supabasePlayerToLocal
 } from './storage.js';
 
 // Import multiplayer systems
@@ -1139,17 +1140,9 @@ async function showOpponentSquad(clubId, clubName) {
         return;
     }
 
-    // Map DB fields to card format
+    // Map DB fields to card format using shared converter
     const mapped = players.map(p => ({
-        id: p.id,
-        name: p.name,
-        age: p.age,
-        position: p.position,
-        overall: p.overall,
-        stars: p.stars || 0,
-        nationality: p.nationality || { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
-        salary: p.salary || 0,
-        energy: p.energy || 75,
+        ...supabasePlayerToLocal(p),
         isMyPlayer: false
     }));
 

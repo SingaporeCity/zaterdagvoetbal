@@ -211,7 +211,7 @@ function clubRecordToGameState(club, players, standings, leagueData) {
 /**
  * Convert Supabase player record to local format
  */
-function supabasePlayerToLocal(p) {
+export function supabasePlayerToLocal(p) {
     // Convert nationality string to object if needed
     let nat = p.nationality;
     if (typeof nat === 'string') {
