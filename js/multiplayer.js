@@ -648,6 +648,12 @@ async function enterLeague(leagueId, clubId) {
         await refreshWaitingRoom(leagueId, user.id);
         subscribeToLobby(leagueId, user.id);
     } else if (league.status === 'active') {
+        // Clean up lobby subscription to prevent re-entry on future league updates
+        if (lobbySubscription) {
+            supabase.removeChannel(lobbySubscription);
+            lobbySubscription = null;
+        }
+
         // Enter the game in multiplayer mode
         setStorageMode('multiplayer', leagueId, clubId);
         hideAllOverlays();

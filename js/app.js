@@ -5532,6 +5532,9 @@ function updateMatchTimer() {
     updateConstructionTimer();
     const remaining = gameState.nextMatch.time - Date.now();
 
+    // In multiplayer, check if current week is already played
+    const mpWeekPlayed = isMultiplayer() && gameState._weekPlayed;
+
     // Update new kantine board timer segments
     const hoursEl = document.getElementById('timer-hours');
     const minutesEl = document.getElementById('timer-minutes');
@@ -5539,7 +5542,25 @@ function updateMatchTimer() {
 
     const playBtn = document.getElementById('play-match-btn');
     if (hoursEl && minutesEl && secondsEl) {
-        if (remaining <= 0) {
+        if (mpWeekPlayed) {
+            // Multiplayer: already played this week — show waiting state
+            hoursEl.textContent = '--';
+            minutesEl.textContent = '--';
+            secondsEl.textContent = '--';
+            if (playBtn) {
+                playBtn.classList.remove('match-ready');
+                if (gameState.matchHistory && gameState.matchHistory.length > 0) {
+                    playBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7a6.97 6.97 0 0 1-4.95-2.05l-1.41 1.41A8.97 8.97 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg> BEKIJK VORIGE WEDSTRIJD';
+                    playBtn.onclick = function() {
+                        navigateToPage('wedstrijden');
+                        setTimeout(() => activateTabOnPage('wedstrijden', 'verslag'), 50);
+                    };
+                } else {
+                    playBtn.innerHTML = 'WACHTEN OP VOLGENDE RONDE';
+                    playBtn.onclick = null;
+                }
+            }
+        } else if (remaining <= 0) {
             hoursEl.textContent = '00';
             minutesEl.textContent = '00';
             secondsEl.textContent = '00';
@@ -6150,14 +6171,21 @@ function updateBudgetDisplays() {
     }
 }
 
+let _trainingTimerInterval = null;
+let _matchTimerInterval = null;
+
 function startTimers() {
+    // Clear existing intervals to prevent duplicates
+    if (_trainingTimerInterval) clearInterval(_trainingTimerInterval);
+    if (_matchTimerInterval) clearInterval(_matchTimerInterval);
+
     // Update training timer every second
-    setInterval(() => {
+    _trainingTimerInterval = setInterval(() => {
         updateTrainingTimers();
     }, 1000);
 
     // Update match timer
-    setInterval(updateMatchTimer, 1000);
+    _matchTimerInterval = setInterval(updateMatchTimer, 1000);
 }
 
 // ================================================
@@ -10835,6 +10863,12 @@ async function _playMultiplayerMatchInner() {
         return;
     }
 
+    // Already played this week — wait for next round
+    if (gameState._weekPlayed) {
+        showNotification('Je hebt deze week al gespeeld. Wacht op de volgende ronde!', 'info');
+        return;
+    }
+
     showNotification('Wedstrijd laden...', 'info');
 
     try {
@@ -11179,6 +11213,9 @@ async function _playMultiplayerMatchInner() {
             chairmanComments
         });
 
+        // Mark week as played — prevents replaying until next round
+        gameState._weekPlayed = true;
+
         // Advance week — sync from DB (RPC already advanced it)
         const { data: updatedLeague } = await supabase
             .from('leagues')
@@ -11287,6 +11324,7 @@ async function _playMultiplayerMatchInner() {
             // Re-sync standings for new season
             await syncStandingsFromSupabase();
 
+            gameState._weekPlayed = false; // New season = new round
             showSeasonEndModal(calcResult);
         } else {
             setNextMatch();
@@ -17114,12 +17152,25 @@ async function initMultiplayerGame(detail) {
             console.warn('No saved state found — using defaults');
         }
 
-        // Reset match timer so match is always playable on refresh
+        // Set up next match for multiplayer
         gameState.nextMatch = gameState.nextMatch || {};
         gameState.nextMatch.time = Date.now() - 1000;
 
-        // Fetch scheduled opponent from Supabase (await so it's ready before rendering)
+        // Check if current week already played (handles page refresh after match)
         if (gameState.multiplayer.clubId) {
+            try {
+                const existingResult = await getMatchResult(
+                    leagueId,
+                    gameState.season || 1,
+                    gameState.week || 1,
+                    gameState.multiplayer.clubId
+                );
+                gameState._weekPlayed = !!existingResult;
+            } catch (e) {
+                gameState._weekPlayed = false;
+            }
+
+            // Fetch scheduled opponent
             try {
                 const opp = await getScheduledOpponent(
                     leagueId,
@@ -17180,6 +17231,7 @@ async function initMultiplayerGame(detail) {
                 if (leagueUpdate.week !== gameState.week || leagueUpdate.season !== gameState.season) {
                     gameState.week = leagueUpdate.week;
                     gameState.season = leagueUpdate.season;
+                    gameState._weekPlayed = false; // New round available
                     renderDashboardExtras();
                 }
             }
