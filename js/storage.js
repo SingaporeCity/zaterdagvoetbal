@@ -670,9 +670,22 @@ export function importSave(file) {
 }
 
 /**
- * Force sync to Supabase (immediate, no debounce)
+ * Force sync to Supabase (marks pending save so it runs after current save completes)
  */
-export async function forceSyncToSupabase(gs) {
+export function forceSyncToSupabase() {
     if (storageMode !== 'multiplayer') return;
-    return await saveMultiplayer(gs || getGameState());
+    // Route through the same lock as saveGame to prevent concurrent saves
+    if (!savingInProgress) {
+        savingInProgress = true;
+        pendingSave = false;
+        saveMultiplayer(getGameState()).finally(() => {
+            savingInProgress = false;
+            if (pendingSave) {
+                pendingSave = false;
+                saveGame();
+            }
+        });
+    } else {
+        pendingSave = true;
+    }
 }

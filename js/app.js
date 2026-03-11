@@ -61,7 +61,7 @@ import {
 } from './storage.js';
 
 // Import multiplayer systems
-import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent, getClubPlayers, insertPlayerToSupabase, getFullSchedule } from './multiplayer.js';
+import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent, getClubPlayers, insertPlayerToSupabase, getFullSchedule, generateSchedule } from './multiplayer.js';
 import { subscribeToLeague, unsubscribeAll, fetchStandings, startCountdown, stopCountdown } from './realtime.js';
 import { supabase, isSupabaseAvailable } from './supabase.js';
 
@@ -10732,7 +10732,25 @@ function playMatch() {
  * 2. If not, simulate ALL matches for the week, save to Supabase, update standings
  * 3. Show the player's match report
  */
+let multiplayerMatchInProgress = false;
+
 async function playMultiplayerMatch() {
+    if (multiplayerMatchInProgress) return;
+    multiplayerMatchInProgress = true;
+
+    // Disable play button to prevent double-click
+    const playBtn = document.getElementById('play-match-btn');
+    if (playBtn) playBtn.disabled = true;
+
+    try {
+        await _playMultiplayerMatchInner();
+    } finally {
+        multiplayerMatchInProgress = false;
+        if (playBtn) playBtn.disabled = false;
+    }
+}
+
+async function _playMultiplayerMatchInner() {
     const mp = gameState.multiplayer;
     if (!mp || !mp.leagueId || !mp.clubId) {
         showNotification('Multiplayer niet correct ingesteld.', 'error');
@@ -10788,42 +10806,253 @@ async function playMultiplayerMatch() {
         const resultType = getMatchResultType(existingResult.home_score, existingResult.away_score, isHome);
 
         // Apply match results to player stats (morale, energy, cards, etc.)
+        // Use captured `week` (not gameState.week) — realtime handler may bump it mid-function
         applyMatchResults(gameState.lineup, {
             homeScore: existingResult.home_score,
             awayScore: existingResult.away_score,
             playerRatings: matchData.playerRatings || {},
             events: matchData.events || []
-        }, isHome, gameState.week);
+        }, isHome, week);
 
         // Red card fines
         const ourTeam = isHome ? 'home' : 'away';
         const redCardEvents = (matchData.events || []).filter(e => e.type === 'red_card' && e.team === ourTeam);
         redCardEvents.forEach(() => gameState.club.budget -= 100);
 
-        // Remove suspended/injured players from lineup
+        // Remove suspended/injured players from lineup (use week+1 = next week)
         const matchNotifications = [];
+        const nextWeek = week + 1;
         gameState.lineup.forEach((p, i) => {
             if (!p) return;
-            if (p.suspendedUntil && p.suspendedUntil > gameState.week) {
-                const weeks = p.suspendedUntil - gameState.week;
+            if (p.suspendedUntil && p.suspendedUntil > nextWeek) {
+                const weeks = p.suspendedUntil - nextWeek;
                 matchNotifications.push(`${p.name} is geschorst voor ${weeks} wedstrijd${weeks > 1 ? 'en' : ''}`);
                 gameState.lineup[i] = null;
             }
-            if (p.injuredUntil && p.injuredUntil > gameState.week) {
-                const weeks = p.injuredUntil - gameState.week;
+            if (p.injuredUntil && p.injuredUntil > nextWeek) {
+                const weeks = p.injuredUntil - nextWeek;
                 matchNotifications.push(`${p.name} is geblesseerd voor ${weeks} wedstrijd${weeks > 1 ? 'en' : ''}`);
                 gameState.lineup[i] = null;
             }
         });
 
-        // Update local stats
-        if (resultType === 'win') gameState.stats.wins++;
-        else if (resultType === 'draw') gameState.stats.draws++;
-        else gameState.stats.losses++;
+        // Sync lineup changes back to gameState.players (they are separate objects)
+        // applyMatchResults modified lineup objects; saveMultiplayer syncs from gameState.players
+        const syncFields = ['goals', 'assists', 'morale', 'energy', 'yellowCards', 'redCards',
+            'suspendedUntil', 'injuredUntil', 'injuryDuration', 'matchesTogether'];
+        gameState.lineup.forEach(lineupPlayer => {
+            if (!lineupPlayer) return;
+            const squadPlayer = gameState.players.find(p => p && p.id === lineupPlayer.id);
+            if (!squadPlayer) return;
+            syncFields.forEach(field => {
+                if (lineupPlayer[field] !== undefined) {
+                    squadPlayer[field] = lineupPlayer[field];
+                }
+            });
+        });
+
+        // === Full post-match stats (shared with singleplayer) ===
+        const myPlayerInLineup = gameState.lineup.some(p => p && p.isMyPlayer);
+        if (myPlayerInLineup) {
+            gameState.stats.myPlayerMatches = (gameState.stats.myPlayerMatches || 0) + 1;
+        }
+
         gameState.club.stats.totalMatches++;
         gameState.club.stats.totalGoals += playerScore;
 
-        // Build a result object compatible with showLiveMatch / match history
+        // Match statistics & streaks
+        if (resultType === 'win') {
+            gameState.stats.wins++;
+            gameState.stats.currentUnbeaten = (gameState.stats.currentUnbeaten || 0) + 1;
+            gameState.stats.currentWinStreak = (gameState.stats.currentWinStreak || 0) + 1;
+            if (isHome) gameState.stats.homeWins = (gameState.stats.homeWins || 0) + 1;
+            const diff = playerScore - opponentScore;
+            if (diff >= 3) gameState.stats.bigWins = (gameState.stats.bigWins || 0) + 1;
+            if (diff >= 4) gameState.stats.bigWins4 = (gameState.stats.bigWins4 || 0) + 1;
+            if (diff >= 5) gameState.stats.bigWins5 = (gameState.stats.bigWins5 || 0) + 1;
+            if (!isHome) gameState.stats.awayWins = (gameState.stats.awayWins || 0) + 1;
+            if (playerScore === 1 && opponentScore === 0) gameState.stats.oneNilWins = (gameState.stats.oneNilWins || 0) + 1;
+            gameState.stats.drawStreak = 0;
+            gameState.stats.lossStreak = 0;
+        } else if (resultType === 'draw') {
+            gameState.stats.draws++;
+            gameState.stats.currentUnbeaten = (gameState.stats.currentUnbeaten || 0) + 1;
+            gameState.stats.currentWinStreak = 0;
+            gameState.stats.drawStreak = (gameState.stats.drawStreak || 0) + 1;
+            gameState.stats.lossStreak = 0;
+        } else {
+            gameState.stats.losses++;
+            gameState.stats.currentUnbeaten = 0;
+            gameState.stats.currentWinStreak = 0;
+            gameState.stats.drawStreak = 0;
+            gameState.stats.lossStreak = (gameState.stats.lossStreak || 0) + 1;
+        }
+        gameState.stats.bestWinStreak = Math.max(gameState.stats.bestWinStreak || 0, gameState.stats.currentWinStreak);
+        gameState.stats.bestUnbeaten = Math.max(gameState.stats.bestUnbeaten || 0, gameState.stats.currentUnbeaten);
+        if (opponentScore === 0) {
+            gameState.stats.cleanSheets = (gameState.stats.cleanSheets || 0) + 1;
+            gameState.stats.cleanSheetStreak = (gameState.stats.cleanSheetStreak || 0) + 1;
+        } else {
+            gameState.stats.cleanSheetStreak = 0;
+        }
+        if (playerScore > (gameState.stats.highestScoreMatch || 0)) gameState.stats.highestScoreMatch = playerScore;
+        gameState.stats.goalsAgainst = (gameState.stats.goalsAgainst || 0) + opponentScore;
+        if (playerScore > 0) {
+            gameState.stats.scoringStreak = (gameState.stats.scoringStreak || 0) + 1;
+            gameState.stats.goalDrought = 0;
+        } else {
+            gameState.stats.goalDrought = (gameState.stats.goalDrought || 0) + 1;
+            gameState.stats.scoringStreak = 0;
+        }
+        if (new Date().getHours() === 0) gameState.stats.playedAtMidnight = true;
+        if (resultType === 'win' && gameState.myPlayer && Math.round(gameState.myPlayer.energy || 0) >= 100 && myPlayerInLineup) {
+            gameState.stats.energy100Win = true;
+        }
+        if (new Date().getDay() === 6) gameState.stats.saturdayMatches = (gameState.stats.saturdayMatches || 0) + 1;
+
+        // Manager XP
+        const mgrLevelBefore = getManagerLevel(gameState.manager?.xp || 0);
+        const xpReasons = [];
+        if (resultType === 'win') { awardXP(gameState, 'matchWin'); xpReasons.push({ reason: 'Wedstrijd gewonnen', amount: 50 }); }
+        else if (resultType === 'draw') { awardXP(gameState, 'matchDraw'); xpReasons.push({ reason: 'Gelijkspel', amount: 20 }); }
+        if (opponentScore === 0) { awardXP(gameState, 'cleanSheet'); xpReasons.push({ reason: 'Clean sheet', amount: 25 }); }
+        if (playerScore > 0) { awardXP(gameState, 'goalScored', playerScore * 5); xpReasons.push({ reason: `${playerScore} doelpunt${playerScore > 1 ? 'en' : ''} gescoord`, amount: playerScore * 5 }); }
+        gameState._pendingManagerXP = xpReasons.length > 0 ? xpReasons : null;
+        const mgrLevelAfter = getManagerLevel(gameState.manager?.xp || 0);
+        if (mgrLevelAfter.level > mgrLevelBefore.level) {
+            const mgrLevelData = MANAGER_LEVELS.find(l => l.level === mgrLevelAfter.level);
+            const mgrNextData = MANAGER_LEVELS.find(l => l.level === mgrLevelAfter.level + 1);
+            gameState._pendingLevelUps = gameState._pendingLevelUps || [];
+            gameState._pendingLevelUps.push({ type: 'manager', data: {
+                oldLevel: mgrLevelBefore.level, newLevel: mgrLevelAfter.level,
+                oldTitle: mgrLevelBefore.title, newTitle: mgrLevelAfter.title,
+                nextTitle: mgrNextData?.title || null,
+                cashReward: mgrLevelData?.cashReward || 0,
+                oldProgress: mgrLevelBefore.progress,
+                progress: mgrLevelAfter.progress, xpToNext: mgrLevelAfter.xpToNext
+            }});
+        }
+
+        // Player XP
+        const playerXPReasons = [];
+        if (myPlayerInLineup && gameState.myPlayer) {
+            awardPlayerXP(gameState, 'match', 20);
+            playerXPReasons.push({ reason: 'Wedstrijd gespeeld', amount: 20 });
+            const myId = 'myplayer';
+            const myGoals = (matchData.events || []).filter(e =>
+                (e.type === 'goal' || e.type === 'penalty') && e.team === ourTeam && e.playerId === myId
+            ).length;
+            const myAssists = (matchData.events || []).filter(e =>
+                (e.type === 'goal' || e.type === 'penalty') && e.team === ourTeam && e.assistId === myId
+            ).length;
+            if (myGoals > 0) {
+                const goalXP = myGoals * 50;
+                awardPlayerXP(gameState, 'match', goalXP);
+                playerXPReasons.push({ reason: `${myGoals} doelpunt${myGoals > 1 ? 'en' : ''}`, amount: goalXP });
+                gameState.stats.myPlayerGoals = (gameState.stats.myPlayerGoals || 0) + myGoals;
+            }
+            if (myAssists > 0) {
+                const assistXP = myAssists * 50;
+                awardPlayerXP(gameState, 'match', assistXP);
+                playerXPReasons.push({ reason: `${myAssists} assist${myAssists > 1 ? 's' : ''}`, amount: assistXP });
+                gameState.stats.myPlayerAssists = (gameState.stats.myPlayerAssists || 0) + myAssists;
+            }
+            if (myGoals > 0 && myAssists > 0) {
+                gameState.stats.myGoalAndAssist = (gameState.stats.myGoalAndAssist || 0) + 1;
+            }
+            if (matchData.manOfTheMatch && matchData.manOfTheMatch.id === 'myplayer') {
+                gameState.stats.myPlayerMotm = (gameState.stats.myPlayerMotm || 0) + 1;
+            }
+        }
+        gameState._pendingPlayerXP = playerXPReasons.length > 0 ? playerXPReasons : null;
+
+        // Player growth (lineup players with stars improve)
+        const improvements = [];
+        const lineupIds = new Set((gameState.lineup || []).filter(p => p).map(p => p.id));
+        gameState.players.forEach(player => {
+            if (!player || !lineupIds.has(player.id)) return;
+            const stars = player.stars || 0;
+            if (stars >= 0.5 && player.overall < 99) {
+                const growthGain = Math.round(15 + stars * 4 + Math.random() * 10);
+                if (!player.growthProgress) player.growthProgress = 0;
+                player.growthProgress += growthGain;
+                let leveled = false;
+                if (player.growthProgress >= 100) {
+                    player.growthProgress -= 100;
+                    player.overall = Math.min(99, player.overall + 1);
+                    leveled = true;
+                }
+                improvements.push({ id: player.id, name: player.name, stars, gainPct: growthGain, progressPct: player.growthProgress, leveled, newOverall: player.overall });
+            } else {
+                improvements.push({ id: player.id, name: player.name, stars, gainPct: 0, progressPct: 0, leveled: false, newOverall: player.overall });
+            }
+        });
+
+        // Energy: playing players lose, bench players recover
+        const tempo = gameState.tactics?.speltempo || 'normaal';
+        const tempoEnergyDrain = { rustig: { min: 15, max: 25 }, normaal: { min: 20, max: 30 }, snel: { min: 25, max: 35 } };
+        const drain = tempoEnergyDrain[tempo] || tempoEnergyDrain.normaal;
+        gameState.players.forEach(player => {
+            if (!player) return;
+            if (lineupIds.has(player.id)) {
+                const loss = drain.min + Math.floor(Math.random() * (drain.max - drain.min + 1));
+                player.energy = Math.max(0, (player.energy || 75) - loss);
+            } else {
+                const recovery = 15 + Math.floor(Math.random() * 11);
+                player.energy = Math.min(100, (player.energy || 75) + recovery);
+            }
+        });
+        if (gameState.myPlayer) {
+            const mpInLineup = lineupIds.has('myplayer');
+            if (mpInLineup) {
+                const loss = drain.min + Math.floor(Math.random() * (drain.max - drain.min + 1));
+                gameState.myPlayer.energy = Math.max(0, (gameState.myPlayer.energy || 100) - loss);
+            } else {
+                const recovery = 15 + Math.floor(Math.random() * 11);
+                gameState.myPlayer.energy = Math.min(100, (gameState.myPlayer.energy || 100) + recovery);
+            }
+            const mpSquad = gameState.players.find(p => p && p.id === 'myplayer');
+            if (mpSquad) mpSquad.energy = gameState.myPlayer.energy;
+        }
+
+        // Fans
+        const baseFans = resultType === 'win' ? 10 : resultType === 'draw' ? 3 : -2;
+        const offensiveMultipliers = { zeer_verdedigend: 0.5, verdedigend: 0.7, gebalanceerd: 1.0, offensief: 1.5, leeroy: 2.0 };
+        const offensiveMultiplier = offensiveMultipliers[gameState.tactics?.offensief] || 1.0;
+        const homeMultiplier = isHome ? 1.2 : 1.0;
+        const goalBonus = playerScore * 2;
+        const newFans = Math.round(baseFans * offensiveMultiplier * homeMultiplier) + goalBonus;
+        gameState.club.fans = Math.max(0, (gameState.club.fans || 50) + newFans);
+
+        // Formation drive
+        if (!gameState.formationDrives) gameState.formationDrives = {};
+        let driveGain = 15 + Math.random() * 5;
+        if (gameState.training?.teamTraining?.bonus?.type === 'tactics') driveGain += 10;
+        gameState.formationDrives[gameState.formation] = Math.min(100, (gameState.formationDrives[gameState.formation] || 0) + driveGain);
+
+        // Compact playerRatings for storage
+        const improvById = {};
+        improvements.forEach(imp => { improvById[String(imp.id)] = imp; });
+        const compactRatings = matchData.playerRatings ? Object.entries(matchData.playerRatings).map(([id, data]) => {
+            const pid = isNaN(Number(id)) ? id : Number(id);
+            const imp = improvById[String(pid)];
+            return {
+                id: pid,
+                name: data.player?.name || '?',
+                position: data.player?.position,
+                rating: Math.round((data.rating || 6) * 10) / 10,
+                goals: data.goals || 0,
+                assists: data.assists || 0,
+                yellowCards: data.yellowCards || 0,
+                redCards: data.redCards || 0,
+                gainPct: imp ? imp.gainPct : 0,
+                progressPct: imp ? imp.progressPct : 0,
+                leveled: imp ? imp.leveled : false,
+                potStars: imp ? imp.stars : 0
+            };
+        }) : [];
+
+        // Build full result object
         const fullResult = {
             homeTeam: { name: isHome ? gameState.club.name : opponentName },
             awayTeam: { name: isHome ? opponentName : gameState.club.name },
@@ -10840,6 +11069,9 @@ async function playMultiplayerMatch() {
             manOfTheMatch: matchData.manOfTheMatch
         };
 
+        // Chairman comments
+        const chairmanComments = generateChairmanComments(fullResult, isHome, improvements, resultType, playerScore, opponentScore);
+
         // Store last match
         gameState.lastMatch = {
             ...fullResult,
@@ -10848,35 +11080,50 @@ async function playMultiplayerMatch() {
             opponentScore,
             resultType,
             opponent: opponentName,
-            playerRatings: [],
-            improvements: [],
-            chairmanComments: []
+            playerRatings: compactRatings,
+            improvements,
+            chairmanComments,
+            newFans
         };
 
-        // Push to match history
+        // Push to match history (use captured week/season, not gameState which may be bumped)
         if (!gameState.matchHistory) gameState.matchHistory = [];
+        const storedEvents = (matchData.events || []).filter(e =>
+            ['goal', 'own_goal', 'yellow_card', 'red_card', 'substitution', 'injury', 'penalty', 'penalty_miss'].includes(e.type)
+        );
         gameState.matchHistory.push({
-            week: gameState.week,
-            season: gameState.season,
+            week,
+            season,
             opponent: opponentName,
             isHome,
             playerScore,
             opponentScore,
             resultType,
-            events: (matchData.events || []).filter(e =>
-                ['goal', 'yellow_card', 'red_card', 'injury', 'penalty'].includes(e.type)
-            ),
+            events: storedEvents,
             possession: fullResult.possession,
             shots: fullResult.shots,
             shotsOnTarget: fullResult.shotsOnTarget,
             xG: fullResult.xG,
             fouls: fullResult.fouls,
             cards: fullResult.cards,
-            manOfTheMatch: fullResult.manOfTheMatch
+            manOfTheMatch: fullResult.manOfTheMatch,
+            playerRatings: compactRatings,
+            improvements,
+            chairmanComments
         });
 
-        // Advance week
-        gameState.week++;
+        // Advance week — sync from DB (RPC already advanced it)
+        const { data: updatedLeague } = await supabase
+            .from('leagues')
+            .select('week, season')
+            .eq('id', leagueId)
+            .single();
+        if (updatedLeague) {
+            gameState.week = updatedLeague.week;
+            gameState.season = updatedLeague.season;
+        } else {
+            gameState.week++;
+        }
 
         // Sync standings from Supabase
         await syncStandingsFromSupabase();
@@ -10885,6 +11132,99 @@ async function playMultiplayerMatch() {
         const didWin = playerScore > opponentScore;
         applyWeeklyFinances(didWin);
 
+        // Tick sponsor contracts + refresh market
+        tickSponsorContracts();
+        generateSponsorMarket();
+
+        // Reset wedstrijdvoorbereiding
+        if (gameState.training && gameState.training.teamTraining) {
+            gameState.training.teamTraining.selected = null;
+            gameState.training.teamTraining.bonus = null;
+        }
+
+        // Check season end
+        if (isSeasonComplete(gameState.standings)) {
+            // Multiplayer season transition: atomic RPC resets standings/season in DB
+            const { data: seasonResult } = await supabase.rpc('process_season_end', {
+                p_league_id: leagueId,
+                p_season: season
+            });
+
+            // Local season-end effects (same as singleplayer handleEndOfSeason)
+            const calcResult = calculateSeasonResults(gameState.standings, gameState.club.division);
+            if (calcResult) {
+                if (calcResult.promoted) {
+                    gameState.stats.promotions = (gameState.stats.promotions || 0) + 1;
+                    gameState.stats.consecutivePromotions = (gameState.stats.consecutivePromotions || 0) + 1;
+                    awardXP(gameState, 'promotion');
+                } else {
+                    gameState.stats.consecutivePromotions = 0;
+                }
+                if (calcResult.isChampion) {
+                    awardXP(gameState, 'title');
+                    gameState.stats.champion = (gameState.stats.champion || 0) + 1;
+                }
+                if (calcResult.position === 6) {
+                    gameState.stats.relegationEscapes = (gameState.stats.relegationEscapes || 0) + 1;
+                }
+            }
+
+            // Archive season
+            const seasonMatches = (gameState.matchHistory || []).filter(m => m.season === season);
+            gameState.seasonHistory = gameState.seasonHistory || [];
+            gameState.seasonHistory.push({
+                season,
+                division: gameState.club.division,
+                position: calcResult?.position || 1,
+                wins: seasonMatches.filter(m => m.resultType === 'win').length,
+                draws: seasonMatches.filter(m => m.resultType === 'draw').length,
+                losses: seasonMatches.filter(m => m.resultType === 'loss').length,
+                goalsFor: seasonMatches.reduce((s, m) => s + m.playerScore, 0),
+                goalsAgainst: seasonMatches.reduce((s, m) => s + m.opponentScore, 0),
+                result: calcResult?.isChampion ? 'champion' : calcResult?.promoted ? 'promoted' : calcResult?.relegated ? 'relegated' : 'normal'
+            });
+
+            // Update division locally (multiplayer: all teams stay in same league, but track individually)
+            if (calcResult) {
+                gameState.club.division = calcResult.newDivision;
+                if (calcResult.isChampion) gameState.club.stats.titles = (gameState.club.stats.titles || 0) + 1;
+                if (calcResult.newDivision < (gameState.club.stats.highestDivision || 8)) {
+                    gameState.club.stats.highestDivision = calcResult.newDivision;
+                }
+            }
+
+            // Age players, reset goals/assists
+            gameState.players.forEach(p => { if (p) { p.age++; p.goals = 0; p.assists = 0; } });
+
+            // Sync new week/season from DB
+            const { data: newLeague } = await supabase
+                .from('leagues')
+                .select('week, season')
+                .eq('id', leagueId)
+                .single();
+            if (newLeague) {
+                gameState.week = newLeague.week;
+                gameState.season = newLeague.season;
+            }
+
+            // Generate new schedule for the new season
+            const { data: allClubs } = await supabase
+                .from('clubs')
+                .select('id, is_ai')
+                .eq('league_id', leagueId);
+            if (allClubs) {
+                const humanClubIds = allClubs.filter(c => !c.is_ai).map(c => c.id);
+                await generateSchedule(leagueId, gameState.season, allClubs.map(c => c.id), humanClubIds);
+            }
+
+            // Re-sync standings for new season
+            await syncStandingsFromSupabase();
+
+            showSeasonEndModal(calcResult);
+        } else {
+            setNextMatch();
+        }
+
         // Re-render
         renderStandings();
         renderTopScorers();
@@ -10892,19 +11232,33 @@ async function playMultiplayerMatch() {
         updateBudgetDisplays();
         renderDashboardExtras();
 
-        // Save
+        // Save (forceSyncToSupabase routes through same lock as saveGame)
         saveGame(gameState);
-        forceSyncToSupabase(gameState);
+        forceSyncToSupabase();
 
         // Show live match simulation
         showLiveMatch(fullResult, isHome, opponentName, () => {
             navigateToPage('wedstrijden');
             setTimeout(() => activateTabOnPage('wedstrijden', 'verslag'), 50);
 
+            // Show pending XP popups
+            setTimeout(() => showPendingXPModals(), 500);
+
             if (matchNotifications.length > 0) {
                 setTimeout(() => {
                     matchNotifications.forEach(msg => showNotification(msg, 'warning'));
                 }, 1000);
+            }
+            if (redCardEvents.length > 0) {
+                setTimeout(() => {
+                    showNotification(`Rode kaart boete: ${formatCurrency(redCardEvents.length * 100)}`, 'warning');
+                }, 1500);
+            }
+
+            // Check achievements
+            const newAchievements = checkAchievements(gameState);
+            if (newAchievements.length > 0) {
+                setTimeout(() => queueAchievements(newAchievements), 3000);
             }
         });
 
@@ -16711,28 +17065,7 @@ async function initMultiplayerGame(detail) {
         initSaveLoadButtons();
         initBugReports();
 
-        // Generate youth players if none loaded (Supabase doesn't store them yet)
-        if (!gameState.youthPlayers || gameState.youthPlayers.length === 0) {
-            gameState.youthPlayers = [];
-            if (gameState.stadium?.academy !== 'acad_0') {
-                generateInitialYouthPlayers();
-            }
-        }
-
-        // Render everything
-        renderStandings();
-        renderTopScorers();
-        renderPlayerCards();
-        updateBudgetDisplays();
-        renderDashboardExtras();
-
-        // Explicitly navigate to dashboard to ensure page is visible
-        navigateToPage('dashboard');
-
-        // Start timers (training + match timer)
-        startTimers();
-
-        // Subscribe to realtime updates
+        // Subscribe to realtime updates BEFORE rendering (catch updates during init)
         subscribeToLeague(leagueId, {
             onStandingsChange: async () => {
                 const standings = await fetchStandings(leagueId);
@@ -16760,6 +17093,27 @@ async function initMultiplayerGame(detail) {
                 }
             }
         });
+
+        // Generate youth players if none loaded (Supabase doesn't store them yet)
+        if (!gameState.youthPlayers || gameState.youthPlayers.length === 0) {
+            gameState.youthPlayers = [];
+            if (gameState.stadium?.academy !== 'acad_0') {
+                generateInitialYouthPlayers();
+            }
+        }
+
+        // Render everything
+        renderStandings();
+        renderTopScorers();
+        renderPlayerCards();
+        updateBudgetDisplays();
+        renderDashboardExtras();
+
+        // Explicitly navigate to dashboard to ensure page is visible
+        navigateToPage('dashboard');
+
+        // Start timers (training + match timer)
+        startTimers();
 
         // Start multiplayer countdown (updates dashboard timer)
         startCountdown(league.match_time || '20:00');

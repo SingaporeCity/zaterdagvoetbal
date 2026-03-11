@@ -348,39 +348,38 @@ async function joinLeague(code) {
             return;
         }
 
-        // Lobby: check player count (RLS allows viewing clubs in lobby leagues)
-        const { count } = await supabase
-            .from('clubs')
-            .select('id', { count: 'exact', head: true })
-            .eq('league_id', league.id)
-            .eq('is_ai', false);
-
-        console.log('[joinLeague] Human player count:', count, '/', league.max_players);
-
-        if (count >= league.max_players) {
-            errorEl.textContent = 'Deze competitie zit vol.';
-            return;
-        }
-
+        // Atomic join via RPC (prevents max_players overflow from concurrent joins)
         {
-            // Join lobby as normal
-            console.log('[joinLeague] Inserting club for user', user.id);
-            const { error: clubError } = await supabase
-                .from('clubs')
-                .insert({
-                    league_id: league.id,
-                    owner_id: user.id,
-                    name: 'FC Nieuw Team',
-                    is_ai: false,
-                    division: league.division
-                });
+            console.log('[joinLeague] Attempting atomic join for user', user.id);
+            const { data: joinResult, error: joinError } = await supabase.rpc('join_league', {
+                p_league_id: league.id,
+                p_user_id: user.id,
+                p_club_name: 'FC Nieuw Team'
+            });
 
-            if (clubError) {
-                console.error('[joinLeague] Club insert error:', clubError);
-                throw clubError;
+            if (joinError) {
+                console.error('[joinLeague] RPC error:', joinError);
+                throw joinError;
             }
 
-            // Feed insert — non-critical, don't let it block join
+            if (!joinResult?.success) {
+                if (joinResult?.error === 'league_full') {
+                    errorEl.textContent = 'Deze competitie zit vol.';
+                } else {
+                    errorEl.textContent = joinResult?.error || 'Kon niet joinen.';
+                }
+                return;
+            }
+
+            if (joinResult.already_joined) {
+                console.log('[joinLeague] Already joined via RPC, entering');
+                showWaitingScreen(league);
+                await refreshWaitingRoom(league.id, user.id);
+                subscribeToLobby(league.id, user.id);
+                return;
+            }
+
+            // Feed insert — non-critical
             supabase.from('league_feed').insert({
                 league_id: league.id,
                 type: 'join',
@@ -810,18 +809,6 @@ async function startLeague(onStartGame) {
 
     const leagueId = myClub.league_id;
 
-    // Guard: check if league is already active (prevents double-tap creating duplicate teams)
-    const { data: leagueCheck } = await supabase
-        .from('leagues')
-        .select('status')
-        .eq('id', leagueId)
-        .single();
-    if (leagueCheck?.status === 'active') {
-        // Already started — just enter it
-        await enterLeague(leagueId, null);
-        return;
-    }
-
     // Get all human clubs
     const { data: humanClubs } = await supabase
         .from('clubs')
@@ -833,62 +820,54 @@ async function startLeague(onStartGame) {
 
     const aiNeeded = 8 - humanClubs.length;
 
-    // Create AI teams
+    // Build AI team names
     const shuffledNames = [...AI_TEAM_NAMES].sort(() => Math.random() - 0.5);
     const usedNames = humanClubs.map(c => c.name);
     const aiNames = shuffledNames.filter(n => !usedNames.includes(n)).slice(0, aiNeeded);
 
-    const aiClubs = [];
-    for (const name of aiNames) {
-        const { data: aiClub } = await supabase
-            .from('clubs')
-            .insert({
-                league_id: leagueId,
-                owner_id: null,
-                name,
-                is_ai: true,
-                division: 8
-            })
-            .select()
-            .single();
+    // Atomic RPC: locks league, checks status=lobby, creates AI clubs + standings, sets active
+    const { data: rpcResult, error: rpcError } = await supabase.rpc('start_league', {
+        p_league_id: leagueId,
+        p_user_id: user.id,
+        p_ai_teams: aiNames.map(name => ({ name }))
+    });
 
-        if (aiClub) aiClubs.push(aiClub);
+    if (rpcError) {
+        console.error('[startLeague] RPC error:', rpcError.message);
+        return;
     }
 
-    const allClubs = [...humanClubs, ...aiClubs];
-
-    // Generate players for all clubs
-    for (const club of allClubs) {
-        await generatePlayersForClub(club.id, leagueId, 8);
+    if (rpcResult?.already_started) {
+        // Another player was faster — just enter
+        await enterLeague(leagueId, null);
+        return;
     }
 
-    // Create standings for all clubs
-    for (const club of allClubs) {
-        await supabase.from('standings').insert({
-            league_id: leagueId,
-            season: 1,
-            club_id: club.id,
-            position: allClubs.indexOf(club) + 1
-        });
+    if (!rpcResult?.success) {
+        console.error('[startLeague] RPC failed:', rpcResult?.error);
+        return;
     }
 
-    // Only generate schedule if 2+ human players; otherwise wait for more to join
-    if (humanClubs.length >= 2) {
+    // Generate players for all clubs (AI clubs created by RPC)
+    const allClubIds = rpcResult.all_club_ids || [];
+    for (const clubId of allClubIds) {
+        await generatePlayersForClub(clubId, leagueId, 8);
+    }
+
+    // Generate schedule if 2+ human players
+    const humanCount = rpcResult.human_count || humanClubs.length;
+    if (humanCount >= 2) {
         const humanClubIds = humanClubs.map(c => c.id);
-        await generateSchedule(leagueId, 1, allClubs.map(c => c.id), humanClubIds);
+        await generateSchedule(leagueId, 1, allClubIds, humanClubIds);
     }
 
-    // Update league status to active (week 0 = no matches yet if solo)
-    await supabase
-        .from('leagues')
-        .update({ status: 'active', week: humanClubs.length >= 2 ? 1 : 0, season: 1 })
-        .eq('id', leagueId);
-
-    // Feed entry
-    await supabase.from('league_feed').insert({
+    // Feed entry (non-critical)
+    supabase.from('league_feed').insert({
         league_id: leagueId,
         type: 'season_start',
-        data: { season: 1, teams: allClubs.length }
+        data: { season: 1, teams: allClubIds.length }
+    }).then(({ error }) => {
+        if (error) console.warn('[startLeague] Feed insert failed:', error.message);
     });
 
     // Enter the game
@@ -1008,7 +987,7 @@ function generateAttributes(overall, position) {
 /**
  * Generate round-robin schedule for a league
  */
-async function generateSchedule(leagueId, season, clubIds, humanClubIds = []) {
+export async function generateSchedule(leagueId, season, clubIds, humanClubIds = []) {
     const n = clubIds.length;
     const rounds = (n - 1) * 2; // Home + away
 
@@ -1082,6 +1061,11 @@ async function generateSchedule(leagueId, season, clubIds, humanClubIds = []) {
     for (let i = 0; i < matches.length; i += batchSize) {
         const { error } = await supabase.from('schedule').insert(matches.slice(i, i + batchSize));
         if (error) {
+            if (error.code === '23505') {
+                // UNIQUE violation — another player already generated the schedule
+                console.log('[generateSchedule] Schedule already exists (race condition resolved)');
+                return true;
+            }
             console.error('[generateSchedule] Insert failed:', error.message);
             insertFailed = true;
         }
@@ -1335,14 +1319,14 @@ function buildTeamFromClub(club, players) {
             midfield: Math.round(avgOf(midfielders)),
             overall: Math.round(avgOverall)
         },
-        roster: filledPlayers.map((p, i) => ({ name: p.name, id: `opp_${i}` })),
+        roster: filledPlayers.map(p => ({ name: p.name, id: p.id })),
         lineup,
         tactics
     };
 }
 
 /**
- * Simulate all matches for a week, save results, update standings, advance week
+ * Simulate all matches for a week, save results atomically via RPC, advance week
  * Returns the match results array
  */
 export async function simulateWeek(leagueId, season, week, simulateMatchFn, calculateStrengthFn) {
@@ -1353,24 +1337,17 @@ export async function simulateWeek(leagueId, season, week, simulateMatchFn, calc
     // Check if already simulated (any result exists)
     const { data: existingResults } = await supabase
         .from('match_results')
-        .select('id')
+        .select('*')
         .eq('league_id', leagueId)
         .eq('season', season)
-        .eq('week', week)
-        .limit(1);
+        .eq('week', week);
 
     if (existingResults && existingResults.length > 0) {
-        // Already simulated, fetch all results
-        const { data: allResults } = await supabase
-            .from('match_results')
-            .select('*')
-            .eq('league_id', leagueId)
-            .eq('season', season)
-            .eq('week', week);
-        return allResults || [];
+        return existingResults;
     }
 
-    const results = [];
+    // Simulate all matches locally, then persist atomically
+    const rpcResults = [];
 
     for (const match of weekSchedule) {
         // Load both clubs and their players
@@ -1409,16 +1386,35 @@ export async function simulateWeek(leagueId, season, week, simulateMatchFn, calc
             { grassLevel: homeClub.stadium?.grass || 0 }
         );
 
-        // Store result in database
-        const matchResultRecord = {
-            league_id: leagueId,
-            schedule_id: match.id,
-            season,
-            week,
+        // Initialise away team playerRatings (fix: away players now have real IDs)
+        awayTeam.lineup.filter(p => p).forEach(player => {
+            if (!result.playerRatings[player.id]) {
+                result.playerRatings[player.id] = {
+                    player: { name: player.name, id: player.id },
+                    rating: 6.0 + (Math.random() - 0.5),
+                    goals: 0, assists: 0, yellowCards: 0, redCards: 0
+                };
+            }
+        });
+        // Process away events for correct ratings
+        result.events.filter(e => e.team === 'away').forEach(ev => {
+            const pr = result.playerRatings[ev.playerId];
+            if (!pr) return;
+            if (ev.type === 'goal') { pr.goals++; pr.rating += 1.0; }
+            if (ev.type === 'yellow_card') { pr.yellowCards++; pr.rating -= 0.5; }
+            if (ev.type === 'red_card') { pr.redCards++; pr.rating -= 2.0; }
+            if (ev.assistId) {
+                const ar = result.playerRatings[ev.assistId];
+                if (ar) { ar.assists++; ar.rating += 0.5; }
+            }
+        });
+
+        rpcResults.push({
             home_club_id: match.home_club_id,
             away_club_id: match.away_club_id,
             home_score: result.homeScore,
             away_score: result.awayScore,
+            schedule_id: match.id,
             match_data: {
                 events: result.events,
                 possession: result.possession,
@@ -1427,70 +1423,37 @@ export async function simulateWeek(leagueId, season, week, simulateMatchFn, calc
                 fouls: result.fouls,
                 cards: result.cards,
                 xG: result.xG,
-                manOfTheMatch: result.manOfTheMatch
+                manOfTheMatch: result.manOfTheMatch,
+                playerRatings: result.playerRatings
             }
-        };
-
-        const { data: savedResult } = await supabase
-            .from('match_results')
-            .insert(matchResultRecord)
-            .select()
-            .single();
-
-        results.push(savedResult || matchResultRecord);
-
-        // Update standings for both teams
-        await updateMultiplayerStandings(leagueId, season, match.home_club_id, result.homeScore, result.awayScore);
-        await updateMultiplayerStandings(leagueId, season, match.away_club_id, result.awayScore, result.homeScore);
-
-        // Mark schedule entry as played
-        await supabase
-            .from('schedule')
-            .update({ played: true })
-            .eq('id', match.id);
+        });
     }
 
-    // Advance league week
-    await supabase
-        .from('leagues')
-        .update({ week: week + 1 })
-        .eq('id', leagueId);
+    // Single atomic RPC call — locks league row, inserts all results, updates standings, advances week
+    const { data: rpcResponse, error: rpcError } = await supabase.rpc('process_week_results', {
+        p_league_id: leagueId,
+        p_season: season,
+        p_week: week,
+        p_results: rpcResults
+    });
 
-    return results;
-}
+    if (rpcError) {
+        console.error('[simulateWeek] RPC error:', rpcError.message);
+    }
 
-/**
- * Update standings for a single club after a match
- */
-async function updateMultiplayerStandings(leagueId, season, clubId, goalsFor, goalsAgainst) {
-    // Fetch current standings
-    const { data: standing } = await supabase
-        .from('standings')
+    if (rpcError || (rpcResponse && rpcResponse.already_exists)) {
+        console.log('[simulateWeek] Results already existed or RPC conflict — fetching canonical results');
+    }
+
+    // Always fetch canonical results from DB (ensures both players see the same data)
+    const { data: canonicalResults } = await supabase
+        .from('match_results')
         .select('*')
         .eq('league_id', leagueId)
         .eq('season', season)
-        .eq('club_id', clubId)
-        .single();
+        .eq('week', week);
 
-    if (!standing) return;
-
-    const won = goalsFor > goalsAgainst;
-    const drawn = goalsFor === goalsAgainst;
-
-    const update = {
-        played: (standing.played || 0) + 1,
-        won: (standing.won || 0) + (won ? 1 : 0),
-        drawn: (standing.drawn || 0) + (drawn ? 1 : 0),
-        lost: (standing.lost || 0) + (!won && !drawn ? 1 : 0),
-        goals_for: (standing.goals_for || 0) + goalsFor,
-        goals_against: (standing.goals_against || 0) + goalsAgainst,
-        points: (standing.points || 0) + (won ? 3 : drawn ? 1 : 0)
-    };
-
-    await supabase
-        .from('standings')
-        .update(update)
-        .eq('id', standing.id);
+    return canonicalResults || [];
 }
 
 /**
