@@ -28358,23 +28358,30 @@ body {
     border-bottom: none;
 }
 
-.opponent-player-rank {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: rgba(255, 144, 32, 0.15);
-    color: var(--accent-orange);
-    font-size: 0.75rem;
-    font-weight: 700;
+.opponent-player-ovr {
+    width: 36px;
+    height: 28px;
+    border-radius: 4px;
+    color: white;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
 }
 
-.opponent-player-row:first-child .opponent-player-rank {
-    background: var(--accent-orange);
-    color: #1a2e1a;
+.opponent-created-badge {
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--accent-amber);
+    background: rgba(255, 201, 64, 0.15);
+    padding: 1px 5px;
+    border-radius: 3px;
+    vertical-align: middle;
+    margin-left: 4px;
 }
 
 .opponent-player-info {

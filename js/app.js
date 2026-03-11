@@ -1179,30 +1179,52 @@ async function showOpponentSquad(clubId, clubName) {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
     overlay.querySelector('.opponent-popup-close').addEventListener('click', close);
 
-    // Fetch players
-    const players = await getClubPlayers(clubId);
+    // Fetch players + club client_state (for myPlayer)
+    const [players, clubData] = await Promise.all([
+        getClubPlayers(clubId),
+        supabase.from('clubs').select('client_state').eq('id', clubId).single()
+    ]);
     const playersContainer = overlay.querySelector('.opponent-popup-players');
 
-    if (!players || players.length === 0) {
+    const mapped = (players || []).map(p => supabasePlayerToLocal(p));
+
+    // Add opponent's created player from client_state
+    const opponentMyPlayer = clubData?.data?.client_state?.myPlayer;
+    if (opponentMyPlayer && opponentMyPlayer.name) {
+        const a = opponentMyPlayer.attributes || {};
+        const ovr = opponentMyPlayer.overall || Math.round(((a.SNE || 0) + (a.TEC || 0) + (a.PAS || 0) + (a.SCH || 0) + (a.VER || 0) + (a.FYS || 0)) / 6);
+        mapped.push({
+            id: 'opponent-myplayer',
+            name: opponentMyPlayer.name,
+            age: opponentMyPlayer.age || 20,
+            position: opponentMyPlayer.position || 'spits',
+            overall: ovr,
+            stars: opponentMyPlayer.stars || 1,
+            nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
+            isMyPlayer: true
+        });
+    }
+
+    if (mapped.length === 0) {
         playersContainer.innerHTML = '<div class="opponent-popup-empty">Geen spelers gevonden</div>';
         return;
     }
 
-    const mapped = players.map(p => supabasePlayerToLocal(p));
     const top5 = mapped.sort((a, b) => b.overall - a.overall).slice(0, 5);
 
     playersContainer.innerHTML = top5.map((p, i) => {
         const posInfo = POSITIONS[p.position];
         const posName = posInfo?.name || p.position;
+        const posColor = posInfo?.color || '#666';
         const flag = p.nationality?.flag || '🏳️';
         const stars = p.stars || 0;
         const starsDisplay = stars > 0 ? Array(Math.min(stars, 5)).fill('★').join('') : '';
 
         return `<div class="opponent-player-row">
-            <div class="opponent-player-rank">${i + 1}</div>
+            <div class="opponent-player-ovr" style="background:${posColor}">${p.overall}</div>
             <div class="opponent-player-info">
-                <div class="opponent-player-name">${flag} ${p.name}</div>
-                <div class="opponent-player-meta">${posName} · ${p.age} jaar · ${p.overall} OVR</div>
+                <div class="opponent-player-name">${flag} ${p.name}${p.isMyPlayer ? ' <span class="opponent-created-badge">SPELER</span>' : ''}</div>
+                <div class="opponent-player-meta">${posName} · ${p.age} jaar</div>
             </div>
             ${starsDisplay ? `<div class="opponent-player-stars">${starsDisplay}</div>` : ''}
         </div>`;
