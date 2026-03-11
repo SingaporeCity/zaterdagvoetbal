@@ -2291,7 +2291,8 @@ function renderLineupPitch() {
         let chemistryBonus = 0;
         let isWrongPosition = false;
         if (player) {
-            const nat = NATIONALITIES.find(n => n.code === player.nationality);
+            const natCode = typeof player.nationality === 'object' ? player.nationality?.code : player.nationality;
+            const nat = NATIONALITIES.find(n => n.code === natCode);
             nationalityFlag = nat?.flag || '🏳️';
             chemistryBonus = chemistryBonuses[player.id] || 0;
 
@@ -2565,7 +2566,7 @@ function handleLineupDrop(targetSlotIndex) {
         const formation = FORMATIONS[gameState.formation];
         if (formation) {
             const requiredPos = formation.positions[targetSlotIndex];
-            const posGroup = POSITIONS[requiredPos]?.group;
+            const posGroup = POSITIONS[requiredPos?.role || requiredPos]?.group;
             const playerGroup = POSITIONS[lineupDragData.player.position]?.group;
             if (posGroup && playerGroup && posGroup !== playerGroup) {
                 gameState.stats.placedWrongPosition = true;
@@ -2918,7 +2919,7 @@ window.handleDrop = function(e, targetIndex) {
         const formation = FORMATIONS[gameState.formation];
         if (formation) {
             const requiredPos = formation.positions[targetIndex];
-            const posGroup = POSITIONS[requiredPos]?.group;
+            const posGroup = POSITIONS[requiredPos?.role || requiredPos]?.group;
             const playerGroup = POSITIONS[placedPlayer.position]?.group;
             if (posGroup && playerGroup && posGroup !== playerGroup) {
                 gameState.stats.placedWrongPosition = true;

@@ -336,7 +336,7 @@ const EVENTS = {
                 age,
                 player: {
                     id: Date.now() + Math.random(),
-                    name: `Jayden de Jong`,
+                    name: data.playerName,
                     age,
                     position: randomFromArray(['centraleMid', 'spits', 'linksbuiten']),
                     overall: random(25, 40),
