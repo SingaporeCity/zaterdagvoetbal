@@ -2287,7 +2287,11 @@ function calculateChemistryBonuses() {
 
         // Check if all adjacent players have same nationality
         if (adjacentPlayers.length > 0) {
-            const allSameNationality = adjacentPlayers.every(ap => ap.nationality === player.nationality);
+            const playerNat = typeof player.nationality === 'object' ? player.nationality?.code : player.nationality;
+            const allSameNationality = adjacentPlayers.every(ap => {
+                const apNat = typeof ap.nationality === 'object' ? ap.nationality?.code : ap.nationality;
+                return apNat === playerNat;
+            });
             if (allSameNationality) {
                 bonuses[player.id] = 1; // +1 overall bonus
             }
