@@ -14699,6 +14699,7 @@ function openSpecialistDropdown(roleKey, roleLabel, lineupPlayers) {
             overlay.style.display = 'none';
             saveGame();
             populateSpecialistSelects();
+            triggerAchievementCheck();
         };
     });
 }
