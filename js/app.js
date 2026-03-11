@@ -1142,57 +1142,71 @@ function renderStandings() {
 }
 
 async function showOpponentSquad(clubId, clubName) {
-    const modal = document.getElementById('player-modal');
-    const content = document.getElementById('player-detail-content');
-    if (!modal || !content) return;
+    // Remove existing popup if any
+    document.querySelector('.opponent-popup-overlay')?.remove();
 
-    content.innerHTML = `<h2 style="text-align:center;margin-bottom:1rem">Selectie van ${clubName}</h2><p style="text-align:center;opacity:0.6">Laden...</p>`;
-    modal.classList.add('active');
+    // Find standing info for this club
+    const standing = gameState.standings.find(s => s.clubId === clubId);
 
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'opponent-popup-overlay';
+    overlay.innerHTML = `
+        <div class="opponent-popup">
+            <button class="opponent-popup-close">&times;</button>
+            <div class="opponent-popup-header">
+                <div class="opponent-popup-name">${clubName}</div>
+                ${standing ? `<div class="opponent-popup-stats">
+                    <span class="opponent-stat">${standing.points} pnt</span>
+                    <span class="opponent-stat-sep"></span>
+                    <span class="opponent-stat">${standing.won || standing.wins || 0}W ${standing.drawn || standing.draws || 0}G ${standing.lost || standing.losses || 0}V</span>
+                    <span class="opponent-stat-sep"></span>
+                    <span class="opponent-stat">${standing.goalsFor || 0}-${standing.goalsAgainst || 0}</span>
+                </div>` : ''}
+            </div>
+            <div class="opponent-popup-divider"></div>
+            <div class="opponent-popup-title">Beste spelers</div>
+            <div class="opponent-popup-players">
+                <div class="opponent-popup-loading">Laden...</div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Close handlers
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    overlay.querySelector('.opponent-popup-close').addEventListener('click', close);
+
+    // Fetch players
     const players = await getClubPlayers(clubId);
+    const playersContainer = overlay.querySelector('.opponent-popup-players');
+
     if (!players || players.length === 0) {
-        content.innerHTML = `<h2 style="text-align:center;margin-bottom:1rem">Selectie van ${clubName}</h2><p style="text-align:center;opacity:0.6">Geen spelers gevonden.</p>`;
+        playersContainer.innerHTML = '<div class="opponent-popup-empty">Geen spelers gevonden</div>';
         return;
     }
 
-    // Map DB fields to card format using shared converter
-    const mapped = players.map(p => ({
-        ...supabasePlayerToLocal(p),
-        isMyPlayer: false
-    }));
+    const mapped = players.map(p => supabasePlayerToLocal(p));
+    const top5 = mapped.sort((a, b) => b.overall - a.overall).slice(0, 5);
 
-    // Group by position
-    const groups = {
-        attacker: { name: 'Aanvallers', icon: '⚽', color: '#9c27b0', players: [] },
-        midfielder: { name: 'Middenvelders', icon: '⚙️', color: '#4caf50', players: [] },
-        defender: { name: 'Verdedigers', icon: '🛡️', color: '#2196f3', players: [] },
-        goalkeeper: { name: 'Keepers', icon: '🧤', color: '#f9a825', players: [] }
-    };
+    playersContainer.innerHTML = top5.map((p, i) => {
+        const posInfo = POSITIONS[p.position];
+        const posName = posInfo?.name || p.position;
+        const flag = p.nationality?.flag || '🏳️';
+        const stars = p.stars || 0;
+        const starsDisplay = stars > 0 ? Array(Math.min(stars, 5)).fill('★').join('') : '';
 
-    mapped.forEach(player => {
-        const group = getPositionGroup(player.position);
-        if (groups[group]) groups[group].players.push(player);
-    });
-
-    Object.values(groups).forEach(g => g.players.sort((a, b) => b.overall - a.overall));
-
-    let html = `<h2 style="text-align:center;margin-bottom:1rem">Selectie van ${clubName}</h2>`;
-    for (const [, group] of Object.entries(groups)) {
-        if (group.players.length > 0) {
-            html += `<div class="squad-group">
-                <div class="squad-group-header" style="background: ${group.color}">
-                    <span class="squad-group-icon">${group.icon}</span>
-                    <span class="squad-group-name">${group.name}</span>
-                    <span class="squad-group-count">${group.players.length}</span>
-                </div>
-                <div class="squad-group-players">
-                    ${group.players.map(p => createPlayerCardHTML(p, false, true)).join('')}
-                </div>
-            </div>`;
-        }
-    }
-
-    content.innerHTML = html;
+        return `<div class="opponent-player-row">
+            <div class="opponent-player-rank">${i + 1}</div>
+            <div class="opponent-player-info">
+                <div class="opponent-player-name">${flag} ${p.name}</div>
+                <div class="opponent-player-meta">${posName} · ${p.age} jaar · ${p.overall} OVR</div>
+            </div>
+            ${starsDisplay ? `<div class="opponent-player-stars">${starsDisplay}</div>` : ''}
+        </div>`;
+    }).join('');
 }
 
 function renderTopScorers() {

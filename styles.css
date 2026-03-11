@@ -28221,4 +28221,185 @@ body {
     .page-section {
         margin-bottom: 12px;
     }
+
+    .opponent-popup {
+        width: 90%;
+        max-width: none;
+        padding: 20px;
+    }
+}
+
+/* ================================================
+   OPPONENT POPUP — Top 5 spelers preview
+   ================================================ */
+.opponent-popup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    animation: opponentFadeIn 0.2s ease;
+}
+
+@keyframes opponentFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.opponent-popup {
+    position: relative;
+    background: var(--bg-card);
+    border-radius: var(--card-radius);
+    border: 1px solid var(--border);
+    padding: 24px 28px;
+    max-width: 380px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlide 0.3s ease;
+}
+
+.opponent-popup-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: all var(--transition-fast);
+}
+
+.opponent-popup-close:hover {
+    background: var(--error);
+    color: white;
+}
+
+.opponent-popup-header {
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.opponent-popup-name {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--accent-orange);
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.opponent-popup-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.opponent-stat {
+    white-space: nowrap;
+}
+
+.opponent-stat-sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    opacity: 0.5;
+}
+
+.opponent-popup-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 14px 0;
+}
+
+.opponent-popup-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.opponent-popup-players {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.opponent-popup-loading,
+.opponent-popup-empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 16px 0;
+}
+
+.opponent-player-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 248, 225, 0.06);
+}
+
+.opponent-player-row:last-child {
+    border-bottom: none;
+}
+
+.opponent-player-rank {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 144, 32, 0.15);
+    color: var(--accent-orange);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.opponent-player-row:first-child .opponent-player-rank {
+    background: var(--accent-orange);
+    color: #1a2e1a;
+}
+
+.opponent-player-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.opponent-player-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.opponent-player-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.opponent-player-stars {
+    color: var(--accent-amber);
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    flex-shrink: 0;
 }
