@@ -16754,14 +16754,14 @@ function upgradeStadiumCategory() {
     gameState.stadium.construction = {
         category: category,
         targetId: nextLevel.id,
-        completesAt: getNextMidnight()
+        completesAt: Date.now() + 12 * 60 * 60 * 1000 // 12 uur bouwtijd
     };
 
     // Update UI
     renderStadiumMap();
     updateStadiumUpgradePanel(category);
     updateBudgetDisplays();
-    showNotification(`Bouw gestart: ${nextLevel.name}! Klaar morgen om 00:00.`, 'success');
+    showNotification(`Bouw gestart: ${nextLevel.name}! Klaar over 12 uur.`, 'success');
     saveGame();
 }
 
