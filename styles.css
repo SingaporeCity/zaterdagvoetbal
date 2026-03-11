@@ -12435,6 +12435,11 @@ body {
     text-align: center;
 }
 
+.available-player .ap-flag {
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
 .available-player .ap-age {
     font-size: 0.65rem;
     color: var(--text-muted);

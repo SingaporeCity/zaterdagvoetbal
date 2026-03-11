@@ -528,8 +528,8 @@ function generatePlayerName(nationality) {
 }
 
 function generateNationality() {
-    // ~70% Dutch, rest proportionally distributed
-    const weights = [170, 8, 8, 5, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 1, 3, 3, 1, 1, 2];
+    // ~50% Dutch, ~50% foreign for realistic transfer market
+    const weights = [71, 8, 8, 5, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 1, 3, 3, 1, 1, 2];
     const total = weights.reduce((a, b) => a + b, 0);
     let roll = Math.random() * total;
 
@@ -2360,6 +2360,7 @@ function renderLineupPitch() {
                          style="background: ${POSITIONS[player.position]?.color || slotColor}">
                         <span class="lp-overall">${player.overall + chemistryBonus}${chemistryBonus > 0 ? '<span class="chemistry-boost">+' + chemistryBonus + '</span>' : ''}</span>
                         <span class="lp-name">${player.name.split(' ')[0]}</span>
+                        <span class="lp-flag">${nationalityFlag}</span>
                         <span class="lp-position">${POSITIONS[player.position]?.abbr || player.position}</span>
                         ${player.suspendedUntil && player.suspendedUntil > gameState.week ? `<span class="lp-status">🚫${player.suspendedUntil - gameState.week}</span>` : player.injuredUntil && player.injuredUntil > gameState.week ? `<span class="lp-status lp-injured">🏥${player.injuredUntil - gameState.week}</span>` : (player.yellowCards || 0) >= 3 ? `<span class="lp-status">🟨${player.yellowCards}</span>` : ''}
                     </div>
@@ -2454,7 +2455,7 @@ function renderAvailablePlayers() {
                      draggable="${isUnavailable ? 'false' : 'true'}"
                      data-player-id="${player.id}">
                     <span class="ap-pos" style="background:${posData?.color || '#666'};color:#fff">${posData?.abbr || '??'}</span>
-                    <span class="ap-age">${player.age}j</span>
+                    <span class="ap-flag">${typeof player.nationality === 'object' ? (player.nationality?.flag || '🏳️') : '🏳️'}</span>
                     <span class="ap-name">${player.name}</span>
                     ${statusHTML}
                     <span class="ap-energy"><span class="ap-energy-bar" style="width:${energy}%;background:${energyColor}"></span></span>
@@ -9137,7 +9138,7 @@ function showOnboarding() {
                     <div class="onboarding-color-presets">
                         ${colorPresets.map((c, i) => `
                             <button class="onboarding-color-btn ${i === 0 ? 'selected' : ''}" data-color-idx="${i}" title="${c.name}">
-                                <span class="ocp-swatch" style="background: ${c.primary}; border: 2px solid ${c.accent}"></span>
+                                <span class="ocp-swatch" style="background: linear-gradient(135deg, ${c.primary} 50%, ${c.secondary} 50%); border: 2px solid ${c.accent}"></span>
                                 <span class="ocp-label">${c.name}</span>
                             </button>
                         `).join('')}
@@ -10684,7 +10685,7 @@ function playMatch() {
             id: pid,
             name: data.player.name,
             position: data.player.position,
-            rating: Math.round(data.rating * 10) / 10,
+            rating: Math.round(data.rating),
             goals: data.goals,
             assists: data.assists,
             yellowCards: data.yellowCards,
@@ -11163,7 +11164,7 @@ async function _playMultiplayerMatchInner() {
                 id: pid,
                 name: data.player?.name || '?',
                 position: data.player?.position,
-                rating: Math.round((data.rating || 6) * 10) / 10,
+                rating: Math.round(data.rating || 6),
                 goals: data.goals || 0,
                 assists: data.assists || 0,
                 yellowCards: data.yellowCards || 0,
@@ -11633,7 +11634,7 @@ function generateChairmanComments(result, isHome, improvements, resultType, play
     }
     if (result.manOfTheMatch) {
         const motm = result.manOfTheMatch;
-        const ratingStr = motm.rating ? ` met een ${motm.rating.toFixed(1)}` : '';
+        const ratingStr = motm.rating ? ` met een ${Math.round(motm.rating)}` : '';
         parts.push(`${motm.name} was vandaag de uitblinker${ratingStr}. Zo\'n speler heb je nodig.`);
     }
     if (improvements.length > 0) {
@@ -11806,7 +11807,7 @@ function renderMatchReport() {
             </thead>
             <tbody>
                 ${sortedRatings.map(p => {
-                    const ratingClass = p.rating >= 8.0 ? 'good' : p.rating >= 6.5 ? 'okay' : 'poor';
+                    const ratingClass = p.rating >= 8 ? 'good' : p.rating >= 6 ? 'okay' : 'poor';
                     const posAbbr = POSITIONS[p.position]?.abbr || p.position;
                     const actualPlayer = gameState.players.find(pl => pl && pl.id === p.id);
                     const injuryIcon = actualPlayer && actualPlayer.injuredUntil && actualPlayer.injuredUntil > gameState.week ? `<span class="mr-injury">🏥${actualPlayer.injuredUntil - gameState.week}</span>` : '';
@@ -11832,7 +11833,7 @@ function renderMatchReport() {
                         <td><span class="mr-name-wrap">${p.name} ${icons}</span></td>
                         <td><span class="mr-ovr-badge" style="background: ${posData2.color}">${actualPlayer ? actualPlayer.overall : '?'}</span></td>
                         <td><span class="rating-stars-cell">${starsHtml}</span></td>
-                        <td><span class="match-rating-badge ${ratingClass}">${p.rating.toFixed(1)}</span></td>
+                        <td><span class="match-rating-badge ${ratingClass}">${Math.round(p.rating)}</span></td>
                         <td class="rating-growth-cell">${growthHTML}</td>
                     </tr>`;
                 }).join('')}
@@ -11886,7 +11887,7 @@ function renderMatchReport() {
                             ${match.manOfTheMatch ? `
                                 <div class="report-footer-item motm">
                                     <span class="report-footer-label">Man of the Match</span>
-                                    <span class="report-footer-value">${match.manOfTheMatch.name}${match.manOfTheMatch.rating ? ` — ${match.manOfTheMatch.rating.toFixed(1)}` : ''}</span>
+                                    <span class="report-footer-value">${match.manOfTheMatch.name}${match.manOfTheMatch.rating ? ` — ${Math.round(match.manOfTheMatch.rating)}` : ''}</span>
                                 </div>
                             ` : ''}
                             ${match.newFans !== undefined ? `
@@ -11971,8 +11972,8 @@ function renderPlayerRatingsTab() {
                                 <td>${data.name}</td>
                                 ${data.ratings.map(r => {
                                     if (r === null || r === undefined) return '<td><span class="form-badge none">-</span></td>';
-                                    const cls = r >= 8.0 ? 'good' : r >= 6.5 ? 'okay' : 'poor';
-                                    return `<td><span class="form-badge ${cls}">${r.toFixed(1)}</span></td>`;
+                                    const cls = r >= 8 ? 'good' : r >= 6 ? 'okay' : 'poor';
+                                    return `<td><span class="form-badge ${cls}">${Math.round(r)}</span></td>`;
                                 }).join('')}
                                 <td><span class="form-badge ${avgClass}">${avg > 0 ? avg.toFixed(1) : '-'}</span></td>
                             </tr>`;
@@ -12781,7 +12782,7 @@ function showMatchResultModal(result, isHome, opponentName) {
                     <div class="match-result-motm-info">
                         <span class="match-result-motm-label">Man of the Match</span>
                         <span class="match-result-motm-name">${result.manOfTheMatch.name}</span>
-                        ${result.manOfTheMatch.rating ? `<span class="match-result-motm-rating">${result.manOfTheMatch.rating.toFixed(1)}</span>` : ''}
+                        ${result.manOfTheMatch.rating ? `<span class="match-result-motm-rating">${Math.round(result.manOfTheMatch.rating)}</span>` : ''}
                     </div>
                 </div>
             ` : ''}

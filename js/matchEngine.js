@@ -612,12 +612,15 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
     result.possession.home = Math.round((homeStrength.midfield / totalMidfield) * 100);
     result.possession.away = 100 - result.possession.home;
 
-    // Initialize player ratings
+    // Initialize player ratings — base influenced by player quality + random match performance
     if (homeLineup) {
         homeLineup.filter(p => p).forEach(player => {
+            const quality = Math.min(1, Math.max(0, (player.overall || 50) / 100));
+            const perf = (Math.random() + Math.random()) / 2; // 0-1, centered around 0.5
+            const base = 3.5 + quality * 1.5 + perf * 2.5;
             result.playerRatings[player.id] = {
                 player,
-                rating: 6.0 + (Math.random() - 0.5),
+                rating: base,
                 goals: 0,
                 assists: 0,
                 yellowCards: 0,
@@ -719,11 +722,11 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
                 // Update player stats
                 if (event.playerId && result.playerRatings[event.playerId]) {
                     result.playerRatings[event.playerId].goals++;
-                    result.playerRatings[event.playerId].rating += 1.0;
+                    result.playerRatings[event.playerId].rating += 1.5;
                 }
                 if (event.assistId && result.playerRatings[event.assistId]) {
                     result.playerRatings[event.assistId].assists++;
-                    result.playerRatings[event.assistId].rating += 0.5;
+                    result.playerRatings[event.assistId].rating += 1.0;
                 }
             } else if (event.type === EVENT_TYPES.SHOT_SAVED) {
                 result.shots[team]++;
@@ -776,8 +779,8 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
     let bestRating = 0;
     let motm = null;
     for (const [id, data] of Object.entries(result.playerRatings)) {
-        // Clamp ratings
-        data.rating = Math.max(4.0, Math.min(10.0, data.rating));
+        // Round and clamp ratings to 2-9
+        data.rating = Math.max(2, Math.min(9, Math.round(data.rating)));
 
         if (data.rating > bestRating) {
             bestRating = data.rating;

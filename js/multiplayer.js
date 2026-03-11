@@ -57,13 +57,12 @@ export function initMultiplayerUI(onStartGame) {
 
     // Signup
     document.getElementById('signup-btn')?.addEventListener('click', async () => {
-        const name = document.getElementById('signup-name').value.trim();
         const email = document.getElementById('signup-email').value.trim();
         const password = document.getElementById('signup-password').value;
         const errorEl = document.getElementById('signup-error');
         errorEl.textContent = '';
 
-        if (!name || !email || !password) {
+        if (!email || !password) {
             errorEl.textContent = 'Vul alle velden in.';
             return;
         }
@@ -73,7 +72,7 @@ export function initMultiplayerUI(onStartGame) {
         }
 
         try {
-            await signUp(email, password, name);
+            await signUp(email, password, email.split('@')[0]);
             showModeScreen();
         } catch (err) {
             errorEl.textContent = err.message;
@@ -935,8 +934,34 @@ async function generatePlayersForClub(clubId, leagueId, division, tier = 'player
         'spits', 'spits'
     ];
 
-    const firstNames = ['Jan', 'Kees', 'Pieter', 'Henk', 'Willem', 'Jaap', 'Sander', 'Erik', 'Bas', 'Tom', 'Mark', 'Joost', 'Frank', 'Daan', 'Lars', 'Bram'];
-    const lastNames = ['de Jong', 'Bakker', 'Visser', 'Smit', 'Meijer', 'de Boer', 'Mulder', 'de Groot', 'Bos', 'Vos', 'Peters', 'Hendriks', 'van Dijk', 'Janssen', 'van den Berg', 'Vermeer'];
+    const dutchFirstNames = ['Jan', 'Kees', 'Pieter', 'Henk', 'Willem', 'Jaap', 'Sander', 'Erik', 'Bas', 'Tom', 'Mark', 'Joost', 'Frank', 'Daan', 'Lars', 'Bram'];
+    const dutchLastNames = ['de Jong', 'Bakker', 'Visser', 'Smit', 'Meijer', 'de Boer', 'Mulder', 'de Groot', 'Bos', 'Vos', 'Peters', 'Hendriks', 'van Dijk', 'Janssen', 'van den Berg', 'Vermeer'];
+
+    // Foreign player name pools per nationality code
+    const foreignNames = {
+        BE: { first: ['Kevin', 'Jelle', 'Bram', 'Thibaut', 'Dries', 'Axel'], last: ['Peeters', 'Janssens', 'Claes', 'Mertens', 'Willems', 'Wouters'] },
+        DE: { first: ['Max', 'Lukas', 'Felix', 'Jonas', 'Leon', 'Tim'], last: ['Müller', 'Schmidt', 'Schneider', 'Fischer', 'Weber', 'Wagner'] },
+        BR: { first: ['Lucas', 'Gabriel', 'Rafael', 'Matheus', 'Bruno', 'Felipe'], last: ['Silva', 'Santos', 'Oliveira', 'Souza', 'Costa', 'Pereira'] },
+        ES: { first: ['Carlos', 'Pablo', 'Sergio', 'Alejandro', 'Diego', 'Adrián'], last: ['García', 'Martínez', 'López', 'Sánchez', 'Rodríguez', 'Fernández'] },
+        GB: { first: ['James', 'Harry', 'Charlie', 'George', 'Oliver', 'Jack'], last: ['Smith', 'Jones', 'Taylor', 'Brown', 'Williams', 'Wilson'] },
+        FR: { first: ['Antoine', 'Hugo', 'Raphaël', 'Lucas', 'Théo', 'Louis'], last: ['Martin', 'Bernard', 'Dubois', 'Thomas', 'Robert', 'Petit'] },
+        GH: { first: ['Kwame', 'Kofi', 'Yaw', 'Kwesi', 'Ebo', 'Nana'], last: ['Mensah', 'Owusu', 'Boateng', 'Asante', 'Osei', 'Agyei'] },
+        MA: { first: ['Youssef', 'Amine', 'Mehdi', 'Hamza', 'Zakaria', 'Bilal'], last: ['El Amrani', 'Bouzid', 'Idrissi', 'Saidi', 'Benjelloun', 'Tahiri'] },
+        TR: { first: ['Emre', 'Burak', 'Cem', 'Oğuz', 'Barış', 'Kaan'], last: ['Yılmaz', 'Kaya', 'Demir', 'Çelik', 'Aydın', 'Öztürk'] },
+        PL: { first: ['Jakub', 'Mateusz', 'Kacper', 'Dawid', 'Szymon', 'Tomasz'], last: ['Kowalski', 'Wiśniewski', 'Wójcik', 'Kamiński', 'Lewandowski', 'Zieliński'] },
+    };
+    const foreignNats = Object.keys(foreignNames);
+
+    // Pick 3-5 random non-keeper indices to be foreign players
+    const foreignCount = 3 + Math.floor(Math.random() * 3); // 3, 4 or 5
+    const allNonKeeperIdx = positions.map((p, i) => p !== 'keeper' ? i : -1).filter(i => i >= 0);
+    const shuffledIdx = allNonKeeperIdx.sort(() => Math.random() - 0.5);
+    const foreignIndices = new Set(shuffledIdx.slice(0, foreignCount));
+    // Assign a nationality to each foreign player
+    const foreignNatMap = {};
+    for (const fi of foreignIndices) {
+        foreignNatMap[fi] = foreignNats[Math.floor(Math.random() * foreignNats.length)];
+    }
 
     // Overall ranges per tier
     const tierRanges = {
@@ -963,8 +988,17 @@ async function generatePlayersForClub(clubId, leagueId, division, tier = 'player
         const overall = isYoung ? rnd(range.youngMin, range.youngMax) : rnd(range.oldMin, range.oldMax);
         const age = isYoung ? rnd(20, 27) : rnd(40, 55);
         const stars = isYoung ? 0.5 : 0;
-        const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-        const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+        const isForeign = foreignIndices.has(idx);
+        const natCode = isForeign ? foreignNatMap[idx] : 'NL';
+        let firstName, lastName;
+        if (isForeign && foreignNames[natCode]) {
+            const pool = foreignNames[natCode];
+            firstName = pool.first[Math.floor(Math.random() * pool.first.length)];
+            lastName = pool.last[Math.floor(Math.random() * pool.last.length)];
+        } else {
+            firstName = dutchFirstNames[Math.floor(Math.random() * dutchFirstNames.length)];
+            lastName = dutchLastNames[Math.floor(Math.random() * dutchLastNames.length)];
+        }
 
         const isKeeper = pos === 'keeper';
         const attrNames = isKeeper ? ['REF', 'BAL', 'SNE', 'FYS'] : ['AAN', 'VER', 'SNE', 'FYS'];
@@ -980,7 +1014,7 @@ async function generatePlayersForClub(clubId, leagueId, division, tier = 'player
             name: `${firstName} ${lastName}`,
             age,
             position: pos,
-            nationality: 'nl',
+            nationality: natCode.toLowerCase(),
             overall,
             potential: overall,
             attributes: { ...attributes, _stars: stars },
@@ -1478,9 +1512,11 @@ export async function simulateWeek(leagueId, season, week, simulateMatchFn, calc
         // Initialise away team playerRatings (fix: away players now have real IDs)
         awayTeam.lineup.filter(p => p).forEach(player => {
             if (!result.playerRatings[player.id]) {
+                const quality = Math.min(1, Math.max(0, (player.overall || 50) / 100));
+                const perf = (Math.random() + Math.random()) / 2;
                 result.playerRatings[player.id] = {
                     player: { name: player.name, id: player.id, position: player.position },
-                    rating: 6.0 + (Math.random() - 0.5),
+                    rating: 3.5 + quality * 1.5 + perf * 2.5,
                     goals: 0, assists: 0, yellowCards: 0, redCards: 0
                 };
             }
@@ -1489,13 +1525,18 @@ export async function simulateWeek(leagueId, season, week, simulateMatchFn, calc
         result.events.filter(e => e.team === 'away').forEach(ev => {
             const pr = result.playerRatings[ev.playerId];
             if (!pr) return;
-            if (ev.type === 'goal') { pr.goals++; pr.rating += 1.0; }
+            if (ev.type === 'goal') { pr.goals++; pr.rating += 1.5; }
             if (ev.type === 'yellow_card') { pr.yellowCards++; pr.rating -= 0.5; }
             if (ev.type === 'red_card') { pr.redCards++; pr.rating -= 2.0; }
             if (ev.assistId) {
                 const ar = result.playerRatings[ev.assistId];
-                if (ar) { ar.assists++; ar.rating += 0.5; }
+                if (ar) { ar.assists++; ar.rating += 1.0; }
             }
+        });
+        // Clamp away ratings to 2-9 integers (home team was clamped by matchEngine)
+        awayTeam.lineup.filter(p => p).forEach(player => {
+            const pr = result.playerRatings[player.id];
+            if (pr) pr.rating = Math.max(2, Math.min(9, Math.round(pr.rating)));
         });
 
         rpcResults.push({
