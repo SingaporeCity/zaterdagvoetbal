@@ -134,6 +134,7 @@ function gameStateToClubRecord(gameState) {
             activeEvent: gameState.activeEvent || null,
             sponsorMarket: gameState.sponsorMarket || { offers: [], generatedForWeek: 0 },
             clubStats: gameState.club?.stats || { founded: 1, titles: 0, highestDivision: 8, totalGoals: 0, totalMatches: 0 },
+            extraSponsors: gameState.extraSponsors || [],
         },
         updated_at: new Date().toISOString()
     };
@@ -201,6 +202,7 @@ function clubRecordToGameState(club, players, standings, leagueData) {
         myPlayer: cs.myPlayer || null,
         scoutingNetwork: club.scouting_network || 'none',
         dailyChecklist: club.daily_checklist || {},
+        extraSponsors: cs.extraSponsors || [],
         onboardingCompleted: club.onboarding_completed || false,
         multiplayer: {
             enabled: true,

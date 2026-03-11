@@ -3565,6 +3565,7 @@ async function purchaseUpgrade(category, upgradeId) {
 
         updateBudgetDisplays();
         renderStadiumPage();
+        saveGame();
     }
 }
 
@@ -3846,7 +3847,7 @@ function renderScoutPage() {
     `;
 }
 
-function hireScoutedPlayer(playerId) {
+async function hireScoutedPlayer(playerId) {
     const player = gameState.scoutSearch.results.find(p => p.id === playerId);
     if (!player) return;
 
@@ -3862,7 +3863,6 @@ function hireScoutedPlayer(playerId) {
 
     // Hire the player
     gameState.club.budget -= player.price;
-    gameState.players.push(player);
     gameState.scoutSearch.results = gameState.scoutSearch.results.filter(p => p.id !== playerId);
     gameState.stats.totalTransfers = (gameState.stats.totalTransfers || 0) + 1;
     gameState.stats.seasonSpending = (gameState.stats.seasonSpending || 0) + player.price;
@@ -3870,10 +3870,18 @@ function hireScoutedPlayer(playerId) {
     if (player.price >= 1000000) gameState.stats.expensiveTransfer = true;
     // Achievement: signed high potential (stars ≥ 0.5)
     if ((player.stars || 0) >= 0.5) gameState.stats.signedHighPotential = true;
-    triggerAchievementCheck();
 
+    // In multiplayer, insert player into Supabase to get UUID
+    if (isMultiplayer() && gameState.multiplayer?.clubId && gameState.multiplayer?.leagueId) {
+        const dbPlayer = await insertPlayerToSupabase(player, gameState.multiplayer.clubId, gameState.multiplayer.leagueId);
+        if (dbPlayer) player.id = dbPlayer.id;
+    }
+
+    gameState.players.push(player);
+    triggerAchievementCheck();
     updateBudgetDisplays();
     renderScoutPage();
+    saveGame();
     showNotification(`${player.name} is toegevoegd aan je selectie!`, 'success');
 }
 
@@ -5134,6 +5142,7 @@ function completeTrainerSession(trainerId) {
 
     // Reset trainer
     gameState.training.trainerStatus[trainerId] = { busy: false };
+    saveGame();
 }
 
 function renderPositionSlots() {
@@ -5336,6 +5345,7 @@ function assignPlayerToTraining(group, playerId, trainerId) {
 
     renderTrainingPage();
     renderDashboardChecklist();
+    saveGame();
 }
 
 function assignTrainerToSlot(trainerId, group) {
@@ -5397,6 +5407,7 @@ function completeTraining(group) {
     clearTrainingSlot(group);
     renderTrainingPage();
     renderPlayerCards();
+    saveGame();
 }
 
 function selectTeamTraining(type) {
@@ -5412,6 +5423,7 @@ function selectTeamTraining(type) {
     gameState.training.teamTraining.bonus = bonuses[type];
     renderTeamTraining();
     renderDashboardChecklist();
+    saveGame();
 }
 
 // Train my player (individual training, 1x per day)
@@ -5873,6 +5885,7 @@ async function listPlayerOnTransferMarket(playerId, price, skipConfirm = false) 
 
         document.getElementById('player-modal').classList.remove('active');
         renderPlayerCards();
+        saveGame();
     }
 }
 
@@ -6621,6 +6634,7 @@ async function handleTransferBuy(playerId) {
             renderTransferMarket();
             if (hasRange) await showOverallReveal(player.name, minVal, maxVal, realVal, sMin, sMax, sReal);
             triggerAchievementCheck();
+            saveGame();
             showNotification(`${player.name} is toegevoegd aan je selectie!`, 'success');
         }
 
@@ -8290,7 +8304,7 @@ async function signYouthContract(playerId) {
     }
 }
 
-function createProfessionalFromYouth(playerIndex, salary, bonus) {
+async function createProfessionalFromYouth(playerIndex, salary, bonus) {
     const youthPlayer = gameState.youthPlayers[playerIndex];
 
     // Determine personality
@@ -8327,6 +8341,12 @@ function createProfessionalFromYouth(playerIndex, salary, bonus) {
 
     // Subtract signing bonus from budget
     gameState.club.budget -= bonus;
+
+    // In multiplayer, insert player into Supabase to get UUID
+    if (isMultiplayer() && gameState.multiplayer?.clubId && gameState.multiplayer?.leagueId) {
+        const dbPlayer = await insertPlayerToSupabase(professionalPlayer, gameState.multiplayer.clubId, gameState.multiplayer.leagueId);
+        if (dbPlayer) professionalPlayer.id = dbPlayer.id;
+    }
 
     // Add to squad and remove from youth
     gameState.players.push(professionalPlayer);
@@ -13619,12 +13639,25 @@ function createEventModal() {
     return modal;
 }
 
-function handleEventChoice(choiceIndex) {
+async function handleEventChoice(choiceIndex) {
     const event = gameState.activeEvent;
     if (!event) return;
 
+    // Snapshot player IDs before event
+    const playerIdsBefore = new Set(gameState.players.map(p => p.id));
+
     // Apply choice effect
     applyEventChoice(gameState, event, choiceIndex);
+
+    // In multiplayer, sync any new players added by the event to Supabase
+    if (isMultiplayer() && gameState.multiplayer?.clubId && gameState.multiplayer?.leagueId) {
+        for (const player of gameState.players) {
+            if (!playerIdsBefore.has(player.id)) {
+                const dbPlayer = await insertPlayerToSupabase(player, gameState.multiplayer.clubId, gameState.multiplayer.leagueId);
+                if (dbPlayer) player.id = dbPlayer.id;
+            }
+        }
+    }
 
     // Add to history
     addEventToHistory(gameState, event, choiceIndex);
@@ -14025,6 +14058,7 @@ function selectStadiumSponsor(sponsorId) {
         sponsorName.textContent = STADIUM_SPONSORS[sponsorId].name;
     }
 
+    saveGame();
     showNotification(`${STADIUM_SPONSORS[sponsorId].name} is nu je stadionsponsor!`, 'success');
 }
 
@@ -14313,6 +14347,8 @@ function selectScoutingNetwork(networkId) {
 
     // Update UI
     renderScoutingNetworkOptions();
+
+    saveGame();
 
     if (networkId === 'none') {
         showNotification('Jeugdscoutingnetwerk uitgeschakeld', 'info');
@@ -15624,6 +15660,7 @@ function upgradeStadiumTile(category) {
     document.querySelector('.modal-overlay')?.remove();
     renderStadiumTiles();
     updateBudgetDisplays();
+    saveGame();
     showNotification(`${nextLevel.name} gebouwd!`, 'success');
 }
 
