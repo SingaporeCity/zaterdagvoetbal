@@ -28,6 +28,7 @@ export function setStorageMode(mode, leagueId = null, clubId = null) {
         clearInterval(autoSaveTimer);
         autoSaveTimer = null;
     }
+    pendingSave = false; // Discard queued save for the old club
     storageMode = mode;
     currentLeagueId = leagueId;
     currentClubId = clubId;
@@ -271,14 +272,16 @@ function buildLineupFromPlayers(players) {
  * Save to Supabase (debounced)
  */
 async function saveMultiplayer(gameState) {
-    if (!isSupabaseAvailable() || !currentClubId) return false;
+    // Capture clubId at start — prevents race if setStorageMode() changes it mid-save
+    const clubId = currentClubId;
+    if (!isSupabaseAvailable() || !clubId) return false;
 
     try {
         const clubData = gameStateToClubRecord(gameState);
         let { error } = await supabase
             .from('clubs')
             .update(clubData)
-            .eq('id', currentClubId);
+            .eq('id', clubId);
 
         // If client_state column doesn't exist yet, retry without it
         if (error && error.message?.includes('client_state')) {
@@ -286,7 +289,7 @@ async function saveMultiplayer(gameState) {
             const retry = await supabase
                 .from('clubs')
                 .update(clubData)
-                .eq('id', currentClubId);
+                .eq('id', clubId);
             error = retry.error;
         }
 
@@ -312,7 +315,7 @@ async function saveMultiplayer(gameState) {
                 await supabase
                     .from('players')
                     .update({ lineup_position: null })
-                    .eq('club_id', currentClubId)
+                    .eq('club_id', clubId)
                     .not('id', 'in', `(${lineupIds.join(',')})`);
             }
         }
@@ -444,9 +447,9 @@ export async function loadGame() {
         // This prevents deleted data (e.g. myPlayer removal) from being resurrected.
         const localBackup = loadLocal();
         if (localBackup?.multiplayer?.clubId === currentClubId) {
-            // Stadium (including construction)
+            // Stadium: only merge construction status (not entire stadium object)
             if (localBackup.stadium?.construction && !mpState.stadium?.construction) {
-                mpState.stadium = localBackup.stadium;
+                mpState.stadium.construction = localBackup.stadium.construction;
             }
             // Lineup from localStorage if Supabase has none
             const hasLineup = mpState.lineup?.some(p => p !== null);
@@ -455,7 +458,8 @@ export async function loadGame() {
                 mpState.lineup = localBackup.lineup;
             }
             // Only merge these safe fields (locally generated, never intentionally cleared)
-            const mergeableFields = ['youthPlayers', 'formationDrives', 'scoutTips', 'scoutHistory', 'sponsorMarket'];
+            // youthPlayers excluded: can be intentionally cleared when demolishing academy
+            const mergeableFields = ['formationDrives', 'scoutTips', 'scoutHistory', 'sponsorMarket'];
             for (const field of mergeableFields) {
                 const mpVal = mpState[field];
                 const localVal = localBackup[field];

@@ -41,7 +41,7 @@
 **Fix:** Migration 014 — `standings_update` beperkt tot eigen club, `schedule_update` geblokkeerd (alleen via RPC). INSERT policies ongewijzigd (league members).
 
 ### 11. localStorage merge resurrects verwijderde data ✅
-**Fix:** Merge beperkt tot safe fields: `youthPlayers`, `formationDrives`, `scoutTips`, `scoutHistory`, `sponsorMarket`. Rest = Supabase is source of truth.
+**Fix:** Merge beperkt tot safe fields: `formationDrives`, `scoutTips`, `scoutHistory`, `sponsorMarket`. `youthPlayers` uitgesloten (kan bewust geleegd worden bij academy-afbraak). Stadium merge beperkt tot alleen `construction` sub-object (niet hele stadium overschrijven).
 
 ### 12. generatePlayersForClub TOCTOU ✅
 **Automatisch opgelost** door `start_league` RPC (alles server-side).
@@ -54,4 +54,4 @@
 ## LOW — GEFIXT
 
 ### 14. Stale currentClubId bij league-switch ✅
-**Fix:** `setStorageMode()` stopt auto-save timer voor mode switch. Auto-save wordt opnieuw gestart via `startAutoSave()` bij `initMultiplayerGame()`.
+**Fix:** `setStorageMode()` stopt auto-save timer + cleart `pendingSave`. `saveMultiplayer()` captured `currentClubId` als lokale var bij start (voorkomt race als club wisselt tijdens async save).

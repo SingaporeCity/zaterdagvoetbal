@@ -165,11 +165,14 @@ Het spel is volledig in het **Nederlands**. UI teksten, achievement namen, voorz
 - `buildTeamFromClub()` heeft een fallback auto-lineup voor bestaande leagues zonder lineup_position
 
 ### localStorage merge (multiplayer)
-- Bij laden in multiplayer worden alleen "safe" velden gemerged vanuit localStorage: `youthPlayers`, `formationDrives`, `scoutTips`, `scoutHistory`, `sponsorMarket`
+- Bij laden in multiplayer worden alleen "safe" velden gemerged vanuit localStorage: `formationDrives`, `scoutTips`, `scoutHistory`, `sponsorMarket`
+- `youthPlayers` uitgesloten: kan bewust geleegd worden bij academy-afbraak
+- Stadium merge: alleen `construction` sub-object, niet het hele stadium (voorkomt downgrading)
 - Alle andere velden: Supabase is source of truth (voorkomt dat verwijderde data terugkomt)
 
 ### Auto-save bij league switch
-- `setStorageMode()` stopt de auto-save timer voor mode/club switch → voorkomt writes naar verkeerde club
+- `setStorageMode()` stopt de auto-save timer + cleart `pendingSave` voor mode/club switch
+- `saveMultiplayer()` captured `currentClubId` als lokale var bij start → voorkomt race als club wisselt tijdens async save
 
 ### Multiplayer concurrency architectuur
 - **`process_week_results`** (012): Atomaire week-simulatie. `FOR UPDATE` lock op league row, `ON CONFLICT DO NOTHING` op match_results, atomaire `SET played = played + 1` op standings. Client simuleert lokaal, stuurt alles in 1 RPC call.
