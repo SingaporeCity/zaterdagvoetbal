@@ -19787,6 +19787,19 @@ body {
     font-weight: 600;
 }
 
+.standings-table tr.clickable-opponent {
+    background: rgba(255, 152, 0, 0.08);
+    cursor: pointer;
+}
+
+.standings-table tr.clickable-opponent:hover {
+    background: rgba(255, 152, 0, 0.18);
+}
+
+.standings-table tr.clickable-opponent td:nth-child(2) {
+    color: var(--accent-orange);
+}
+
 /* Promotion zone */
 .standings-table tbody tr:nth-child(-n+3) td {
     background: rgba(46, 125, 50, 0.10);
@@ -24577,6 +24590,18 @@ body {
 
 .programma-standings .vg-stand-player td {
     background: rgba(76, 175, 80, 0.08);
+}
+
+.vg-stand-table tr.clickable-opponent {
+    cursor: pointer;
+}
+
+.vg-stand-table tr.clickable-opponent:hover td {
+    background: rgba(255, 152, 0, 0.12);
+}
+
+.vg-stand-table tr.clickable-opponent td:nth-child(2) {
+    color: var(--accent-orange);
 }
 
 /* Match Report (reuses match-result-* styles from modal) */

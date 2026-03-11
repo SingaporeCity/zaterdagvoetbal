@@ -1129,7 +1129,7 @@ function renderStandings() {
         html += `
             <tr class="${isPlayer ? 'is-player' : ''} ${zoneClass}${isClickable ? ' clickable-opponent' : ''}"${isClickable ? ` onclick="showOpponentSquad('${team.clubId}', '${team.name.replace(/'/g, "\\'")}')" style="cursor:pointer"` : ''}>
                 <td>${position}</td>
-                <td>${team.name}${isClickable ? ' <span style="opacity:0.4;font-size:0.8em">&#9656;</span>' : ''}</td>
+                <td>${team.name}${isClickable ? ' <span style="opacity:0.5;font-size:0.8em">👤</span>' : ''}</td>
                 <td>${team.won || team.wins || 0}</td>
                 <td>${team.drawn || team.draws || 0}</td>
                 <td>${team.lost || team.losses || 0}</td>
@@ -2024,16 +2024,19 @@ function renderCompactStandings(divisionNames) {
     const promoZone = 2;
     const relegZone = totalTeams - 2;
 
+    const mp = isMultiplayer();
     const rows = standings.map((team, i) => {
         const pos = i + 1;
+        const isClickable = mp && !team.isPlayer && !team.isAI && team.clubId;
         let cls = team.isPlayer ? 'vg-stand-player' : '';
+        if (isClickable) cls += ' clickable-opponent';
         if (pos <= promoZone) cls += ' vg-stand-promo';
         else if (pos > relegZone) cls += ' vg-stand-releg';
         const gf = team.goalsFor || 0;
         const ga = team.goalsAgainst || 0;
-        return `<tr class="${cls}">
+        return `<tr class="${cls}"${isClickable ? ` onclick="showOpponentSquad('${team.clubId}', '${team.name.replace(/'/g, "\\'")}')" style="cursor:pointer"` : ''}>
             <td>${pos}</td>
-            <td>${team.name}</td>
+            <td>${team.name}${isClickable ? ' <span style="opacity:0.5;font-size:0.8em">👤</span>' : ''}</td>
             <td>${team.played || 0}</td>
             <td>${team.won || team.wins || 0}</td>
             <td>${team.drawn || team.draws || 0}</td>
