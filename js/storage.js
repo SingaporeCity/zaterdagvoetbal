@@ -135,6 +135,9 @@ function gameStateToClubRecord(gameState) {
             sponsorMarket: gameState.sponsorMarket || { offers: [], generatedForWeek: 0 },
             clubStats: gameState.club?.stats || { founded: 1, titles: 0, highestDivision: 8, totalGoals: 0, totalMatches: 0 },
             extraSponsors: gameState.extraSponsors || [],
+            myPlayerLineupPos: gameState.lineup
+                ? gameState.lineup.findIndex(p => p && (p.id === 'myplayer' || p.isMyPlayer))
+                : -1,
         },
         updated_at: new Date().toISOString()
     };
@@ -172,7 +175,7 @@ function clubRecordToGameState(club, players, standings, leagueData) {
         stadium: club.stadium || {},
         players: players.map(supabasePlayerToLocal),
         youthPlayers: cs.youthPlayers || [],
-        lineup: buildLineupFromPlayers(players),
+        lineup: restoreMyPlayerInLineup(buildLineupFromPlayers(players), cs),
         formation: club.formation || '4-4-2',
         tactics: club.tactics || { mentaliteit: 'normaal', offensief: 'gebalanceerd', speltempo: 'normaal', veldbreedte: 'gebalanceerd', dekking: 'zone' },
         specialists: club.specialists || { cornerTaker: null, penaltyTaker: null, freekickTaker: null, captain: null },
@@ -267,6 +270,38 @@ function buildLineupFromPlayers(players) {
             lineup[p.lineup_position] = supabasePlayerToLocal(p);
         }
     });
+    return lineup;
+}
+
+/**
+ * Restore myPlayer into lineup from client_state saved position
+ */
+function restoreMyPlayerInLineup(lineup, cs) {
+    const pos = cs.myPlayerLineupPos;
+    if (pos >= 0 && pos < 11 && cs.myPlayer && !lineup[pos]) {
+        const mp = cs.myPlayer;
+        lineup[pos] = {
+            id: 'myplayer',
+            name: mp.name,
+            age: mp.age,
+            position: mp.position,
+            nationality: mp.nationality,
+            overall: mp.overall,
+            potential: mp.potential,
+            stars: mp.stars || 0,
+            attributes: mp.attributes || {},
+            personality: mp.personality,
+            salary: mp.salary || 0,
+            contractWeeks: mp.contractWeeks,
+            goals: mp.goals || 0,
+            assists: mp.assists || 0,
+            morale: mp.morale || 80,
+            condition: mp.condition || 80,
+            energy: mp.energy || 100,
+            xp: mp.xp || 0,
+            isMyPlayer: true,
+        };
+    }
     return lineup;
 }
 
