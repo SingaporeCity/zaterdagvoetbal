@@ -742,8 +742,19 @@ function generateSquad(division) {
         youngIndices.add(pick);
     }
 
+    // Pick 3 random old (non-young, non-keeper) indices to be hopeless players (ALG 1-2)
+    const remainingOld = positionList.map((p, i) => (p !== 'keeper' && !youngIndices.has(i)) ? i : -1).filter(i => i >= 0);
+    const hopelessIndices = new Set();
+    while (hopelessIndices.size < 3 && remainingOld.length > 0) {
+        const pick = remainingOld.splice(Math.floor(Math.random() * remainingOld.length), 1)[0];
+        hopelessIndices.add(pick);
+    }
+
     positionList.forEach((position, i) => {
-        squad.push(createZaterdagPlayer(position, { young: youngIndices.has(i) }));
+        squad.push(createZaterdagPlayer(position, {
+            young: youngIndices.has(i),
+            hopeless: hopelessIndices.has(i)
+        }));
     });
 
     return squad;
@@ -754,13 +765,14 @@ function assignPlayerStars(age) {
     return randomFromArray([0, 0, 0, 0, 0, 0, 0, 0.5]);
 }
 
-function createZaterdagPlayer(position, { young = false } = {}) {
+function createZaterdagPlayer(position, { young = false, hopeless = false } = {}) {
     const isKeeper = position === 'keeper';
     const attrNames = isKeeper ? ['REF', 'BAL', 'SNE', 'FYS'] : ['AAN', 'VER', 'SNE', 'FYS'];
 
-    // Young players: ALG 2-3, age 20-27, 0.5 stars
-    // Old players: ALG 3-7, age 40-55, 0 stars
-    const targetOverall = young ? random(2, 3) : random(3, 7);
+    // Young players: ALG 2-3, age 20-27, 0.5 stars (potential to grow)
+    // Hopeless old players: ALG 1-2, age 40-55, 0 stars (de vader van iemand)
+    // Normal old players: ALG 3-7, age 40-55, 0 stars
+    const targetOverall = young ? random(2, 3) : hopeless ? random(1, 2) : random(3, 7);
     const attributes = {};
 
     // Generate attributes that produce the target overall
@@ -789,6 +801,9 @@ function createZaterdagPlayer(position, { young = false } = {}) {
     const playerStars = young ? 0.5 : 0;
     const calculatedSalary = Math.round(5 + (overall / 10) + playerStars * 3 + random(0, 3));
 
+    // Energy: most players 70-100, but a few start lower (kroegavond)
+    const energy = Math.random() < 0.25 ? random(55, 65) : random(70, 100);
+
     return {
         id: Date.now() + Math.random(),
         name: playerName,
@@ -805,7 +820,7 @@ function createZaterdagPlayer(position, { young = false } = {}) {
         assists: 0,
         morale: random(60, 90),
         condition: random(70, 100),
-        energy: random(60, 100),
+        energy: energy,
         stars: playerStars,
         fixedMarketValue: 0,
         photo: generatePlayerPhoto(playerName, position)
