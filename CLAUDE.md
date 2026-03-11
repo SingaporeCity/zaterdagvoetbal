@@ -137,7 +137,27 @@ Alle knoppen die state muteren moeten `btn.disabled = true` krijgen aan het begi
 In Supabase worden club.stats opgeslagen als `client_state.clubStats` om collision te voorkomen met de `stats` kolom.
 
 ### Player nationality
-Supabase slaat nationality op als string code ("NL"). Bij laden moet dit omgezet worden naar een object met `NATIONALITIES` lookup: `{ code, flag, name }`.
+Supabase slaat nationality op als string code ("NL"). Bij laden moet dit omgezet worden naar een object met `NATIONALITIES` lookup: `{ code, flag, name }`. Vergelijk nationaliteiten ALTIJD op `.code` strings, niet op object references.
+
+### Spelerscijfers (match ratings)
+- Gehele getallen, range 2-9 (geen decimalen)
+- Base rating: `3.5 + quality * 1.5 + performanceRoll * 2.5` (quality = overall/100, performanceRoll = gemiddelde van 2 randoms)
+- Doelpunt: +1.5, assist: +1.0, gele kaart: -0.5, rode kaart: -2.0
+- In multiplayer: away-team ratings worden apart geïnitialiseerd in `simulateWeek()` — moeten `position` bevatten
+- Compact ratings filteren op `lineupIds` — alleen eigen team opslaan, niet de tegenstander
+
+### Signup flow
+- Account aanmaken: alleen email + wachtwoord (geen managernaam)
+- `display_name` wordt tijdelijk ingevuld met deel vóór @
+- Spelernaam wordt gevraagd tijdens onboarding (stap 2)
+
+### Onboarding kleurpresets
+- Kleurswatches tonen diagonale split: `linear-gradient(135deg, primary 50%, secondary 50%)` met accent border
+- 6 presets: Groen-Wit, Rood-Wit, Blauw-Wit, Zwart-Geel, Oranje-Zwart, Paars-Wit
+
+### Nationaliteitsvlaggen in opstelling
+- Pitch-cirkels: `.lp-flag` badge rechtsboven op het speler-cirkel (CSS al aanwezig)
+- Spelerslijst: `.ap-flag` emoji tussen positie-badge en naam (vervangt leeftijd)
 
 ### replaceGameState shallow merge
 Nested objects worden gespreid maar niet deep-merged. Nieuwe keys in geneste objecten overleven, maar verwijderde keys ook. Arrays worden volledig vervangen.
@@ -166,6 +186,17 @@ Het spel is volledig in het **Nederlands**. UI teksten, achievement namen, voorz
 - **Human** (overall 3-7): start iets boven gemiddeld, moet managen voor de titel
 - AI teams krijgen automatisch een 4-4-2 lineup via `generatePlayersForClub()`
 - `buildTeamFromClub()` heeft een fallback auto-lineup voor bestaande leagues zonder lineup_position
+
+### Buitenlandse spelers
+- **Team generatie** (`generatePlayersForClub()`): 3-5 buitenlanders per team met passende namen per nationaliteit (BE/DE/BR/ES/GB/FR/GH/MA/TR/PL). Keepers zijn altijd Nederlands.
+- **Transfermarkt** (`generateNationality()`): ~50% Nederlands, ~50% buitenlands. Gewicht NL=71, rest=71 totaal.
+- **Nationaliteit opslag**: Supabase slaat op als lowercase string code ("nl", "de"). Bij laden omgezet naar object via `NATIONALITIES` lookup.
+
+### myPlayer in lineup (multiplayer)
+- `myPlayer` zit NIET in de `players` tabel — alleen in `client_state`
+- Lineup-positie van myPlayer wordt apart opgeslagen als `client_state.myPlayerLineupPos`
+- Bij laden: `restoreMyPlayerInLineup()` zet myPlayer terug op de opgeslagen positie
+- Zonder dit verdwijnt myPlayer uit de opstelling bij elke refresh
 
 ### localStorage merge (multiplayer)
 - Bij laden in multiplayer worden alleen "safe" velden gemerged vanuit localStorage: `formationDrives`, `scoutTips`, `scoutHistory`, `sponsorMarket`
