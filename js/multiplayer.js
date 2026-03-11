@@ -986,20 +986,22 @@ async function generatePlayersForClub(clubId, leagueId, division, tier = 'player
         };
     });
 
-    // Auto-assign lineup positions for 4-4-2 formation (best 11 by position fit)
-    const formationRoles = [
-        'keeper', 'linksback', 'centraleVerdediger', 'centraleVerdediger', 'rechtsback',
-        'linksbuiten', 'centraleMid', 'centraleMid', 'rechtsbuiten',
-        'spits', 'spits'
-    ];
-    const assigned = new Set();
-    formationRoles.forEach((role, slotIdx) => {
-        const playerIdx = players.findIndex((p, i) => !assigned.has(i) && p.position === role);
-        if (playerIdx !== -1) {
-            players[playerIdx].lineup_position = slotIdx;
-            assigned.add(playerIdx);
-        }
-    });
+    // Auto-assign lineup positions only for AI clubs (human players choose their own)
+    if (tier !== 'player') {
+        const formationRoles = [
+            'keeper', 'linksback', 'centraleVerdediger', 'centraleVerdediger', 'rechtsback',
+            'linksbuiten', 'centraleMid', 'centraleMid', 'rechtsbuiten',
+            'spits', 'spits'
+        ];
+        const assigned = new Set();
+        formationRoles.forEach((role, slotIdx) => {
+            const playerIdx = players.findIndex((p, i) => !assigned.has(i) && p.position === role);
+            if (playerIdx !== -1) {
+                players[playerIdx].lineup_position = slotIdx;
+                assigned.add(playerIdx);
+            }
+        });
+    }
 
     const { error } = await supabase.from('players').insert(players);
     if (error) console.error('Failed to insert players for club', clubId, error);
