@@ -848,10 +848,18 @@ async function startLeague(onStartGame) {
         return;
     }
 
-    // Generate players for all clubs (AI clubs created by RPC)
+    // Generate players for human clubs (default 'player' tier, guard skips if already exists)
     const allClubIds = rpcResult.all_club_ids || [];
+    const aiClubIds = rpcResult.ai_club_ids || [];
     for (const clubId of allClubIds) {
+        if (aiClubIds.includes(clubId)) continue;
         await generatePlayersForClub(clubId, leagueId, 8);
+    }
+
+    // Generate players for AI clubs with varied difficulty tiers
+    const tiers = assignAiTiers(aiClubIds.length);
+    for (let i = 0; i < aiClubIds.length; i++) {
+        await generatePlayersForClub(aiClubIds[i], leagueId, 8, tiers[i]);
     }
 
     // Generate schedule if 2+ human players
@@ -876,9 +884,31 @@ async function startLeague(onStartGame) {
 }
 
 /**
+ * Assign difficulty tiers to AI teams for a varied league experience.
+ * ~30% weak, ~40% average, ~30% strong (always at least 1 of each).
+ */
+function assignAiTiers(count) {
+    if (count === 0) return [];
+    const weakCount = Math.max(1, Math.round(count * 0.3));
+    const strongCount = Math.max(1, Math.round(count * 0.3));
+    const avgCount = Math.max(0, count - weakCount - strongCount);
+    const tiers = [
+        ...Array(weakCount).fill('weak'),
+        ...Array(avgCount).fill('average'),
+        ...Array(strongCount).fill('strong')
+    ];
+    // Fisher-Yates shuffle
+    for (let i = tiers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [tiers[i], tiers[j]] = [tiers[j], tiers[i]];
+    }
+    return tiers;
+}
+
+/**
  * Generate initial players for a club
  */
-async function generatePlayersForClub(clubId, leagueId, division) {
+async function generatePlayersForClub(clubId, leagueId, division, tier = 'player') {
     // Guard: don't generate if club already has players
     const { data: existing } = await supabase
         .from('players')
@@ -890,7 +920,7 @@ async function generatePlayersForClub(clubId, leagueId, division) {
         return;
     }
 
-    // Kelderklasse: old-timers squad (40-55yr, ALG 3-7) with 3 young guys (20-27yr, ALG 2-3)
+    // Kelderklasse: old-timers squad with some young guys
     const positions = [
         'keeper', 'keeper',
         'linksback', 'centraleVerdediger', 'centraleVerdediger', 'rechtsback', 'centraleVerdediger',
@@ -901,6 +931,15 @@ async function generatePlayersForClub(clubId, leagueId, division) {
 
     const firstNames = ['Jan', 'Kees', 'Pieter', 'Henk', 'Willem', 'Jaap', 'Sander', 'Erik', 'Bas', 'Tom', 'Mark', 'Joost', 'Frank', 'Daan', 'Lars', 'Bram'];
     const lastNames = ['de Jong', 'Bakker', 'Visser', 'Smit', 'Meijer', 'de Boer', 'Mulder', 'de Groot', 'Bos', 'Vos', 'Peters', 'Hendriks', 'van Dijk', 'Janssen', 'van den Berg', 'Vermeer'];
+
+    // Overall ranges per tier
+    const tierRanges = {
+        player:  { oldMin: 3, oldMax: 7, youngMin: 2, youngMax: 3 },
+        weak:    { oldMin: 2, oldMax: 4, youngMin: 1, youngMax: 2 },
+        average: { oldMin: 3, oldMax: 6, youngMin: 2, youngMax: 3 },
+        strong:  { oldMin: 5, oldMax: 8, youngMin: 3, youngMax: 4 },
+    };
+    const range = tierRanges[tier] || tierRanges.player;
 
     // Pick 1-2 random non-keeper indices to be young players with 0.5 POT
     const youngCount = 1 + Math.floor(Math.random() * 2); // 1 or 2
@@ -915,7 +954,7 @@ async function generatePlayersForClub(clubId, leagueId, division) {
 
     const players = positions.map((pos, idx) => {
         const isYoung = youngIndices.has(idx);
-        const overall = isYoung ? rnd(2, 3) : rnd(3, 7);
+        const overall = isYoung ? rnd(range.youngMin, range.youngMax) : rnd(range.oldMin, range.oldMax);
         const age = isYoung ? rnd(20, 27) : rnd(40, 55);
         const stars = isYoung ? 0.5 : 0;
         const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
@@ -945,6 +984,21 @@ async function generatePlayersForClub(clubId, leagueId, division) {
             salary: Math.round(5 + (overall / 10) + stars * 3 + rnd(0, 3)),
             lineup_position: null
         };
+    });
+
+    // Auto-assign lineup positions for 4-4-2 formation (best 11 by position fit)
+    const formationRoles = [
+        'keeper', 'linksback', 'centraleVerdediger', 'centraleVerdediger', 'rechtsback',
+        'linksbuiten', 'centraleMid', 'centraleMid', 'rechtsbuiten',
+        'spits', 'spits'
+    ];
+    const assigned = new Set();
+    formationRoles.forEach((role, slotIdx) => {
+        const playerIdx = players.findIndex((p, i) => !assigned.has(i) && p.position === role);
+        if (playerIdx !== -1) {
+            players[playerIdx].lineup_position = slotIdx;
+            assigned.add(playerIdx);
+        }
     });
 
     const { error } = await supabase.from('players').insert(players);
@@ -1293,6 +1347,33 @@ function buildTeamFromClub(club, players) {
             lineup[p.lineup_position] = p;
         }
     });
+
+    // Fallback: if no lineup set (AI teams from before auto-lineup fix), auto-assign by position
+    if (lineup.every(p => p === null) && players.length > 0) {
+        const fallbackRoles = [
+            'keeper', 'linksback', 'centraleVerdediger', 'centraleVerdediger', 'rechtsback',
+            'linksbuiten', 'centraleMid', 'centraleMid', 'rechtsbuiten',
+            'spits', 'spits'
+        ];
+        const assigned = new Set();
+        fallbackRoles.forEach((role, slotIdx) => {
+            const playerIdx = players.findIndex((p, i) => !assigned.has(i) && p.position === role);
+            if (playerIdx !== -1) {
+                lineup[slotIdx] = players[playerIdx];
+                assigned.add(playerIdx);
+            }
+        });
+        // Fill any remaining empty slots with unassigned players
+        for (let i = 0; i < 11; i++) {
+            if (lineup[i] === null) {
+                const idx = players.findIndex((p, pi) => !assigned.has(pi));
+                if (idx !== -1) {
+                    lineup[i] = players[idx];
+                    assigned.add(idx);
+                }
+            }
+        }
+    }
 
     const formation = club.tactics?.formation || '4-4-2';
     const tactics = club.tactics || { offensief: 'gebalanceerd', speltempo: 'normaal', veldbreedte: 'normaal', dekking: 'normaal', mentaliteit: 'normaal' };

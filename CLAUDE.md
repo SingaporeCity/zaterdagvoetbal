@@ -27,7 +27,7 @@ cd /Users/patrickjeeninga/Coding/zaterdagvoetbal && git add <files> && git commi
 |---------|--------|-----|
 | `app.js` | ~17k | Alles: UI rendering, game logic, stadion, sponsors, tactiek, match display, achievements UI. Zoek op `function renderXxxPage()` voor specifieke pagina's |
 | `achievements.js` | ~2.4k | `ACHIEVEMENTS` object met 200+ achievements, `checkAchievements()`, `initAchievements()` |
-| `multiplayer.js` | ~1.5k | Lobby, league creation/joining, `startLeague()`, `generateSchedule()`, `simulateWeek()`, AI teams |
+| `multiplayer.js` | ~1.6k | Lobby, league creation/joining, `startLeague()`, `generateSchedule()`, `simulateWeek()`, AI teams met tier systeem |
 | `matchEngine.js` | ~930 | `simulateMatch()`, `calculateTeamStrength()`, `generateOpponent()` |
 | `progression.js` | ~710 | XP/leveling systeem, `awardPlayerXP()`, `awardXP()`, `getSPPerLevel()`, dagelijkse beloningen |
 | `constants.js` | ~680 | `POSITIONS`, `FORMATIONS`, `TACTICS`, `NATIONALITIES`, `STAFF_TYPES`, `MANAGER_LEVELS` |
@@ -42,7 +42,7 @@ cd /Users/patrickjeeninga/Coding/zaterdagvoetbal && git add <files> && git commi
 ### Andere bestanden
 - `index.html` — Alle pagina HTML (single page app, pagina's via `.page.active`)
 - `styles.css` — ~15k regels CSS
-- `supabase/migrations/` — 11 SQL migraties (001-011)
+- `supabase/migrations/` — 14 SQL migraties (001-014)
 
 ## Architectuur
 
@@ -146,8 +146,30 @@ Het spel is volledig in het **Nederlands**. UI teksten, achievement namen, voorz
 - Project URL en anon key staan in `js/supabase.js`
 - RLS policies zijn actief
 - RPC functies: `generate_invite_code`, `find_league_by_invite_code`, `replace_ai_club`, `process_week_results`, `start_league`, `join_league`, `process_season_end`
-- Migraties in `supabase/migrations/` (001-013)
+- Migraties in `supabase/migrations/` (001-014)
 - **Migraties t/m 013 zijn uitgevoerd in Supabase**
+- **Migratie 014 moet nog uitgevoerd worden** — tighten RLS (standings UPDATE eigen club only, schedule UPDATE geblokkeerd)
+
+### RLS policies (014)
+- `standings_update`: beperkt tot eigen club (`club_id IN (SELECT id FROM clubs WHERE owner_id = auth.uid())`)
+- `schedule_update`: geblokkeerd (`USING (false)`) — alleen via SECURITY DEFINER RPCs
+- `standings_insert` / `schedule_insert`: league members (ongewijzigd)
+
+### AI team tier systeem
+- AI teams krijgen gevarieerde kracht via `assignAiTiers()`: ~30% weak, ~40% average, ~30% strong
+- **Weak** (overall 2-4): degradatiekandidaten
+- **Average** (overall 3-6): normaal kelderklasse
+- **Strong** (overall 5-8): klassefavorieten
+- **Human** (overall 3-7): start iets boven gemiddeld, moet managen voor de titel
+- AI teams krijgen automatisch een 4-4-2 lineup via `generatePlayersForClub()`
+- `buildTeamFromClub()` heeft een fallback auto-lineup voor bestaande leagues zonder lineup_position
+
+### localStorage merge (multiplayer)
+- Bij laden in multiplayer worden alleen "safe" velden gemerged vanuit localStorage: `youthPlayers`, `formationDrives`, `scoutTips`, `scoutHistory`, `sponsorMarket`
+- Alle andere velden: Supabase is source of truth (voorkomt dat verwijderde data terugkomt)
+
+### Auto-save bij league switch
+- `setStorageMode()` stopt de auto-save timer voor mode/club switch → voorkomt writes naar verkeerde club
 
 ### Multiplayer concurrency architectuur
 - **`process_week_results`** (012): Atomaire week-simulatie. `FOR UPDATE` lock op league row, `ON CONFLICT DO NOTHING` op match_results, atomaire `SET played = played + 1` op standings. Client simuleert lokaal, stuurt alles in 1 RPC call.

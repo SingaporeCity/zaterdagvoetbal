@@ -23,6 +23,11 @@ let currentClubId = null;
  * Set storage mode
  */
 export function setStorageMode(mode, leagueId = null, clubId = null) {
+    // Stop existing auto-save before switching to prevent writes to wrong club
+    if (autoSaveTimer) {
+        clearInterval(autoSaveTimer);
+        autoSaveTimer = null;
+    }
     storageMode = mode;
     currentLeagueId = leagueId;
     currentClubId = clubId;
@@ -433,7 +438,10 @@ export async function loadGame() {
         const mpState = await loadMultiplayer();
         if (!mpState) return null;
 
-        // Merge localStorage backup for state that might not have synced to Supabase
+        // Merge localStorage backup for fields that may not have synced to Supabase.
+        // Only merge "safe" fields — ones that are locally generated and never
+        // intentionally cleared. For everything else, Supabase is the source of truth.
+        // This prevents deleted data (e.g. myPlayer removal) from being resurrected.
         const localBackup = loadLocal();
         if (localBackup?.multiplayer?.clubId === currentClubId) {
             // Stadium (including construction)
@@ -446,15 +454,11 @@ export async function loadGame() {
             if (!hasLineup && localHasLineup) {
                 mpState.lineup = localBackup.lineup;
             }
-            // Client-side state that lives in client_state column
-            const clientFields = ['hiredStaff', 'staffHiredAt', 'myPlayer', 'matchHistory',
-                'lastMatch', 'scoutTips', 'scoutHistory', 'scoutTipClaimed', 'scoutMission',
-                'sponsorSlots', 'stadiumSponsor', 'youthPlayers', 'formationDrives',
-                'nextMatchBonus', 'activeEvent', 'sponsorMarket'];
-            for (const field of clientFields) {
+            // Only merge these safe fields (locally generated, never intentionally cleared)
+            const mergeableFields = ['youthPlayers', 'formationDrives', 'scoutTips', 'scoutHistory', 'sponsorMarket'];
+            for (const field of mergeableFields) {
                 const mpVal = mpState[field];
                 const localVal = localBackup[field];
-                // Use localStorage if Supabase has default/empty value but localStorage has real data
                 const mpEmpty = mpVal === null || mpVal === undefined ||
                     (Array.isArray(mpVal) && mpVal.length === 0) ||
                     (typeof mpVal === 'object' && !Array.isArray(mpVal) && mpVal !== null && Object.keys(mpVal).length === 0);
