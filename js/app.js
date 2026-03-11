@@ -4273,7 +4273,7 @@ function renderProfileTraining() {
                                 ${!hasIndividualTrainer ? '<div class="training-sec-warning">Je hebt een individuele trainer nodig!</div>' : ''}
                             </div>
                             ${hasIndividualTrainer
-                                ? `<button class="btn btn-sm ${canTrain ? 'btn-primary' : 'btn-secondary'}" onclick="trainMyPlayer('vrije_tijd')" ${!canTrain ? 'disabled' : ''}>Trainen</button>`
+                                ? `<button class="btn btn-sm ${canTrain ? 'btn-primary' : trainedToday ? 'btn-danger' : 'btn-secondary'}" onclick="trainMyPlayer('vrije_tijd')" ${!canTrain ? 'disabled' : ''}>Trainen</button>`
                                 : `<button class="btn btn-sm btn-primary" onclick="window.navigateTo('staff')">Aannemen</button>`}
                         </div>
                         <div class="training-action-card ${canSpy ? 'action-available' : ''}">
@@ -4281,7 +4281,7 @@ function renderProfileTraining() {
                                 <div class="training-sec-title">Spioneren</div>
                                 <div class="training-sec-desc">Gluur vanuit de bosjes naar de training van <strong>${opponentName}</strong> en ontdek hun opstelling en zwakke plekken. Geeft een <strong>bonus voor de volgende wedstrijd</strong>.</div>
                             </div>
-                            <button class="btn btn-sm ${canSpy ? 'btn-primary' : 'btn-secondary'}" onclick="trainMyPlayer('spy')" ${!canSpy ? 'disabled' : ''}>Spioneer</button>
+                            <button class="btn btn-sm ${canSpy ? 'btn-primary' : trainedToday ? 'btn-danger' : 'btn-secondary'}" onclick="trainMyPlayer('spy')" ${!canSpy ? 'disabled' : ''}>Spioneer</button>
                         </div>
                         <div class="training-action-card ${!hasFysio ? 'locked' : ''} ${canMassage ? 'action-available' : ''} ${hasFysio && mp.energy >= 100 ? 'action-done' : ''}">
                             <div class="training-action-info">
@@ -4294,7 +4294,7 @@ function renderProfileTraining() {
                                 ${!hasFysio ? '<div class="training-sec-warning">Je hebt een fysiotherapeut nodig!</div>' : ''}
                             </div>
                             ${hasFysio
-                                ? `<button class="btn btn-sm ${canMassage ? 'btn-primary' : 'btn-secondary'}" onclick="${canMassage ? "trainMyPlayer('massage')" : ''}" ${!canMassage ? 'disabled' : ''}>${mp.energy >= 100 ? '✓ Vol' : 'Massage'}</button>`
+                                ? `<button class="btn btn-sm ${canMassage ? 'btn-primary' : trainedToday ? 'btn-danger' : 'btn-secondary'}" onclick="${canMassage ? "trainMyPlayer('massage')" : ''}" ${!canMassage ? 'disabled' : ''}>${mp.energy >= 100 ? '✓ Vol' : 'Massage'}</button>`
                                 : `<button class="btn btn-sm btn-primary" onclick="window.navigateTo('staff')">Aannemen</button>`}
                         </div>
                     </div>
