@@ -4261,7 +4261,7 @@ function renderProfileTraining() {
             <div class="training-dual-row">
                 <!-- Dagelijkse acties card (links) -->
                 <div class="training-actions-card">
-                    <div class="training-actions-header">Dagelijkse actie <span class="training-actions-hint ${!trainedToday ? 'training-hint-urgent' : ''}">${trainedToday ? '(vandaag al gebruikt)' : '(1 per dag — kies slim!)'}</span></div>
+                    <div class="training-actions-header">Dagelijkse actie <span class="training-actions-hint ${!trainedToday ? 'training-hint-urgent' : 'training-hint-done'}">${trainedToday ? '(vandaag al gebruikt)' : '(1 per dag — kies slim!)'}</span></div>
                     <div class="training-actions-col">
                         <div class="training-action-card ${!hasIndividualTrainer ? 'locked' : ''} ${canTrain ? 'action-available' : ''}">
                             <div class="training-action-info">

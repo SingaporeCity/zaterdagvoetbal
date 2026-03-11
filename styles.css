@@ -18242,6 +18242,20 @@ body {
     border-radius: 10px;
 }
 
+.training-hint-done {
+    color: var(--accent-red);
+    font-weight: 700;
+    font-size: 0.7rem;
+}
+
+/* Grey out action cards + buttons when daily action is used */
+.training-action-card:not(.action-available):not(.locked) .btn-secondary {
+    background: var(--bg-tertiary, #2a2a2a);
+    color: var(--text-muted);
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .training-actions-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
