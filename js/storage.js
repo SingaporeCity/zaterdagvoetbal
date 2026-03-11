@@ -391,7 +391,8 @@ async function loadMultiplayer() {
             points: s.points,
             position: idx + 1,
             isPlayer: s.club_id === currentClubId,
-            isAI: s.clubs?.is_ai || false
+            isAI: s.clubs?.is_ai || false,
+            clubId: s.club_id
         }));
 
         return clubRecordToGameState(club, players, standings, league);
