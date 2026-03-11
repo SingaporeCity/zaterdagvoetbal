@@ -3,6 +3,9 @@
 ## Wat is dit?
 Nederlandse amateurvoetbal-managergame. Je bent speler én manager van een zaterdagclub. Vite + vanilla JS frontend, Supabase (Postgres) backend voor multiplayer. Gehost op GitHub Pages.
 
+## FOCUS: ALLEEN MULTIPLAYER
+We werken alleen aan multiplayer. Singleplayer is niet relevant. Alle fixes, features en tests moeten gericht zijn op de multiplayer-ervaring. Bij elke wijziging: check of het correct synct met Supabase, of `saveGame()` wordt aangeroepen, en of nieuwe spelers via `insertPlayerToSupabase()` een UUID krijgen.
+
 ## Deploy workflow — ALTIJD BEIDE BRANCHES
 ```bash
 npm run build
