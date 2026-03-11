@@ -11151,10 +11151,12 @@ async function _playMultiplayerMatchInner() {
         if (gameState.training?.teamTraining?.bonus?.type === 'tactics') driveGain += 10;
         gameState.formationDrives[gameState.formation] = Math.min(100, (gameState.formationDrives[gameState.formation] || 0) + driveGain);
 
-        // Compact playerRatings for storage
+        // Compact playerRatings for storage — only OWN team players
         const improvById = {};
         improvements.forEach(imp => { improvById[String(imp.id)] = imp; });
-        const compactRatings = matchData.playerRatings ? Object.entries(matchData.playerRatings).map(([id, data]) => {
+        const compactRatings = matchData.playerRatings ? Object.entries(matchData.playerRatings)
+            .filter(([id]) => lineupIds.has(id) || lineupIds.has(isNaN(Number(id)) ? id : Number(id)))
+            .map(([id, data]) => {
             const pid = isNaN(Number(id)) ? id : Number(id);
             const imp = improvById[String(pid)];
             return {

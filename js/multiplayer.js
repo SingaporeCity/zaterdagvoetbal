@@ -1479,7 +1479,7 @@ export async function simulateWeek(leagueId, season, week, simulateMatchFn, calc
         awayTeam.lineup.filter(p => p).forEach(player => {
             if (!result.playerRatings[player.id]) {
                 result.playerRatings[player.id] = {
-                    player: { name: player.name, id: player.id },
+                    player: { name: player.name, id: player.id, position: player.position },
                     rating: 6.0 + (Math.random() - 0.5),
                     goals: 0, assists: 0, yellowCards: 0, redCards: 0
                 };
