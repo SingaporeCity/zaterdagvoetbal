@@ -14570,7 +14570,24 @@ function populateSpecialistSelects() {
     }
 
     const lineupIds = new Set(gameState.lineup.filter(p => p != null).map(p => p.id));
-    const lineupPlayers = gameState.players
+
+    // Build lineup players list including myPlayer
+    const allPlayers = [...gameState.players];
+    if (gameState.myPlayer && gameState.myPlayer.name) {
+        const mp = gameState.myPlayer;
+        const a = mp.attributes || {};
+        const ovr = Math.round(((a.SNE || 0) + (a.TEC || 0) + (a.PAS || 0) + (a.SCH || 0) + (a.VER || 0) + (a.FYS || 0)) / 6);
+        allPlayers.push({
+            id: 'myplayer',
+            name: mp.name,
+            age: mp.age,
+            position: mp.position,
+            overall: ovr,
+            stars: mp.stars || 1,
+            isMyPlayer: true
+        });
+    }
+    const lineupPlayers = allPlayers
         .filter(p => lineupIds.has(p.id))
         .sort((a, b) => (b.overall || 0) - (a.overall || 0));
     const posAbbr = (pos) => POSITIONS[pos]?.abbr || pos;
