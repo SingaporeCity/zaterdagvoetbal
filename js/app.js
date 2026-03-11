@@ -13723,12 +13723,12 @@ const SPONSORS = {
         duration: 8
     },
     balanced: {
-        name: 'Café Het Gouden Paard',
-        tagline: 'Soms is het druk, soms niet',
-        description: 'Gezellig kroegje met een gokkast achter. Winnen levert bonusrondes op.',
+        name: 'Vishandel Smit',
+        tagline: 'Dagverse vis, elke dag',
+        description: 'De lekkerste kibbeling van de regio. Bij winst trakteert Smit de hele kleedkamer.',
         matchIncome: 30,
         winBonus: 25,
-        icon: '🍺',
+        icon: '🐟',
         duration: 10
     },
     intimico: {
@@ -13842,6 +13842,12 @@ function selectSponsor(sponsorId) {
         icon: sponsor.icon,
         weeksRemaining: sponsor.duration
     };
+
+    // Vishandel Smit achievement
+    if (sponsorId === 'balanced') {
+        gameState.stats = gameState.stats || {};
+        gameState.stats.choseVishandelSmit = true;
+    }
 
     // Update UI
     showNotification(`${sponsor.name} is nu je shirtsponsor voor ${sponsor.duration} weken!`, 'success');

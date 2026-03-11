@@ -2100,13 +2100,23 @@ const ACHIEVEMENTS = {
     },
     thanksFrans: {
         id: 'thanksFrans',
-        name: 'Thanks Frans',
+        name: 'Dit noem je nou echte vrienden',
         description: 'Klik op het Bugs-tabblad',
         category: CATEGORIES.SPECIAL,
         icon: '🐛',
         hidden: true,
         reward: { managerXP: 10 },
         check: (state) => state.stats?.visitedBugsTab === true
+    },
+    lycurgusLegende: {
+        id: 'lycurgusLegende',
+        name: 'Lycurgus Legende',
+        description: 'Kies Vishandel Smit als shirtsponsor',
+        category: CATEGORIES.SPECIAL,
+        icon: '🐟',
+        hidden: true,
+        reward: { managerXP: 15 },
+        check: (state) => state.stats?.choseVishandelSmit === true
     },
     halloDavid: {
         id: 'halloDavid',
