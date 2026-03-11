@@ -3563,6 +3563,8 @@ function renderScoutPage() {
         chairmanSon.nationality = NATIONALITIES[0];
         chairmanSon.tipSource = 'voorzitter';
         gameState.scoutTips.push(chairmanSon);
+        // Start 5-day cooldown so next voorzitter tip doesn't appear immediately
+        gameState.scoutMission.lastScoutDate = getTodayString();
         saveGame();
     }
 
@@ -3912,6 +3914,10 @@ window.acceptScoutTip = async function(playerId) {
 
     gameState.players.push(player);
     gameState.scoutTipClaimed = true;
+    // Prevent immediate voorzitter tip regeneration after signing
+    if (!gameState.scoutMission.lastScoutDate) {
+        gameState.scoutMission.lastScoutDate = getTodayString();
+    }
     gameState.stats.signedScouted = (gameState.stats.signedScouted || 0) + 1;
     gameState.stats.totalTransfers = (gameState.stats.totalTransfers || 0) + 1;
     if (!hasUncertainty) gameState.stats.exactScout = (gameState.stats.exactScout || 0) + 1;
@@ -3958,6 +3964,10 @@ window.declineScoutTip = function(playerId) {
     }
     if (!found) return;
     gameState.scoutTipClaimed = true;
+    // Prevent immediate voorzitter tip regeneration after declining
+    if (!gameState.scoutMission.lastScoutDate) {
+        gameState.scoutMission.lastScoutDate = getTodayString();
+    }
     gameState.stats.rejected = (gameState.stats.rejected || 0) + 1;
     saveGame();
     renderScoutPage();
@@ -3980,10 +3990,8 @@ window.keepScouting = function(playerId) {
     const player = gameState.scoutTips.splice(idx, 1)[0];
     gameState.scoutHistory.push(player);
     gameState.scoutTipClaimed = true;
-    // Only mark scout as "used today" if this was an actual scout tip (not voorzitter)
-    if (player.tipSource !== 'voorzitter') {
-        gameState.scoutMission.lastScoutDate = getTodayString();
-    }
+    // Always mark lastScoutDate — prevents immediate voorzitter tip regeneration
+    gameState.scoutMission.lastScoutDate = getTodayString();
     saveGame();
     renderScoutPage();
     showNotification('Speler toegevoegd aan de scoutinglijst. Na elke wedstrijd wordt het rapport nauwkeuriger.', 'success');
