@@ -12454,6 +12454,14 @@ body {
     text-overflow: ellipsis;
 }
 
+.available-player .ap-stars-compact {
+    font-size: 0.6rem;
+    color: #fdd835;
+    letter-spacing: -1px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
 .available-player .ap-energy {
     width: 100%;
     height: 5px;

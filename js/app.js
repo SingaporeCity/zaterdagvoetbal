@@ -2460,7 +2460,7 @@ function renderAvailablePlayers() {
                     ${statusHTML}
                     <span class="ap-energy"><span class="ap-energy-bar" style="width:${energy}%;background:${energyColor}"></span></span>
                     <span class="ap-overall" style="background: ${posData?.color || '#666'}">${player.overall}</span>
-                    <span class="ap-stars">${renderStarsHTML(stars)}</span>
+                    ${stars > 0 ? `<span class="ap-stars-compact">${'★'.repeat(Math.floor(stars))}${stars % 1 >= 0.25 ? '½' : ''}</span>` : ''}
                 </div>
             `;
         });
@@ -3607,7 +3607,7 @@ function renderScoutPage() {
         chairmanSon.tipSource = 'voorzitter';
         gameState.scoutTips.push(chairmanSon);
         // Start 5-day cooldown so next voorzitter tip doesn't appear immediately
-        gameState.scoutMission.lastScoutDate = getTodayString();
+        gameState.scoutMission.lastVoorzitterDate = getTodayString();
         saveGame();
     }
 
@@ -3615,7 +3615,7 @@ function renderScoutPage() {
     if (scoutLevel === 0 && gameState.scoutTips.length === 0 && gameState.scoutTipClaimed) {
         const mission = gameState.scoutMission;
         const today = getTodayString();
-        const lastDate = mission.lastScoutDate;
+        const lastDate = mission.lastVoorzitterDate;
         let daysPassed = 999;
         if (lastDate) {
             const last = new Date(lastDate);
@@ -3626,7 +3626,7 @@ function renderScoutPage() {
             const player = createScoutedPlayer(0);
             player.tipSource = 'voorzitter';
             gameState.scoutTips.push(player);
-            mission.lastScoutDate = today;
+            mission.lastVoorzitterDate = today;
             saveGame();
             showNotification('De voorzitter heeft een tip voor je!', 'info');
         }
@@ -3965,8 +3965,8 @@ window.acceptScoutTip = async function(playerId) {
     gameState.players.push(player);
     gameState.scoutTipClaimed = true;
     // Prevent immediate voorzitter tip regeneration after signing
-    if (!gameState.scoutMission.lastScoutDate) {
-        gameState.scoutMission.lastScoutDate = getTodayString();
+    if (!gameState.scoutMission.lastVoorzitterDate) {
+        gameState.scoutMission.lastVoorzitterDate = getTodayString();
     }
     gameState.stats.signedScouted = (gameState.stats.signedScouted || 0) + 1;
     gameState.stats.totalTransfers = (gameState.stats.totalTransfers || 0) + 1;
@@ -4015,8 +4015,8 @@ window.declineScoutTip = function(playerId) {
     if (!found) return;
     gameState.scoutTipClaimed = true;
     // Prevent immediate voorzitter tip regeneration after declining
-    if (!gameState.scoutMission.lastScoutDate) {
-        gameState.scoutMission.lastScoutDate = getTodayString();
+    if (!gameState.scoutMission.lastVoorzitterDate) {
+        gameState.scoutMission.lastVoorzitterDate = getTodayString();
     }
     gameState.stats.rejected = (gameState.stats.rejected || 0) + 1;
     saveGame();
@@ -4040,8 +4040,8 @@ window.keepScouting = function(playerId) {
     const player = gameState.scoutTips.splice(idx, 1)[0];
     gameState.scoutHistory.push(player);
     gameState.scoutTipClaimed = true;
-    // Always mark lastScoutDate — prevents immediate voorzitter tip regeneration
-    gameState.scoutMission.lastScoutDate = getTodayString();
+    // Always mark lastVoorzitterDate — prevents immediate voorzitter tip regeneration
+    gameState.scoutMission.lastVoorzitterDate = getTodayString();
     saveGame();
     renderScoutPage();
     showNotification('Speler toegevoegd aan de scoutinglijst. Na elke wedstrijd wordt het rapport nauwkeuriger.', 'success');
@@ -10629,7 +10629,7 @@ function playMatch() {
         const stars = player.stars || 0;
         if (stars >= 0.5 && player.overall < 99) {
             // Growth per match: stars determine speed (0.5★ = slow, 5★ = fast)
-            const growthGain = Math.round(15 + stars * 4 + Math.random() * 10);
+            const growthGain = Math.round(5 + stars * 30 + Math.random() * 10);
             if (!player.growthProgress) player.growthProgress = 0;
             player.growthProgress += growthGain;
             let leveled = false;
@@ -11095,7 +11095,7 @@ async function _playMultiplayerMatchInner() {
             if (!player || !lineupIds.has(player.id)) return;
             const stars = player.stars || 0;
             if (stars >= 0.5 && player.overall < 99) {
-                const growthGain = Math.round(15 + stars * 4 + Math.random() * 10);
+                const growthGain = Math.round(5 + stars * 30 + Math.random() * 10);
                 if (!player.growthProgress) player.growthProgress = 0;
                 player.growthProgress += growthGain;
                 let leveled = false;

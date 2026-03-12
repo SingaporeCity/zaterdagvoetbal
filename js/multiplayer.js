@@ -972,8 +972,8 @@ async function generatePlayersForClub(clubId, leagueId, division, tier = 'player
     };
     const range = tierRanges[tier] || tierRanges.player;
 
-    // Pick 1-2 random non-keeper indices to be young players with 0.5 POT
-    const youngCount = 1 + Math.floor(Math.random() * 2); // 1 or 2
+    // Pick exactly 2 random non-keeper indices to be young players with 0.5 POT
+    const youngCount = 2;
     const nonKeeperIndices = positions.map((p, i) => p !== 'keeper' ? i : -1).filter(i => i >= 0);
     const youngIndices = new Set();
     while (youngIndices.size < youngCount && nonKeeperIndices.length > 0) {

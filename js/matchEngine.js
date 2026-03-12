@@ -559,27 +559,49 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
 
     // Specialists bonus — captain and set piece takers
     const specialists = options.specialists || {};
-    const lineupIds = homeLineup ? homeLineup.filter(p => p).map(p => String(p.id)) : [];
+    const filledLineup = homeLineup ? homeLineup.filter(p => p) : [];
+    const lineupIds = filledLineup.map(p => String(p.id));
+
+    // Captain: must be 30+ years old for bonus (experience = leadership)
     if (specialists.captain && lineupIds.includes(String(specialists.captain))) {
-        // Captain in lineup: +3% team boost (leadership)
-        const captainBonus = 1.03;
-        if (isHomeGame) {
-            homeStrength.attack = Math.round(homeStrength.attack * captainBonus);
-            homeStrength.defense = Math.round(homeStrength.defense * captainBonus);
-            homeStrength.midfield = Math.round(homeStrength.midfield * captainBonus);
-        } else {
-            awayStrength.attack = Math.round(awayStrength.attack * captainBonus);
-            awayStrength.defense = Math.round(awayStrength.defense * captainBonus);
-            awayStrength.midfield = Math.round(awayStrength.midfield * captainBonus);
+        const captain = filledLineup.find(p => String(p.id) === String(specialists.captain));
+        if (captain && (captain.age || 0) >= 30) {
+            const captainBonus = 1.05; // +5% team boost
+            if (isHomeGame) {
+                homeStrength.attack = Math.round(homeStrength.attack * captainBonus);
+                homeStrength.defense = Math.round(homeStrength.defense * captainBonus);
+                homeStrength.midfield = Math.round(homeStrength.midfield * captainBonus);
+            } else {
+                awayStrength.attack = Math.round(awayStrength.attack * captainBonus);
+                awayStrength.defense = Math.round(awayStrength.defense * captainBonus);
+                awayStrength.midfield = Math.round(awayStrength.midfield * captainBonus);
+            }
         }
     }
-    // Each set piece specialist in lineup: +1% attack (set piece threat)
+
+    // Set piece specialists: +2% attack each
+    // Freekick: only counts if taker is the attacker/midfielder with highest potential
     let setPieceBonus = 0;
-    ['cornerTaker', 'penaltyTaker', 'freekickTaker'].forEach(role => {
+    ['cornerTaker', 'penaltyTaker'].forEach(role => {
         if (specialists[role] && lineupIds.includes(String(specialists[role]))) {
-            setPieceBonus += 0.01;
+            setPieceBonus += 0.02;
         }
     });
+    // Freekick: validate that taker is the highest-potential attacker/midfielder
+    if (specialists.freekickTaker && lineupIds.includes(String(specialists.freekickTaker))) {
+        const attackMidGroups = ['attacker', 'midfielder'];
+        const attackMids = filledLineup.filter(p => {
+            const group = POSITIONS[p.position]?.group;
+            return attackMidGroups.includes(group);
+        });
+        if (attackMids.length > 0) {
+            const bestStars = Math.max(...attackMids.map(p => p.stars || 0));
+            const taker = filledLineup.find(p => String(p.id) === String(specialists.freekickTaker));
+            if (taker && (taker.stars || 0) >= bestStars) {
+                setPieceBonus += 0.02;
+            }
+        }
+    }
     if (setPieceBonus > 0) {
         if (isHomeGame) {
             homeStrength.attack = Math.round(homeStrength.attack * (1 + setPieceBonus));
