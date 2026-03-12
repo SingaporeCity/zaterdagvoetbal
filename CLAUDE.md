@@ -3,8 +3,18 @@
 ## Wat is dit?
 Nederlandse amateurvoetbal-managergame. Je bent speler én manager van een zaterdagclub. Vite + vanilla JS frontend, Supabase (Postgres) backend voor multiplayer. Gehost op GitHub Pages.
 
-## FOCUS: ALLEEN MULTIPLAYER
-We werken alleen aan multiplayer. Singleplayer is niet relevant. Alle fixes, features en tests moeten gericht zijn op de multiplayer-ervaring. Bij elke wijziging: check of het correct synct met Supabase, of `saveGame()` wordt aangeroepen, en of nieuwe spelers via `insertPlayerToSupabase()` een UUID krijgen.
+## ALLEEN MULTIPLAYER — singleplayer code is verwijderd
+Er is geen singleplayer meer. De volgende functies/concepten bestaan NIET meer:
+- `initGame()` — verwijderd, multiplayer start via `initMultiplayerGame()`
+- `playMatch()` — is nu een simpele redirect naar `playMultiplayerMatch()`
+- `handleEndOfSeason()` — verwijderd, season-end stats zitten nu in `playMultiplayerMatch()`
+- `onStartGame()` — verwijderd, `DOMContentLoaded` roept direct `initMultiplayerUI()` + `checkAuthAndRoute()` aan
+- `loadGameSync()` / `deleteSave()` — verwijderd uit storage.js
+- `generateFakeMatchHistory()` — verwijderd
+- Mode-selectie scherm (`#mode-screen`) — verwijderd uit HTML en JS
+- `initMultiplayerUI()`, `startLeague()`, `checkAuthAndRoute()` accepteren geen `onStartGame` parameter meer
+
+Bij elke wijziging: check of het correct synct met Supabase, of `saveGame()` wordt aangeroepen, en of nieuwe spelers via `insertPlayerToSupabase()` een UUID krijgen.
 
 ## Deploy workflow — ALTIJD BEIDE BRANCHES
 ```bash
@@ -25,16 +35,16 @@ cd /Users/patrickjeeninga/Coding/zaterdagvoetbal && git add <files> && git commi
 
 ## Projectstructuur
 
-### JS bestanden (25k+ regels totaal)
+### JS bestanden (~24k regels totaal)
 | Bestand | Regels | Wat |
 |---------|--------|-----|
-| `app.js` | ~17k | Alles: UI rendering, game logic, stadion, sponsors, tactiek, match display, achievements UI. Zoek op `function renderXxxPage()` voor specifieke pagina's |
+| `app.js` | ~16k | Alles: UI rendering, game logic, stadion, sponsors, tactiek, match display, achievements UI. Zoek op `function renderXxxPage()` voor specifieke pagina's. `playMatch()` redirected naar `playMultiplayerMatch()`. |
 | `achievements.js` | ~2.4k | `ACHIEVEMENTS` object met 200+ achievements, `checkAchievements()`, `initAchievements()` |
 | `multiplayer.js` | ~1.6k | Lobby, league creation/joining, `startLeague()`, `generateSchedule()`, `simulateWeek()`, AI teams met tier systeem |
 | `matchEngine.js` | ~930 | `simulateMatch()`, `calculateTeamStrength()`, `generateOpponent()` |
 | `progression.js` | ~710 | XP/leveling systeem, `awardPlayerXP()`, `awardXP()`, `getSPPerLevel()`, dagelijkse beloningen |
 | `constants.js` | ~680 | `POSITIONS`, `FORMATIONS`, `TACTICS`, `NATIONALITIES`, `STAFF_TYPES`, `MANAGER_LEVELS` |
-| `storage.js` | ~680 | `saveGame()`, `loadGame()`, `gameStateToClubRecord()`, `clubRecordToGameState()`, Supabase sync |
+| `storage.js` | ~650 | `saveGame()`, `loadGame()`, `gameStateToClubRecord()`, `clubRecordToGameState()`, Supabase sync. Geen `loadGameSync()`/`deleteSave()` meer. |
 | `state.js` | ~330 | `gameState` singleton, `getGameState()`, `replaceGameState()` |
 | `realtime.js` | ~270 | Supabase realtime subscriptions, `subscribeToLeague()`, `fetchStandings()` |
 | `events.js` | ~750 | Match events, `generateMatchEvents()` |
@@ -56,8 +66,8 @@ cd /Users/patrickjeeninga/Coding/zaterdagvoetbal && git add <files> && git commi
 - `getGameState()` geeft referentie terug (geen kopie)
 
 ### Opslag / sync
-- **Singleplayer**: `localStorage` via `saveGame()`
-- **Multiplayer**: Supabase `clubs` tabel met `client_state` JSONB kolom
+- **Primary**: Supabase `clubs` tabel met `client_state` JSONB kolom
+- **Backup**: `localStorage` via `saveLocal()` (wordt altijd mee-opgeslagen als backup)
 - `gameStateToClubRecord()` serialiseert gameState → Supabase record
 - `clubRecordToGameState()` deserialiseert terug
 - `saveGame()` heeft debounce + `pendingSave` flag tegen dropped saves
@@ -216,11 +226,29 @@ Het spel is volledig in het **Nederlands**. UI teksten, achievement namen, voorz
 - **UNIQUE constraint** op `match_results(league_id, season, week, home_club_id, away_club_id)` (012)
 - **`leagues` tabel** toegevoegd aan `supabase_realtime` publication (012)
 
-### Multiplayer match flow (na concurrency fixes)
-1. `playMultiplayerMatch()` heeft double-click guard (`multiplayerMatchInProgress` + `btn.disabled`)
-2. Captured `week`/`season` aan begin → gebruikt die i.p.v. `gameState.week` voor alle match-gerelateerde logica
-3. `simulateWeek()` simuleert lokaal, stuurt alles naar `process_week_results` RPC
-4. Na match: volledige post-match effecten (stats, XP, player growth, energy, fans, achievements) — zelfde als singleplayer
-5. `applyMatchResults` wijzigt lineup objecten → synct terug naar `gameState.players` voor persistence
-6. `forceSyncToSupabase()` gaat door dezelfde `savingInProgress` lock als `saveGame()`
-7. Season-end: `isSeasonComplete()` check → `process_season_end` RPC → lokale effecten → nieuwe schedule
+### App startup flow
+1. `DOMContentLoaded` → `initMultiplayerUI()` + `checkAuthAndRoute()`
+2. Geen `onStartGame` callback meer — auth route toont direct lobby
+3. Als Supabase niet bereikbaar: foutmelding (geen singleplayer fallback)
+4. Na league selectie: `multiplayer-start` event → `initMultiplayerGame()`
+
+### Multiplayer match flow
+1. `playMatch()` → `playMultiplayerMatch()` (directe redirect, geen singleplayer branch)
+2. `playMultiplayerMatch()` heeft double-click guard (`multiplayerMatchInProgress` + `btn.disabled`)
+3. Captured `week`/`season` aan begin → gebruikt die i.p.v. `gameState.week` voor alle match-gerelateerde logica
+4. `simulateWeek()` simuleert lokaal, stuurt alles naar `process_week_results` RPC
+5. Na match: volledige post-match effecten (stats, XP, player growth, energy, fans, achievements)
+6. `applyMatchResults` wijzigt lineup objecten → synct terug naar `gameState.players` voor persistence
+7. `forceSyncToSupabase()` gaat door dezelfde `savingInProgress` lock als `saveGame()`
+8. Season-end: `isSeasonComplete()` check → `process_season_end` RPC → lokale effecten → nieuwe schedule
+
+### Season-end stats (in playMultiplayerMatch)
+Bij seizoenseinde worden de volgende stats bijgewerkt in de multiplayer flow:
+- `showManagerXPPopup` voor promotie (500 XP) en kampioen (1000 XP)
+- Promotie bonus: +0.5 ster voor spelers die minstens helft seizoen speelden
+- `topHalfFinish`, `runnerUp`, `lastPlace` positie-stats
+- `perfectSeason` (alle 14+ wedstrijden gewonnen)
+- `budgetPositive` (positief budget aan einde seizoen)
+- `yoyoClub` (gepromoveerd vorig seizoen, gedegradeerd dit seizoen)
+- `comebackPromotion` (gepromoveerd na vorige degradatie)
+- `seasonSpending` reset naar 0
