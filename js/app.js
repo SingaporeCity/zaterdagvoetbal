@@ -46,12 +46,7 @@ import {
 import {
     saveGame,
     loadGame,
-    loadGameSync,
-    hasSaveFile,
-    getSaveInfo,
     startAutoSave,
-    calculateOfflineProgress,
-    applyOfflineProgress,
     exportSave,
     importSave,
     setStorageMode,
@@ -70,24 +65,17 @@ import {
     generateOpponent,
     calculateTeamStrength,
     getMatchResultType,
-    getMatchPoints,
-    applyMatchResults,
-    formatMatchResult
+    applyMatchResults
 } from './matchEngine.js';
 
 import {
-    generateStandings as generateNewStandings,
-    updateStandings,
-    simulateAIMatches,
     isSeasonComplete,
     calculateSeasonResults,
-    startNewSeason,
     checkDailyReward,
     getManagerLevel,
     awardXP,
     getPlayerLevel,
     awardPlayerXP,
-    getNextOpponent,
     getZoneInfo,
     getSeasonSchedule,
     MANAGER_LEVELS,
@@ -8923,125 +8911,6 @@ function migratePlayersToZaterdag() {
     });
 }
 
-function generateFakeMatchHistory() {
-    const opponents = ['FC Rivaal', 'SC Concordia', 'Vv De Meeuwen', 'SV Oranje'];
-    const results = [
-        { playerScore: 3, opponentScore: 1, resultType: 'win' },
-        { playerScore: 0, opponentScore: 2, resultType: 'loss' },
-        { playerScore: 1, opponentScore: 1, resultType: 'draw' },
-        { playerScore: 2, opponentScore: 0, resultType: 'win' }
-    ];
-
-    if (!gameState.matchHistory) gameState.matchHistory = [];
-    const lineupPlayers = (gameState.lineup || []).filter(p => p != null);
-    const playersForRatings = lineupPlayers.length > 0 ? lineupPlayers : gameState.players.slice(0, 11);
-    // Attackers/midfielders more likely to score
-    const attackers = playersForRatings.filter(p => ['spits', 'linksbuiten', 'rechtsbuiten', 'linksMid', 'centraleMid', 'rechtsMid'].includes(p.position));
-    const scorerPool = attackers.length > 0 ? attackers : playersForRatings;
-
-    for (let i = 0; i < 4; i++) {
-        const isHome = i % 2 === 0;
-        const pScore = results[i].playerScore;
-        const oScore = results[i].opponentScore;
-
-        // Start with base ratings, no goals/assists
-        const ratings = playersForRatings.map(p => ({
-            id: p.id,
-            name: p.name,
-            position: p.position,
-            rating: Math.round((5.5 + Math.random() * 3.5) * 10) / 10,
-            goals: 0,
-            assists: 0,
-            yellowCards: Math.random() < 0.12 ? 1 : 0,
-            redCards: 0
-        }));
-
-        // Distribute player goals among scorerPool players and create goal events
-        const fakeEvents = [];
-        const usedMinutes = new Set();
-        for (let g = 0; g < pScore; g++) {
-            const scorerIdx = Math.floor(Math.random() * scorerPool.length);
-            const scorer = scorerPool[scorerIdx];
-            const ratingEntry = ratings.find(r => r.id === scorer.id);
-            if (ratingEntry) {
-                ratingEntry.goals++;
-                ratingEntry.rating = Math.round((ratingEntry.rating + 1.0) * 10) / 10;
-            }
-            let minute;
-            do { minute = 5 + Math.floor(Math.random() * 85); } while (usedMinutes.has(minute));
-            usedMinutes.add(minute);
-            fakeEvents.push({
-                minute,
-                type: 'goal',
-                team: isHome ? 'home' : 'away',
-                player: scorer.name,
-                playerId: scorer.id,
-                commentary: `${scorer.name} scoort! ${minute}'`
-            });
-        }
-        // Opponent goals (no specific player)
-        for (let g = 0; g < oScore; g++) {
-            let minute;
-            do { minute = 5 + Math.floor(Math.random() * 85); } while (usedMinutes.has(minute));
-            usedMinutes.add(minute);
-            fakeEvents.push({
-                minute,
-                type: 'goal',
-                team: isHome ? 'away' : 'home',
-                player: 'Tegenstander',
-                commentary: `Tegendoelpunt in de ${minute}e minuut.`
-            });
-        }
-        // Add yellow card events for players that got one
-        ratings.filter(r => r.yellowCards > 0).forEach(r => {
-            let minute;
-            do { minute = 5 + Math.floor(Math.random() * 85); } while (usedMinutes.has(minute));
-            usedMinutes.add(minute);
-            fakeEvents.push({
-                minute,
-                type: 'yellow_card',
-                team: isHome ? 'home' : 'away',
-                player: r.name,
-                playerId: r.id,
-                commentary: `Gele kaart voor ${r.name}.`
-            });
-        });
-        fakeEvents.sort((a, b) => a.minute - b.minute);
-
-        const possHome = 45 + Math.floor(Math.random() * 20);
-        const bestPlayer = [...ratings].sort((a, b) => b.rating - a.rating)[0];
-
-        gameState.matchHistory.push({
-            week: i + 1,
-            season: gameState.season,
-            opponent: opponents[i],
-            isHome,
-            playerScore: pScore,
-            opponentScore: oScore,
-            resultType: results[i].resultType,
-            events: fakeEvents,
-            possession: { home: possHome, away: 100 - possHome },
-            shots: { home: 5 + Math.floor(Math.random() * 10), away: 3 + Math.floor(Math.random() * 8) },
-            shotsOnTarget: { home: 2 + Math.floor(Math.random() * 5), away: 1 + Math.floor(Math.random() * 4) },
-            corners: { home: Math.floor(Math.random() * 6), away: Math.floor(Math.random() * 6) },
-            fouls: { home: 3 + Math.floor(Math.random() * 8), away: 3 + Math.floor(Math.random() * 8) },
-            cards: { home: { yellow: ratings.filter(r => r.yellowCards > 0).length, red: 0 }, away: { yellow: Math.floor(Math.random() * 3), red: 0 } },
-            manOfTheMatch: bestPlayer ? { name: bestPlayer.name, rating: bestPlayer.rating } : null,
-            playerRatings: ratings,
-            improvements: [],
-            chairmanComments: {
-                positive: 'De voorzitter waardeert de inzet van het team.',
-                negative: 'De voorzitter ziet altijd ruimte voor verbetering.'
-            }
-        });
-    }
-
-    // Set lastMatch to most recent
-    gameState.lastMatch = gameState.matchHistory[gameState.matchHistory.length - 1];
-    // Set week to 5 (after 4 matches)
-    gameState.week = 5;
-}
-
 // ================================================
 // ONBOARDING & TUTORIAL
 // ================================================
@@ -9594,264 +9463,7 @@ function showTutorial() {
     renderTutorialStep(0);
 }
 
-function initGame(mode = 'local') {
-    // Handle reset via URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('reset') === '1') {
-        localStorage.removeItem('zaterdagvoetbal_save');
-        window.history.replaceState({}, '', window.location.pathname);
-    }
-
-    // Check for existing save (singleplayer uses sync load)
-    const savedState = loadGameSync();
-    const isNewGame = !savedState;
-
-    if (savedState) {
-        // Load saved game
-        replaceGameState(savedState);
-        console.log('Save file loaded!');
-
-        // Calculate and apply offline progress (silently)
-        const offlineProgress = calculateOfflineProgress(gameState);
-        if (offlineProgress && offlineProgress.hoursAway >= 1) {
-            applyOfflineProgress(gameState, offlineProgress);
-        }
-
-        // Check if construction completed while offline
-        checkConstruction();
-    } else {
-        // New game - generate initial data
-        gameState.players = generateSquad(gameState.club.division);
-        gameState.lineup = new Array(11).fill(null);
-        gameState.standings = generateNewStandings(gameState.club.name, gameState.club.division);
-        gameState.achievements = initAchievements();
-
-        // Seed first voorzitter scout tip so new players start with one
-        if (!gameState.scoutTips) gameState.scoutTips = [];
-        if (!gameState.scoutHistory) gameState.scoutHistory = [];
-        const firstTip = createScoutedPlayer(0);
-        firstTip.name = `${randomFromArray(DUTCH_FIRST_NAMES)} Bakker`;
-        firstTip.age = 18;
-        firstTip.nationality = NATIONALITIES[0];
-        firstTip.tipSource = 'voorzitter';
-        gameState.scoutTips.push(firstTip);
-
-        // Generate initial youth players for the academy
-        generateInitialYouthPlayers();
-        gameState._lastYouthDailyDate = new Date().toDateString();
-    }
-
-    // Migrate tactics: old keys → new keys
-    if (gameState.tactics && gameState.tactics.mentality !== undefined) {
-        const oldTactics = gameState.tactics;
-        const offensiefMap = { defensive: 'verdedigend', balanced: 'gebalanceerd', attacking: 'offensief', ultra_attacking: 'leeroy' };
-        const tempoMap = { slow: 'rustig', normal: 'normaal', fast: 'snel', counter: 'snel' };
-        const breedteMap = { narrow: 'smal', normal: 'gebalanceerd', wide: 'breed' };
-        const dekkingVal = (gameState.advancedTactics?.marking) || 'zone';
-        gameState.tactics = {
-            mentaliteit: 'normaal',
-            offensief: offensiefMap[oldTactics.mentality] || 'gebalanceerd',
-            speltempo: tempoMap[oldTactics.tempo] || 'normaal',
-            veldbreedte: breedteMap[oldTactics.width] || 'gebalanceerd',
-            dekking: dekkingVal === 'man' ? 'man' : 'zone'
-        };
-        delete gameState.advancedTactics;
-    }
-
-    // Migrate existing players: ensure 90% Dutch nationality + zaterdagvoetbal stats
-    migratePlayersToZaterdag();
-
-    // Patch salary for players with salary 0 (old saves)
-    gameState.players.forEach(p => {
-        if (p && (!p.salary || p.salary === 0)) {
-            p.salary = Math.round(5 + ((p.overall || 10) / 10) + (p.stars || 0) * 3 + Math.floor(Math.random() * 3));
-        }
-    });
-
-    // Ensure myPlayer is in gameState.players so they can be in the lineup
-    const mp = initMyPlayer();
-    const mpOverall = Math.round((mp.attributes.SNE + mp.attributes.TEC + mp.attributes.PAS + mp.attributes.SCH + mp.attributes.VER + mp.attributes.FYS) / 6);
-    const mpInSquad = gameState.players.find(p => p && p.id === 'myplayer');
-    if (!mpInSquad) {
-        gameState.players.unshift({
-            id: 'myplayer',
-            name: mp.name,
-            age: mp.age,
-            position: mp.position,
-            overall: mpOverall,
-            stars: 1,
-            isMyPlayer: true,
-            nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
-            salary: 0,
-            energy: mp.energy || 100,
-            attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
-        });
-    } else {
-        // Sync overall with current attributes
-        mpInSquad.overall = mpOverall;
-        mpInSquad.energy = mp.energy || 100;
-        if (!mpInSquad.stars) mpInSquad.stars = 1;
-    }
-    // Sync stars back to myPlayer so the global top bar shows the correct value
-    const mpSquadRef = gameState.players.find(p => p && p.id === 'myplayer');
-    if (mpSquadRef) mp.stars = mpSquadRef.stars;
-
-    // Migrate: convert potential to fixed stars property
-    if (gameState.players && gameState.players.length > 0) {
-        gameState.players.forEach(p => {
-            if (p && p.stars === undefined) {
-                if (p.isMyPlayer) {
-                    p.stars = 1;
-                } else if (p.potential !== undefined) {
-                    p.stars = getPotentialStars(p.overall, p.potential);
-                } else {
-                    p.stars = 0.5;
-                }
-            }
-        });
-        // No longer ensure high star players — stars grow via promotions
-    }
-
-    // Migrate youth players: assign potentialStars if missing
-    if (gameState.youthPlayers && gameState.youthPlayers.length > 0) {
-        const needsMigration = gameState.youthPlayers.some(p => p.potentialStars === undefined);
-        if (needsMigration) {
-            const maxStars = getAcademyMaxStars();
-            const steps = Math.floor(maxStars / 0.5);
-            gameState.youthPlayers.forEach(p => {
-                if (p.potentialStars === undefined) {
-                    p.potentialStars = (random(1, steps) * 0.5);
-                }
-            });
-        }
-    }
-
-    // Migrate stadium: buildings that should start unbuilt
-    if (gameState.stadium) {
-        const unbuiltMigrations = {
-            medical: 'med_0', scouting: 'scout_0', youthscouting: 'ysct_0',
-            kantine: 'kantine_0', sponsoring: 'sponsor_0', perszaal: 'pers_0'
-        };
-        Object.entries(unbuiltMigrations).forEach(([key, lvl0]) => {
-            const config = STADIUM_TILE_CONFIG[key];
-            if (!config) return;
-            const currentId = gameState.stadium[config.stateKey];
-            // If still on old free level 1 (cost was 0), migrate to level 0
-            if (currentId === config.levels[1]?.id) {
-                const oldCost = config.levels[1]?.cost;
-                // Only migrate if they never actually paid to build (old saves had cost 0)
-                if (oldCost && !gameState.stadium._migratedV3) {
-                    gameState.stadium[config.stateKey] = lvl0;
-                }
-            }
-            // If key is missing entirely, set to unbuilt
-            if (!currentId) {
-                gameState.stadium[config.stateKey] = lvl0;
-            }
-        });
-        gameState.stadium._migratedV3 = true;
-    }
-
-    // Check and apply daily reward (silently)
-    const dailyRewardResult = checkDailyReward(gameState);
-    // Reward is claimed but no modal shown
-
-    // Age youth players daily
-    processYouthDaily();
-
-    // Generate fake match history for testing (only on first load with no history, skip for fresh new games)
-    if (!isNewGame && (!gameState.matchHistory || gameState.matchHistory.length === 0) && gameState.players.length > 0) {
-        generateFakeMatchHistory();
-    }
-
-    // Ensure next opponent is set correctly
-    if (isMultiplayer() && gameState.multiplayer?.leagueId && gameState.multiplayer?.clubId) {
-        // In multiplayer: fetch scheduled opponent from Supabase
-        getScheduledOpponent(
-            gameState.multiplayer.leagueId,
-            gameState.season || 1,
-            gameState.week || 1,
-            gameState.multiplayer.clubId
-        ).then(opp => {
-            if (opp) {
-                gameState.nextMatch.opponent = opp.name;
-                gameState.nextMatch.isHome = opp.isHome;
-                // Update display
-                const awayTeamName = document.getElementById('away-team-name');
-                if (awayTeamName) awayTeamName.textContent = opp.name;
-            }
-        });
-    } else {
-        const nextOpp = getNextOpponent(gameState.standings, gameState.week);
-        if (nextOpp) {
-            gameState.nextMatch.opponent = nextOpp.name;
-            gameState.nextMatch.isHome = nextOpp.isHome;
-            gameState.nextMatch.opponentPosition = nextOpp.position;
-        }
-    }
-
-    // Reset match timer so match is always playable on refresh
-    gameState.nextMatch.time = Date.now() - 1000;
-
-    // Move global tiles into dashboard header on init
-    const tiles = document.querySelector('.global-top-tiles');
-    const dashHeader = document.getElementById('dashboard')?.querySelector('.page-header');
-    if (tiles && dashHeader) dashHeader.appendChild(tiles);
-
-    // Render initial content
-    renderStandings();
-    renderTopScorers();
-    renderPlayerCards();
-    updateBudgetDisplays();
-    renderDashboardExtras();
-
-    // Initialize interactions
-    initNavigation();
-    initQuickActions();
-    initFilters();
-    initModals();
-    initScoutFilters();
-    initTrainingButton();
-
-    // Initialize new features
-    initTransferMarket();
-    initScoutCriteria();
-    initTacticsTabs();
-    initChairmanTips();
-    initPlayMatchButton();
-    initSaveLoadButtons();
-    initBugReports();
-
-    // Start timers
-    startTimers();
-
-    // Start auto-save
-    startAutoSave();
-
-    // Random events disabled - no popups on dashboard load
-
-    // Check achievements (skip during onboarding to avoid popups)
-    if (!isNewGame || gameState.onboardingCompleted) {
-        const newAchievements = checkAchievements(gameState);
-        if (newAchievements.length > 0) {
-            setTimeout(() => queueAchievements(newAchievements), 2000);
-        }
-    }
-
-    console.log('🎮 Zaterdagvoetbal v2.0 initialized!');
-    console.log('📊 Squad:', gameState.players.length, 'players');
-    console.log('💰 Budget:', formatCurrency(gameState.club.budget));
-    console.log('🏆 Achievements:', getAchievementStats(gameState).unlocked + '/' + getAchievementStats(gameState).total);
-
-    // Trigger onboarding for new players
-    if (isNewGame && !gameState.onboardingCompleted) {
-        gameState.week = 1;
-        gameState.matchHistory = [];
-        gameState.lastMatch = null;
-        console.log('🆕 New game detected — starting onboarding');
-        setTimeout(() => showOnboarding(), 500);
-    }
-}
+// initGame('local') removed — multiplayer only, see initMultiplayerGame()
 
 // ================================================
 // DASHBOARD EXTRAS
@@ -10361,485 +9973,7 @@ function initPlayMatchButton() {
 }
 
 function playMatch() {
-    // Multiplayer: use async flow
-    if (isMultiplayer()) {
-        playMultiplayerMatch();
-        return;
-    }
-
-    // Check if match is available
-    const now = Date.now();
-    if (gameState.nextMatch.time > now) {
-        showNotification('🎩 Voorzitter: "Ik snap dat je snel wil beginnen, maar de tegenstander staat nog niet op het veld."', 'warning');
-        return;
-    }
-
-    // Check if lineup has at least 1 player
-    const validLineup = gameState.lineup.filter(p => p !== null);
-    if (validLineup.length === 0) {
-        showNotification('Je hebt minstens 1 speler nodig in je opstelling!', 'error');
-        return;
-    }
-
-    // Check for suspended/injured players
-    const unavailable = validLineup.filter(p =>
-        (p.suspendedUntil && p.suspendedUntil > gameState.week) ||
-        (p.injuredUntil && p.injuredUntil > gameState.week)
-    );
-    if (unavailable.length > 0) {
-        showNotification(`Geschorste/geblesseerde spelers in opstelling: ${unavailable.map(p => p.name).join(', ')}`, 'error');
-        return;
-    }
-
-    // Generate opponent
-    const opponent = generateOpponent(
-        gameState.club.division,
-        gameState.nextMatch.opponentPosition || random(1, 8)
-    );
-    opponent.name = gameState.nextMatch.opponent || opponent.name;
-
-    // Determine if home game (alternate)
-    const isHome = (gameState.week % 2 === 1);
-
-    // Gather match parameters
-    const formationDrive = getFormationDrive(gameState.formation);
-    const grassLevel = getGrassLevel();
-    const teamTrainingBonus = gameState.training?.teamTraining?.bonus || null;
-
-    // Achievement: played with 0% formation drive
-    if (formationDrive === 0) gameState.stats.playedZeroDrive = true;
-
-    // Simulate match
-    const strengthOptions = { formationDrive, teamTrainingBonus };
-    const spyBonus = gameState.nextMatchBonus || 0;
-    const result = simulateMatch(
-        { name: gameState.club.name, strength: calculateTeamStrength(gameState.lineup, gameState.formation, gameState.tactics, gameState.lineup, strengthOptions) },
-        opponent,
-        gameState.lineup,
-        gameState.formation,
-        gameState.tactics,
-        isHome,
-        { grassLevel, playerTeamBonus: 1.10, spyBonus, specialists: gameState.specialists || {} }
-    );
-    // Reset spy bonus after use
-    gameState.nextMatchBonus = 0;
-
-    // Determine scores from player's perspective
-    const playerScore = isHome ? result.homeScore : result.awayScore;
-    const opponentScore = isHome ? result.awayScore : result.homeScore;
-
-    // Apply results to player stats
-    applyMatchResults(gameState.lineup, result, isHome, gameState.week);
-
-    // Red card fines (€100 per red card)
-    const ourTeam = isHome ? 'home' : 'away';
-    const redCardEvents = result.events.filter(e => e.type === 'red_card' && e.team === ourTeam);
-    redCardEvents.forEach(() => gameState.club.budget -= 100);
-
-    // Collect suspension/injury notifications and remove unavailable from lineup
-    const matchNotifications = [];
-    gameState.lineup.forEach((p, i) => {
-        if (!p) return;
-        if (p.suspendedUntil && p.suspendedUntil > gameState.week) {
-            const weeks = p.suspendedUntil - gameState.week;
-            matchNotifications.push(`${p.name} is geschorst voor ${weeks} wedstrijd${weeks > 1 ? 'en' : ''}`);
-            gameState.lineup[i] = null;
-        }
-        if (p.injuredUntil && p.injuredUntil > gameState.week) {
-            const weeks = p.injuredUntil - gameState.week;
-            matchNotifications.push(`🏥 ${p.name} is geblesseerd voor ${weeks} wedstrijd${weeks > 1 ? 'en' : ''}`);
-            gameState.lineup[i] = null;
-        }
-    });
-
-    // Update standings
-    updateStandings(gameState.standings, gameState.club.name, playerScore, opponentScore);
-    updateStandings(gameState.standings, opponent.name, opponentScore, playerScore);
-
-    // Simulate AI matches
-    simulateAIMatches(gameState.standings);
-
-    // Track if myPlayer was in the lineup
-    const myPlayerInLineup = gameState.lineup.some(p => p && p.isMyPlayer);
-    if (myPlayerInLineup) {
-        gameState.stats.myPlayerMatches = (gameState.stats.myPlayerMatches || 0) + 1;
-    }
-
-    // Update club stats
-    gameState.club.stats.totalMatches++;
-    gameState.club.stats.totalGoals += playerScore;
-
-    // Update match statistics
-    const resultType = getMatchResultType(result.homeScore, result.awayScore, isHome);
-    if (resultType === 'win') {
-        gameState.stats.wins++;
-        gameState.stats.currentUnbeaten++;
-        gameState.stats.currentWinStreak = (gameState.stats.currentWinStreak || 0) + 1;
-        if (isHome) gameState.stats.homeWins++;
-    } else if (resultType === 'draw') {
-        gameState.stats.draws++;
-        gameState.stats.currentUnbeaten++;
-        gameState.stats.currentWinStreak = 0;
-    } else {
-        gameState.stats.losses++;
-        gameState.stats.currentUnbeaten = 0;
-        gameState.stats.currentWinStreak = 0;
-    }
-
-    // Update all-time records
-    gameState.stats.bestWinStreak = Math.max(gameState.stats.bestWinStreak || 0, gameState.stats.currentWinStreak);
-    gameState.stats.bestUnbeaten = Math.max(gameState.stats.bestUnbeaten || 0, gameState.stats.currentUnbeaten);
-
-    if (opponentScore === 0) {
-        gameState.stats.cleanSheets++;
-    }
-
-    if (playerScore > gameState.stats.highestScoreMatch) {
-        gameState.stats.highestScoreMatch = playerScore;
-    }
-
-    // Track goals against
-    gameState.stats.goalsAgainst = (gameState.stats.goalsAgainst || 0) + opponentScore;
-
-    // Track big wins
-    if (resultType === 'win') {
-        const diff = playerScore - opponentScore;
-        if (diff >= 3) gameState.stats.bigWins = (gameState.stats.bigWins || 0) + 1;
-        if (diff >= 4) gameState.stats.bigWins4 = (gameState.stats.bigWins4 || 0) + 1;
-        if (diff >= 5) gameState.stats.bigWins5 = (gameState.stats.bigWins5 || 0) + 1;
-        if (!isHome) gameState.stats.awayWins = (gameState.stats.awayWins || 0) + 1;
-        if (playerScore === 1 && opponentScore === 0) gameState.stats.oneNilWins = (gameState.stats.oneNilWins || 0) + 1;
-    }
-
-    // Track draw streak
-    if (resultType === 'draw') {
-        gameState.stats.drawStreak = (gameState.stats.drawStreak || 0) + 1;
-    } else {
-        gameState.stats.drawStreak = 0;
-    }
-
-    // Track loss streak
-    if (resultType === 'loss') {
-        gameState.stats.lossStreak = (gameState.stats.lossStreak || 0) + 1;
-    } else {
-        gameState.stats.lossStreak = 0;
-    }
-
-    // Track clean sheet streak
-    if (opponentScore === 0) {
-        gameState.stats.cleanSheetStreak = (gameState.stats.cleanSheetStreak || 0) + 1;
-    } else {
-        gameState.stats.cleanSheetStreak = 0;
-    }
-
-    // Track scoring streak / goal drought
-    if (playerScore > 0) {
-        gameState.stats.scoringStreak = (gameState.stats.scoringStreak || 0) + 1;
-        gameState.stats.goalDrought = 0;
-    } else {
-        gameState.stats.goalDrought = (gameState.stats.goalDrought || 0) + 1;
-        gameState.stats.scoringStreak = 0;
-    }
-
-    // Track midnight play
-    if (new Date().getHours() === 0) {
-        gameState.stats.playedAtMidnight = true;
-    }
-
-    // Track energy 100% win
-    if (resultType === 'win' && gameState.myPlayer && Math.round(gameState.myPlayer.energy || 0) >= 100 && myPlayerInLineup) {
-        gameState.stats.energy100Win = true;
-    }
-
-    // Check for Saturday match
-    if (new Date().getDay() === 6) {
-        gameState.stats.saturdayMatches++;
-    }
-
-    // Award Manager XP — capture level before/after for level-up detection
-    const mgrLevelBefore = getManagerLevel(gameState.manager?.xp || 0);
-    const xpReasons = [];
-    if (resultType === 'win') { awardXP(gameState, 'matchWin'); xpReasons.push({ reason: 'Wedstrijd gewonnen', amount: 50 }); }
-    else if (resultType === 'draw') { awardXP(gameState, 'matchDraw'); xpReasons.push({ reason: 'Gelijkspel', amount: 20 }); }
-    if (opponentScore === 0) { awardXP(gameState, 'cleanSheet'); xpReasons.push({ reason: 'Clean sheet', amount: 25 }); }
-    if (playerScore > 0) { awardXP(gameState, 'goalScored', playerScore * 5); xpReasons.push({ reason: `${playerScore} doelpunt${playerScore > 1 ? 'en' : ''} gescoord`, amount: playerScore * 5 }); }
-    // Store XP reasons — popups shown after modal close
-    gameState._pendingManagerXP = xpReasons.length > 0 ? xpReasons : null;
-    // Detect manager level-up
-    const mgrLevelAfter = getManagerLevel(gameState.manager?.xp || 0);
-    if (mgrLevelAfter.level > mgrLevelBefore.level) {
-        const mgrLevelData = MANAGER_LEVELS.find(l => l.level === mgrLevelAfter.level);
-        const mgrNextData = MANAGER_LEVELS.find(l => l.level === mgrLevelAfter.level + 1);
-        gameState._pendingLevelUps = gameState._pendingLevelUps || [];
-        gameState._pendingLevelUps.push({ type: 'manager', data: {
-            oldLevel: mgrLevelBefore.level, newLevel: mgrLevelAfter.level,
-            oldTitle: mgrLevelBefore.title, newTitle: mgrLevelAfter.title,
-            nextTitle: mgrNextData?.title || null,
-            cashReward: mgrLevelData?.cashReward || 0,
-            oldProgress: mgrLevelBefore.progress,
-            progress: mgrLevelAfter.progress, xpToNext: mgrLevelAfter.xpToNext
-        }});
-    }
-
-    // Player XP for match participation + goals/assists
-    const playerXPReasons = [];
-    if (myPlayerInLineup && gameState.myPlayer) {
-        // Base XP for playing
-        awardPlayerXP(gameState, 'match', 20);
-        playerXPReasons.push({ reason: 'Wedstrijd gespeeld', amount: 20 });
-
-        // Count myPlayer goals and assists
-        const myId = 'myplayer';
-        const myGoals = result.events.filter(e =>
-            (e.type === 'goal' || e.type === 'penalty') && e.team === ourTeam && e.playerId === myId
-        ).length;
-        const myAssists = result.events.filter(e =>
-            (e.type === 'goal' || e.type === 'penalty') && e.team === ourTeam && e.assistId === myId
-        ).length;
-
-        if (myGoals > 0) {
-            const goalXP = myGoals * 50;
-            awardPlayerXP(gameState, 'match', goalXP);
-            playerXPReasons.push({ reason: `${myGoals} doelpunt${myGoals > 1 ? 'en' : ''}`, amount: goalXP });
-            gameState.stats.myPlayerGoals = (gameState.stats.myPlayerGoals || 0) + myGoals;
-        }
-        if (myAssists > 0) {
-            const assistXP = myAssists * 50;
-            awardPlayerXP(gameState, 'match', assistXP);
-            playerXPReasons.push({ reason: `${myAssists} assist${myAssists > 1 ? 's' : ''}`, amount: assistXP });
-            gameState.stats.myPlayerAssists = (gameState.stats.myPlayerAssists || 0) + myAssists;
-        }
-        if (myGoals > 0 && myAssists > 0) {
-            gameState.stats.myGoalAndAssist = (gameState.stats.myGoalAndAssist || 0) + 1;
-        }
-        // Track man of the match for myPlayer
-        if (result.manOfTheMatch && result.manOfTheMatch.id === 'myplayer') {
-            gameState.stats.myPlayerMotm = (gameState.stats.myPlayerMotm || 0) + 1;
-        }
-    }
-    gameState._pendingPlayerXP = playerXPReasons.length > 0 ? playerXPReasons : null;
-
-    // Player improvement: only lineup players with >= 1 star improve
-    // Growth works via progress bar: each match adds %, at 100% → +1 ALG (max 99)
-    const improvements = [];
-    const lineupIds = new Set((gameState.lineup || []).filter(p => p).map(p => p.id));
-    gameState.players.forEach(player => {
-        if (!player) return;
-        if (!lineupIds.has(player.id)) return; // Only lineup players
-        const stars = player.stars || 0;
-        if (stars >= 0.5 && player.overall < 99) {
-            // Growth per match: stars determine speed (0.5★ = slow, 5★ = fast)
-            const growthGain = Math.round(5 + stars * 30 + Math.random() * 10);
-            if (!player.growthProgress) player.growthProgress = 0;
-            player.growthProgress += growthGain;
-            let leveled = false;
-            if (player.growthProgress >= 100) {
-                player.growthProgress -= 100;
-                player.overall = Math.min(99, player.overall + 1);
-                leveled = true;
-            }
-            improvements.push({ id: player.id, name: player.name, stars, gainPct: growthGain, progressPct: player.growthProgress, leveled, newOverall: player.overall });
-        } else {
-            improvements.push({ id: player.id, name: player.name, stars, gainPct: 0, progressPct: 0, leveled: false, newOverall: player.overall });
-        }
-    });
-
-    // Update energy: playing players lose energy, bench players recover
-    const tempo = gameState.tactics?.speltempo || 'normaal';
-    const tempoEnergyDrain = { rustig: { min: 15, max: 25 }, normaal: { min: 20, max: 30 }, snel: { min: 25, max: 35 } };
-    const drain = tempoEnergyDrain[tempo] || tempoEnergyDrain.normaal;
-    gameState.players.forEach(player => {
-        if (!player) return;
-        if (lineupIds.has(player.id)) {
-            // Playing: lose energy based on tempo
-            const loss = drain.min + Math.floor(Math.random() * (drain.max - drain.min + 1));
-            player.energy = Math.max(0, (player.energy || 75) - loss);
-        } else {
-            // Bench/not playing: recover ~20% energy
-            const recovery = 15 + Math.floor(Math.random() * 11); // 15-25
-            player.energy = Math.min(100, (player.energy || 75) + recovery);
-        }
-    });
-    // Also update myPlayer energy
-    if (gameState.myPlayer) {
-        const mpInLineup = lineupIds.has('myplayer');
-        if (mpInLineup) {
-            const loss = drain.min + Math.floor(Math.random() * (drain.max - drain.min + 1));
-            gameState.myPlayer.energy = Math.max(0, (gameState.myPlayer.energy || 100) - loss);
-        } else {
-            const recovery = 15 + Math.floor(Math.random() * 11);
-            gameState.myPlayer.energy = Math.min(100, (gameState.myPlayer.energy || 100) + recovery);
-        }
-        // Sync to squad entry
-        const mpSquad = gameState.players.find(p => p && p.id === 'myplayer');
-        if (mpSquad) mpSquad.energy = gameState.myPlayer.energy;
-    }
-
-    // Compact playerRatings for storage (embed growth data directly)
-    const improvById = {};
-    improvements.forEach(imp => { improvById[String(imp.id)] = imp; });
-    const compactRatings = result.playerRatings ? Object.entries(result.playerRatings).map(([id, data]) => {
-        const pid = isNaN(Number(id)) ? id : Number(id);
-        const imp = improvById[String(pid)];
-        return {
-            id: pid,
-            name: data.player.name,
-            position: data.player.position,
-            rating: Math.round(data.rating),
-            goals: data.goals,
-            assists: data.assists,
-            yellowCards: data.yellowCards,
-            redCards: data.redCards,
-            gainPct: imp ? imp.gainPct : 0,
-            progressPct: imp ? imp.progressPct : 0,
-            leveled: imp ? imp.leveled : false,
-            potStars: imp ? imp.stars : 0
-        };
-    }) : [];
-
-    // Count corners from events
-    const cornersHome = result.events.filter(e => e.type === 'corner' && e.team === 'home').length;
-    const cornersAway = result.events.filter(e => e.type === 'corner' && e.team === 'away').length;
-
-    // Generate chairman comments
-    const chairmanComments = generateChairmanComments(result, isHome, improvements, resultType, playerScore, opponentScore);
-
-    // Important events to store
-    const storedEvents = result.events.filter(e =>
-        ['goal', 'own_goal', 'yellow_card', 'red_card', 'substitution', 'injury', 'penalty', 'penalty_miss'].includes(e.type)
-    );
-
-    // Store last match
-    gameState.lastMatch = {
-        ...result,
-        isHome,
-        playerScore,
-        opponentScore,
-        resultType,
-        opponent: opponent.name,
-        playerRatings: compactRatings,
-        improvements,
-        chairmanComments,
-        corners: { home: cornersHome, away: cornersAway },
-        fouls: result.fouls || { home: 0, away: 0 },
-        cards: result.cards || { home: { yellow: 0, red: 0 }, away: { yellow: 0, red: 0 } }
-    };
-
-    // Calculate new fans
-    const baseFans = resultType === 'win' ? 10 : resultType === 'draw' ? 3 : -2;
-    const offensiveMultipliers = { zeer_verdedigend: 0.5, verdedigend: 0.7, gebalanceerd: 1.0, offensief: 1.5, leeroy: 2.0 };
-    const offensiveMultiplier = offensiveMultipliers[gameState.tactics.offensief] || 1.0;
-    const homeMultiplier = isHome ? 1.2 : 1.0;
-    const goalBonus = playerScore * 2;
-    const newFans = Math.round(baseFans * offensiveMultiplier * homeMultiplier) + goalBonus;
-    gameState.club.fans = Math.max(0, (gameState.club.fans || 50) + newFans);
-    gameState.lastMatch.newFans = newFans;
-
-    // Increase formation drive for the formation used this match (+15-20%)
-    if (!gameState.formationDrives) gameState.formationDrives = {};
-    let driveGain = 15 + Math.random() * 5;
-    // Tactische bespreking bonus: +10% extra bedrevenheid
-    if (gameState.training?.teamTraining?.bonus?.type === 'tactics') {
-        driveGain += 10;
-    }
-    gameState.formationDrives[gameState.formation] = Math.min(100, (gameState.formationDrives[gameState.formation] || 0) + driveGain);
-
-    // Push to match history
-    if (!gameState.matchHistory) gameState.matchHistory = [];
-    gameState.matchHistory.push({
-        week: gameState.week,
-        season: gameState.season,
-        opponent: opponent.name,
-        isHome,
-        playerScore,
-        opponentScore,
-        resultType,
-        events: storedEvents,
-        possession: result.possession,
-        shots: result.shots,
-        shotsOnTarget: result.shotsOnTarget,
-        xG: result.xG || { home: 0, away: 0 },
-        corners: { home: cornersHome, away: cornersAway },
-        fouls: result.fouls || { home: 0, away: 0 },
-        cards: result.cards || { home: { yellow: 0, red: 0 }, away: { yellow: 0, red: 0 } },
-        manOfTheMatch: result.manOfTheMatch,
-        playerRatings: compactRatings,
-        improvements,
-        chairmanComments
-    });
-
-    // Advance week
-    gameState.week++;
-
-    // Remove suspended/injured players from lineup for next match
-    gameState.lineup = gameState.lineup.map(player => {
-        if (!player) return null;
-        if (player.suspendedUntil && player.suspendedUntil > gameState.week) return null;
-        if (player.injuredUntil && player.injuredUntil > gameState.week) return null;
-        return player;
-    });
-
-    // Apply weekly finances (income - expenses + optional win bonus)
-    const didWin = playerScore > opponentScore;
-    applyWeeklyFinances(didWin);
-
-    // Tick sponsor contracts (decrease weeks remaining)
-    tickSponsorContracts();
-
-    // Refresh sponsor market for new week
-    generateSponsorMarket();
-
-    // Check if season is complete
-    if (isSeasonComplete(gameState.standings)) {
-        const seasonResult = handleEndOfSeason();
-        showSeasonEndModal(seasonResult);
-    } else {
-        // Set next match
-        setNextMatch();
-    }
-
-    // Reset wedstrijdvoorbereiding for next match
-    if (gameState.training && gameState.training.teamTraining) {
-        gameState.training.teamTraining.selected = null;
-        gameState.training.teamTraining.bonus = null;
-    }
-
-    // Re-render UI
-    renderStandings();
-    renderTopScorers();
-    renderPlayerCards();
-    updateBudgetDisplays();
-    renderDashboardExtras();
-
-    // Save game
-    saveGame(gameState);
-
-    // Show live match simulation, then navigate to Resultaat tab
-    showLiveMatch(result, isHome, opponent.name, () => {
-        navigateToPage('wedstrijden');
-        setTimeout(() => activateTabOnPage('wedstrijden', 'verslag'), 50);
-
-        // Show pending XP popups sequentially after navigating
-        setTimeout(() => showPendingXPModals(), 500);
-
-        // Show suspension/injury notifications
-        if (matchNotifications.length > 0) {
-            setTimeout(() => {
-                matchNotifications.forEach(msg => showNotification(msg, 'warning'));
-            }, 1000);
-        }
-        if (redCardEvents.length > 0) {
-            setTimeout(() => {
-                showNotification(`Rode kaart boete: ${formatCurrency(redCardEvents.length * 100)}`, 'warning');
-            }, 1500);
-        }
-
-        // Check achievements
-        const newAchievements = checkAchievements(gameState);
-        if (newAchievements.length > 0) {
-            setTimeout(() => queueAchievements(newAchievements), 3000);
-        }
-    });
+    playMultiplayerMatch();
 }
 
 /**
@@ -11284,16 +10418,83 @@ async function _playMultiplayerMatchInner() {
                     gameState.stats.promotions = (gameState.stats.promotions || 0) + 1;
                     gameState.stats.consecutivePromotions = (gameState.stats.consecutivePromotions || 0) + 1;
                     awardXP(gameState, 'promotion');
+                    showManagerXPPopup([{ reason: 'Promotie!', amount: 500 }]);
+
+                    // Promotie bonus: +0.5 ster voor spelers die minstens helft seizoen speelden
+                    const promoMatches = (gameState.matchHistory || []).filter(m => m.season === season);
+                    const totalPromoMatches = promoMatches.length;
+                    const halfPromoMatches = Math.ceil(totalPromoMatches / 2);
+                    const matchCounts = {};
+                    promoMatches.forEach(m => {
+                        (m.playerRatings || []).forEach(r => {
+                            const pid = String(r.id);
+                            matchCounts[pid] = (matchCounts[pid] || 0) + 1;
+                        });
+                    });
+                    gameState.players.forEach(p => {
+                        const played = matchCounts[String(p.id)] || 0;
+                        if (played >= halfPromoMatches) {
+                            p.stars = Math.min(5, (p.stars || 0) + 0.5);
+                        }
+                    });
                 } else {
                     gameState.stats.consecutivePromotions = 0;
                 }
                 if (calcResult.isChampion) {
                     awardXP(gameState, 'title');
+                    showManagerXPPopup([{ reason: 'Kampioen!', amount: 1000 }]);
                     gameState.stats.champion = (gameState.stats.champion || 0) + 1;
                 }
                 if (calcResult.position === 6) {
                     gameState.stats.relegationEscapes = (gameState.stats.relegationEscapes || 0) + 1;
                 }
+
+                // Track season-end stats
+                if (calcResult.position !== undefined) {
+                    const totalTeams = gameState.standings?.length || 8;
+                    if (calcResult.position <= Math.floor(totalTeams / 2)) {
+                        gameState.stats.topHalfFinish = (gameState.stats.topHalfFinish || 0) + 1;
+                    }
+                    if (calcResult.position === 2) {
+                        gameState.stats.runnerUp = (gameState.stats.runnerUp || 0) + 1;
+                    }
+                    if (calcResult.position === totalTeams) {
+                        gameState.stats.lastPlace = true;
+                    }
+                }
+
+                // Track perfect season
+                const seasonMatchesForStats = (gameState.matchHistory || []).filter(m => m.season === season);
+                if (seasonMatchesForStats.length >= 14) {
+                    if (seasonMatchesForStats.every(m => m.resultType === 'win')) {
+                        gameState.stats.perfectSeason = true;
+                    }
+                }
+
+                // Track budget positive at season end
+                if (gameState.club.budget > 0) {
+                    gameState.stats.budgetPositive = true;
+                }
+
+                // Track yoyo club
+                const sh = gameState.seasonHistory || [];
+                if (sh.length >= 2) {
+                    const prev = sh[sh.length - 1];
+                    if ((prev.result === 'promoted' || prev.result === 'champion') && calcResult.relegated) {
+                        gameState.stats.yoyoClub = true;
+                    }
+                }
+
+                // Track comeback promotion
+                if (calcResult.promoted && sh.length >= 1) {
+                    const lastResult = sh[sh.length - 1]?.result;
+                    if (lastResult === 'relegated') {
+                        gameState.stats.comebackPromotion = true;
+                    }
+                }
+
+                // Reset season spending
+                gameState.stats.seasonSpending = 0;
             }
 
             // Archive season
@@ -11431,136 +10632,24 @@ async function syncStandingsFromSupabase() {
 }
 
 function setNextMatch() {
-    if (isMultiplayer() && gameState.multiplayer?.clubId) {
-        // Multiplayer: fetch opponent from Supabase schedule
-        gameState.nextMatch = {
-            opponent: 'Laden...',
-            time: Date.now() - 1000
-        };
-        getScheduledOpponent(
-            gameState.multiplayer.leagueId,
-            gameState.season || 1,
-            gameState.week || 1,
-            gameState.multiplayer.clubId
-        ).then(opp => {
-            if (opp) {
-                gameState.nextMatch.opponent = opp.name;
-                gameState.nextMatch.isHome = opp.isHome;
-                const awayTeamName = document.getElementById('away-team-name');
-                if (awayTeamName) awayTeamName.textContent = opp.name;
-            }
-        }).catch(() => {});
-        return;
-    }
-
-    const nextOpponent = getNextOpponent(gameState.standings, gameState.week);
-    if (nextOpponent) {
-        gameState.nextMatch = {
-            opponent: nextOpponent.name,
-            time: getNextMidnight(),
-            isHome: nextOpponent.isHome,
-            opponentPosition: nextOpponent.position
-        };
-    } else {
-        // Default
-        gameState.nextMatch = {
-            opponent: 'Onbekende Tegenstander',
-            time: getNextMidnight()
-        };
-    }
-}
-
-function handleEndOfSeason() {
-    const result = calculateSeasonResults(gameState.standings, gameState.club.division);
-
-    // Track promotions/relegation escapes
-    if (result.promoted) {
-        gameState.stats.promotions++;
-        gameState.stats.consecutivePromotions = (gameState.stats.consecutivePromotions || 0) + 1;
-        awardXP(gameState, 'promotion');
-        showManagerXPPopup([{ reason: 'Promotie!', amount: 500 }]);
-
-        // Promotie bonus: +0.5 ster potentie voor spelers die minstens helft gespeeld hebben
-        const seasonMatches = (gameState.matchHistory || []).filter(m => m.season === gameState.season);
-        const totalMatches = seasonMatches.length;
-        const halfMatches = Math.ceil(totalMatches / 2);
-        const matchCounts = {};
-        seasonMatches.forEach(m => {
-            (m.playerRatings || []).forEach(r => {
-                const pid = String(r.id);
-                matchCounts[pid] = (matchCounts[pid] || 0) + 1;
-            });
-        });
-        gameState.players.forEach(p => {
-            const played = matchCounts[String(p.id)] || 0;
-            if (played >= halfMatches) {
-                p.stars = Math.min(5, (p.stars || 0) + 0.5);
-            }
-        });
-    } else {
-        gameState.stats.consecutivePromotions = 0;
-    }
-    if (result.position === 6) {
-        gameState.stats.relegationEscapes++;
-    }
-    if (result.isChampion) {
-        awardXP(gameState, 'title');
-        showManagerXPPopup([{ reason: 'Kampioen!', amount: 1000 }]);
-        gameState.stats.champion = (gameState.stats.champion || 0) + 1;
-    }
-
-    // Track season-end stats
-    if (result.position !== undefined) {
-        const totalTeams = gameState.standings?.length || 8;
-        if (result.position <= Math.floor(totalTeams / 2)) {
-            gameState.stats.topHalfFinish = (gameState.stats.topHalfFinish || 0) + 1;
+    gameState.nextMatch = {
+        opponent: 'Laden...',
+        time: Date.now() - 1000
+    };
+    if (!gameState.multiplayer?.clubId) return;
+    getScheduledOpponent(
+        gameState.multiplayer.leagueId,
+        gameState.season || 1,
+        gameState.week || 1,
+        gameState.multiplayer.clubId
+    ).then(opp => {
+        if (opp) {
+            gameState.nextMatch.opponent = opp.name;
+            gameState.nextMatch.isHome = opp.isHome;
+            const awayTeamName = document.getElementById('away-team-name');
+            if (awayTeamName) awayTeamName.textContent = opp.name;
         }
-        if (result.position === 2) {
-            gameState.stats.runnerUp = (gameState.stats.runnerUp || 0) + 1;
-        }
-        if (result.position === totalTeams) {
-            gameState.stats.lastPlace = true;
-        }
-    }
-
-    // Track perfect season / no-loss season
-    const seasonMatches2 = (gameState.matchHistory || []).filter(m => m.season === gameState.season);
-    if (seasonMatches2.length >= 14) {
-        if (seasonMatches2.every(m => m.resultType === 'win')) {
-            gameState.stats.perfectSeason = true;
-        }
-    }
-
-    // Track budget positive at season end
-    if (gameState.club.budget > 0) {
-        gameState.stats.budgetPositive = true;
-    }
-
-    // Track yoyo club (promoted last season, relegated this season or vice versa)
-    const sh = gameState.seasonHistory || [];
-    if (sh.length >= 2) {
-        const prev = sh[sh.length - 1];
-        const curr = result;
-        if ((prev.result === 'promoted' || prev.result === 'champion') && curr.relegated) {
-            gameState.stats.yoyoClub = true;
-        }
-    }
-
-    // Track comeback promotion (promoted after previous relegation)
-    if (result.promoted && sh.length >= 1) {
-        const lastResult = sh[sh.length - 1]?.result;
-        if (lastResult === 'relegated') {
-            gameState.stats.comebackPromotion = true;
-        }
-    }
-
-    // Reset season spending
-    gameState.stats.seasonSpending = 0;
-
-    // Start new season
-    startNewSeason(gameState);
-
-    return result;
+    }).catch(() => {});
 }
 
 // ================================================
@@ -13827,11 +12916,6 @@ function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
-}
-
-// Keep the old generateStandings for backward compatibility
-function generateStandings() {
-    return generateNewStandings(gameState.club.name, gameState.club.division);
 }
 
 // ================================================
@@ -17321,17 +16405,6 @@ async function initMultiplayerGame(detail) {
     }
 }
 
-/**
- * Callback for mode selection — starts the game
- */
-function onStartGame(mode) {
-    if (mode === 'local') {
-        setStorageMode('local');
-        initGame('local');
-    }
-    // multiplayer mode is handled by the 'multiplayer-start' event
-}
-
 // Listen for multiplayer game start
 window.addEventListener('multiplayer-start', (e) => {
     initMultiplayerGame(e.detail).catch(err => {
@@ -17341,14 +16414,12 @@ window.addEventListener('multiplayer-start', (e) => {
 
 // Start when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize multiplayer UI listeners
-    initMultiplayerUI(onStartGame);
+    initMultiplayerUI();
 
     if (isSupabaseAvailable()) {
-        // Supabase is configured: show auth/mode screen
-        checkAuthAndRoute(onStartGame);
+        checkAuthAndRoute();
     } else {
-        // No Supabase: go straight to singleplayer
-        initGame('local');
+        console.error('Supabase niet bereikbaar — multiplayer vereist.');
+        showNotification('Kan geen verbinding maken met de server. Probeer later opnieuw.', 'error');
     }
 });

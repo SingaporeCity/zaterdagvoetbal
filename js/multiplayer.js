@@ -19,7 +19,7 @@ const AI_TEAM_NAMES = [
 /**
  * Initialize multiplayer UI event listeners
  */
-export function initMultiplayerUI(onStartGame) {
+export function initMultiplayerUI() {
     // Auth form toggles
     document.getElementById('show-signup')?.addEventListener('click', (e) => {
         e.preventDefault();
@@ -79,22 +79,6 @@ export function initMultiplayerUI(onStartGame) {
         }
     });
 
-    // Mode selection
-    document.getElementById('mode-singleplayer')?.addEventListener('click', () => {
-        hideAllOverlays();
-        setStorageMode('local');
-        onStartGame('local');
-    });
-
-    document.getElementById('mode-multiplayer')?.addEventListener('click', () => {
-        showLobbyScreen();
-    });
-
-    document.getElementById('mode-logout')?.addEventListener('click', async () => {
-        await signOut();
-        showAuthScreen();
-    });
-
     // Lobby logout
     document.getElementById('lobby-back')?.addEventListener('click', async () => {
         await signOut();
@@ -148,7 +132,7 @@ export function initMultiplayerUI(onStartGame) {
         btn.disabled = true;
         btn.textContent = 'Starten...';
         try {
-            await startLeague(onStartGame);
+            await startLeague();
         } finally {
             btn.disabled = false;
             btn.textContent = 'Start competitie';
@@ -179,7 +163,6 @@ export function initMultiplayerUI(onStartGame) {
 
 function hideAllOverlays() {
     document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('mode-screen').style.display = 'none';
     document.getElementById('lobby-screen').style.display = 'none';
     document.getElementById('waiting-screen').style.display = 'none';
 }
@@ -657,7 +640,6 @@ async function enterLeague(leagueId, clubId) {
         setStorageMode('multiplayer', leagueId, clubId);
         hideAllOverlays();
 
-        // The onStartGame callback in app.js will handle loading
         gameState.multiplayer.enabled = true;
         gameState.multiplayer.leagueId = leagueId;
         gameState.multiplayer.clubId = clubId;
@@ -796,7 +778,7 @@ function subscribeToLobby(leagueId, userId) {
  * Start the league (host only)
  * Generates AI teams, players, schedule, standings
  */
-async function startLeague(onStartGame) {
+async function startLeague() {
     const user = await getUser();
     if (!user) return;
 
@@ -1179,13 +1161,7 @@ export async function generateSchedule(leagueId, season, clubIds, humanClubIds =
 /**
  * Check if user is logged in and return to appropriate screen
  */
-export async function checkAuthAndRoute(onStartGame) {
-    if (!isSupabaseAvailable()) {
-        // No Supabase configured, go straight to singleplayer
-        onStartGame('local');
-        return;
-    }
-
+export async function checkAuthAndRoute() {
     try {
         const session = await getSession();
         if (session) {
@@ -1195,7 +1171,6 @@ export async function checkAuthAndRoute(onStartGame) {
         }
     } catch (err) {
         console.error('Auth check failed:', err);
-        // Network error or expired token — show login screen
         showAuthScreen();
     }
 }

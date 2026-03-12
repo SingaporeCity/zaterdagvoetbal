@@ -523,24 +523,10 @@ export async function loadGame() {
 }
 
 /**
- * Synchronous load for singleplayer (backwards compatible)
- */
-export function loadGameSync() {
-    return loadLocal();
-}
-
-/**
  * Check if a save file exists
  */
 export function hasSaveFile() {
     return localStorage.getItem(SAVE_KEY) !== null;
-}
-
-/**
- * Delete the save file
- */
-export function deleteSave() {
-    localStorage.removeItem(SAVE_KEY);
 }
 
 /**
