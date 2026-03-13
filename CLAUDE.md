@@ -94,6 +94,9 @@ cd /Users/patrickjeeninga/Coding/zaterdagvoetbal && git add <files> && git commi
 - `schedule` tabel: alle wedstrijden
 - `match_results` tabel: gesimuleerde resultaten met match_data JSONB
 
+## UI/UX workflow
+Gebruik ALTIJD de `/frontend-design` skill bij het ontwerpen of aanpassen van pagina's, componenten of UI-elementen. Dit geldt voor nieuwe pagina's, redesigns, en significante visuele wijzigingen.
+
 ## Belangrijke patronen
 
 ### Achievement toevoegen
