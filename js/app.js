@@ -2464,6 +2464,33 @@ function renderAvailablePlayers() {
         el.addEventListener('dragend', () => {
             el.classList.remove('dragging');
         });
+        // Tap-to-select for mobile
+        el.addEventListener('click', () => {
+            if (el.classList.contains('in-lineup') || el.classList.contains('unavailable')) return;
+            const playerId = parsePlayerId(el.dataset.playerId);
+            let player = gameState.players.find(p => p.id === playerId);
+            if (!player && playerId === 'myplayer') {
+                const mp = initMyPlayer();
+                const mpOverall = Math.round((mp.attributes.SNE + mp.attributes.TEC + mp.attributes.PAS + mp.attributes.SCH + mp.attributes.VER + mp.attributes.FYS) / 6);
+                player = {
+                    id: 'myplayer', name: mp.name, age: mp.age, position: mp.position,
+                    overall: mpOverall, stars: mp.stars || 1, isMyPlayer: true,
+                    energy: mp.energy || 100,
+                    nationality: { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
+                    attributes: { AAN: mp.attributes.SCH, VER: mp.attributes.VER, SNE: mp.attributes.SNE, FYS: mp.attributes.FYS }
+                };
+            }
+            if (!player) return;
+            // Toggle selection
+            const wasSelected = el.classList.contains('tap-selected');
+            document.querySelectorAll('.available-player.tap-selected').forEach(s => s.classList.remove('tap-selected'));
+            if (!wasSelected) {
+                el.classList.add('tap-selected');
+                lineupTapSelected = player;
+            } else {
+                lineupTapSelected = null;
+            }
+        });
     });
 }
 
@@ -2471,11 +2498,12 @@ function updateLineupFit() {
     renderDashboardChecklist();
 }
 
-// Drag & Drop for lineup
+// Drag & Drop + tap-to-select for lineup
 let lineupDragData = { player: null, fromSlot: null };
+let lineupTapSelected = null;
 
 function initLineupDragDrop() {
-    // Slots can receive drops
+    // Slots can receive drops AND taps
     document.querySelectorAll('.lineup-slot').forEach(slot => {
         slot.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -2491,6 +2519,27 @@ function initLineupDragDrop() {
             slot.classList.remove('drag-over');
             const slotIndex = parseInt(slot.dataset.slotIndex);
             handleLineupDrop(slotIndex);
+        });
+
+        // Tap-to-place: click on slot to place selected player or remove existing
+        slot.addEventListener('click', () => {
+            const slotIndex = parseInt(slot.dataset.slotIndex);
+            const existing = gameState.lineup[slotIndex];
+
+            if (lineupTapSelected) {
+                // Place selected player in this slot
+                lineupDragData = { player: lineupTapSelected, fromSlot: null };
+                handleLineupDrop(slotIndex);
+                lineupTapSelected = null;
+                document.querySelectorAll('.available-player.tap-selected').forEach(s => s.classList.remove('tap-selected'));
+            } else if (existing) {
+                // Tapped an occupied slot — remove player
+                gameState.lineup[slotIndex] = null;
+                renderLineupPitch();
+                renderAvailablePlayers();
+                updateLineupFit();
+                saveGame(gameState);
+            }
         });
     });
 

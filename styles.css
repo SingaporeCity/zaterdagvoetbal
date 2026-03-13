@@ -12426,6 +12426,12 @@ body {
     opacity: 0.35;
 }
 
+.available-player.tap-selected {
+    background: rgba(46, 125, 50, 0.25) !important;
+    border-color: var(--accent-green) !important;
+    box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.3);
+}
+
 .available-player .ap-pos {
     font-size: 0.6rem;
     padding: 2px 4px;
@@ -27858,11 +27864,78 @@ body {
     .jeugdteam-layout {
         max-height: none !important;
     }
-    /* Lineup/tactics containers: allow scroll */
-    .lineup-players-panel,
+    /* Lineup/tactics: vertical stack on mobile */
+    .lineup-container {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        overflow: visible !important;
+    }
     .lineup-pitch-panel {
+        order: -1;
+        overflow: visible !important;
+        max-height: none !important;
+    }
+    .lineup-players-panel {
         max-height: none !important;
         overflow: visible !important;
+    }
+    .lineup-player-groups {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    /* Available player list: compact for mobile */
+    .available-player {
+        grid-template-columns: 26px 20px 1fr auto 24px !important;
+        gap: 4px !important;
+        padding: 5px 6px !important;
+        font-size: 0.8rem !important;
+    }
+    .available-player .ap-energy {
+        display: none !important;
+    }
+    .available-player .ap-stars-compact {
+        display: none !important;
+    }
+    .available-player .ap-overall {
+        font-size: 0.7rem !important;
+        padding: 2px 4px !important;
+        min-width: 22px !important;
+    }
+    /* Pitch needs explicit height in column layout (flex:1 = 0px without it) */
+    #lineup-pitch,
+    .lineup-pitch {
+        flex: none !important;
+        aspect-ratio: 5 / 3 !important;
+        width: 100% !important;
+        min-height: unset !important;
+    }
+    /* Smaller player circles on mobile pitch */
+    .lineup-slot {
+        width: 54px !important;
+        height: 54px !important;
+    }
+    .lineup-player {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    .lineup-player .lp-overall {
+        font-size: 0.8rem !important;
+    }
+    .lineup-player .lp-name {
+        font-size: 0.4rem !important;
+    }
+    .lineup-player .lp-flag {
+        width: 13px !important;
+        height: 13px !important;
+        font-size: 0.55rem !important;
+        top: -3px !important;
+        right: -3px !important;
+    }
+    .lineup-player .lp-position {
+        font-size: 0.45rem !important;
+        padding: 1px 4px !important;
+        bottom: -4px !important;
     }
 
     /* --- GLOBAL --- */
@@ -28011,23 +28084,29 @@ body {
     .tactics-bottom {
         grid-template-columns: 1fr;
     }
-    .lineup-container {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 12px !important;
-        overflow: visible !important;
+    /* Pitch even smaller on tiny screens */
+    .lineup-slot {
+        width: 46px !important;
+        height: 46px !important;
     }
-    .lineup-pitch-panel {
-        order: -1;
-        overflow: visible !important;
+    .lineup-player {
+        width: 34px !important;
+        height: 34px !important;
     }
-    .lineup-players-panel {
-        max-height: none !important;
-        overflow: visible !important;
+    .lineup-player .lp-overall {
+        font-size: 0.7rem !important;
     }
-    .lineup-player-groups {
-        max-height: none !important;
-        overflow: visible !important;
+    .lineup-player .lp-name {
+        display: none !important;
+    }
+    .lineup-player .lp-flag {
+        width: 11px !important;
+        height: 11px !important;
+        font-size: 0.45rem !important;
+    }
+    .lineup-player .lp-position {
+        font-size: 0.4rem !important;
+        padding: 0px 3px !important;
     }
     .team-training-options {
         flex-wrap: wrap;
