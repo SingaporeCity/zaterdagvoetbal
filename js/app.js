@@ -8574,7 +8574,56 @@ function checkBankruptcy() {
 function renderDailyFinances() {
     const fin = calculateWeeklyFinances();
 
-    // Header balance
+    // Icon maps
+    const incomeIcons = {
+        'Kaartverkoop': '🎟️',
+        'Shirtsponsor': '👕',
+        'Bordsponsor': '📋',
+        'Horeca': '🍺'
+    };
+    const expenseIcons = {
+        'Spelerssalarissen': '👥',
+        'Stafsalarissen': '🧑‍💼',
+        'Stadiononderhoud': '🏟️',
+        'Jeugdscouting': '🔍',
+        'Jeugdopleiding': '⚽'
+    };
+
+    // Budget card — current budget
+    const budgetEl = document.getElementById('fin-budget-value');
+    if (budgetEl) budgetEl.textContent = formatCurrency(gameState.club.budget);
+
+    // Budget card — weekly trend
+    const trendEl = document.getElementById('fin-budget-trend');
+    if (trendEl) {
+        const sign = fin.weeklyResult >= 0 ? '+' : '';
+        const arrow = fin.weeklyResult >= 0 ? '↑' : '↓';
+        trendEl.textContent = `${arrow} ${sign}${formatCurrency(fin.weeklyResult)} / week`;
+        trendEl.className = `fin-budget-trend ${fin.weeklyResult >= 0 ? 'positive' : 'negative'}`;
+    }
+
+    // Budget card — balance bar
+    const total = fin.totalIncome + fin.totalExpense;
+    const incPct = total > 0 ? (fin.totalIncome / total * 100) : 50;
+    const barInc = document.getElementById('fin-bar-income');
+    const barExp = document.getElementById('fin-bar-expense');
+    if (barInc) barInc.style.width = `${incPct}%`;
+    if (barExp) barExp.style.width = `${100 - incPct}%`;
+
+    // Balance bar labels
+    const barIncLabel = document.getElementById('fin-bar-income-label');
+    const barExpLabel = document.getElementById('fin-bar-expense-label');
+    if (barIncLabel) barIncLabel.textContent = `+${formatCurrency(fin.totalIncome)}`;
+    if (barExpLabel) barExpLabel.textContent = `-${formatCurrency(fin.totalExpense)}`;
+
+    // Season spending
+    const seasonEl = document.getElementById('fin-season-spending');
+    if (seasonEl) {
+        const spending = gameState.stats?.seasonSpending || 0;
+        seasonEl.textContent = spending > 0 ? `Seizoensuitgaven: ${formatCurrency(spending)}` : '';
+    }
+
+    // Header balance (legacy)
     const balEl = document.getElementById('fin-balance');
     if (balEl) balEl.textContent = formatCurrency(gameState.club.budget);
 
@@ -8584,11 +8633,12 @@ function renderDailyFinances() {
         let html = fin.income
             .filter(i => i.value > 0)
             .map(i => {
-                return `<li><span class="fin-item-label">${i.label}${i.detail ? ` <small>(${i.detail})</small>` : ''}</span><span class="fin-item-val income">+${formatCurrency(i.value)}</span></li>`;
+                const icon = incomeIcons[i.label] || '';
+                return `<li><span class="fin-item-label"><span class="fin-item-icon">${icon}</span>${i.label}${i.detail ? ` <small>(${i.detail})</small>` : ''}</span><span class="fin-item-val income">+${formatCurrency(i.value)}</span></li>`;
             })
             .join('');
         if (fin.winBonus > 0) {
-            html += `<li class="fin-item-bonus"><span class="fin-item-label">Winbonus <small>(bij winst)</small></span><span class="fin-item-val bonus">+${formatCurrency(fin.winBonus)}</span></li>`;
+            html += `<li class="fin-item-bonus"><span class="fin-item-label"><span class="fin-item-icon">🏆</span>Winbonus <small>(bij winst)</small></span><span class="fin-item-val bonus">+${formatCurrency(fin.winBonus)}</span></li>`;
         }
         incList.innerHTML = html || '<li class="fin-empty">Geen inkomsten</li>';
     }
@@ -8602,7 +8652,10 @@ function renderDailyFinances() {
     if (expList) {
         expList.innerHTML = fin.expense
             .filter(e => e.value > 0)
-            .map(e => `<li><span class="fin-item-label">${e.label}</span><span class="fin-item-val expense">-${formatCurrency(e.value)}</span></li>`)
+            .map(e => {
+                const icon = expenseIcons[e.label] || '';
+                return `<li><span class="fin-item-label"><span class="fin-item-icon">${icon}</span>${e.label}</span><span class="fin-item-val expense">-${formatCurrency(e.value)}</span></li>`;
+            })
             .join('') || '<li class="fin-empty">Geen uitgaven</li>';
     }
 
