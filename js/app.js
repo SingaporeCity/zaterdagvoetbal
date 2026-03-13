@@ -6035,6 +6035,11 @@ function initNavigation() {
             // Navigate to page first
             navigateToPage(page);
 
+            // Close mobile sidebar after navigation
+            document.querySelector('.sidebar')?.classList.remove('sidebar-open');
+            document.getElementById('sidebar-overlay')?.classList.remove('active');
+            document.getElementById('hamburger-btn')?.classList.remove('active');
+
             // Then activate the specific tab
             setTimeout(() => {
                 activateTabOnPage(page, tab);

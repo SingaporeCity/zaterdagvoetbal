@@ -27804,30 +27804,58 @@ body {
         padding: 6px 4px;
     }
 
-    /* --- TACTIEK --- */
+    /* --- TACTIEK / OPSTELLING --- */
+    #tactics.page.active {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: auto !important;
+    }
     .tactics-grid,
     .tactics-col {
         grid-template-columns: 1fr;
     }
     .tactics-bottom {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
     }
     .lineup-container {
-        grid-template-columns: 1fr !important;
-        overflow-x: visible;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        overflow: visible !important;
+    }
+    .lineup-pitch-panel {
+        order: -1;
+        overflow: visible !important;
     }
     .lineup-players-panel {
-        max-height: 300px;
-        overflow-y: auto;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .lineup-player-groups {
+        max-height: none !important;
+        overflow: visible !important;
     }
     .team-training-options {
         flex-wrap: wrap;
     }
     .team-training-option {
-        flex: 1 1 45%;
+        flex: 1 1 100%;
+    }
+    .tactics-options-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .spec-list {
+        grid-template-columns: 1fr !important;
     }
 
     /* --- SELECTIE / SQUAD --- */
+    #squad.page.active {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+    .squad-container {
+        overflow: visible !important;
+    }
     .player-attributes {
         grid-template-columns: repeat(3, 1fr);
         gap: 6px;
@@ -27842,7 +27870,7 @@ body {
         gap: 8px;
     }
     .bench-position-groups {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
         gap: 10px;
     }
 
@@ -27874,28 +27902,58 @@ body {
     }
 
     /* --- SCOUTING --- */
+    #scout.page.active {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
     .scout-grid {
         grid-template-columns: 1fr;
+        max-height: none !important;
+        overflow: visible !important;
     }
     .scouting-layout {
         grid-template-columns: 1fr;
+        overflow: visible !important;
+        max-height: none !important;
     }
     .scouting-sidebar {
-        flex-direction: row;
-        gap: 12px;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .scouting-main {
+        overflow: visible !important;
     }
     .scout-results-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-columns: 1fr !important;
         gap: 10px;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .scout-tip-section {
+        overflow: visible !important;
     }
 
     /* --- JEUGD --- */
+    #jeugdteam.page.active {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: auto !important;
+    }
     .jeugdteam-layout {
         grid-template-columns: 1fr;
+        overflow: visible !important;
+        max-height: none !important;
     }
     .youth-sidebar {
-        flex-direction: row;
-        gap: 12px;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .youth-main {
+        overflow: visible !important;
+    }
+    .youth-players-grid {
+        grid-template-columns: 1fr !important;
+        overflow: visible !important;
     }
     .youth-stats {
         grid-template-columns: repeat(2, 1fr);
@@ -27942,16 +28000,24 @@ body {
     }
 
     /* --- STAF --- */
+    #staff.page.active {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
     .staff-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-columns: 1fr !important;
         gap: 10px;
     }
     .assistant-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
         gap: 8px;
     }
 
     /* --- FINANCIEN --- */
+    #finances.page.active {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
     .fin-week-view {
         grid-template-columns: 1fr;
         gap: 12px;
@@ -27963,7 +28029,17 @@ body {
         grid-template-columns: 1fr;
     }
 
+    /* --- SPONSORS --- */
+    #sponsors.page.active {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
     /* --- WEDSTRIJDEN --- */
+    #matches.page.active {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
     .programma-layout {
         grid-template-columns: 1fr;
         gap: 12px;
@@ -27984,6 +28060,10 @@ body {
     }
 
     /* --- MIJN TEAM --- */
+    #mijnteam.page.active {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
     .mijnteam-container {
         grid-template-columns: 1fr;
     }
