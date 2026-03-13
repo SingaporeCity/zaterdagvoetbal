@@ -10037,7 +10037,7 @@ async function _playMultiplayerMatchInner() {
         const lastDate = new Date(gameState.lastMatchPlayedAt);
         const now = new Date();
         if (lastDate.toDateString() === now.toDateString()) {
-            showNotification('Je hebt vandaag al gespeeld! Morgen kun je weer.', 'info');
+            showNotification('🏟️ Voorzitter: "Je bent wat te vroeg aanwezig, de tegenstander staat nog niet op het veld."', 'info');
             return;
         }
     }
@@ -10048,7 +10048,7 @@ async function _playMultiplayerMatchInner() {
         const [mh, mm] = matchTimeStr.split(':').map(Number);
         const now = new Date();
         if (now.getHours() < mh || (now.getHours() === mh && now.getMinutes() < mm)) {
-            showNotification(`Je kunt pas na ${matchTimeStr} spelen!`, 'info');
+            showNotification('🏟️ Voorzitter: "Je bent wat te vroeg aanwezig, de tegenstander staat nog niet op het veld."', 'info');
             return;
         }
     }
