@@ -57,7 +57,7 @@ import {
 
 // Import multiplayer systems
 import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent, getClubPlayers, insertPlayerToSupabase, getFullSchedule, generateSchedule } from './multiplayer.js';
-import { subscribeToLeague, unsubscribeAll, fetchStandings, startCountdown, stopCountdown } from './realtime.js';
+import { subscribeToLeague, unsubscribeAll, fetchStandings } from './realtime.js';
 import { supabase, isSupabaseAvailable } from './supabase.js';
 
 import {
@@ -5531,10 +5531,23 @@ function updateConstructionTimer() {
 function updateMatchTimer() {
     checkConstruction();
     updateConstructionTimer();
-    const remaining = gameState.nextMatch.time - Date.now();
+
+    // Recalculate next match time dynamically (handles midnight rollover)
+    if (gameState.nextMatch) {
+        gameState.nextMatch.time = getNextMatchTime();
+    }
+    const remaining = (gameState.nextMatch?.time || 0) - Date.now();
 
     // In multiplayer, check if current week is already played
     const mpWeekPlayed = isMultiplayer() && gameState._weekPlayed;
+
+    // Check if already played today (daily limit)
+    const playedToday = (() => {
+        if (!gameState.lastMatchPlayedAt) return false;
+        const last = new Date(gameState.lastMatchPlayedAt);
+        const now = new Date();
+        return last.toDateString() === now.toDateString();
+    })();
 
     // Update new kantine board timer segments
     const hoursEl = document.getElementById('timer-hours');
@@ -5543,11 +5556,7 @@ function updateMatchTimer() {
 
     const playBtn = document.getElementById('play-match-btn');
     if (hoursEl && minutesEl && secondsEl) {
-        if (mpWeekPlayed) {
-            // Multiplayer: already played this week — show waiting state
-            hoursEl.textContent = '--';
-            minutesEl.textContent = '--';
-            secondsEl.textContent = '--';
+        const showWaitState = (message) => {
             if (playBtn) {
                 playBtn.classList.remove('match-ready');
                 if (gameState.matchHistory && gameState.matchHistory.length > 0) {
@@ -5557,45 +5566,39 @@ function updateMatchTimer() {
                         setTimeout(() => activateTabOnPage('wedstrijden', 'verslag'), 50);
                     };
                 } else {
-                    playBtn.innerHTML = 'WACHTEN OP VOLGENDE RONDE';
+                    playBtn.innerHTML = message;
                     playBtn.onclick = null;
                 }
             }
-        } else if (remaining <= 0) {
+        };
+
+        if (mpWeekPlayed || playedToday || remaining > 0) {
+            // Show countdown timer
+            if (remaining > 0) {
+                const hours = Math.floor(remaining / (1000 * 60 * 60));
+                const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+                hoursEl.textContent = String(hours).padStart(2, '0');
+                minutesEl.textContent = String(minutes).padStart(2, '0');
+                secondsEl.textContent = String(seconds).padStart(2, '0');
+            } else {
+                // Time is up but week already played — show dashes
+                hoursEl.textContent = '--';
+                minutesEl.textContent = '--';
+                secondsEl.textContent = '--';
+            }
+            showWaitState('WACHTEN OP VOLGENDE RONDE');
+        } else {
+            // Match ready — timer at 00:00:00, show play button
             hoursEl.textContent = '00';
             minutesEl.textContent = '00';
             secondsEl.textContent = '00';
-            // Match ready — show play button
             if (playBtn) {
                 playBtn.classList.add('match-ready');
                 playBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg> SPEEL WEDSTRIJD';
                 playBtn.onclick = playMatch;
             }
-        } else {
-            const hours = Math.floor(remaining / (1000 * 60 * 60));
-            const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
-
-            hoursEl.textContent = String(hours).padStart(2, '0');
-            minutesEl.textContent = String(minutes).padStart(2, '0');
-            secondsEl.textContent = String(seconds).padStart(2, '0');
-
-            // Match not ready — show "Bekijk vorige wedstrijd" if there is match history
-            if (playBtn && gameState.matchHistory && gameState.matchHistory.length > 0) {
-                playBtn.classList.remove('match-ready');
-                playBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7a6.97 6.97 0 0 1-4.95-2.05l-1.41 1.41A8.97 8.97 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg> BEKIJK VORIGE WEDSTRIJD';
-                playBtn.onclick = function() {
-                    navigateToPage('wedstrijden');
-                    setTimeout(() => activateTabOnPage('wedstrijden', 'verslag'), 50);
-                };
-            }
         }
-    }
-
-    // Also update old timer element for compatibility
-    const timerEl = document.getElementById('match-timer');
-    if (timerEl && !hoursEl) {
-        timerEl.textContent = remaining <= 0 ? 'Nu spelen!' : formatTimeRemaining(remaining);
     }
 }
 
@@ -10029,6 +10032,27 @@ async function _playMultiplayerMatchInner() {
         return;
     }
 
+    // Daily limit: max 1 match per day
+    if (gameState.lastMatchPlayedAt) {
+        const lastDate = new Date(gameState.lastMatchPlayedAt);
+        const now = new Date();
+        if (lastDate.toDateString() === now.toDateString()) {
+            showNotification('Je hebt vandaag al gespeeld! Morgen kun je weer.', 'info');
+            return;
+        }
+    }
+
+    // Time gate: match only available after match_time (default 20:00)
+    {
+        const matchTimeStr = gameState._matchTime || '20:00';
+        const [mh, mm] = matchTimeStr.split(':').map(Number);
+        const now = new Date();
+        if (now.getHours() < mh || (now.getHours() === mh && now.getMinutes() < mm)) {
+            showNotification(`Je kunt pas na ${matchTimeStr} spelen!`, 'info');
+            return;
+        }
+    }
+
     showNotification('Wedstrijd laden...', 'info');
 
     try {
@@ -10377,6 +10401,10 @@ async function _playMultiplayerMatchInner() {
 
         // Mark week as played — prevents replaying until next round
         gameState._weekPlayed = true;
+        // Track when last match was played (daily limit: 1 per day)
+        gameState.lastMatchPlayedAt = Date.now();
+        // Update timer to count down to tomorrow's match time
+        gameState.nextMatch.time = getNextMatchTime();
 
         // Advance week — sync from DB (RPC already advanced it)
         const { data: updatedLeague } = await supabase
@@ -10636,10 +10664,39 @@ async function syncStandingsFromSupabase() {
     }
 }
 
+function getNextMatchTime() {
+    const matchTimeStr = gameState._matchTime || '20:00';
+    const [hours, minutes] = matchTimeStr.split(':').map(Number);
+    const now = new Date();
+    const today = new Date(now);
+    today.setHours(hours, minutes, 0, 0);
+
+    // If we already played today, next match is tomorrow
+    const lastPlayed = gameState.lastMatchPlayedAt;
+    if (lastPlayed) {
+        const lastDate = new Date(lastPlayed);
+        const isToday = lastDate.toDateString() === now.toDateString();
+        if (isToday) {
+            // Already played today → tomorrow at match_time
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            return tomorrow.getTime();
+        }
+    }
+
+    // Haven't played today — if it's past match_time, match is available now
+    if (now >= today) {
+        return today.getTime(); // In the past = available now
+    }
+
+    // Before match_time today — count down to today's match_time
+    return today.getTime();
+}
+
 function setNextMatch() {
     gameState.nextMatch = {
         opponent: 'Laden...',
-        time: Date.now() - 1000
+        time: getNextMatchTime()
     };
     if (!gameState.multiplayer?.clubId) return;
     getScheduledOpponent(
@@ -16281,9 +16338,12 @@ async function initMultiplayerGame(detail) {
             console.warn('No saved state found — using defaults');
         }
 
-        // Set up next match for multiplayer
+        // Store match_time from league settings (for daily countdown)
+        gameState._matchTime = league.match_time || '20:00';
+
+        // Set up next match for multiplayer (real countdown to match_time)
         gameState.nextMatch = gameState.nextMatch || {};
-        gameState.nextMatch.time = Date.now() - 1000;
+        gameState.nextMatch.time = getNextMatchTime();
 
         // Check if current week already played (handles page refresh after match)
         if (gameState.multiplayer.clubId) {
@@ -16387,8 +16447,7 @@ async function initMultiplayerGame(detail) {
         // Start timers (training + match timer)
         startTimers();
 
-        // Start multiplayer countdown (updates dashboard timer)
-        startCountdown(league.match_time || '20:00');
+        // Match timer is handled by updateMatchTimer() via startTimers()
 
         // Start auto-save to sync
         startAutoSave();
