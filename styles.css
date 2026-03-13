@@ -26697,25 +26697,141 @@ body {
     flex: 1;
 }
 
-/* Skip button */
-.live-match-skip {
+/* Match controls bar */
+.live-match-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
     margin: 0.4rem auto 0.6rem;
-    padding: 0.5rem 1.8rem;
+    flex-shrink: 0;
+}
+
+.live-match-btn-forward {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.55rem 1.6rem;
     font-family: var(--font-body);
     font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: rgba(46, 125, 50, 0.25);
+    border: 1px solid rgba(46, 125, 50, 0.4);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.live-match-btn-forward:hover {
+    background: rgba(46, 125, 50, 0.4);
+    border-color: rgba(46, 125, 50, 0.6);
+}
+.live-match-btn-forward:active {
+    transform: scale(0.96);
+}
+.live-match-btn-forward svg {
+    opacity: 0.85;
+}
+
+.live-match-btn-skip {
+    padding: 0.55rem 1.4rem;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
     color: var(--text-muted);
-    background: rgba(255, 248, 225, 0.06);
+    background: rgba(255, 248, 225, 0.05);
     border: 1px solid rgba(255, 248, 225, 0.1);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    flex-shrink: 0;
+}
+.live-match-btn-skip:hover {
+    background: rgba(255, 248, 225, 0.1);
+    color: var(--text-secondary);
+    border-color: rgba(255, 248, 225, 0.18);
 }
 
-.live-match-skip:hover {
-    background: rgba(255, 248, 225, 0.12);
+/* Skip confirmation overlay */
+.live-match-confirm-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    animation: fadeIn 0.2s ease;
+}
+
+.live-match-confirm-box {
+    background: var(--bg-card);
+    border: 1px solid rgba(46, 125, 50, 0.3);
+    border-radius: 16px;
+    padding: 2rem 2.2rem;
+    max-width: 360px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.live-match-confirm-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.6rem;
+}
+
+.live-match-confirm-title {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 700;
     color: var(--text-primary);
-    border-color: rgba(255, 248, 225, 0.2);
+    margin: 0 0 0.5rem;
+}
+
+.live-match-confirm-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0 0 1.4rem;
+}
+
+.live-match-confirm-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.live-match-confirm-cancel {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: rgba(46, 125, 50, 0.25);
+    border: 1px solid rgba(46, 125, 50, 0.4);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.live-match-confirm-cancel:hover {
+    background: rgba(46, 125, 50, 0.4);
+}
+
+.live-match-confirm-yes {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    background: rgba(255, 248, 225, 0.06);
+    border: 1px solid rgba(255, 248, 225, 0.12);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.live-match-confirm-yes:hover {
+    background: rgba(200, 60, 60, 0.2);
+    border-color: rgba(200, 60, 60, 0.4);
+    color: var(--text-secondary);
 }
 
 /* Halftime / Fulltime overlay */
@@ -26813,6 +26929,26 @@ body {
     .live-match-commentary {
         margin: 0 0 0.3rem;
     }
+    .live-match-controls {
+        gap: 8px;
+        margin: 0.3rem auto 0.5rem;
+    }
+    .live-match-btn-forward {
+        padding: 0.5rem 1.2rem;
+        font-size: 0.8rem;
+    }
+    .live-match-btn-skip {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+    }
+    .live-match-confirm-box {
+        padding: 1.5rem 1.4rem;
+        max-width: 320px;
+    }
+    .live-match-confirm-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -26836,6 +26972,23 @@ body {
     }
     .live-match-goal-text {
         font-size: 2.8rem;
+    }
+    .live-match-btn-forward {
+        padding: 0.45rem 1rem;
+        font-size: 0.75rem;
+    }
+    .live-match-btn-skip {
+        padding: 0.45rem 0.8rem;
+        font-size: 0.7rem;
+    }
+    .live-match-confirm-box {
+        padding: 1.2rem 1rem;
+    }
+    .live-match-confirm-title {
+        font-size: 1rem;
+    }
+    .live-match-confirm-text {
+        font-size: 0.8rem;
     }
 }
 

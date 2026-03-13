@@ -11413,7 +11413,15 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
                 <div class="live-match-log" id="lm-log"></div>
             </div>
         </div>
-        <button class="live-match-skip" id="lm-skip">Sla over</button>
+        <div class="live-match-controls" id="lm-controls">
+            <button class="live-match-btn-forward" id="lm-forward">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 15,12 5,21"/><polygon points="13,3 23,12 13,21"/></svg>
+                Verder
+            </button>
+            <button class="live-match-btn-skip" id="lm-skip">
+                Sla over
+            </button>
+        </div>
     `;
 
     document.body.appendChild(overlay);
@@ -11428,6 +11436,7 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
     const commentaryMsg = document.getElementById('lm-commentary-msg');
     const logEl = document.getElementById('lm-log');
     const skipBtn = document.getElementById('lm-skip');
+    const forwardBtn = document.getElementById('lm-forward');
 
     // Stats elements
     const statEls = {
@@ -11699,14 +11708,14 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
             const buildupText = templates[Math.floor(Math.random() * templates.length)].replace('{player}', playerName);
             showCommentary(buildupText, isOwn ? 'own' : 'opponent');
 
-            // 2. Wait 5 seconds for suspense, then reveal outcome
+            // 2. Wait for suspense, then reveal outcome
             timer = setTimeout(() => {
                 if (stopped) return;
                 hideBall();
                 revealEvent(ev);
                 // Small pause after reveal before next shot
-                timer = setTimeout(() => processNextShot(index + 1), 800);
-            }, 5000);
+                timer = setTimeout(() => processNextShot(index + 1), getDelay(800));
+            }, getDelay(5000));
         }
 
         if (shotEvents.length > 0) {
@@ -11716,11 +11725,53 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
         }
     }
 
-    // Skip button
-    skipBtn.addEventListener('click', finish);
+    // Forward button — skip to next event instantly
+    let fastForward = false;
+    forwardBtn.addEventListener('click', () => {
+        fastForward = true;
+        // Cancel current timer and immediately tick
+        if (timer) { clearTimeout(timer); timer = null; }
+        tick();
+    });
+
+    // Skip button — show confirmation popup
+    skipBtn.addEventListener('click', () => {
+        // Pause the simulation
+        if (timer) { clearTimeout(timer); timer = null; }
+
+        const confirm = document.createElement('div');
+        confirm.className = 'live-match-confirm-overlay';
+        confirm.innerHTML = `
+            <div class="live-match-confirm-box">
+                <div class="live-match-confirm-icon">⏭️</div>
+                <p class="live-match-confirm-title">Wedstrijd overslaan?</p>
+                <p class="live-match-confirm-text">Je mist de rest van het live commentaar. De uitslag en statistieken worden wel opgeslagen.</p>
+                <div class="live-match-confirm-buttons">
+                    <button class="live-match-confirm-cancel" id="lm-confirm-cancel">Terug naar wedstrijd</button>
+                    <button class="live-match-confirm-yes" id="lm-confirm-yes">Sla over</button>
+                </div>
+            </div>
+        `;
+        overlay.appendChild(confirm);
+
+        document.getElementById('lm-confirm-cancel').addEventListener('click', () => {
+            confirm.remove();
+            // Resume simulation
+            timer = setTimeout(tick, 400);
+        });
+        document.getElementById('lm-confirm-yes').addEventListener('click', () => {
+            confirm.remove();
+            finish();
+        });
+    });
 
     // Start simulation
     commentaryEl.classList.add('visible');
+
+    function getDelay(normalDelay) {
+        if (fastForward) { fastForward = false; return 30; }
+        return normalDelay;
+    }
 
     function tick() {
         if (stopped) return;
@@ -11747,11 +11798,11 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
                     // Halftime check
                     if (currentMinute === 45) {
                         showHalftime();
-                        timer = setTimeout(tick, 1800);
+                        timer = setTimeout(tick, getDelay(1800));
                     } else if (currentMinute >= 90) {
                         showFulltime();
                     } else {
-                        timer = setTimeout(tick, 600);
+                        timer = setTimeout(tick, getDelay(600));
                     }
                 });
                 return; // Don't schedule next tick — processMinuteEvents handles it
@@ -11762,7 +11813,7 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
             delay = 650;
         } else {
             // Random field highlight on some empty minutes
-            if (Math.random() < 0.3) {
+            if (!fastForward && Math.random() < 0.3) {
                 const side = Math.random() < 0.5 ? 'left' : 'right';
                 highlightField(side);
             }
@@ -11786,7 +11837,7 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
             setTimeout(() => minuteEl.classList.remove('pulse'), 500);
         }
 
-        timer = setTimeout(tick, delay);
+        timer = setTimeout(tick, getDelay(delay));
     }
 
     // Show voorbeschouwing (minute 0 preview events) before match starts
