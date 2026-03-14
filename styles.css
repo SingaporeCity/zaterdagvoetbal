@@ -28097,7 +28097,12 @@ body {
         border-radius: 10px;
     }
     .gcb-budget {
-        display: none !important;
+        padding: 0 2px;
+        border-left: 1px solid rgba(255, 255, 255, 0.08);
+        padding-left: 8px;
+    }
+    .gcb-budget-value {
+        font-size: 0.85rem;
     }
     .gcb-rating {
         padding: 4px 8px;
@@ -28610,6 +28615,9 @@ body {
     }
     .gcb-track-reward {
         font-size: 0.45rem;
+    }
+    .gcb-budget-value {
+        font-size: 0.75rem;
     }
 
     /* --- GRIDS: naar 1 kolom op kleine telefoons --- */
