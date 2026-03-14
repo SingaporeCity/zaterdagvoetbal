@@ -29029,7 +29029,7 @@ body {
         gap: 4px;
     }
     .gcb-track-name {
-        display: none !important;
+        font-size: 0.4rem !important;
     }
     .gcb-xp-track {
         min-width: 40px;
