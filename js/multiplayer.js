@@ -907,8 +907,15 @@ async function generatePlayersForClub(clubId, leagueId, division, tier = 'player
         return;
     }
 
-    // Kelderklasse: old-timers squad with some young guys
-    const positions = [
+    // Squad composition depends on tier
+    // Human players: 16 (excl myPlayer) = 1 keeper, 5 def, 5 mid, 4 att + myPlayer = 17 total
+    // AI: 17 players as before
+    const positions = tier === 'player' ? [
+        'keeper',
+        'linksback', 'centraleVerdediger', 'centraleVerdediger', 'rechtsback', 'centraleVerdediger',
+        'centraleMid', 'centraleMid', 'centraleMid', 'linksbuiten', 'rechtsbuiten',
+        'spits', 'spits', 'linksbuiten', 'rechtsbuiten'
+    ] : [
         'keeper', 'keeper',
         'linksback', 'centraleVerdediger', 'centraleVerdediger', 'rechtsback', 'centraleVerdediger',
         'centraleMid', 'centraleMid', 'centraleMid', 'centraleMid',
@@ -934,8 +941,8 @@ async function generatePlayersForClub(clubId, leagueId, division, tier = 'player
     };
     const foreignNats = Object.keys(foreignNames);
 
-    // Pick 3-5 random non-keeper indices to be foreign players
-    const foreignCount = 3 + Math.floor(Math.random() * 3); // 3, 4 or 5
+    // Pick foreign players: exactly 3 for human, 3-5 for AI
+    const foreignCount = tier === 'player' ? 3 : 3 + Math.floor(Math.random() * 3);
     const allNonKeeperIdx = positions.map((p, i) => p !== 'keeper' ? i : -1).filter(i => i >= 0);
     const shuffledIdx = allNonKeeperIdx.sort(() => Math.random() - 0.5);
     const foreignIndices = new Set(shuffledIdx.slice(0, foreignCount));
@@ -967,10 +974,12 @@ async function generatePlayersForClub(clubId, leagueId, division, tier = 'player
 
     const players = positions.map((pos, idx) => {
         const isYoung = youngIndices.has(idx);
-        const overall = isYoung ? rnd(range.youngMin, range.youngMax) : rnd(range.oldMin, range.oldMax);
-        const age = isYoung ? rnd(20, 27) : rnd(40, 55);
-        const stars = isYoung ? 0.5 : 0;
         const isForeign = foreignIndices.has(idx);
+        // Foreign players for human teams are slightly above average
+        const foreignBonus = (tier === 'player' && isForeign) ? 1 : 0;
+        const overall = isYoung ? rnd(range.youngMin, range.youngMax) : rnd(range.oldMin, range.oldMax) + foreignBonus;
+        const age = isYoung ? rnd(18, 23) : rnd(40, 55);
+        const stars = isYoung ? 0.5 : 0;
         const natCode = isForeign ? foreignNatMap[idx] : 'NL';
         let firstName, lastName;
         if (isForeign && foreignNames[natCode]) {
