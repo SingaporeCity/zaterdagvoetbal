@@ -7498,8 +7498,6 @@ function applyClubColors() {
 function updateClubDisplays() {
     const clubNameDisplay = document.getElementById('club-name-display');
     if (clubNameDisplay) clubNameDisplay.textContent = gameState.club.name;
-    const dashTitle = document.getElementById('dashboard-title');
-    if (dashTitle) dashTitle.textContent = gameState.club.name || 'Dashboard';
 }
 
 // ================================================
