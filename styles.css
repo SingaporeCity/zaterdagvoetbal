@@ -28092,57 +28092,57 @@ body {
     .gcb {
         width: auto !important;
         flex-wrap: nowrap;
-        padding: 5px 8px;
-        gap: 6px;
-        border-radius: 8px;
+        padding: 7px 10px;
+        gap: 8px;
+        border-radius: 10px;
     }
     .gcb-budget {
         display: none !important;
     }
     .gcb-rating {
-        padding: 3px 6px;
-        border-radius: 5px;
+        padding: 4px 8px;
+        border-radius: 6px;
     }
     .gcb-rating-value {
-        font-size: 1rem;
+        font-size: 1.15rem;
     }
     .gcb-rating-label {
-        font-size: 0.4rem;
+        font-size: 0.45rem;
         letter-spacing: 0.5px;
     }
     .gcb-tracks {
         min-width: 0;
-        gap: 2px;
-    }
-    .gcb-track-row {
-        padding: 1px 3px;
-        gap: 1px;
-    }
-    .gcb-track-header {
         gap: 3px;
     }
+    .gcb-track-row {
+        padding: 2px 4px;
+        gap: 2px;
+    }
+    .gcb-track-header {
+        gap: 4px;
+    }
     .gcb-track-icon {
-        font-size: 0.6rem;
+        font-size: 0.65rem;
     }
     .gcb-track-name {
-        font-size: 0.5rem;
+        font-size: 0.55rem;
     }
     .gcb-track-level {
-        font-size: 0.5rem;
+        font-size: 0.55rem;
     }
     .gcb-track-reward {
-        font-size: 0.45rem;
-        padding: 0px 3px;
+        font-size: 0.5rem;
+        padding: 1px 4px;
     }
     .gcb-xp-track {
-        height: 10px;
-        border-radius: 4px;
+        height: 12px;
+        border-radius: 5px;
     }
     .gcb-xp-fill {
-        border-radius: 4px;
+        border-radius: 5px;
     }
     .gcb-xp-label {
-        font-size: 0.4rem;
+        font-size: 0.45rem;
     }
 
     /* --- STADIUM MOBILE: hide map, show facility buttons --- */
@@ -28590,14 +28590,14 @@ body {
         padding: 14px 10px;
     }
     .gcb {
-        padding: 4px 6px;
-        gap: 5px;
+        padding: 5px 8px;
+        gap: 6px;
     }
     .gcb-rating {
-        padding: 2px 5px;
+        padding: 3px 6px;
     }
     .gcb-rating-value {
-        font-size: 0.85rem;
+        font-size: 1rem;
     }
     .gcb-tracks {
         min-width: 0;
@@ -28606,10 +28606,10 @@ body {
         display: none !important;
     }
     .gcb-track-name {
-        font-size: 0.45rem;
+        font-size: 0.5rem;
     }
     .gcb-track-reward {
-        font-size: 0.4rem;
+        font-size: 0.45rem;
     }
 
     /* --- GRIDS: naar 1 kolom op kleine telefoons --- */
