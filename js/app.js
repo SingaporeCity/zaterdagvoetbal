@@ -6104,6 +6104,7 @@ function navigateToPage(page) {
             triggerAchievementCheck();
         }
         renderBugHistory();
+        renderBugLeaderboard();
     }
 
     updateNavBadges();
@@ -13258,6 +13259,67 @@ async function renderBugHistory() {
             <div class="bug-history-item-title">${escapeHtml(b.title)}</div>
             ${b.description ? `<div class="bug-history-item-desc">${escapeHtml(b.description)}</div>` : ''}
             <div class="bug-history-item-date">${date}</div>
+        </div>`;
+    }).join('');
+}
+
+async function renderBugLeaderboard() {
+    const container = document.getElementById('bug-leaderboard');
+    if (!container || !isSupabaseAvailable()) {
+        if (container) container.innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem;text-align:center;">Niet beschikbaar.</p>';
+        return;
+    }
+
+    // Fetch all bug reports with user_id
+    const { data: reports, error } = await supabase
+        .from('bug_reports')
+        .select('user_id');
+
+    if (error || !reports || reports.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem;text-align:center;">Nog geen bugs gemeld.</p>';
+        return;
+    }
+
+    // Count per user
+    const counts = {};
+    reports.forEach(r => {
+        if (r.user_id) counts[r.user_id] = (counts[r.user_id] || 0) + 1;
+    });
+
+    const userIds = Object.keys(counts);
+    if (userIds.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem;text-align:center;">Nog geen bugs gemeld.</p>';
+        return;
+    }
+
+    // Fetch club names for these users
+    const { data: clubs } = await supabase
+        .from('clubs')
+        .select('owner_id, name')
+        .in('owner_id', userIds)
+        .eq('is_ai', false);
+
+    const nameMap = {};
+    (clubs || []).forEach(c => {
+        if (!nameMap[c.owner_id]) nameMap[c.owner_id] = c.name;
+    });
+
+    // Sort by count descending
+    const sorted = userIds
+        .map(uid => ({ uid, count: counts[uid], name: nameMap[uid] || 'Onbekend' }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+    const myUserId = gameState.multiplayer?.userId;
+    const medals = ['🥇', '🥈', '🥉'];
+
+    container.innerHTML = sorted.map((entry, i) => {
+        const isMe = entry.uid === myUserId;
+        const rank = i < 3 ? medals[i] : `${i + 1}.`;
+        return `<div class="bh-row${isMe ? ' bh-me' : ''}">
+            <span class="bh-rank">${rank}</span>
+            <span class="bh-name">${escapeHtml(entry.name)}</span>
+            <span class="bh-count">${entry.count} 🐛</span>
         </div>`;
     }).join('');
 }
