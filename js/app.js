@@ -3171,6 +3171,14 @@ function renderStadiumMobileFacilities() {
     container.className = 'stadium-mobile-facilities';
     container.innerHTML = html;
     mapContainer.parentNode.insertBefore(container, mapContainer);
+
+    // On mobile: move fans/capacity overlay above the facility buttons
+    if (isMobile) {
+        const overlay = mapContainer.querySelector('.stadium-map-overlay');
+        if (overlay) {
+            mapContainer.parentNode.insertBefore(overlay, container);
+        }
+    }
 }
 
 function renderTierList() {
