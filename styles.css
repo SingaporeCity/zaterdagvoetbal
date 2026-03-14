@@ -28500,9 +28500,14 @@ body {
         padding: 0;
     }
     .gcb-track-icon,
-    .gcb-track-name,
     .gcb-xp-label {
         display: none !important;
+    }
+    .gcb-track-name {
+        font-size: 0.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
     .gcb-track-level {
         font-size: 0.5rem;
@@ -28513,20 +28518,20 @@ body {
         padding: 0 3px;
     }
     .gcb-xp-track {
-        height: 8px;
-        border-radius: 4px;
-        min-width: 55px;
+        height: 10px;
+        border-radius: 5px;
+        min-width: 60px;
     }
     .gcb-xp-fill {
-        border-radius: 3px;
+        border-radius: 5px;
     }
     .gcb-budget {
         padding: 0;
         border-left: 1px solid rgba(255, 255, 255, 0.1);
-        padding-left: 6px;
+        padding-left: 8px;
     }
     .gcb-budget-value {
-        font-size: 0.8rem;
+        font-size: 1rem;
     }
 
     /* --- STADIUM MOBILE: hide map, show facility buttons --- */
@@ -29018,11 +29023,14 @@ body {
     .gcb {
         gap: 4px;
     }
+    .gcb-track-name {
+        display: none !important;
+    }
     .gcb-xp-track {
         min-width: 40px;
     }
     .gcb-budget-value {
-        font-size: 0.7rem;
+        font-size: 0.85rem;
     }
 
     /* --- GRIDS: naar 1 kolom op kleine telefoons --- */
