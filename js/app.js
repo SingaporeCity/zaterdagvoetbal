@@ -16728,8 +16728,8 @@ async function initMultiplayerGame(detail) {
             console.warn('No saved state found — using defaults');
         }
 
-        // Store match_time from league settings (for daily countdown)
-        gameState._matchTime = league.match_time || '00:10';
+        // Match time — hardcoded, ignore DB value
+        gameState._matchTime = '00:15';
 
         // Set up next match for multiplayer (real countdown to match_time)
         gameState.nextMatch = gameState.nextMatch || {};
