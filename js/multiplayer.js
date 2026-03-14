@@ -1592,28 +1592,37 @@ export async function simulateWeek(leagueId, season, week, simulateMatchFn, calc
  * unplayed week for this player.
  */
 export async function findPlayerCurrentWeek(leagueId, season, leagueWeek, myClubId, lastMatchPlayedAt) {
-    // Check if there's a result for leagueWeek - 1 that the player hasn't processed yet
-    // (the league advanced past it, but the player never saw it)
+    // Walk backwards from leagueWeek to find the first week this player hasn't processed yet.
+    // A result may exist (simulated by the other player), but THIS player hasn't seen it.
+    // alreadyPlayed = true means this player has SEEN and PROCESSED the result (don't play again).
+    // alreadyPlayed = false means the player still needs to "play" (view commentary + apply effects).
     for (let w = leagueWeek - 1; w >= 1; w--) {
         const result = await getMatchResult(leagueId, season, w, myClubId);
         if (result) {
-            // Result exists for this week — check if the player already processed it
-            // by comparing timestamps. If lastMatchPlayedAt is before the result was created,
-            // the player hasn't seen this result yet.
             const resultTime = new Date(result.created_at).getTime();
             const playerTime = lastMatchPlayedAt ? new Date(lastMatchPlayedAt).getTime() : 0;
             if (playerTime < resultTime) {
-                // Player hasn't seen this result — this is their current week
-                return { week: w, alreadyPlayed: true };
+                // Result exists but player hasn't seen it — let them "play" it
+                return { week: w, alreadyPlayed: false };
             }
+            // Player already processed this week, keep looking
         } else {
-            // No result for this week — it hasn't been simulated yet, this is the week to play
+            // No result yet — this week hasn't been simulated
             return { week: w, alreadyPlayed: false };
         }
     }
-    // All previous weeks processed — player is on the current league week
+    // All previous weeks processed — check current league week
     const currentResult = await getMatchResult(leagueId, season, leagueWeek, myClubId);
-    return { week: leagueWeek, alreadyPlayed: !!currentResult };
+    if (currentResult) {
+        const resultTime = new Date(currentResult.created_at).getTime();
+        const playerTime = lastMatchPlayedAt ? new Date(lastMatchPlayedAt).getTime() : 0;
+        if (playerTime < resultTime) {
+            // Result exists but unseen
+            return { week: leagueWeek, alreadyPlayed: false };
+        }
+        return { week: leagueWeek, alreadyPlayed: true };
+    }
+    return { week: leagueWeek, alreadyPlayed: false };
 }
 
 /**
