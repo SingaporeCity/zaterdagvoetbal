@@ -28145,6 +28145,36 @@ body {
     .jeugdteam-layout {
         max-height: none !important;
     }
+    /* --- JEUGDTEAM MOBILE --- */
+    .youth-tabs {
+        width: 100%;
+    }
+    .youth-tab {
+        flex: 1;
+        padding: 6px 4px;
+        font-size: 0.72rem;
+        text-align: center;
+    }
+    .youth-tab-age {
+        display: block;
+        font-size: 0.6rem;
+        opacity: 0.7;
+    }
+    .jeugdteam-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: visible !important;
+    }
+    .youth-main {
+        order: -1;
+    }
+    .youth-capacity-card {
+        display: none !important;
+    }
+    .youth-players-grid {
+        grid-template-columns: 1fr !important;
+        overflow: visible !important;
+    }
     /* Lineup/tactics: vertical stack on mobile */
     .tactics-panel.active,
     #opstelling-panel.active,
