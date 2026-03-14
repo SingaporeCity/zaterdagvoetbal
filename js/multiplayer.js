@@ -618,44 +618,48 @@ let enterLeagueInProgress = false;
 async function enterLeague(leagueId, clubId) {
     if (enterLeagueInProgress) return;
     enterLeagueInProgress = true;
-    const { data: league } = await supabase
-        .from('leagues')
-        .select('*')
-        .eq('id', leagueId)
-        .single();
+    try {
+        const { data: league } = await supabase
+            .from('leagues')
+            .select('*')
+            .eq('id', leagueId)
+            .single();
 
-    if (!league) return;
+        if (!league) return;
 
-    const user = await getUser();
-    if (!user) return;
+        const user = await getUser();
+        if (!user) return;
 
-    if (league.status === 'lobby') {
-        showWaitingScreen(league);
-        await refreshWaitingRoom(leagueId, user.id);
-        subscribeToLobby(leagueId, user.id);
-    } else if (league.status === 'active') {
-        // Clean up lobby subscription to prevent re-entry on future league updates
-        if (lobbySubscription) {
-            supabase.removeChannel(lobbySubscription);
-            lobbySubscription = null;
+        if (league.status === 'lobby') {
+            showWaitingScreen(league);
+            await refreshWaitingRoom(leagueId, user.id);
+            subscribeToLobby(leagueId, user.id);
+        } else if (league.status === 'active') {
+            // Clean up lobby subscription to prevent re-entry on future league updates
+            if (lobbySubscription) {
+                supabase.removeChannel(lobbySubscription);
+                lobbySubscription = null;
+            }
+
+            // Enter the game in multiplayer mode
+            setStorageMode('multiplayer', leagueId, clubId);
+            hideAllOverlays();
+
+            gameState.multiplayer.enabled = true;
+            gameState.multiplayer.leagueId = leagueId;
+            gameState.multiplayer.clubId = clubId;
+            gameState.multiplayer.userId = user.id;
+            gameState.multiplayer.leagueName = league.name;
+            gameState.multiplayer.inviteCode = league.invite_code;
+            gameState.multiplayer.isHost = league.created_by === user.id;
+
+            // Dispatch custom event for app.js to handle
+            window.dispatchEvent(new CustomEvent('multiplayer-start', {
+                detail: { leagueId, clubId, userId: user.id, league }
+            }));
         }
-
-        // Enter the game in multiplayer mode
-        setStorageMode('multiplayer', leagueId, clubId);
-        hideAllOverlays();
-
-        gameState.multiplayer.enabled = true;
-        gameState.multiplayer.leagueId = leagueId;
-        gameState.multiplayer.clubId = clubId;
-        gameState.multiplayer.userId = user.id;
-        gameState.multiplayer.leagueName = league.name;
-        gameState.multiplayer.inviteCode = league.invite_code;
-        gameState.multiplayer.isHost = league.created_by === user.id;
-
-        // Dispatch custom event for app.js to handle
-        window.dispatchEvent(new CustomEvent('multiplayer-start', {
-            detail: { leagueId, clubId, userId: user.id, league }
-        }));
+    } finally {
+        enterLeagueInProgress = false;
     }
 }
 
