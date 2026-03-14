@@ -28100,6 +28100,14 @@ body {
         max-height: none !important;
         overflow: visible !important;
     }
+    .formation-selector {
+        flex-wrap: wrap;
+    }
+    .formation-drive {
+        width: 100%;
+        margin-left: 0;
+        text-align: center;
+    }
 
     /* --- MOBILE SLOT PLAYER PICKER --- */
     .slot-picker-overlay {
