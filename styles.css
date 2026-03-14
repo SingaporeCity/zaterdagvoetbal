@@ -10473,7 +10473,30 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+    .chairman-modal {
+        padding: 16px;
+        max-width: calc(100vw - 32px);
+    }
+    .contract-offer-player {
+        font-size: 0.85rem;
+        gap: 5px;
+    }
+    .contract-offer-line {
+        font-size: 0.8rem;
+    }
+    .contract-btn-accept,
+    .contract-btn-negotiate,
+    .contract-btn-refuse {
+        padding: 9px 12px;
+        font-size: 0.85rem;
+    }
 }
 
 .contract-offer-details {
