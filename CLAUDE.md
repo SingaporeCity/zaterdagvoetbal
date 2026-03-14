@@ -35,16 +35,16 @@ cd /Users/patrickjeeninga/zaterdagvoetbal && git add <files> && git commit -m "b
 
 ## Projectstructuur
 
-### JS bestanden (~24k regels totaal)
+### JS bestanden (~25k regels totaal)
 | Bestand | Regels | Wat |
 |---------|--------|-----|
-| `app.js` | ~16k | Alles: UI rendering, game logic, stadion, sponsors, tactiek, match display, achievements UI. Zoek op `function renderXxxPage()` voor specifieke pagina's. `playMatch()` redirected naar `playMultiplayerMatch()`. |
-| `achievements.js` | ~2.4k | `ACHIEVEMENTS` object met 200+ achievements, `checkAchievements()`, `initAchievements()` |
-| `multiplayer.js` | ~1.6k | Lobby, league creation/joining, `startLeague()`, `generateSchedule()`, `simulateWeek()`, AI teams met tier systeem |
+| `app.js` | ~17k | Alles: UI rendering, game logic, stadion, sponsors, tactiek, match display, achievements UI, bug reports, mobile slot picker. Zoek op `function renderXxxPage()` voor specifieke pagina's. |
+| `achievements.js` | ~2.4k | `ACHIEVEMENTS` object met 200+ achievements, `checkAchievements()`, `initAchievements()`. **XP rewards worden x3 toegepast in `claimAchievement()`** |
+| `multiplayer.js` | ~1.6k | Lobby, league creation/joining, `startLeague()`, `generateSchedule()`, `simulateWeek()`, AI teams met tier systeem, `generatePlayersForClub()` |
 | `matchEngine.js` | ~930 | `simulateMatch()`, `calculateTeamStrength()`, `generateOpponent()` |
 | `progression.js` | ~710 | XP/leveling systeem, `awardPlayerXP()`, `awardXP()`, `getSPPerLevel()`, dagelijkse beloningen |
 | `constants.js` | ~680 | `POSITIONS`, `FORMATIONS`, `TACTICS`, `NATIONALITIES`, `STAFF_TYPES`, `MANAGER_LEVELS` |
-| `storage.js` | ~650 | `saveGame()`, `loadGame()`, `gameStateToClubRecord()`, `clubRecordToGameState()`, Supabase sync. Geen `loadGameSync()`/`deleteSave()` meer. |
+| `storage.js` | ~650 | `saveGame()`, `loadGame()`, `gameStateToClubRecord()`, `clubRecordToGameState()`, Supabase sync |
 | `state.js` | ~330 | `gameState` singleton, `getGameState()`, `replaceGameState()` |
 | `realtime.js` | ~270 | Supabase realtime subscriptions, `subscribeToLeague()`, `fetchStandings()` |
 | `events.js` | ~750 | Match events, `generateMatchEvents()` |
@@ -94,28 +94,37 @@ cd /Users/patrickjeeninga/zaterdagvoetbal && git add <files> && git commit -m "b
 - `schedule` tabel: alle wedstrijden
 - `match_results` tabel: gesimuleerde resultaten met match_data JSONB
 - `bug_reports` tabel: user_id, title, description, user_agent, created_at
+- `profiles` tabel: id, display_name (voor bug hunter ranglijst)
 
 ## UI/UX workflow
 Gebruik ALTIJD de `/frontend-design` skill bij het ontwerpen of aanpassen van pagina's, componenten of UI-elementen. Dit geldt voor nieuwe pagina's, redesigns, en significante visuele wijzigingen.
 
 ## Mobile design — Belangrijke patronen
 
-### XP-tegel in mobile header
+### XP-tegel in mobile header bar
 - Op mobile (≤768px) wordt `.global-top-tiles` verplaatst naar `.mobile-header` (de vaste top bar)
 - Op desktop naar de `.page-header` van de actieve pagina
 - JS in `navigateToPage()` en `initMultiplayerGame()` checkt `window.matchMedia('(max-width: 768px)')` voor de juiste plaatsing
-- Budget-tegel wordt verborgen op de Financiën-pagina via JS in `navigateToPage()`
+- Toont: Speler/Manager labels, level, reward, XP bars (10px), budget (1rem)
+- Op ≤480px: labels kleiner (0.4rem), budget 0.85rem
+- `.mobile-header` gebruikt `min-height: 56px` (flexibel) + `box-shadow` i.p.v. border-bottom (voorkomt lijn door XP bars)
 
 ### Mobile sidebar navigatie
-- Submenu's gebruiken op mobile een **class-based toggle** (`submenu-open`) i.p.v. CSS `:hover`
+- Sidebar is **210px** breed op mobile (was 260px desktop). Overridden via `--sidebar-width: 210px` lokaal op `.sidebar`
+- Submenu's gebruiken **class-based toggle** (`submenu-open`) i.p.v. CSS `:hover`
 - `:hover` is uitgeschakeld op ≤768px: `.nav-item.has-submenu:hover .nav-submenu { display: none !important; }`
+- Submenu positie volgt automatisch: `left: var(--sidebar-width)` erft de lokale 210px
 - Eerste tik opent submenu + navigeert, tweede tik sluit alles
 - Bij sidebar-close worden alle `submenu-open` classes verwijderd
+- BUGS-knop zit in de `<ul class="nav-menu">` direct na "Mijn Speler"
 
 ### Mobile CSS specificiteit valkuilen
 - **ID-selectors met `!important`** overschrijven class-based mobile overrides. Bijv. `#opstelling-panel.active { overflow: hidden !important; }` wint van `.tactics-panel.active { overflow: visible !important; }`. Oplossing: altijd ook de ID-selector overridden in de mobile media query.
 - **`flex: 1; min-height: 0; overflow: hidden;`** is een veelvoorkomend desktop patroon dat op mobile alles onzichtbaar maakt (0px hoogte). Mobile overrides moeten `flex: none !important; min-height: auto !important; overflow: visible !important;` gebruiken.
 - **480px breakpoint** kan 768px overrides onbedoeld terugdraaien. Check altijd beide breakpoints.
+- **Negatieve margins** (`margin-left: -16px` op `#stadium`) verdwijnen op mobile maar worden niet automatisch gereset. Altijd `margin: 0 !important` toevoegen.
+- **`margin-left: 230px`** op `.youth-tabs` voor desktop sidebar offset moet op mobile naar `0`.
+- **`width: fit-content`** op tabs voorkomt dat ze de volle breedte pakken. Override met `width: 100% !important`.
 
 ### Mobile lineup/opstelling
 - Desktop: drag-and-drop via HTML5 drag API
@@ -123,15 +132,67 @@ Gebruik ALTIJD de `/frontend-design` skill bij het ontwerpen of aanpassen van pa
 - Picker toont: positie, vlag, naam, energiebalk, ALG, potentie-sterren
 - Gesorteerd op positiegroep (aanval→middenveld→verdediging→keeper), dan ALG
 - Spelers met 0 sterren tonen lege kolom (geen "-")
+- Formatiebedrevenheid-tekst wrapt naar eigen regel onder dropdown op mobile
 
 ### Mobile selectie (spelerkaarten)
 - `pc-ratings` gebruikt `display: contents` zodat `pc-overall` en `pc-potential-stars` apart gepositioneerd worden in het grid
 - Potentie-sterren staan onder de energiebalk (rij 3), dismiss-knop rechts bovenin (rij 1, kolom 4)
+- Grid: `auto 1fr auto auto`, 3 rijen, compacte gap (1px 6px)
+
+### Mobile jeugdteam
+- Tabs volle breedte (`flex: 1`, `width: 100% !important`, `margin-left: 0 !important`)
+- Op ≤480px: `white-space: normal`, `font-size: 0.65rem`, `min-width: 0` zodat alle 3 tabs passen
+- Spelers boven jeugdacademie kaart (`youth-main { order: -1 }`)
+- "Plekken per categorie" kaart verborgen
+- Youth-card knoppen ("Contract aanbieden" / "Ontslaan") op eigen rij (`grid-column: 1 / -1`)
+
+### Mobile scouting
+- `scouting-sidebar` gebruikt `display: contents` zodat scout-card en centrum-card individueel geordend worden
+- Volgorde: scout-card (0) → main content (1) → scoutingscentrum (2, onderaan)
+
+### Mobile sportcomplex
+- Fans/capaciteit overlay verplaatst via JS uit `.stadium-map-container` naar vóór facility-buttons
+- `#stadium.page.active { margin-left: 0 !important; margin-right: 0 !important; }` — reset negatieve margins
+- `youthscouting` faciliteit overgeslagen op mobile (valt onder scouting)
+
+### Mobile sponsors
+- Shirt/bord visueel links (90px), 3 sponsor-opties rechts **onder elkaar** (`grid-template-columns: 1fr`)
+- Compactere visuele elementen (shirt 60px, bord 85px)
+
+### Mobile staf
+- Kaarten horizontaal: icoon links (36px), info rechts
+- "In dienst" badge en "Inhuren" knop rechts uitgelijnd met `margin-left: auto`
+
+### Mobile contract popup
+- `flex-wrap: nowrap` + `white-space: nowrap` op `.contract-offer-player` — sterren wrappen niet
+- Modal `max-width: calc(100vw - 32px)`, kleinere padding
+
+### Mobile dashboard
+- Seizoen/week tekst naast teamnaam (`#dashboard .header-left { display: flex; align-items: baseline; gap: 8px; }`)
 
 ### touch-action: manipulation
 Globaal ingesteld op `*, *::before, *::after` — schakelt double-tap-to-zoom uit zodat snel tappen (bijv. 10 skillpunten verdelen) niet inzoomt.
 
 ## Belangrijke patronen
+
+### Achievement XP multiplier
+- Alle achievement XP rewards worden **x3** toegepast
+- Multiplier zit in `claimAchievement()` (app.js) en de display (`showAchievementModal()` + achievement overzicht)
+- Base waarden in `achievements.js` zijn NIET gewijzigd — de x3 wordt in runtime berekend
+
+### Squad compositie bij nieuw spel
+`generatePlayersForClub()` in `multiplayer.js` genereert verschillende squads per tier:
+
+**Human** (`tier = 'player'`): 15 spelers + myPlayer = 16 totaal
+- 1 keeper (Nederlands)
+- 5 verdedigers (LB, 3×CV, RB)
+- 5 middenvelders (3×CM, LB, RB)
+- 4 aanvallers (2×SP, LW, RW)
+- Precies **3 buitenlanders** met +1 overall bonus (iets beter dan gemiddeld)
+- **2 jonge talenten** (18-23 jaar) met 0.5★ potentieel
+- Rest: veteranen (40-55 jaar), 0 sterren
+
+**AI teams**: 17 spelers, 2 keepers, 3-5 buitenlanders (geen bonus), zelfde tier-ranges
 
 ### Achievement toevoegen
 1. Voeg entry toe aan `ACHIEVEMENTS` in `achievements.js`:
@@ -143,7 +204,7 @@ mijnAchievement: {
     category: CATEGORIES.SPECIAL,
     icon: '🎯',
     hidden: true, // optioneel
-    reward: { managerXP: 15 }, // of playerXP
+    reward: { managerXP: 15 }, // of playerXP — wordt x3 in UI/claim
     check: (state) => state.stats?.mijnFlag === true
 }
 ```
@@ -161,16 +222,27 @@ Elke pagina heeft een `renderXxxPage()` functie in `app.js`. Navigatie via `navi
 `TACTICS` in `constants.js` definieert categorieën (mentaliteit, offensief, speltempo, veldbreedte, dekking) met opties. Waarden worden opgeslagen in `gameState.tactics.categorie = optie.id`.
 
 ### Stadion SVG kaart
-`renderStadiumMap()` in `app.js` genereert een volledige SVG met gebouwen, velden, wegen, bomen. Elk gebouw is klikbaar (`selectStadiumCategory()`). Level badges gebruiken `levelColors` array — index 0-1 zijn blauwgrijs (#90a4ae/#b0bec5) voor contrast op groen. Op mobile is de kaart verborgen en worden facility-buttons getoond via `renderStadiumMobileFacilities()`. De `youthscouting` faciliteit wordt op mobile overgeslagen (valt al onder scouting).
+`renderStadiumMap()` in `app.js` genereert een volledige SVG met gebouwen, velden, wegen, bomen. Elk gebouw is klikbaar (`selectStadiumCategory()`). Level badges gebruiken `levelColors` array — index 0-1 zijn blauwgrijs (#90a4ae/#b0bec5) voor contrast op groen. Op mobile is de kaart verborgen en worden facility-buttons getoond via `renderStadiumMobileFacilities()`. De `youthscouting` faciliteit wordt op mobile overgeslagen (valt al onder scouting). Fans/capaciteit overlay wordt via JS verplaatst naar boven de buttons.
 
 ### Bug reports
 - Na succesvolle submit: `awardPlayerXP(10)` + popup "Thanks voor je bug report, hier is wat XP voor je."
 - Bug Hunters ranglijst (`renderBugLeaderboard()`): telt reports per `user_id`, toont clubnaam + spelernaam (italic) uit `clubs` en `profiles` tabellen
 - Ranglijst wordt direct geüpdatet na elke submit
+- Pagina-volgorde: formulier (compact, 3 rijen textarea) → ranglijst → jouw meldingen
+
+### Scouting onzekerheidssysteem
+- `getScoutUncertainty()`: berekent ALG/sterren-ranges op basis van `gameState.week - player.scoutedAtWeek`
+- Elke week (= 1 real-time dag = 1 wedstrijd) krimpt de marge: ±12/±2 → ±8/±1.5 → ±4/±0.5 → exact (na 3 weken)
+- Na 3 weken scouting zijn ALG en potentie volledig bekend
+- Ranges worden herberekend bij het renderen van de scouting-pagina
 
 ### Transfer reveal animatie
 - `showOverallReveal()`: toont range-animatie die convergeert naar werkelijke waarde
 - Confetti bij hoge overall, regenwolken bij lage overall — **maar NIET als speler ≥0.5 ster potentieel heeft**
+
+### Dashboard toptalenten
+- `renderDashboardTopPlayers()`: sorteert jeugdspelers op ALG (level) eerst, dan potentie-sterren
+- Toont top 3 in het dashboard
 
 ### Clubnaam en kleuren bij laden
 - `updateClubDisplays()` en `applyClubColors()` worden aangeroepen in `initMultiplayerGame()` na `replaceGameState()` — anders blijft "FC Goals Maken" met standaardkleuren zichtbaar
@@ -249,10 +321,10 @@ Het spel is volledig in het **Nederlands**. UI teksten, achievement namen, voorz
 - **Human** (overall 3-7): start iets boven gemiddeld, moet managen voor de titel
 - AI teams krijgen automatisch een 4-4-2 lineup via `generatePlayersForClub()`
 - `buildTeamFromClub()` heeft een fallback auto-lineup voor bestaande leagues zonder lineup_position
-- Bij generatie: 2 jonge spelers met 0.5 ster potentieel, rest 0 sterren
 
 ### Buitenlandse spelers
-- **Team generatie** (`generatePlayersForClub()`): 3-5 buitenlanders per team met passende namen per nationaliteit (BE/DE/BR/ES/GB/FR/GH/MA/TR/PL). Keepers zijn altijd Nederlands.
+- **Human team**: precies 3 buitenlanders met +1 overall bonus. Keepers altijd Nederlands.
+- **AI teams**: 3-5 buitenlanders zonder bonus. Keepers altijd Nederlands.
 - **Transfermarkt** (`generateNationality()`): ~50% Nederlands, ~50% buitenlands. Gewicht NL=71, rest=71 totaal.
 - **Nationaliteit opslag**: Supabase slaat op als lowercase string code ("nl", "de"). Bij laden omgezet naar object via `NATIONALITIES` lookup.
 
