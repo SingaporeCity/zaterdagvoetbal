@@ -28147,7 +28147,7 @@ body {
     }
     /* --- JEUGDTEAM MOBILE --- */
     .youth-tabs {
-        width: 100%;
+        width: 100% !important;
     }
     .youth-tab {
         flex: 1;
@@ -28920,11 +28920,17 @@ body {
     }
     .page-tab,
     .matches-tab,
-    .tactics-tab,
-    .youth-tab {
+    .tactics-tab {
         white-space: nowrap;
         flex-shrink: 0;
         font-size: 0.8rem;
+    }
+    .youth-tab {
+        flex: 1 !important;
+        flex-shrink: 1 !important;
+        white-space: normal;
+        font-size: 0.7rem;
+        text-align: center;
     }
 
     /* --- VOORZITTER INTRO (alle pagina's) --- */
