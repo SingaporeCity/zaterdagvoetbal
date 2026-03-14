@@ -13218,15 +13218,17 @@ function initBugReports() {
             statusEl.style.color = '#d32f2f';
             console.error('Bug report failed:', error);
         } else {
-            statusEl.textContent = 'Bedankt! Bug is gemeld.';
-            statusEl.style.color = 'var(--accent-green)';
+            statusEl.textContent = '';
             titleEl.value = '';
             descEl.value = '';
+            awardPlayerXP(10);
+            await showAlert('Thanks voor je bug report, hier is wat XP voor je.');
             if (!gameState.stats.submittedBugReport) {
                 gameState.stats.submittedBugReport = true;
                 triggerAchievementCheck();
             }
             renderBugHistory();
+            saveGame();
         }
         submitBtn.disabled = false;
     });
