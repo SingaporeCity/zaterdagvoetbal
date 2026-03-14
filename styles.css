@@ -25201,6 +25201,7 @@ body {
     }
 
     .sidebar {
+        --sidebar-width: 210px;
         transform: translateX(-100%);
         transition: transform var(--transition-normal);
         z-index: 150;
@@ -25218,7 +25219,8 @@ body {
 
     .nav-item {
         justify-content: flex-start;
-        padding: 8px 20px;
+        padding: 8px 16px;
+        font-size: 0.82rem;
     }
 
     .club-info {
