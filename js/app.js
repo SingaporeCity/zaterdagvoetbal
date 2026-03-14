@@ -5950,6 +5950,9 @@ function navigateToPage(page) {
         pageHeader.appendChild(tiles);
     }
 
+    // Hide budget tile on finances page (redundant there)
+    const budgetEl = document.querySelector('.gcb-budget');
+    if (budgetEl) budgetEl.style.display = page === 'finances' ? 'none' : '';
 
     // Close any open modals
     document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
