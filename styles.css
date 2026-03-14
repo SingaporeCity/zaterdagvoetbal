@@ -28187,8 +28187,8 @@ body {
     .player-card:not(.transfer-card) {
         grid-template-columns: auto 1fr auto auto !important;
         grid-template-rows: auto auto auto;
-        gap: 3px 8px;
-        padding: 8px 10px !important;
+        gap: 1px 6px;
+        padding: 5px 10px !important;
     }
     .player-card:not(.transfer-card) .pc-left {
         grid-row: 1;
