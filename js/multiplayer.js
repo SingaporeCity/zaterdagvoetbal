@@ -184,6 +184,7 @@ async function showModeScreen() {
 }
 
 async function showLobbyScreen() {
+    enterLeagueInProgress = false;
     hideAllOverlays();
     document.getElementById('lobby-screen').style.display = 'flex';
     document.getElementById('lobby-error').textContent = '';
@@ -613,7 +614,10 @@ async function loadMyLeagues() {
 /**
  * Enter an existing league
  */
+let enterLeagueInProgress = false;
 async function enterLeague(leagueId, clubId) {
+    if (enterLeagueInProgress) return;
+    enterLeagueInProgress = true;
     const { data: league } = await supabase
         .from('leagues')
         .select('*')
