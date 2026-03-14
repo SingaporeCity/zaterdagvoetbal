@@ -6067,12 +6067,30 @@ function initNavigation() {
         item.addEventListener('click', (e) => {
             // Don't navigate if clicking on submenu
             if (e.target.closest('.nav-submenu')) return;
+
+            // Mobile submenu toggle: second tap closes submenu + sidebar
+            if (item.classList.contains('has-submenu') && item.classList.contains('submenu-open')) {
+                item.classList.remove('submenu-open');
+                document.querySelector('.sidebar')?.classList.remove('sidebar-open');
+                document.getElementById('sidebar-overlay')?.classList.remove('active');
+                document.getElementById('hamburger-btn')?.classList.remove('active');
+                return;
+            }
+
+            // Close any other open submenus, open this one
+            document.querySelectorAll('.nav-item.submenu-open').forEach(i => i.classList.remove('submenu-open'));
+            if (item.classList.contains('has-submenu')) {
+                item.classList.add('submenu-open');
+            }
+
             navigateToPage(item.dataset.page);
 
-            // Close mobile sidebar after navigation
-            document.querySelector('.sidebar')?.classList.remove('sidebar-open');
-            document.getElementById('sidebar-overlay')?.classList.remove('active');
-            document.getElementById('hamburger-btn')?.classList.remove('active');
+            // Close mobile sidebar after navigation (only for items without submenu)
+            if (!item.classList.contains('has-submenu')) {
+                document.querySelector('.sidebar')?.classList.remove('sidebar-open');
+                document.getElementById('sidebar-overlay')?.classList.remove('active');
+                document.getElementById('hamburger-btn')?.classList.remove('active');
+            }
         });
     });
 
@@ -6087,7 +6105,8 @@ function initNavigation() {
             // Navigate to page first
             navigateToPage(page);
 
-            // Close mobile sidebar after navigation
+            // Close submenu + mobile sidebar after navigation
+            document.querySelectorAll('.nav-item.submenu-open').forEach(i => i.classList.remove('submenu-open'));
             document.querySelector('.sidebar')?.classList.remove('sidebar-open');
             document.getElementById('sidebar-overlay')?.classList.remove('active');
             document.getElementById('hamburger-btn')?.classList.remove('active');
@@ -6121,6 +6140,7 @@ function initNavigation() {
 
     if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', () => {
+            document.querySelectorAll('.nav-item.submenu-open').forEach(i => i.classList.remove('submenu-open'));
             sidebar.classList.remove('sidebar-open');
             sidebarOverlay.classList.remove('active');
             if (hamburgerBtn) hamburgerBtn.classList.remove('active');

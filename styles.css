@@ -28057,6 +28057,14 @@ body {
         bottom: -4px !important;
     }
 
+    /* --- SIDEBAR SUBMENUS: class-based toggle on mobile --- */
+    .nav-item.has-submenu:hover .nav-submenu {
+        display: none !important;
+    }
+    .nav-item.has-submenu.submenu-open .nav-submenu {
+        display: block !important;
+    }
+
     /* --- GLOBAL --- */
     .page-title {
         font-size: 1.4rem;
