@@ -10312,7 +10312,7 @@ async function _playMultiplayerMatchInner() {
 
     // Time gate: match only available after match_time (default 20:00)
     {
-        const matchTimeStr = gameState._matchTime || '20:00';
+        const matchTimeStr = gameState._matchTime || '00:10';
         const [mh, mm] = matchTimeStr.split(':').map(Number);
         const now = new Date();
         if (now.getHours() < mh || (now.getHours() === mh && now.getMinutes() < mm)) {
@@ -10936,7 +10936,7 @@ async function syncStandingsFromSupabase() {
 }
 
 function getNextMatchTime() {
-    const matchTimeStr = gameState._matchTime || '20:00';
+    const matchTimeStr = gameState._matchTime || '00:10';
     const [hours, minutes] = matchTimeStr.split(':').map(Number);
     const now = new Date();
     const today = new Date(now);
@@ -16729,7 +16729,7 @@ async function initMultiplayerGame(detail) {
         }
 
         // Store match_time from league settings (for daily countdown)
-        gameState._matchTime = league.match_time || '20:00';
+        gameState._matchTime = league.match_time || '00:10';
 
         // Set up next match for multiplayer (real countdown to match_time)
         gameState.nextMatch = gameState.nextMatch || {};
