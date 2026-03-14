@@ -28155,6 +28155,7 @@ body {
     /* --- JEUGDTEAM MOBILE --- */
     .youth-tabs {
         width: 100% !important;
+        margin-left: 0 !important;
     }
     .youth-tab {
         flex: 1;
