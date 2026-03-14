@@ -28810,15 +28810,6 @@ body {
     .stadium-map-container {
         min-height: auto;
     }
-    .stadium-map-overlay {
-        top: 6px;
-        left: 6px;
-        padding: 4px 10px;
-        border-radius: 8px;
-    }
-    .smo-value {
-        font-size: 0.9rem;
-    }
     .stadium-upgrade-panel {
         position: fixed !important;
         top: 0 !important;
