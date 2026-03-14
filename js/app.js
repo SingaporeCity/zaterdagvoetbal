@@ -6090,7 +6090,10 @@ function navigateToPage(page) {
         renderProfileTraining();
         initTrainingTabs();
     }
-    if (page === 'stadium') renderStadiumPage();
+    if (page === 'stadium') {
+        if (!gameState.stadiumVisited) { gameState.stadiumVisited = true; saveGame(); }
+        renderStadiumPage();
+    }
     if (page === 'scout') renderScoutPage();
     if (page === 'transfers') renderTransferMarket();
     if (page === 'finances') {
@@ -9981,9 +9984,9 @@ function getChecklistItems() {
     // Sponsor actief
     const hasSponsor = (gameState.sponsor?.weeksRemaining > 0) || (gameState.sponsorSlots?.bord?.weeksRemaining > 0);
 
-    // Individueel trainen: minstens 1 slot bezet
-    const slots = gameState.training?.slots || {};
-    const hasTraining = Object.values(slots).some(s => s.playerId !== null);
+    // Speler heeft vandaag getraind
+    const mp = initMyPlayer();
+    const hasTraining = mp.lastTrainingDate === getTodayString();
 
     // Scouting: missie actief, pending speler, of tip beschikbaar
     const hasScouting = !!gameState.scoutMission?.active || !!gameState.scoutMission?.pendingPlayer || !!gameState.scoutMission?.lastScoutDate;
@@ -9994,16 +9997,8 @@ function getChecklistItems() {
     // Transfermarkt bezocht
     const hasSquad = !!gameState.transfersVisited;
 
-    // Stadion verbeterd
-    const hasStadiumUpgrade = (() => {
-        const s = gameState.stadium;
-        if (!s) return false;
-        if (s.tribune && s.tribune !== 'tribune_1') return true;
-        if (s.grass && s.grass !== 'grass_0') return true;
-        if ((s.horeca || []).length > 0) return true;
-        if ((s.fanshop || []).length > 0) return true;
-        return false;
-    })();
+    // Stadion pagina bezocht
+    const hasStadiumUpgrade = !!gameState.stadiumVisited;
 
     // Staf: minstens 1 via nieuw of oud systeem
     const hasStaffNew = (gameState.hiredStaff?.medisch || []).length > 0;
