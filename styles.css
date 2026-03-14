@@ -25123,9 +25123,10 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 56px;
+    min-height: 56px;
     background: var(--bg-sidebar);
-    border-bottom: 1px solid var(--border);
+    border-bottom: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
     z-index: 200;
     align-items: center;
     padding: 0 16px;
