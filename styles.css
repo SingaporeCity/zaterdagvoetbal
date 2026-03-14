@@ -16228,10 +16228,10 @@ body {
         height: 60px;
     }
     .sponsor-options {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: 1fr;
     }
     #sponsor-market-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: 1fr;
     }
     .sponsor-option {
         padding: 6px 4px;
