@@ -28152,6 +28152,7 @@ body {
     }
     .gcb-track-level {
         font-size: 0.5rem;
+        margin-left: 0;
     }
     .gcb-track-reward {
         font-size: 0.45rem;
