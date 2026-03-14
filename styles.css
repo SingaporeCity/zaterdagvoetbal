@@ -28932,12 +28932,22 @@ body {
         flex-shrink: 0;
         font-size: 0.8rem;
     }
+    .youth-tabs {
+        width: 100% !important;
+        overflow-x: visible !important;
+        flex-wrap: nowrap !important;
+    }
     .youth-tab {
         flex: 1 !important;
         flex-shrink: 1 !important;
-        white-space: normal;
-        font-size: 0.7rem;
+        white-space: normal !important;
+        font-size: 0.65rem;
         text-align: center;
+        padding: 5px 2px !important;
+        min-width: 0 !important;
+    }
+    .youth-tab-age {
+        font-size: 0.55rem;
     }
 
     /* --- VOORZITTER INTRO (alle pagina's) --- */
