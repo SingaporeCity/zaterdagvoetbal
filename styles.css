@@ -28082,6 +28082,7 @@ body {
     }
     .nav-item.has-submenu.submenu-open .nav-submenu {
         display: block !important;
+        left: var(--sidebar-width) !important;
     }
 
     /* --- GLOBAL --- */
