@@ -2695,9 +2695,10 @@ function showSlotPlayerPicker(slotIndex, existingPlayer) {
         const isInjured = p.injuredUntil && p.injuredUntil > gameState.week;
         return !isSuspended && !isInjured;
     }).sort((a, b) => {
-        const aMatch = getPositionGroup(a.position) === slotGroup ? 1 : 0;
-        const bMatch = getPositionGroup(b.position) === slotGroup ? 1 : 0;
-        if (aMatch !== bMatch) return bMatch - aMatch;
+        const groupOrder = { attacker: 0, midfielder: 1, defender: 2, goalkeeper: 3 };
+        const aGroup = groupOrder[getPositionGroup(a.position)] ?? 9;
+        const bGroup = groupOrder[getPositionGroup(b.position)] ?? 9;
+        if (aGroup !== bGroup) return aGroup - bGroup;
         return b.overall - a.overall;
     });
 
@@ -2708,7 +2709,7 @@ function showSlotPlayerPicker(slotIndex, existingPlayer) {
         const energy = p.energy || 75;
         const energyColor = energy >= 70 ? '#4caf50' : energy >= 30 ? '#ff9800' : '#f44336';
         const stars = p.stars || 0;
-        const starsHTML = stars > 0 ? '★'.repeat(Math.floor(stars)) + (stars % 1 >= 0.25 ? '½' : '') : '-';
+        const starsHTML = stars > 0 ? '★'.repeat(Math.floor(stars)) + (stars % 1 >= 0.25 ? '½' : '') : '';
         const isMatch = getPositionGroup(p.position) === slotGroup;
 
         rowsHTML += `
