@@ -25610,7 +25610,7 @@ body {
 /* ============================================ */
 
 .nav-bugs-wrapper {
-    margin-top: auto;
+    margin-top: 8px;
     padding: 12px 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
