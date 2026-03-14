@@ -3147,7 +3147,7 @@ function renderStadiumMobileFacilities() {
     let html = '';
     const isMobile = window.matchMedia('(max-width: 768px)').matches;
     Object.keys(STADIUM_TILE_CONFIG).forEach(key => {
-        if (isMobile && key === 'scouting') return;
+        if (isMobile && key === 'youthscouting') return;
         const config = STADIUM_TILE_CONFIG[key];
         const currentId = gameState.stadium[config.stateKey];
         const currentIndex = config.levels.findIndex(l => l.id === currentId);
