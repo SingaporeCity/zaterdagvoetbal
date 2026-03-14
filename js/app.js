@@ -1857,8 +1857,8 @@ function renderAchievementCards(achievements, filterCategories) {
                 const desc = isHidden ? 'Nog niet ontdekt...' : a.description;
                 const icon = isHidden ? '❓' : a.icon;
                 const cls = a.unlocked ? 'ach-card unlocked' : (isHidden ? 'ach-card hidden-ach' : 'ach-card');
-                const xpBadge = a.reward?.playerXP ? `<span class="ach-xp-badge">+${a.reward.playerXP * 3} XP</span>` :
-                                a.reward?.managerXP ? `<span class="ach-xp-badge mgr">+${a.reward.managerXP * 3} XP</span>` : '';
+                const xpBadge = a.reward?.playerXP ? `<span class="ach-xp-badge">+${a.reward.playerXP * 2} XP</span>` :
+                                a.reward?.managerXP ? `<span class="ach-xp-badge mgr">+${a.reward.managerXP * 2} XP</span>` : '';
                 const showProgress = !a.unlocked && !isHidden && a.progressTarget > 0;
                 const progressBar = showProgress
                     ? `<div class="ach-card-progress"><div class="ach-card-progress-fill" style="width:${Math.round((a.progressCurrent / a.progressTarget) * 100)}%"></div><span class="ach-card-progress-text">${a.progressCurrent}/${a.progressTarget}</span></div>`
@@ -12399,7 +12399,7 @@ function showNextAchievement() {
 function showAchievementModal(achievement) {
     // Calculate total XP
     const reward = achievement.reward || {};
-    const totalXP = ((reward.playerXP || 0) + (reward.managerXP || 0) + (reward.xp || 0)) * 3;
+    const totalXP = ((reward.playerXP || 0) + (reward.managerXP || 0) + (reward.xp || 0)) * 2;
 
     const overlay = document.createElement('div');
     overlay.className = 'achievement-modal-overlay';
@@ -12430,8 +12430,8 @@ function claimAchievement(btn) {
     btn.disabled = true;
     const overlay = btn.closest('.achievement-modal-overlay');
     const reward = overlay._achievementReward || {};
-    const playerXP = (reward.playerXP || 0) * 3;
-    const managerXP = ((reward.managerXP || 0) + (reward.xp || 0)) * 3;
+    const playerXP = (reward.playerXP || 0) * 2;
+    const managerXP = ((reward.managerXP || 0) + (reward.xp || 0)) * 2;
 
     // Capture levels before XP grant for level-up detection
     const mgrBefore = getManagerLevel(gameState.manager?.xp || 0);
