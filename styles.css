@@ -28051,20 +28051,28 @@ body {
         max-height: none !important;
     }
     /* Lineup/tactics: vertical stack on mobile */
+    .tactics-panel.active {
+        overflow: visible !important;
+        min-height: auto !important;
+        flex: none !important;
+    }
     .lineup-container {
         display: flex !important;
         flex-direction: column !important;
         gap: 12px !important;
         overflow: visible !important;
+        flex: none !important;
     }
     .lineup-pitch-panel {
         order: -1;
         overflow: visible !important;
         max-height: none !important;
+        flex: none !important;
     }
     .lineup-players-panel {
         max-height: none !important;
         overflow: visible !important;
+        flex: none !important;
     }
     .lineup-player-groups {
         max-height: none !important;
