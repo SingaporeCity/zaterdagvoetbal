@@ -9908,9 +9908,14 @@ function renderDashboardTopPlayers() {
     const container = document.getElementById('dashboard-toptalents');
     if (!container) return;
 
-    // Get youth players sorted by potential
+    // Get youth players sorted by overall (level), then potential
     const topTalents = [...(gameState.youthPlayers || [])]
-        .sort((a, b) => (b.potentialStars || 1) - (a.potentialStars || 1))
+        .sort((a, b) => {
+            const aLevel = getYouthLevel(a.overall, getYouthMaxLevel(a.age));
+            const bLevel = getYouthLevel(b.overall, getYouthMaxLevel(b.age));
+            if (bLevel !== aLevel) return bLevel - aLevel;
+            return (b.potentialStars || 1) - (a.potentialStars || 1);
+        })
         .slice(0, 3);
 
     if (topTalents.length === 0) {
