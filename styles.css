@@ -28091,29 +28091,32 @@ body {
     }
     .gcb {
         width: auto !important;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         padding: 7px 10px;
-        gap: 8px;
+        gap: 4px 8px;
         border-radius: 10px;
     }
+    .gcb-tracks {
+        order: -1;
+        flex: 0 0 100%;
+    }
+    .gcb-rating {
+        padding: 3px 7px;
+        border-radius: 5px;
+    }
+    .gcb-rating-value {
+        font-size: 0.9rem;
+    }
+    .gcb-rating-label {
+        font-size: 0.4rem;
+        letter-spacing: 0.5px;
+    }
     .gcb-budget {
-        padding: 0 2px;
-        border-left: 1px solid rgba(255, 255, 255, 0.08);
-        padding-left: 8px;
+        margin-left: auto;
+        padding: 0;
     }
     .gcb-budget-value {
         font-size: 0.85rem;
-    }
-    .gcb-rating {
-        padding: 4px 8px;
-        border-radius: 6px;
-    }
-    .gcb-rating-value {
-        font-size: 1.15rem;
-    }
-    .gcb-rating-label {
-        font-size: 0.45rem;
-        letter-spacing: 0.5px;
     }
     .gcb-tracks {
         min-width: 0;
@@ -28596,13 +28599,13 @@ body {
     }
     .gcb {
         padding: 5px 8px;
-        gap: 6px;
+        gap: 3px 6px;
     }
     .gcb-rating {
-        padding: 3px 6px;
+        padding: 2px 5px;
     }
     .gcb-rating-value {
-        font-size: 1rem;
+        font-size: 0.8rem;
     }
     .gcb-tracks {
         min-width: 0;
