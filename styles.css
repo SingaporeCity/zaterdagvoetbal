@@ -27915,16 +27915,17 @@ body {
 
 /* Mobile adjustments — onboarding & tutorial */
 @media (max-width: 768px) {
-    /* Overlay: less padding, top-aligned on mobile */
+    /* Overlay: center on mobile, account for header */
     .onboarding-overlay {
         padding: 8px;
+        padding-top: 64px;
         align-items: flex-start;
     }
 
     /* Panel: full width, adapt padding */
     .onboarding-panel {
         width: 100%;
-        max-height: calc(100vh - 16px);
+        max-height: calc(100vh - 72px);
         padding: 18px 16px;
         border-radius: 14px;
     }
