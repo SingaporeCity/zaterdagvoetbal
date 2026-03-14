@@ -25814,6 +25814,14 @@ body {
     white-space: nowrap;
 }
 
+.bh-player {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-left: 4px;
+}
+
 .bh-count {
     font-size: 0.8rem;
     font-weight: 700;

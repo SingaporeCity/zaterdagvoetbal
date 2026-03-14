@@ -13293,21 +13293,30 @@ async function renderBugLeaderboard() {
         return;
     }
 
-    // Fetch club names for these users
+    // Fetch club names + player names for these users
     const { data: clubs } = await supabase
         .from('clubs')
         .select('owner_id, name')
         .in('owner_id', userIds)
         .eq('is_ai', false);
 
-    const nameMap = {};
+    const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', userIds);
+
+    const clubMap = {};
     (clubs || []).forEach(c => {
-        if (!nameMap[c.owner_id]) nameMap[c.owner_id] = c.name;
+        if (!clubMap[c.owner_id]) clubMap[c.owner_id] = c.name;
+    });
+    const playerMap = {};
+    (profiles || []).forEach(p => {
+        if (p.display_name) playerMap[p.id] = p.display_name;
     });
 
     // Sort by count descending
     const sorted = userIds
-        .map(uid => ({ uid, count: counts[uid], name: nameMap[uid] || 'Onbekend' }))
+        .map(uid => ({ uid, count: counts[uid], club: clubMap[uid] || 'Onbekend', player: playerMap[uid] || '' }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 10);
 
@@ -13319,7 +13328,7 @@ async function renderBugLeaderboard() {
         const rank = i < 3 ? medals[i] : `${i + 1}.`;
         return `<div class="bh-row${isMe ? ' bh-me' : ''}">
             <span class="bh-rank">${rank}</span>
-            <span class="bh-name">${escapeHtml(entry.name)}</span>
+            <span class="bh-name">${escapeHtml(entry.club)}${entry.player ? ` <em class="bh-player">${escapeHtml(entry.player)}</em>` : ''}</span>
             <span class="bh-count">${entry.count} 🐛</span>
         </div>`;
     }).join('');
