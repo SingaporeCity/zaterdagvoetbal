@@ -388,7 +388,7 @@ function showOverallReveal(playerName, minVal, maxVal, realVal, starsMin, starsM
                     if (isGreat) {
                         finalEl.classList.add('reveal-great');
                         spawnConfetti(effectsEl);
-                    } else if (isBad) {
+                    } else if (isBad && !(realStars >= 0.5)) {
                         finalEl.classList.add('reveal-bad');
                         spawnRain(effectsEl);
                     }
