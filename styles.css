@@ -16211,13 +16211,38 @@ body {
 
 @media (max-width: 700px) {
     .sponsor-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: 90px 1fr;
+        gap: 8px;
+    }
+    .sponsor-visual {
+        width: 90px;
+    }
+    .sponsor-visual .kit-shirt-svg {
+        width: 60px;
+    }
+    .sponsor-visual .kit-shorts-svg {
+        width: 44px;
+    }
+    .reclamebord-svg {
+        width: 85px;
+        height: 60px;
     }
     .sponsor-options {
         grid-template-columns: repeat(3, 1fr);
     }
     #sponsor-market-grid {
         grid-template-columns: repeat(3, 1fr);
+    }
+    .sponsor-option {
+        padding: 6px 4px;
+        font-size: 0.7rem;
+    }
+    .sponsor-section {
+        padding: 8px 10px;
+    }
+    .sponsor-section-label {
+        font-size: 0.65rem;
+        margin-bottom: 4px;
     }
 }
 
