@@ -28144,6 +28144,8 @@ body {
     }
     .gcb-track-icon {
         font-size: 0.6rem;
+        width: 0.7rem;
+        text-align: center;
     }
     .gcb-track-name,
     .gcb-xp-label {
