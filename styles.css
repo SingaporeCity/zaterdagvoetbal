@@ -25158,7 +25158,7 @@ body {
 
     .nav-item {
         justify-content: flex-start;
-        padding: 10px 24px;
+        padding: 8px 20px;
     }
 
     .club-info {
@@ -25167,7 +25167,23 @@ body {
 
     .sidebar-header {
         flex-direction: row;
-        padding: 24px;
+        padding: 10px 16px;
+        gap: 10px;
+    }
+
+    .club-badge {
+        width: 34px;
+        height: 41px;
+    }
+
+    .club-name {
+        font-size: 1.05rem;
+        margin-bottom: 1px;
+    }
+
+    .club-division {
+        font-size: 0.7rem;
+        padding: 1px 6px;
     }
 
     .sidebar-footer .stat-label {
