@@ -28016,6 +28016,14 @@ body {
     .page.active {
         overflow-y: auto !important;
         overflow-x: hidden !important;
+        flex: none !important;
+        min-height: auto !important;
+    }
+    #tactics.page.active {
+        overflow: visible !important;
+        overflow-y: auto !important;
+        flex: none !important;
+        min-height: auto !important;
     }
     /* Dashboard specific: remove fixed height + overflow locks */
     #dashboard.active {
