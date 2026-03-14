@@ -16587,6 +16587,10 @@ async function initMultiplayerGame(detail) {
             }
         }
 
+        // Apply saved club name + colors to header/badge
+        updateClubDisplays();
+        applyClubColors();
+
         // Render everything
         renderStandings();
         renderTopScorers();

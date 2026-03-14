@@ -999,6 +999,7 @@ async function generatePlayersForClub(clubId, leagueId, division, tier = 'player
             nationality: natCode.toLowerCase(),
             overall,
             potential: overall,
+            stars,
             attributes: { ...attributes, _stars: stars },
             morale: rnd(60, 90),
             fitness: 100,
