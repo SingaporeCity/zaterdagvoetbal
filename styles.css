@@ -28103,21 +28103,13 @@ body {
         margin-bottom: 2px;
     }
     .gcb-rating {
-        padding: 4px 8px;
-        border-radius: 6px;
-    }
-    .gcb-rating-value {
-        font-size: 1.1rem;
-    }
-    .gcb-rating-label {
-        font-size: 0.42rem;
-        letter-spacing: 0.5px;
+        display: none !important;
     }
     .gcb-budget {
         padding: 0;
     }
     .gcb-budget-value {
-        font-size: 0.95rem;
+        font-size: 1.15rem;
     }
     .gcb-tracks {
         min-width: 0;
