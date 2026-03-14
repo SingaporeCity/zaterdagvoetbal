@@ -142,8 +142,8 @@ export function calculateTeamStrength(lineup, formation, tactics, players, optio
             fitMultiplier = 0.75; // Bigger penalty for wrong group
         }
 
-        // Energy factor: 100% energy = ×1.0, 50% = ×0.85, 30% = ×0.79
-        const energyFactor = 0.7 + ((player.energy || 100) / 100) * 0.3;
+        // Energy factor: 100% = ×1.0, 50% = ×0.67 (ovr 6→4), 0% = ×0.33
+        const energyFactor = 0.333 + ((player.energy || 100) / 100) * 0.667;
         const playerStrength = player.overall * fitMultiplier * energyFactor;
 
         switch (positionGroup) {
