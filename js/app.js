@@ -11133,8 +11133,8 @@ function renderMatchReport() {
     const resultText = resultType === 'win' ? 'Gewonnen!' : resultType === 'loss' ? 'Verloren' : 'Gelijkspel';
 
     // Stats
-    const possHome = isHome ? match.possession.home : match.possession.away;
-    const possAway = isHome ? match.possession.away : match.possession.home;
+    const possHome = isHome ? (match.possession?.home ?? 50) : (match.possession?.away ?? 50);
+    const possAway = isHome ? (match.possession?.away ?? 50) : (match.possession?.home ?? 50);
     const shotsHome = isHome ? match.shots.home : match.shots.away;
     const shotsAway = isHome ? match.shots.away : match.shots.home;
     const sotHome = isHome ? match.shotsOnTarget.home : match.shotsOnTarget.away;
@@ -11577,7 +11577,7 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
     const overlay = document.createElement('div');
     overlay.className = 'live-match-overlay';
 
-    const finalPossHome = isHome ? (result.possession?.home || 50) : (result.possession?.away || 50);
+    const finalPossHome = isHome ? (result.possession?.home ?? 50) : (result.possession?.away ?? 50);
     const finalPossAway = 100 - finalPossHome;
 
     overlay.innerHTML = `

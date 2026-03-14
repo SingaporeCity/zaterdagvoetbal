@@ -629,10 +629,15 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
     homeStrength.defense = Math.round(homeStrength.defense * homeMultiplier);
     homeStrength.midfield = Math.round(homeStrength.midfield * (1 + (homeMultiplier - 1) * 0.5));
 
-    // Calculate possession based on midfield strength
+    // Calculate possession based on midfield strength (guard against division by zero)
     const totalMidfield = homeStrength.midfield + awayStrength.midfield;
-    result.possession.home = Math.round((homeStrength.midfield / totalMidfield) * 100);
-    result.possession.away = 100 - result.possession.home;
+    if (totalMidfield > 0) {
+        result.possession.home = Math.round((homeStrength.midfield / totalMidfield) * 100);
+        result.possession.away = 100 - result.possession.home;
+    } else {
+        result.possession.home = 50;
+        result.possession.away = 50;
+    }
 
     // Initialize player ratings — base influenced by player quality + random match performance
     if (homeLineup) {
