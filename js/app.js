@@ -2521,19 +2521,20 @@ function initLineupDragDrop() {
             handleLineupDrop(slotIndex);
         });
 
-        // Tap-to-place: click on slot to place selected player or remove existing
+        // Tap-to-place: click on slot — mobile shows picker, desktop uses tap-select
         slot.addEventListener('click', () => {
             const slotIndex = parseInt(slot.dataset.slotIndex);
             const existing = gameState.lineup[slotIndex];
 
-            if (lineupTapSelected) {
-                // Place selected player in this slot
+            if (window.matchMedia('(max-width: 768px)').matches) {
+                // Mobile: show player picker dropdown
+                showSlotPlayerPicker(slotIndex, existing);
+            } else if (lineupTapSelected) {
                 lineupDragData = { player: lineupTapSelected, fromSlot: null };
                 handleLineupDrop(slotIndex);
                 lineupTapSelected = null;
                 document.querySelectorAll('.available-player.tap-selected').forEach(s => s.classList.remove('tap-selected'));
             } else if (existing) {
-                // Tapped an occupied slot — remove player
                 gameState.lineup[slotIndex] = null;
                 renderLineupPitch();
                 renderAvailablePlayers();
@@ -2665,6 +2666,105 @@ function handleLineupDrop(targetSlotIndex) {
     renderLineupPitch();
     renderAvailablePlayers();
     updateLineupFit();
+}
+
+function showSlotPlayerPicker(slotIndex, existingPlayer) {
+    // Remove any existing picker
+    document.querySelector('.slot-picker-overlay')?.remove();
+
+    const formation = FORMATIONS[gameState.formation];
+    const slotRole = formation?.positions[slotIndex]?.role || '';
+    const slotPosData = POSITIONS[slotRole];
+    const slotGroup = getPositionGroup(slotRole);
+
+    // Build player list: myPlayer + all squad players not in lineup
+    const lineupIds = new Set(gameState.lineup.filter(p => p).map(p => p.id));
+    const mp = initMyPlayer();
+    const mpOverall = Math.round((mp.attributes.SNE + mp.attributes.TEC + mp.attributes.PAS + mp.attributes.SCH + mp.attributes.VER + mp.attributes.FYS) / 6);
+    const myPlayerEntry = {
+        id: 'myplayer', name: mp.name, position: mp.position, overall: mpOverall,
+        stars: mp.stars || 1, isMyPlayer: true, energy: mp.energy || 100,
+        nationality: { code: 'NL', flag: '🇳🇱' }
+    };
+    const allPlayers = [myPlayerEntry, ...gameState.players.filter(p => !p.isMyPlayer)];
+
+    // Sort: matching position group first, then by overall
+    const available = allPlayers.filter(p => {
+        if (lineupIds.has(p.id)) return false;
+        const isSuspended = p.suspendedUntil && p.suspendedUntil > gameState.week;
+        const isInjured = p.injuredUntil && p.injuredUntil > gameState.week;
+        return !isSuspended && !isInjured;
+    }).sort((a, b) => {
+        const aMatch = getPositionGroup(a.position) === slotGroup ? 1 : 0;
+        const bMatch = getPositionGroup(b.position) === slotGroup ? 1 : 0;
+        if (aMatch !== bMatch) return bMatch - aMatch;
+        return b.overall - a.overall;
+    });
+
+    let rowsHTML = '';
+    available.forEach(p => {
+        const pd = POSITIONS[p.position];
+        const flag = typeof p.nationality === 'object' ? (p.nationality?.flag || '🏳️') : '🏳️';
+        const energy = p.energy || 75;
+        const energyColor = energy >= 70 ? '#4caf50' : energy >= 30 ? '#ff9800' : '#f44336';
+        const stars = p.stars || 0;
+        const starsHTML = stars > 0 ? '★'.repeat(Math.floor(stars)) + (stars % 1 >= 0.25 ? '½' : '') : '-';
+        const isMatch = getPositionGroup(p.position) === slotGroup;
+
+        rowsHTML += `
+            <div class="spp-row${isMatch ? ' spp-match' : ''}" data-player-id="${p.id}">
+                <span class="spp-pos" style="background:${pd?.color || '#666'}">${pd?.abbr || '??'}</span>
+                <span class="spp-flag">${flag}</span>
+                <span class="spp-name">${p.name}</span>
+                <span class="spp-energy"><span class="spp-energy-fill" style="width:${energy}%;background:${energyColor}"></span></span>
+                <span class="spp-overall" style="background:${pd?.color || '#666'}">${p.overall}</span>
+                <span class="spp-stars">${starsHTML}</span>
+            </div>`;
+    });
+
+    const overlay = document.createElement('div');
+    overlay.className = 'slot-picker-overlay';
+    overlay.innerHTML = `
+        <div class="slot-picker">
+            <div class="spp-header">
+                <span class="spp-title">${slotPosData?.name || slotRole} kiezen</span>
+                <button class="spp-close">✕</button>
+            </div>
+            ${existingPlayer ? `<button class="spp-remove-btn">✕ ${existingPlayer.name} verwijderen</button>` : ''}
+            <div class="spp-list">${rowsHTML || '<div class="spp-empty">Geen spelers beschikbaar</div>'}</div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Close
+    overlay.querySelector('.spp-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+    // Remove existing player
+    const removeBtn = overlay.querySelector('.spp-remove-btn');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+            gameState.lineup[slotIndex] = null;
+            overlay.remove();
+            renderLineupPitch();
+            renderAvailablePlayers();
+            updateLineupFit();
+            saveGame(gameState);
+        });
+    }
+
+    // Select player
+    overlay.querySelectorAll('.spp-row').forEach(row => {
+        row.addEventListener('click', () => {
+            const playerId = parsePlayerId(row.dataset.playerId);
+            let player = allPlayers.find(p => String(p.id) === String(playerId));
+            if (!player) return;
+            lineupDragData = { player, fromSlot: null };
+            handleLineupDrop(slotIndex);
+            overlay.remove();
+            saveGame(gameState);
+        });
+    });
 }
 
 function renderTacticsOptions() {
