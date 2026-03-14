@@ -521,7 +521,7 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
         shotsOnTarget: { home: 0, away: 0 },
         fouls: { home: 0, away: 0 },
         cards: { home: { yellow: 0, red: 0 }, away: { yellow: 0, red: 0 } },
-        xG: { home: 0, away: 0 }
+        xG: { home: 0.05, away: 0.05 }
     };
 
     // Use pre-calculated strengths (options like formationDrive/teamTraining are already baked in)
