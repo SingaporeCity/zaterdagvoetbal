@@ -28185,6 +28185,20 @@ body {
         grid-template-columns: 1fr !important;
         overflow: visible !important;
     }
+    .player-card.youth-card {
+        grid-template-columns: auto 1fr auto auto !important;
+        grid-template-rows: auto auto !important;
+        gap: 3px 6px !important;
+    }
+    .player-card.youth-card .yc-action {
+        grid-column: 1 / -1;
+        justify-content: stretch;
+    }
+    .player-card.youth-card .yc-action .btn {
+        flex: 1;
+        font-size: 0.72rem;
+        padding: 6px 8px;
+    }
     /* Lineup/tactics: vertical stack on mobile */
     .tactics-panel.active,
     #opstelling-panel.active,
