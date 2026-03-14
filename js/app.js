@@ -56,7 +56,7 @@ import {
 } from './storage.js';
 
 // Import multiplayer systems
-import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent, getClubPlayers, insertPlayerToSupabase, getFullSchedule, generateSchedule } from './multiplayer.js';
+import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent, findPlayerCurrentWeek, getClubPlayers, insertPlayerToSupabase, getFullSchedule, generateSchedule } from './multiplayer.js';
 import { subscribeToLeague, unsubscribeAll, fetchStandings } from './realtime.js';
 import { supabase, isSupabaseAvailable } from './supabase.js';
 
@@ -10646,6 +10646,9 @@ async function _playMultiplayerMatchInner() {
         gameState.nextMatch.time = getNextMatchTime();
 
         // Advance week — sync from DB (RPC already advanced it)
+        // Also clear any pending league update from realtime
+        gameState._pendingLeagueWeek = null;
+        gameState._pendingLeagueSeason = null;
         const { data: updatedLeague } = await supabase
             .from('leagues')
             .select('week, season')
@@ -16715,16 +16718,20 @@ async function initMultiplayerGame(detail) {
         gameState.nextMatch = gameState.nextMatch || {};
         gameState.nextMatch.time = getNextMatchTime();
 
-        // Check if current week already played (handles page refresh after match)
+        // Check if player has unseen match results from a previous week
+        // The league.week may have advanced (another player simulated), but THIS player
+        // hasn't seen their result yet. We need to find the right week for this player.
         if (gameState.multiplayer.clubId) {
             try {
-                const existingResult = await getMatchResult(
+                const playerWeek = await findPlayerCurrentWeek(
                     leagueId,
                     gameState.season || 1,
                     gameState.week || 1,
-                    gameState.multiplayer.clubId
+                    gameState.multiplayer.clubId,
+                    gameState.lastMatchPlayedAt
                 );
-                gameState._weekPlayed = !!existingResult;
+                gameState.week = playerWeek.week;
+                gameState._weekPlayed = playerWeek.alreadyPlayed;
             } catch (e) {
                 gameState._weekPlayed = false;
             }
@@ -16781,7 +16788,14 @@ async function initMultiplayerGame(detail) {
                 }
             },
             onMatchResult: (result) => {
-                showNotification(`Uitslag: ${result.home_score}-${result.away_score}`, 'info');
+                // Only show notification for OWN matches
+                const myClubId = gameState.multiplayer?.clubId;
+                if (myClubId && (result.home_club_id === myClubId || result.away_club_id === myClubId)) {
+                    // Don't show if we're currently playing (we'll see it in the match report)
+                    if (!multiplayerMatchInProgress) {
+                        showNotification(`Uitslag: ${result.home_score}-${result.away_score}`, 'info');
+                    }
+                }
             },
             onTransferChange: () => {
                 if (typeof renderTransferMarket === 'function') renderTransferMarket();
@@ -16792,10 +16806,18 @@ async function initMultiplayerGame(detail) {
                 }
             },
             onLeagueUpdate: (leagueUpdate) => {
+                // DON'T immediately advance the week — another player simulated,
+                // but THIS player may not have seen their result yet.
+                // Store as pending; it will be picked up after the player views their match.
                 if (leagueUpdate.week !== gameState.week || leagueUpdate.season !== gameState.season) {
-                    gameState.week = leagueUpdate.week;
-                    gameState.season = leagueUpdate.season;
-                    gameState._weekPlayed = false; // New round available
+                    if (multiplayerMatchInProgress) {
+                        // During active match: ignore completely (captured week/season is used)
+                        return;
+                    }
+                    // Store the pending advance — don't bump gameState.week yet
+                    gameState._pendingLeagueWeek = leagueUpdate.week;
+                    gameState._pendingLeagueSeason = leagueUpdate.season;
+                    // Refresh dashboard to show updated standings
                     renderDashboardExtras();
                 }
             }

@@ -1582,6 +1582,37 @@ export async function simulateWeek(leagueId, season, week, simulateMatchFn, calc
 }
 
 /**
+ * Find the correct week for this player.
+ * The league.week may have advanced (another player simulated), but this player
+ * might not have played/seen their result yet. Walk backwards to find the first
+ * unplayed week for this player.
+ */
+export async function findPlayerCurrentWeek(leagueId, season, leagueWeek, myClubId, lastMatchPlayedAt) {
+    // Check if there's a result for leagueWeek - 1 that the player hasn't processed yet
+    // (the league advanced past it, but the player never saw it)
+    for (let w = leagueWeek - 1; w >= 1; w--) {
+        const result = await getMatchResult(leagueId, season, w, myClubId);
+        if (result) {
+            // Result exists for this week — check if the player already processed it
+            // by comparing timestamps. If lastMatchPlayedAt is before the result was created,
+            // the player hasn't seen this result yet.
+            const resultTime = new Date(result.created_at).getTime();
+            const playerTime = lastMatchPlayedAt ? new Date(lastMatchPlayedAt).getTime() : 0;
+            if (playerTime < resultTime) {
+                // Player hasn't seen this result — this is their current week
+                return { week: w, alreadyPlayed: true };
+            }
+        } else {
+            // No result for this week — it hasn't been simulated yet, this is the week to play
+            return { week: w, alreadyPlayed: false };
+        }
+    }
+    // All previous weeks processed — player is on the current league week
+    const currentResult = await getMatchResult(leagueId, season, leagueWeek, myClubId);
+    return { week: leagueWeek, alreadyPlayed: !!currentResult };
+}
+
+/**
  * Get the scheduled opponent's club name for the dashboard
  */
 export async function getScheduledOpponent(leagueId, season, week, myClubId) {
