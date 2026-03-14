@@ -28059,7 +28059,10 @@ body {
         max-height: none !important;
     }
     /* Lineup/tactics: vertical stack on mobile */
-    .tactics-panel.active {
+    .tactics-panel.active,
+    #opstelling-panel.active,
+    #tactiek-panel.active,
+    #specialisten-panel.active {
         overflow: visible !important;
         min-height: auto !important;
         flex: none !important;
@@ -28067,15 +28070,26 @@ body {
     .lineup-container {
         display: flex !important;
         flex-direction: column !important;
+        grid-template-columns: none !important;
+        grid-template-rows: none !important;
         gap: 12px !important;
         overflow: visible !important;
         flex: none !important;
+        min-height: auto !important;
     }
     .lineup-pitch-panel {
         order: -1;
         overflow: visible !important;
         max-height: none !important;
         flex: none !important;
+        min-height: auto !important;
+    }
+    #lineup-pitch,
+    .lineup-pitch {
+        flex: none !important;
+        aspect-ratio: 5 / 3 !important;
+        width: 100% !important;
+        min-height: unset !important;
     }
     .lineup-players-panel {
         max-height: none !important;
