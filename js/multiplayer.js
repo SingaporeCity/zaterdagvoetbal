@@ -865,6 +865,12 @@ async function startLeague() {
         if (error) console.warn('[startLeague] Feed insert failed:', error.message);
     });
 
+    // Clean up lobby subscription before entering (prevents double enterLeague from realtime callback)
+    if (lobbySubscription) {
+        supabase.removeChannel(lobbySubscription);
+        lobbySubscription = null;
+    }
+
     // Enter the game
     const myClubId = humanClubs.find(c => c.owner_id === user.id)?.id;
     await enterLeague(leagueId, myClubId);
