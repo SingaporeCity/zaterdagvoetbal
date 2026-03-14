@@ -5943,11 +5943,16 @@ function navigateToPage(page) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(page)?.classList.add('active');
 
-    // Move global tiles into the active page's header
+    // Move global tiles: mobile → top header bar, desktop → page header
     const tiles = document.querySelector('.global-top-tiles');
-    const pageHeader = document.getElementById(page)?.querySelector('.page-header');
-    if (tiles && pageHeader) {
-        pageHeader.appendChild(tiles);
+    if (window.matchMedia('(max-width: 768px)').matches) {
+        const mobileHeader = document.querySelector('.mobile-header');
+        if (tiles && mobileHeader && !mobileHeader.contains(tiles)) {
+            mobileHeader.appendChild(tiles);
+        }
+    } else {
+        const pageHeader = document.getElementById(page)?.querySelector('.page-header');
+        if (tiles && pageHeader) pageHeader.appendChild(tiles);
     }
 
 
@@ -16549,10 +16554,15 @@ async function initMultiplayerGame(detail) {
             }
         }
 
-        // Move global tiles into dashboard header
+        // Move global tiles: mobile → top header bar, desktop → dashboard header
         const tiles = document.querySelector('.global-top-tiles');
-        const dashHeader = document.getElementById('dashboard')?.querySelector('.page-header');
-        if (tiles && dashHeader) dashHeader.appendChild(tiles);
+        if (window.matchMedia('(max-width: 768px)').matches) {
+            const mobileHeader = document.querySelector('.mobile-header');
+            if (tiles && mobileHeader) mobileHeader.appendChild(tiles);
+        } else {
+            const dashHeader = document.getElementById('dashboard')?.querySelector('.page-header');
+            if (tiles && dashHeader) dashHeader.appendChild(tiles);
+        }
 
         // Initialize ALL UI interactions (must match initGame)
         initNavigation();

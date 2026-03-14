@@ -28085,11 +28085,7 @@ body {
     }
     .page-header {
         gap: 8px;
-        flex-wrap: nowrap !important;
-        align-items: center;
-    }
-    .page-header .header-left {
-        min-width: 0;
+        flex-wrap: wrap;
     }
     .page {
         padding: 8px;
@@ -28105,6 +28101,12 @@ body {
         height: 44px;
         font-size: 1.5rem;
     }
+
+    /* --- XP TILE IN MOBILE HEADER BAR --- */
+    .mobile-title {
+        font-size: 1rem;
+        letter-spacing: 1px;
+    }
     .global-top-tiles {
         margin-left: auto;
         width: auto !important;
@@ -28112,59 +28114,53 @@ body {
     }
     .gcb {
         width: auto !important;
-        flex-wrap: wrap;
-        justify-content: center;
-        padding: 7px 10px;
-        gap: 6px 10px;
-        border-radius: 10px;
-    }
-    .gcb-tracks {
-        order: -1;
-        flex: 0 0 100%;
-        margin-bottom: 2px;
+        flex-wrap: nowrap;
+        background: none;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        gap: 6px;
     }
     .gcb-rating {
         display: none !important;
     }
-    .gcb-budget {
-        padding: 0;
-    }
-    .gcb-budget-value {
-        font-size: 1.15rem;
-    }
     .gcb-tracks {
         min-width: 0;
-        gap: 3px;
+        gap: 1px;
     }
     .gcb-track-row {
-        padding: 2px 4px;
-        gap: 2px;
+        padding: 0 2px;
+        gap: 1px;
     }
     .gcb-track-header {
-        gap: 4px;
+        gap: 3px;
     }
     .gcb-track-icon {
-        font-size: 0.65rem;
-    }
-    .gcb-track-name {
         font-size: 0.55rem;
+    }
+    .gcb-track-name,
+    .gcb-track-reward,
+    .gcb-xp-label {
+        display: none !important;
     }
     .gcb-track-level {
-        font-size: 0.55rem;
-    }
-    .gcb-track-reward {
         font-size: 0.5rem;
-        padding: 1px 4px;
     }
     .gcb-xp-track {
-        height: 12px;
-        border-radius: 5px;
+        height: 7px;
+        border-radius: 3px;
+        min-width: 50px;
     }
     .gcb-xp-fill {
-        border-radius: 5px;
+        border-radius: 3px;
     }
-    .gcb-xp-label {
-        font-size: 0.45rem;
+    .gcb-budget {
+        padding: 0;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        padding-left: 6px;
+    }
+    .gcb-budget-value {
+        font-size: 0.8rem;
     }
 
     /* --- STADIUM MOBILE: hide map, show facility buttons --- */
@@ -28611,30 +28607,20 @@ body {
         max-width: 96%;
         padding: 14px 10px;
     }
+    .mobile-title {
+        font-size: 0.85rem;
+    }
     .gcb {
-        padding: 5px 8px;
-        gap: 3px 6px;
-    }
-    .gcb-rating {
-        padding: 2px 5px;
-    }
-    .gcb-rating-value {
-        font-size: 0.8rem;
-    }
-    .gcb-tracks {
-        min-width: 0;
+        gap: 4px;
     }
     .gcb-track-icon {
         display: none !important;
     }
-    .gcb-track-name {
-        font-size: 0.5rem;
-    }
-    .gcb-track-reward {
-        font-size: 0.45rem;
+    .gcb-xp-track {
+        min-width: 40px;
     }
     .gcb-budget-value {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
     }
 
     /* --- GRIDS: naar 1 kolom op kleine telefoons --- */
