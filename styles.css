@@ -25743,14 +25743,20 @@ body {
     margin-top: 6px;
 }
 
+/* Compact bug form */
+.bug-form-compact {
+    padding: 14px !important;
+}
+.bug-form-compact .bug-textarea {
+    rows: 3;
+}
+
 /* Bug Hunter Leaderboard */
 .bug-leaderboard-card {
     background: var(--card-bg);
     border-radius: 12px;
     padding: 20px;
     border: 1px solid var(--border-color);
-    max-width: 600px;
-    margin-top: 8px;
 }
 
 .bug-leaderboard-title {

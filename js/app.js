@@ -13229,6 +13229,7 @@ function initBugReports() {
                 triggerAchievementCheck();
             }
             renderBugHistory();
+            renderBugLeaderboard();
             saveGame();
         }
         submitBtn.disabled = false;
