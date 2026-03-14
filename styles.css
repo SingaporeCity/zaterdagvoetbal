@@ -28092,31 +28092,32 @@ body {
     .gcb {
         width: auto !important;
         flex-wrap: wrap;
+        justify-content: center;
         padding: 7px 10px;
-        gap: 4px 8px;
+        gap: 6px 10px;
         border-radius: 10px;
     }
     .gcb-tracks {
         order: -1;
         flex: 0 0 100%;
+        margin-bottom: 2px;
     }
     .gcb-rating {
-        padding: 3px 7px;
-        border-radius: 5px;
+        padding: 4px 8px;
+        border-radius: 6px;
     }
     .gcb-rating-value {
-        font-size: 0.9rem;
+        font-size: 1.1rem;
     }
     .gcb-rating-label {
-        font-size: 0.4rem;
+        font-size: 0.42rem;
         letter-spacing: 0.5px;
     }
     .gcb-budget {
-        margin-left: auto;
         padding: 0;
     }
     .gcb-budget-value {
-        font-size: 0.85rem;
+        font-size: 0.95rem;
     }
     .gcb-tracks {
         min-width: 0;
