@@ -28463,6 +28463,17 @@ body {
         font-size: 1.5rem;
     }
 
+    /* --- DASHBOARD HEADER: season/week next to title --- */
+    #dashboard .header-left {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+    #dashboard .page-subtitle {
+        font-size: 0.75rem;
+        margin: 0;
+    }
+
     /* --- XP TILE IN MOBILE HEADER BAR --- */
     .mobile-title {
         font-size: 1rem;
