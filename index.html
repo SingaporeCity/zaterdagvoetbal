@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zaterdagvoetbal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/zaterdagvoetbal/assets/index-D4UaIuZE.js"></script>
+  <link rel="stylesheet" crossorigin href="/zaterdagvoetbal/assets/index-C7ivje3k.css">
+</head>
+<body>
+    <!-- ============================================ -->
+    <!-- MULTIPLAYER SCREENS (overlays above game)    -->
+    <!-- ============================================ -->
+
+    <!-- Auth Screen: Login / Signup -->
+    <div id="auth-screen" class="mp-overlay" style="display:none;">
+
+        <!-- Background illustrations -->
+        <div class="mp-bg-details" aria-hidden="true">
+            <!-- Beer glass — top left -->
+            <svg class="mp-bg-item mp-bg-beer" viewBox="0 0 80 120">
+                <rect x="16" y="22" width="42" height="68" rx="5" fill="#d4920a" stroke="#ffb300" stroke-width="3"/>
+                <rect x="19" y="30" width="36" height="57" rx="3" fill="#e8a817" opacity="0.6"/>
+                <ellipse cx="25" cy="24" rx="8" ry="6" fill="#fff8e1"/>
+                <ellipse cx="37" cy="21" rx="10" ry="7" fill="#fffde7"/>
+                <ellipse cx="50" cy="24" rx="8" ry="6" fill="#fff8e1"/>
+                <path d="M58 34 Q74 34 74 52 Q74 70 58 70" fill="none" stroke="#ffb300" stroke-width="3.5" stroke-linecap="round"/>
+                <circle cx="30" cy="55" r="2.5" fill="#ffe082" opacity="0.5"/>
+                <circle cx="42" cy="65" r="2" fill="#ffe082" opacity="0.4"/>
+                <circle cx="35" cy="45" r="3" fill="#ffe082" opacity="0.35"/>
+                <circle cx="46" cy="52" r="1.8" fill="#ffe082" opacity="0.45"/>
+            </svg>
+            <!-- Player avatar — top right -->
+            <svg class="mp-bg-item mp-bg-player" viewBox="0 0 100 180">
+                <!-- Shadow -->
+                <ellipse cx="50" cy="174" rx="22" ry="5" fill="#000" opacity="0.15"/>
+                <!-- Legs -->
+                <rect x="34" y="118" width="12" height="40" rx="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <rect x="54" y="118" width="12" height="40" rx="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <!-- Socks -->
+                <rect x="32" y="145" width="16" height="16" rx="3" fill="#1a6b2a" stroke="#145522" stroke-width="1"/>
+                <rect x="52" y="145" width="16" height="16" rx="3" fill="#1a6b2a" stroke="#145522" stroke-width="1"/>
+                <!-- Boots -->
+                <path d="M30,158 L30,168 Q30,172 34,172 L50,172 Q54,172 54,168 L54,162 L48,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M50,158 L50,168 Q50,172 54,172 L70,172 Q74,172 74,168 L74,162 L68,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <!-- Shorts -->
+                <path d="M28,104 L72,104 L68,128 Q64,132 54,132 L50,132 L46,132 Q36,132 32,128 Z" fill="#fff" stroke="#ddd" stroke-width="1.5"/>
+                <line x1="50" y1="104" x2="50" y2="130" stroke="#ddd" stroke-width="1" opacity="0.5"/>
+                <!-- Shirt body -->
+                <path d="M30,50 L30,106 Q30,110 34,110 L66,110 Q70,110 70,106 L70,50" fill="#1a6b2a" stroke="#145522" stroke-width="1.5"/>
+                <!-- Collar -->
+                <path d="M38,48 Q50,52 62,48" fill="#145522" stroke="#0f4a1a" stroke-width="1.5"/>
+                <!-- Sleeves -->
+                <path d="M30,50 L14,62 Q10,64 12,68 L18,80 Q20,84 24,82 L30,74 Z" fill="#1a6b2a" stroke="#145522" stroke-width="1.5"/>
+                <path d="M70,50 L86,62 Q90,64 88,68 L82,80 Q80,84 76,82 L70,74 Z" fill="#1a6b2a" stroke="#145522" stroke-width="1.5"/>
+                <!-- Arms -->
+                <path d="M18,78 L22,92" stroke="#e8c9a0" stroke-width="6" stroke-linecap="round"/>
+                <path d="M82,78 L78,92" stroke="#e8c9a0" stroke-width="6" stroke-linecap="round"/>
+                <!-- Shirt number -->
+                <text x="50" y="88" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#fff" opacity="0.9">9</text>
+                <!-- Shirt stripes -->
+                <line x1="30" y1="60" x2="70" y2="60" stroke="#145522" stroke-width="1" opacity="0.3"/>
+                <line x1="30" y1="70" x2="70" y2="70" stroke="#145522" stroke-width="1" opacity="0.3"/>
+                <!-- Head -->
+                <ellipse cx="50" cy="34" rx="16" ry="18" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1.5"/>
+                <!-- Hair -->
+                <path d="M34,30 Q34,14 50,14 Q66,14 66,30 L66,24 Q66,16 50,16 Q34,16 34,24 Z" fill="#3a2a1a"/>
+                <!-- Eyes -->
+                <ellipse cx="43" cy="34" rx="2" ry="2.5" fill="#2a2a2a"/>
+                <ellipse cx="57" cy="34" rx="2" ry="2.5" fill="#2a2a2a"/>
+                <!-- Eyebrows -->
+                <path d="M39,30 L47,29" stroke="#3a2a1a" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M53,29 L61,30" stroke="#3a2a1a" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Mouth — grin -->
+                <path d="M44,40 Q50,44 56,40" fill="none" stroke="#c9a87c" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Ears -->
+                <ellipse cx="34" cy="35" rx="3" ry="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <ellipse cx="66" cy="35" rx="3" ry="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+            </svg>
+            <!-- Player 2 avatar — top right, different kit -->
+            <svg class="mp-bg-item mp-bg-player2" viewBox="0 0 100 180">
+                <ellipse cx="50" cy="174" rx="22" ry="5" fill="#000" opacity="0.15"/>
+                <!-- Legs -->
+                <rect x="34" y="118" width="12" height="40" rx="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <rect x="54" y="118" width="12" height="40" rx="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <!-- Socks -->
+                <rect x="32" y="145" width="16" height="16" rx="3" fill="#c62828" stroke="#a11d1d" stroke-width="1"/>
+                <rect x="52" y="145" width="16" height="16" rx="3" fill="#c62828" stroke="#a11d1d" stroke-width="1"/>
+                <line x1="32" y1="150" x2="48" y2="150" stroke="#fff" stroke-width="1" opacity="0.4"/>
+                <line x1="52" y1="150" x2="68" y2="150" stroke="#fff" stroke-width="1" opacity="0.4"/>
+                <!-- Boots -->
+                <path d="M30,158 L30,168 Q30,172 34,172 L50,172 Q54,172 54,168 L54,162 L48,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M50,158 L50,168 Q50,172 54,172 L70,172 Q74,172 74,168 L74,162 L68,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <!-- Shorts -->
+                <path d="M28,104 L72,104 L68,128 Q64,132 54,132 L50,132 L46,132 Q36,132 32,128 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <!-- Shirt body — red -->
+                <path d="M30,50 L30,106 Q30,110 34,110 L66,110 Q70,110 70,106 L70,50" fill="#c62828" stroke="#a11d1d" stroke-width="1.5"/>
+                <!-- Collar — white -->
+                <path d="M38,48 Q50,52 62,48" fill="#fff" stroke="#ddd" stroke-width="1.5"/>
+                <!-- Sleeves -->
+                <path d="M30,50 L14,62 Q10,64 12,68 L18,80 Q20,84 24,82 L30,74 Z" fill="#c62828" stroke="#a11d1d" stroke-width="1.5"/>
+                <path d="M70,50 L86,62 Q90,64 88,68 L82,80 Q80,84 76,82 L70,74 Z" fill="#c62828" stroke="#a11d1d" stroke-width="1.5"/>
+                <!-- Arms -->
+                <path d="M18,78 L14,92" stroke="#d4a574" stroke-width="6" stroke-linecap="round"/>
+                <path d="M82,78 L86,92" stroke="#d4a574" stroke-width="6" stroke-linecap="round"/>
+                <!-- Shirt number -->
+                <text x="50" y="88" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#fff" opacity="0.9">5</text>
+                <!-- White side stripe -->
+                <line x1="30" y1="54" x2="30" y2="106" stroke="#fff" stroke-width="2" opacity="0.3"/>
+                <line x1="70" y1="54" x2="70" y2="106" stroke="#fff" stroke-width="2" opacity="0.3"/>
+                <!-- Head -->
+                <ellipse cx="50" cy="34" rx="16" ry="18" fill="#d4a574" stroke="#b8906a" stroke-width="1.5"/>
+                <!-- Hair — short buzz cut -->
+                <path d="M34,30 Q34,15 50,14 Q66,15 66,30" fill="#1a1a1a" stroke="#111" stroke-width="1"/>
+                <path d="M36,28 Q36,17 50,16 Q64,17 64,28" fill="#2a2a2a"/>
+                <!-- Eyes -->
+                <ellipse cx="43" cy="34" rx="2" ry="2.5" fill="#1a1a1a"/>
+                <ellipse cx="57" cy="34" rx="2" ry="2.5" fill="#1a1a1a"/>
+                <!-- Eyebrows -->
+                <path d="M39,30 L47,29" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M53,29 L61,30" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round"/>
+                <!-- Mouth — determined -->
+                <path d="M44,41 Q50,43 56,41" fill="none" stroke="#b8906a" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Ears -->
+                <ellipse cx="34" cy="35" rx="3" ry="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <ellipse cx="66" cy="35" rx="3" ry="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+            </svg>
+            <!-- Dugout bench — right side (kept) -->
+            <svg class="mp-bg-item mp-bg-dugout" viewBox="0 0 140 90">
+                <path d="M5,25 L70,5 L135,25 L135,33 L70,13 L5,33 Z" fill="#5d8aa8" stroke="#4a7a98" stroke-width="2"/>
+                <line x1="15" y1="30" x2="15" y2="78" stroke="#8a7e6b" stroke-width="4" stroke-linecap="round"/>
+                <line x1="125" y1="30" x2="125" y2="78" stroke="#8a7e6b" stroke-width="4" stroke-linecap="round"/>
+                <rect x="12" y="52" width="116" height="7" rx="3" fill="#8B4513" stroke="#6d3510" stroke-width="2"/>
+                <line x1="28" y1="59" x2="28" y2="78" stroke="#8a7e6b" stroke-width="3"/>
+                <line x1="70" y1="59" x2="70" y2="78" stroke="#8a7e6b" stroke-width="3"/>
+                <line x1="112" y1="59" x2="112" y2="78" stroke="#8a7e6b" stroke-width="3"/>
+                <path d="M2,78 L138,78" stroke="#4a7a48" stroke-width="2" stroke-dasharray="6 4"/>
+                <path d="M8,78 Q10,70 12,78" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+                <path d="M50,78 Q52,72 54,78" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+                <path d="M100,78 Q102,71 104,78" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+            </svg>
+            <!-- Player 3 — keeper (yellow kit), bottom right -->
+            <svg class="mp-bg-item mp-bg-player3" viewBox="0 0 100 180">
+                <ellipse cx="50" cy="174" rx="22" ry="5" fill="#000" opacity="0.15"/>
+                <!-- Legs -->
+                <rect x="34" y="118" width="12" height="40" rx="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <rect x="54" y="118" width="12" height="40" rx="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <!-- Socks -->
+                <rect x="32" y="145" width="16" height="16" rx="3" fill="#222" stroke="#111" stroke-width="1"/>
+                <rect x="52" y="145" width="16" height="16" rx="3" fill="#222" stroke="#111" stroke-width="1"/>
+                <!-- Boots -->
+                <path d="M30,158 L30,168 Q30,172 34,172 L50,172 Q54,172 54,168 L54,162 L48,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M50,158 L50,168 Q50,172 54,172 L70,172 Q74,172 74,168 L74,162 L68,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <!-- Shorts — long keeper shorts -->
+                <path d="M28,104 L72,104 L68,132 Q64,136 54,136 L46,136 Q36,136 32,132 Z" fill="#222" stroke="#111" stroke-width="1.5"/>
+                <!-- Shirt — yellow keeper kit -->
+                <path d="M30,50 L30,106 Q30,110 34,110 L66,110 Q70,110 70,106 L70,50" fill="#e8b800" stroke="#c9a000" stroke-width="1.5"/>
+                <!-- Collar -->
+                <path d="M38,48 Q50,52 62,48" fill="#c9a000" stroke="#a68800" stroke-width="1.5"/>
+                <!-- Sleeves -->
+                <path d="M30,50 L14,62 Q10,64 12,68 L18,80 Q20,84 24,82 L30,74 Z" fill="#e8b800" stroke="#c9a000" stroke-width="1.5"/>
+                <path d="M70,50 L86,62 Q90,64 88,68 L82,80 Q80,84 76,82 L70,74 Z" fill="#e8b800" stroke="#c9a000" stroke-width="1.5"/>
+                <!-- Gloves -->
+                <path d="M18,78 L20,92" stroke="#e8c9a0" stroke-width="6" stroke-linecap="round"/>
+                <circle cx="20" cy="92" r="4" fill="#e8b800" stroke="#c9a000" stroke-width="1"/>
+                <path d="M82,78 L80,92" stroke="#e8c9a0" stroke-width="6" stroke-linecap="round"/>
+                <circle cx="80" cy="92" r="4" fill="#e8b800" stroke="#c9a000" stroke-width="1"/>
+                <!-- Shirt number -->
+                <text x="50" y="88" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#222" opacity="0.9">1</text>
+                <!-- Head -->
+                <ellipse cx="50" cy="34" rx="16" ry="18" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1.5"/>
+                <!-- Hair — short sides -->
+                <path d="M34,28 Q34,14 50,13 Q66,14 66,28 L64,22 Q62,16 50,15 Q38,16 36,22 Z" fill="#6b4226"/>
+                <!-- Eyes -->
+                <ellipse cx="43" cy="34" rx="2" ry="2.5" fill="#2a2a2a"/>
+                <ellipse cx="57" cy="34" rx="2" ry="2.5" fill="#2a2a2a"/>
+                <!-- Eyebrows -->
+                <path d="M39,30 L47,29" stroke="#6b4226" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M53,29 L61,30" stroke="#6b4226" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Mouth -->
+                <path d="M44,41 L56,41" stroke="#c9a87c" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Ears -->
+                <ellipse cx="34" cy="35" rx="3" ry="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <ellipse cx="66" cy="35" rx="3" ry="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+            </svg>
+            <!-- Player 4 — blue kit, bottom center-left -->
+            <svg class="mp-bg-item mp-bg-player4" viewBox="0 0 100 180">
+                <ellipse cx="50" cy="174" rx="22" ry="5" fill="#000" opacity="0.15"/>
+                <!-- Legs -->
+                <rect x="34" y="118" width="12" height="40" rx="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <rect x="54" y="118" width="12" height="40" rx="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <!-- Socks -->
+                <rect x="32" y="145" width="16" height="16" rx="3" fill="#1565c0" stroke="#0d47a1" stroke-width="1"/>
+                <rect x="52" y="145" width="16" height="16" rx="3" fill="#1565c0" stroke="#0d47a1" stroke-width="1"/>
+                <!-- Boots -->
+                <path d="M30,158 L30,168 Q30,172 34,172 L50,172 Q54,172 54,168 L54,162 L48,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M50,158 L50,168 Q50,172 54,172 L70,172 Q74,172 74,168 L74,162 L68,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <!-- Shorts -->
+                <path d="M28,104 L72,104 L68,128 Q64,132 54,132 L46,132 Q36,132 32,128 Z" fill="#fff" stroke="#ddd" stroke-width="1.5"/>
+                <!-- Shirt — blue -->
+                <path d="M30,50 L30,106 Q30,110 34,110 L66,110 Q70,110 70,106 L70,50" fill="#1565c0" stroke="#0d47a1" stroke-width="1.5"/>
+                <!-- Collar -->
+                <path d="M38,48 Q50,52 62,48" fill="#0d47a1" stroke="#093a8a" stroke-width="1.5"/>
+                <!-- Sleeves -->
+                <path d="M30,50 L14,62 Q10,64 12,68 L18,80 Q20,84 24,82 L30,74 Z" fill="#1565c0" stroke="#0d47a1" stroke-width="1.5"/>
+                <path d="M70,50 L86,62 Q90,64 88,68 L82,80 Q80,84 76,82 L70,74 Z" fill="#1565c0" stroke="#0d47a1" stroke-width="1.5"/>
+                <!-- Arms -->
+                <path d="M18,78 L22,92" stroke="#d4a574" stroke-width="6" stroke-linecap="round"/>
+                <path d="M82,78 L78,92" stroke="#d4a574" stroke-width="6" stroke-linecap="round"/>
+                <!-- Shirt number -->
+                <text x="50" y="88" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#fff" opacity="0.9">8</text>
+                <!-- Head -->
+                <ellipse cx="50" cy="34" rx="16" ry="18" fill="#d4a574" stroke="#b8906a" stroke-width="1.5"/>
+                <!-- Hair — curly -->
+                <path d="M34,28 Q32,12 50,10 Q68,12 66,28" fill="#1a1a1a"/>
+                <circle cx="38" cy="18" r="4" fill="#1a1a1a"/>
+                <circle cx="50" cy="14" r="4.5" fill="#1a1a1a"/>
+                <circle cx="62" cy="18" r="4" fill="#1a1a1a"/>
+                <!-- Eyes -->
+                <ellipse cx="43" cy="34" rx="2" ry="2.5" fill="#1a1a1a"/>
+                <ellipse cx="57" cy="34" rx="2" ry="2.5" fill="#1a1a1a"/>
+                <!-- Eyebrows -->
+                <path d="M39,30 L47,29" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M53,29 L61,30" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Mouth — smile -->
+                <path d="M44,40 Q50,45 56,40" fill="none" stroke="#b8906a" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Ears -->
+                <ellipse cx="34" cy="35" rx="3" ry="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <ellipse cx="66" cy="35" rx="3" ry="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+            </svg>
+            <!-- Whistle — realistic metal with gold lanyard -->
+            <svg class="mp-bg-item mp-bg-whistle" viewBox="0 0 100 55">
+                <ellipse cx="50" cy="50" rx="35" ry="4" fill="#000" opacity="0.08"/>
+                <path d="M18,24 Q18,14 30,14 L58,13 Q66,13 70,18 L82,28 Q88,34 82,40 L68,42 Q60,42 56,38 L53,34 L30,35 Q18,35 18,24 Z" fill="#c0c0c0" stroke="#999" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M24,17 L62,16" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+                <path d="M20,28 L55,29" stroke="#a8a8a8" stroke-width="1.5" opacity="0.5"/>
+                <path d="M22,32 L53,33" stroke="#909090" stroke-width="1" opacity="0.4"/>
+                <ellipse cx="83" cy="33" rx="4.5" ry="5" fill="#555" stroke="#444" stroke-width="1.5"/>
+                <ellipse cx="83" cy="32" rx="2" ry="2.5" fill="#333"/>
+                <circle cx="18" cy="24" r="7" fill="none" stroke="#d4af37" stroke-width="3"/>
+                <circle cx="18" cy="24" r="4" fill="none" stroke="#d4af37" stroke-width="1" opacity="0.4"/>
+                <path d="M11,24 Q2,14 6,4 Q8,0 14,2" stroke="#d4af37" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <path d="M14,2 Q20,4 18,10" stroke="#d4af37" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <ellipse cx="42" cy="20" rx="12" ry="3" fill="#fff" opacity="0.15" transform="rotate(-2 42 20)"/>
+            </svg>
+        </div>
+
+        <div class="mp-card mp-card-with-logo">
+            <!-- Shield logo above card -->
+            <div class="kk-logo-above">
+                <svg viewBox="0 0 120 145" width="90" height="108">
+                    <defs>
+                        <linearGradient id="kk-sh1" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#1a3a24"/><stop offset="100%" stop-color="#0c1a0f"/>
+                        </linearGradient>
+                        <linearGradient id="kk-gd1" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#ffd54f"/><stop offset="100%" stop-color="#ff9800"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Shield -->
+                    <path d="M60,4 L112,22 L112,78 Q112,120 60,140 Q8,120 8,78 L8,22 Z" fill="url(#kk-sh1)" stroke="#5ce065" stroke-width="2.5"/>
+                    <path d="M60,10 L106,26 L106,76 Q106,115 60,134 Q14,115 14,76 L14,26 Z" fill="none" stroke="#5ce065" stroke-width="0.7" opacity="0.2"/>
+                    <!-- KELDER banner -->
+                    <rect x="14" y="32" width="92" height="16" rx="1" fill="#5ce065"/>
+                    <text x="60" y="44.5" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="15" letter-spacing="3" fill="#0c1a0f">KELDER</text>
+                    <!-- Stairs + ball -->
+                    <g transform="translate(30, 54)">
+                        <rect x="0" y="0" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.9"/>
+                        <rect x="9" y="9" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.7"/>
+                        <rect x="18" y="18" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.5"/>
+                        <rect x="27" y="27" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.35"/>
+                        <rect x="12" y="4" width="2" height="5" fill="#f5f2ea" opacity="0.4"/>
+                        <rect x="21" y="13" width="2" height="5" fill="#f5f2ea" opacity="0.3"/>
+                        <rect x="30" y="22" width="2" height="5" fill="#f5f2ea" opacity="0.2"/>
+                    </g>
+                    <circle cx="72" cy="92" r="7" fill="#f5f2ea" stroke="#ddd" stroke-width="1"/>
+                    <path d="M72,88 L74.5,90 L73.5,93 L70.5,93 L69.5,90 Z" fill="#1a3a24" opacity="0.5"/>
+                    <path d="M40,62 Q50,74 60,82 Q66,88 70,92" stroke="#ff9020" stroke-width="1" fill="none" stroke-dasharray="2 2" opacity="0.5"/>
+                    <!-- KLASSE banner -->
+                    <rect x="18" y="104" width="84" height="16" rx="1" fill="url(#kk-gd1)"/>
+                    <text x="60" y="116.5" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="15" letter-spacing="3" fill="#0c1a0f">KLASSE</text>
+                    <!-- Star -->
+                    <polygon points="60,12 62,18 68,18 63,22 65,28 60,25 55,28 57,22 52,18 58,18" fill="#ffd54f" opacity="0.7"/>
+                </svg>
+            </div>
+
+            <!-- Login Form -->
+            <div id="auth-login-form" class="mp-form">
+                <div class="mp-field">
+                    <label for="login-email">E-mail</label>
+                    <input type="email" id="login-email" placeholder="je@email.nl" autocomplete="email">
+                </div>
+                <div class="mp-field">
+                    <label for="login-password">Wachtwoord</label>
+                    <input type="password" id="login-password" placeholder="Wachtwoord" autocomplete="current-password">
+                </div>
+                <div id="login-error" class="mp-error"></div>
+                <button id="login-btn" class="mp-btn mp-btn-primary mp-btn-block">Inloggen</button>
+                <p class="mp-switch">Nog geen account? <a href="#" id="show-signup">Maak er een</a></p>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="auth-signup-form" class="mp-form" style="display:none;">
+                <div class="mp-field">
+                    <label for="signup-email">E-mail</label>
+                    <input type="email" id="signup-email" placeholder="je@email.nl" autocomplete="email">
+                </div>
+                <div class="mp-field">
+                    <label for="signup-password">Wachtwoord</label>
+                    <input type="password" id="signup-password" placeholder="Min. 6 tekens" autocomplete="new-password">
+                </div>
+                <div id="signup-error" class="mp-error"></div>
+                <button id="signup-btn" class="mp-btn mp-btn-primary mp-btn-block">Account aanmaken</button>
+                <p class="mp-switch">Al een account? <a href="#" id="show-login">Inloggen</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- League Lobby Screen -->
+    <div id="lobby-screen" class="mp-overlay" style="display:none;">
+
+        <!-- Background illustrations -->
+        <div class="mp-bg-details" aria-hidden="true">
+            <!-- Beer glass — top left -->
+            <svg class="mp-bg-item mp-bg-beer" viewBox="0 0 80 120">
+                <!-- Glass body -->
+                <rect x="16" y="22" width="42" height="68" rx="5" fill="#d4920a" stroke="#ffb300" stroke-width="3"/>
+                <!-- Beer liquid -->
+                <rect x="19" y="30" width="36" height="57" rx="3" fill="#e8a817" opacity="0.6"/>
+                <!-- Foam -->
+                <ellipse cx="25" cy="24" rx="8" ry="6" fill="#fff8e1"/>
+                <ellipse cx="37" cy="21" rx="10" ry="7" fill="#fffde7"/>
+                <ellipse cx="50" cy="24" rx="8" ry="6" fill="#fff8e1"/>
+                <!-- Handle -->
+                <path d="M58 34 Q74 34 74 52 Q74 70 58 70" fill="none" stroke="#ffb300" stroke-width="3.5" stroke-linecap="round"/>
+                <!-- Bubbles -->
+                <circle cx="30" cy="55" r="2.5" fill="#ffe082" opacity="0.5"/>
+                <circle cx="42" cy="65" r="2" fill="#ffe082" opacity="0.4"/>
+                <circle cx="35" cy="45" r="3" fill="#ffe082" opacity="0.35"/>
+                <circle cx="46" cy="52" r="1.8" fill="#ffe082" opacity="0.45"/>
+            </svg>
+
+            <!-- Player avatar — top right -->
+            <svg class="mp-bg-item mp-bg-player" viewBox="0 0 100 180">
+                <ellipse cx="50" cy="174" rx="22" ry="5" fill="#000" opacity="0.15"/>
+                <rect x="34" y="118" width="12" height="40" rx="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <rect x="54" y="118" width="12" height="40" rx="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <rect x="32" y="145" width="16" height="16" rx="3" fill="#1a6b2a" stroke="#145522" stroke-width="1"/>
+                <rect x="52" y="145" width="16" height="16" rx="3" fill="#1a6b2a" stroke="#145522" stroke-width="1"/>
+                <path d="M30,158 L30,168 Q30,172 34,172 L50,172 Q54,172 54,168 L54,162 L48,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M50,158 L50,168 Q50,172 54,172 L70,172 Q74,172 74,168 L74,162 L68,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M28,104 L72,104 L68,128 Q64,132 54,132 L50,132 L46,132 Q36,132 32,128 Z" fill="#fff" stroke="#ddd" stroke-width="1.5"/>
+                <line x1="50" y1="104" x2="50" y2="130" stroke="#ddd" stroke-width="1" opacity="0.5"/>
+                <path d="M30,50 L30,106 Q30,110 34,110 L66,110 Q70,110 70,106 L70,50" fill="#1a6b2a" stroke="#145522" stroke-width="1.5"/>
+                <path d="M38,48 Q50,52 62,48" fill="#145522" stroke="#0f4a1a" stroke-width="1.5"/>
+                <path d="M30,50 L14,62 Q10,64 12,68 L18,80 Q20,84 24,82 L30,74 Z" fill="#1a6b2a" stroke="#145522" stroke-width="1.5"/>
+                <path d="M70,50 L86,62 Q90,64 88,68 L82,80 Q80,84 76,82 L70,74 Z" fill="#1a6b2a" stroke="#145522" stroke-width="1.5"/>
+                <path d="M18,78 L22,92" stroke="#e8c9a0" stroke-width="6" stroke-linecap="round"/>
+                <path d="M82,78 L78,92" stroke="#e8c9a0" stroke-width="6" stroke-linecap="round"/>
+                <text x="50" y="88" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#fff" opacity="0.9">9</text>
+                <line x1="30" y1="60" x2="70" y2="60" stroke="#145522" stroke-width="1" opacity="0.3"/>
+                <line x1="30" y1="70" x2="70" y2="70" stroke="#145522" stroke-width="1" opacity="0.3"/>
+                <ellipse cx="50" cy="34" rx="16" ry="18" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1.5"/>
+                <path d="M34,30 Q34,14 50,14 Q66,14 66,30 L66,24 Q66,16 50,16 Q34,16 34,24 Z" fill="#3a2a1a"/>
+                <ellipse cx="43" cy="34" rx="2" ry="2.5" fill="#2a2a2a"/>
+                <ellipse cx="57" cy="34" rx="2" ry="2.5" fill="#2a2a2a"/>
+                <path d="M39,30 L47,29" stroke="#3a2a1a" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M53,29 L61,30" stroke="#3a2a1a" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M44,40 Q50,44 56,40" fill="none" stroke="#c9a87c" stroke-width="1.5" stroke-linecap="round"/>
+                <ellipse cx="34" cy="35" rx="3" ry="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <ellipse cx="66" cy="35" rx="3" ry="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+            </svg>
+
+            <!-- Player 2 avatar — top right, different kit -->
+            <svg class="mp-bg-item mp-bg-player2" viewBox="0 0 100 180">
+                <ellipse cx="50" cy="174" rx="22" ry="5" fill="#000" opacity="0.15"/>
+                <!-- Legs -->
+                <rect x="34" y="118" width="12" height="40" rx="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <rect x="54" y="118" width="12" height="40" rx="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <!-- Socks -->
+                <rect x="32" y="145" width="16" height="16" rx="3" fill="#c62828" stroke="#a11d1d" stroke-width="1"/>
+                <rect x="52" y="145" width="16" height="16" rx="3" fill="#c62828" stroke="#a11d1d" stroke-width="1"/>
+                <line x1="32" y1="150" x2="48" y2="150" stroke="#fff" stroke-width="1" opacity="0.4"/>
+                <line x1="52" y1="150" x2="68" y2="150" stroke="#fff" stroke-width="1" opacity="0.4"/>
+                <!-- Boots -->
+                <path d="M30,158 L30,168 Q30,172 34,172 L50,172 Q54,172 54,168 L54,162 L48,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M50,158 L50,168 Q50,172 54,172 L70,172 Q74,172 74,168 L74,162 L68,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <!-- Shorts -->
+                <path d="M28,104 L72,104 L68,128 Q64,132 54,132 L50,132 L46,132 Q36,132 32,128 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <!-- Shirt body — red -->
+                <path d="M30,50 L30,106 Q30,110 34,110 L66,110 Q70,110 70,106 L70,50" fill="#c62828" stroke="#a11d1d" stroke-width="1.5"/>
+                <!-- Collar — white -->
+                <path d="M38,48 Q50,52 62,48" fill="#fff" stroke="#ddd" stroke-width="1.5"/>
+                <!-- Sleeves -->
+                <path d="M30,50 L14,62 Q10,64 12,68 L18,80 Q20,84 24,82 L30,74 Z" fill="#c62828" stroke="#a11d1d" stroke-width="1.5"/>
+                <path d="M70,50 L86,62 Q90,64 88,68 L82,80 Q80,84 76,82 L70,74 Z" fill="#c62828" stroke="#a11d1d" stroke-width="1.5"/>
+                <!-- Arms -->
+                <path d="M18,78 L14,92" stroke="#d4a574" stroke-width="6" stroke-linecap="round"/>
+                <path d="M82,78 L86,92" stroke="#d4a574" stroke-width="6" stroke-linecap="round"/>
+                <!-- Shirt number -->
+                <text x="50" y="88" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#fff" opacity="0.9">5</text>
+                <!-- White side stripe -->
+                <line x1="30" y1="54" x2="30" y2="106" stroke="#fff" stroke-width="2" opacity="0.3"/>
+                <line x1="70" y1="54" x2="70" y2="106" stroke="#fff" stroke-width="2" opacity="0.3"/>
+                <!-- Head -->
+                <ellipse cx="50" cy="34" rx="16" ry="18" fill="#d4a574" stroke="#b8906a" stroke-width="1.5"/>
+                <!-- Hair — short buzz cut -->
+                <path d="M34,30 Q34,15 50,14 Q66,15 66,30" fill="#1a1a1a" stroke="#111" stroke-width="1"/>
+                <path d="M36,28 Q36,17 50,16 Q64,17 64,28" fill="#2a2a2a"/>
+                <!-- Eyes -->
+                <ellipse cx="43" cy="34" rx="2" ry="2.5" fill="#1a1a1a"/>
+                <ellipse cx="57" cy="34" rx="2" ry="2.5" fill="#1a1a1a"/>
+                <!-- Eyebrows -->
+                <path d="M39,30 L47,29" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M53,29 L61,30" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round"/>
+                <!-- Mouth — determined -->
+                <path d="M44,41 Q50,43 56,41" fill="none" stroke="#b8906a" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Ears -->
+                <ellipse cx="34" cy="35" rx="3" ry="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <ellipse cx="66" cy="35" rx="3" ry="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+            </svg>
+            <!-- Dugout bench — right side (kept) -->
+            <svg class="mp-bg-item mp-bg-dugout" viewBox="0 0 140 90">
+                <path d="M5,25 L70,5 L135,25 L135,33 L70,13 L5,33 Z" fill="#5d8aa8" stroke="#4a7a98" stroke-width="2"/>
+                <line x1="15" y1="30" x2="15" y2="78" stroke="#8a7e6b" stroke-width="4" stroke-linecap="round"/>
+                <line x1="125" y1="30" x2="125" y2="78" stroke="#8a7e6b" stroke-width="4" stroke-linecap="round"/>
+                <rect x="12" y="52" width="116" height="7" rx="3" fill="#8B4513" stroke="#6d3510" stroke-width="2"/>
+                <line x1="28" y1="59" x2="28" y2="78" stroke="#8a7e6b" stroke-width="3"/>
+                <line x1="70" y1="59" x2="70" y2="78" stroke="#8a7e6b" stroke-width="3"/>
+                <line x1="112" y1="59" x2="112" y2="78" stroke="#8a7e6b" stroke-width="3"/>
+                <path d="M2,78 L138,78" stroke="#4a7a48" stroke-width="2" stroke-dasharray="6 4"/>
+                <path d="M8,78 Q10,70 12,78" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+                <path d="M50,78 Q52,72 54,78" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+                <path d="M100,78 Q102,71 104,78" stroke="#5ce065" stroke-width="1.5" fill="none"/>
+            </svg>
+
+            <!-- Player 3 — keeper (yellow kit), bottom right -->
+            <svg class="mp-bg-item mp-bg-player3" viewBox="0 0 100 180">
+                <ellipse cx="50" cy="174" rx="22" ry="5" fill="#000" opacity="0.15"/>
+                <rect x="34" y="118" width="12" height="40" rx="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <rect x="54" y="118" width="12" height="40" rx="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <rect x="32" y="145" width="16" height="16" rx="3" fill="#222" stroke="#111" stroke-width="1"/>
+                <rect x="52" y="145" width="16" height="16" rx="3" fill="#222" stroke="#111" stroke-width="1"/>
+                <path d="M30,158 L30,168 Q30,172 34,172 L50,172 Q54,172 54,168 L54,162 L48,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M50,158 L50,168 Q50,172 54,172 L70,172 Q74,172 74,168 L74,162 L68,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M28,104 L72,104 L68,132 Q64,136 54,136 L46,136 Q36,136 32,132 Z" fill="#222" stroke="#111" stroke-width="1.5"/>
+                <path d="M30,50 L30,106 Q30,110 34,110 L66,110 Q70,110 70,106 L70,50" fill="#e8b800" stroke="#c9a000" stroke-width="1.5"/>
+                <path d="M38,48 Q50,52 62,48" fill="#c9a000" stroke="#a68800" stroke-width="1.5"/>
+                <path d="M30,50 L14,62 Q10,64 12,68 L18,80 Q20,84 24,82 L30,74 Z" fill="#e8b800" stroke="#c9a000" stroke-width="1.5"/>
+                <path d="M70,50 L86,62 Q90,64 88,68 L82,80 Q80,84 76,82 L70,74 Z" fill="#e8b800" stroke="#c9a000" stroke-width="1.5"/>
+                <path d="M18,78 L20,92" stroke="#e8c9a0" stroke-width="6" stroke-linecap="round"/>
+                <circle cx="20" cy="92" r="4" fill="#e8b800" stroke="#c9a000" stroke-width="1"/>
+                <path d="M82,78 L80,92" stroke="#e8c9a0" stroke-width="6" stroke-linecap="round"/>
+                <circle cx="80" cy="92" r="4" fill="#e8b800" stroke="#c9a000" stroke-width="1"/>
+                <text x="50" y="88" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#222" opacity="0.9">1</text>
+                <ellipse cx="50" cy="34" rx="16" ry="18" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1.5"/>
+                <path d="M34,28 Q34,14 50,13 Q66,14 66,28 L64,22 Q62,16 50,15 Q38,16 36,22 Z" fill="#6b4226"/>
+                <ellipse cx="43" cy="34" rx="2" ry="2.5" fill="#2a2a2a"/>
+                <ellipse cx="57" cy="34" rx="2" ry="2.5" fill="#2a2a2a"/>
+                <path d="M39,30 L47,29" stroke="#6b4226" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M53,29 L61,30" stroke="#6b4226" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M44,41 L56,41" stroke="#c9a87c" stroke-width="1.5" stroke-linecap="round"/>
+                <ellipse cx="34" cy="35" rx="3" ry="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+                <ellipse cx="66" cy="35" rx="3" ry="4" fill="#e8c9a0" stroke="#c9a87c" stroke-width="1"/>
+            </svg>
+            <!-- Player 4 — blue kit, bottom center-left -->
+            <svg class="mp-bg-item mp-bg-player4" viewBox="0 0 100 180">
+                <ellipse cx="50" cy="174" rx="22" ry="5" fill="#000" opacity="0.15"/>
+                <rect x="34" y="118" width="12" height="40" rx="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <rect x="54" y="118" width="12" height="40" rx="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <rect x="32" y="145" width="16" height="16" rx="3" fill="#1565c0" stroke="#0d47a1" stroke-width="1"/>
+                <rect x="52" y="145" width="16" height="16" rx="3" fill="#1565c0" stroke="#0d47a1" stroke-width="1"/>
+                <path d="M30,158 L30,168 Q30,172 34,172 L50,172 Q54,172 54,168 L54,162 L48,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M50,158 L50,168 Q50,172 54,172 L70,172 Q74,172 74,168 L74,162 L68,158 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+                <path d="M28,104 L72,104 L68,128 Q64,132 54,132 L46,132 Q36,132 32,128 Z" fill="#fff" stroke="#ddd" stroke-width="1.5"/>
+                <path d="M30,50 L30,106 Q30,110 34,110 L66,110 Q70,110 70,106 L70,50" fill="#1565c0" stroke="#0d47a1" stroke-width="1.5"/>
+                <path d="M38,48 Q50,52 62,48" fill="#0d47a1" stroke="#093a8a" stroke-width="1.5"/>
+                <path d="M30,50 L14,62 Q10,64 12,68 L18,80 Q20,84 24,82 L30,74 Z" fill="#1565c0" stroke="#0d47a1" stroke-width="1.5"/>
+                <path d="M70,50 L86,62 Q90,64 88,68 L82,80 Q80,84 76,82 L70,74 Z" fill="#1565c0" stroke="#0d47a1" stroke-width="1.5"/>
+                <path d="M18,78 L22,92" stroke="#d4a574" stroke-width="6" stroke-linecap="round"/>
+                <path d="M82,78 L78,92" stroke="#d4a574" stroke-width="6" stroke-linecap="round"/>
+                <text x="50" y="88" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#fff" opacity="0.9">8</text>
+                <ellipse cx="50" cy="34" rx="16" ry="18" fill="#d4a574" stroke="#b8906a" stroke-width="1.5"/>
+                <path d="M34,28 Q32,12 50,10 Q68,12 66,28" fill="#1a1a1a"/>
+                <circle cx="38" cy="18" r="4" fill="#1a1a1a"/>
+                <circle cx="50" cy="14" r="4.5" fill="#1a1a1a"/>
+                <circle cx="62" cy="18" r="4" fill="#1a1a1a"/>
+                <ellipse cx="43" cy="34" rx="2" ry="2.5" fill="#1a1a1a"/>
+                <ellipse cx="57" cy="34" rx="2" ry="2.5" fill="#1a1a1a"/>
+                <path d="M39,30 L47,29" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M53,29 L61,30" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M44,40 Q50,45 56,40" fill="none" stroke="#b8906a" stroke-width="1.5" stroke-linecap="round"/>
+                <ellipse cx="34" cy="35" rx="3" ry="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+                <ellipse cx="66" cy="35" rx="3" ry="4" fill="#d4a574" stroke="#b8906a" stroke-width="1"/>
+            </svg>
+            <!-- Whistle — realistic metal with gold lanyard -->
+            <svg class="mp-bg-item mp-bg-whistle" viewBox="0 0 100 55">
+                <ellipse cx="50" cy="50" rx="35" ry="4" fill="#000" opacity="0.08"/>
+                <path d="M18,24 Q18,14 30,14 L58,13 Q66,13 70,18 L82,28 Q88,34 82,40 L68,42 Q60,42 56,38 L53,34 L30,35 Q18,35 18,24 Z" fill="#c0c0c0" stroke="#999" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M24,17 L62,16" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+                <path d="M20,28 L55,29" stroke="#a8a8a8" stroke-width="1.5" opacity="0.5"/>
+                <path d="M22,32 L53,33" stroke="#909090" stroke-width="1" opacity="0.4"/>
+                <ellipse cx="83" cy="33" rx="4.5" ry="5" fill="#555" stroke="#444" stroke-width="1.5"/>
+                <ellipse cx="83" cy="32" rx="2" ry="2.5" fill="#333"/>
+                <circle cx="18" cy="24" r="7" fill="none" stroke="#d4af37" stroke-width="3"/>
+                <circle cx="18" cy="24" r="4" fill="none" stroke="#d4af37" stroke-width="1" opacity="0.4"/>
+                <path d="M11,24 Q2,14 6,4 Q8,0 14,2" stroke="#d4af37" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <path d="M14,2 Q20,4 18,10" stroke="#d4af37" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <ellipse cx="42" cy="20" rx="12" ry="3" fill="#fff" opacity="0.15" transform="rotate(-2 42 20)"/>
+            </svg>
+        </div>
+
+        <div class="mp-card mp-card-with-logo">
+            <!-- Shield logo above card -->
+            <div class="kk-logo-above">
+                <svg viewBox="0 0 120 145" width="90" height="108">
+                    <defs>
+                        <linearGradient id="kk-sh2" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#1a3a24"/><stop offset="100%" stop-color="#0c1a0f"/>
+                        </linearGradient>
+                        <linearGradient id="kk-gd2" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#ffd54f"/><stop offset="100%" stop-color="#ff9800"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M60,4 L112,22 L112,78 Q112,120 60,140 Q8,120 8,78 L8,22 Z" fill="url(#kk-sh2)" stroke="#5ce065" stroke-width="2.5"/>
+                    <path d="M60,10 L106,26 L106,76 Q106,115 60,134 Q14,115 14,76 L14,26 Z" fill="none" stroke="#5ce065" stroke-width="0.7" opacity="0.2"/>
+                    <rect x="14" y="32" width="92" height="16" rx="1" fill="#5ce065"/>
+                    <text x="60" y="44.5" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="15" letter-spacing="3" fill="#0c1a0f">KELDER</text>
+                    <g transform="translate(30, 54)">
+                        <rect x="0" y="0" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.9"/>
+                        <rect x="9" y="9" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.7"/>
+                        <rect x="18" y="18" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.5"/>
+                        <rect x="27" y="27" width="14" height="4" rx="1" fill="#f5f2ea" opacity="0.35"/>
+                        <rect x="12" y="4" width="2" height="5" fill="#f5f2ea" opacity="0.4"/>
+                        <rect x="21" y="13" width="2" height="5" fill="#f5f2ea" opacity="0.3"/>
+                        <rect x="30" y="22" width="2" height="5" fill="#f5f2ea" opacity="0.2"/>
+                    </g>
+                    <circle cx="72" cy="92" r="7" fill="#f5f2ea" stroke="#ddd" stroke-width="1"/>
+                    <path d="M72,88 L74.5,90 L73.5,93 L70.5,93 L69.5,90 Z" fill="#1a3a24" opacity="0.5"/>
+                    <path d="M40,62 Q50,74 60,82 Q66,88 70,92" stroke="#ff9020" stroke-width="1" fill="none" stroke-dasharray="2 2" opacity="0.5"/>
+                    <rect x="18" y="104" width="84" height="16" rx="1" fill="url(#kk-gd2)"/>
+                    <text x="60" y="116.5" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="15" letter-spacing="3" fill="#0c1a0f">KLASSE</text>
+                    <polygon points="60,12 62,18 68,18 63,22 65,28 60,25 55,28 57,22 52,18 58,18" fill="#ffd54f" opacity="0.7"/>
+                </svg>
+            </div>
+
+            <!-- My Leagues List (shown first when user has leagues) -->
+            <div id="lobby-my-leagues" class="mp-my-leagues" style="display:none;">
+                <h2 class="mp-my-leagues-title">Mijn competities</h2>
+                <div id="lobby-leagues-list" class="mp-leagues-list">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="mp-new-toggle" id="lobby-new-toggle">+ Nieuwe competitie of deelnemen</div>
+            </div>
+
+            <!-- Create or Join -->
+            <div id="lobby-choice" class="mp-lobby-choice">
+                <button id="lobby-random-btn" class="mp-btn mp-btn-primary mp-btn-block mp-btn-lg">Nieuwe competitie</button>
+                <div class="mp-divider"><span>of doe mee</span></div>
+                <div class="mp-join-row">
+                    <input type="text" id="lobby-join-code" class="mp-join-input" placeholder="INVITE CODE" maxlength="6" style="text-transform:uppercase;">
+                    <button id="lobby-join-btn" class="mp-btn mp-btn-secondary">Deelnemen</button>
+                </div>
+                <div id="lobby-error" class="mp-error"></div>
+            </div>
+
+            <button id="lobby-back" class="mp-logout-btn">Uitloggen</button>
+        </div>
+    </div>
+
+    <!-- Waiting Room Screen -->
+    <div id="waiting-screen" class="mp-overlay" style="display:none;">
+        <div class="mp-card">
+            <button id="waiting-back" class="mp-back-btn">&larr; Terug</button>
+            <h2 class="mp-waiting-title" id="waiting-league-name">Competitie</h2>
+            <div class="mp-invite-code-box">
+                <span class="mp-invite-label">Invite code</span>
+                <strong id="waiting-invite-code">------</strong>
+                <button id="waiting-copy-code" class="mp-btn mp-btn-small">Kopieer</button>
+            </div>
+            <div id="waiting-players" class="mp-waiting-players">
+                <!-- Player slots populated by JS -->
+            </div>
+            <div class="mp-waiting-info">
+                <p><span id="waiting-count">0</span>/8 spelers &mdash; AI-teams vullen de rest aan</p>
+            </div>
+            <button id="waiting-start-btn" class="mp-btn mp-btn-primary mp-btn-block mp-btn-lg" style="display:none;">Start competitie</button>
+            <p id="waiting-start-info" class="mp-info">Wacht tot de host de competitie start...</p>
+        </div>
+    </div>
+
+    <!-- League overlay removed — countdown is on dashboard -->
+
+    <!-- Main App Container -->
+    <div id="app">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <span class="mobile-title">Zaterdagvoetbal</span>
+        </div>
+
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header" id="sidebar-header-btn">
+                <div class="club-badge">
+                    <svg viewBox="0 0 100 120" class="badge-svg" id="club-badge-svg">
+                        <!-- Shield background -->
+                        <path d="M50 5 L95 25 L95 70 Q95 100 50 115 Q5 100 5 70 L5 25 Z" fill="var(--accent-green-dim)" stroke="var(--text-primary)" stroke-width="3" id="badge-path"/>
+
+                        <!-- Inner shield decoration -->
+                        <path d="M50 12 L88 28 L88 68 Q88 93 50 107 Q12 93 12 68 L12 28 Z" fill="none" stroke="var(--text-primary)" stroke-width="1" opacity="0.3"/>
+
+                        <!-- Goal net symbol -->
+                        <g transform="translate(35, 25)">
+                            <!-- Goal posts -->
+                            <rect x="0" y="8" width="3" height="22" fill="var(--text-primary)"/>
+                            <rect x="27" y="8" width="3" height="22" fill="var(--text-primary)"/>
+                            <rect x="0" y="5" width="30" height="4" fill="var(--text-primary)"/>
+                            <!-- Net lines -->
+                            <line x1="4" y1="9" x2="4" y2="30" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="10" y1="9" x2="10" y2="30" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="15" y1="9" x2="15" y2="30" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="20" y1="9" x2="20" y2="30" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="26" y1="9" x2="26" y2="30" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="3" y1="15" x2="27" y2="15" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <line x1="3" y1="22" x2="27" y2="22" stroke="var(--text-primary)" stroke-width="0.5" opacity="0.6"/>
+                            <!-- Ball going in -->
+                            <circle cx="15" cy="20" r="6" fill="var(--accent-orange)" stroke="var(--text-primary)" stroke-width="1"/>
+                            <path d="M12 17 L18 23 M18 17 L12 23" stroke="var(--text-primary)" stroke-width="0.8" opacity="0.7"/>
+                        </g>
+
+                        <!-- FC text -->
+                        <text x="50" y="70" text-anchor="middle" fill="var(--text-primary)" font-family="Bebas Neue, sans-serif" font-size="11" letter-spacing="2" id="badge-text-fc">FC</text>
+
+                        <!-- GOALS text -->
+                        <text x="50" y="85" text-anchor="middle" fill="var(--accent-orange)" font-family="Bebas Neue, sans-serif" font-size="16" font-weight="bold" letter-spacing="1" id="badge-text-1">GOALS</text>
+
+                        <!-- MAKEN text -->
+                        <text x="50" y="100" text-anchor="middle" fill="var(--text-primary)" font-family="Bebas Neue, sans-serif" font-size="12" letter-spacing="2" id="badge-text-2">MAKEN</text>
+                    </svg>
+                </div>
+                <div class="club-info">
+                    <h1 class="club-name" id="club-name-display">FC Goals Maken</h1>
+                    <span class="club-division">6e Klasse B</span>
+                </div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                            <polyline points="9,22 9,12 15,12 15,22"/>
+                        </svg>
+                    </span>
+                    <span>Dashboard</span>
+                </li>
+
+                <li class="nav-group-label">Wedstrijden</li>
+                <li class="nav-item has-submenu" data-page="wedstrijden">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2a10 10 0 010 20"/>
+                            <path d="M9.5 4.5L12 8l2.5-3.5"/>
+                            <path d="M4.5 9.5L8 12l-3.5 2.5"/>
+                            <path d="M14.5 19.5L12 16l-2.5 3.5"/>
+                            <path d="M19.5 14.5L16 12l3.5-2.5"/>
+                        </svg>
+                    </span>
+                    <span>Wedstrijden</span>
+                    <ul class="nav-submenu">
+                        <li data-tab="verslag">Resultaat</li>
+                        <li data-tab="waardering">Ratings</li>
+                        <li data-tab="programma">Competitie</li>
+                    </ul>
+                </li>
+                <li class="nav-item" data-page="squad">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 010 7.75"/>
+                        </svg>
+                    </span>
+                    <span>Selectie</span>
+                </li>
+                <li class="nav-item has-submenu" data-page="tactics">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <line x1="12" y1="3" x2="12" y2="21"/>
+                            <line x1="3" y1="12" x2="21" y2="12"/>
+                        </svg>
+                    </span>
+                    <span>Tactiek</span>
+                    <span class="nav-badge todo-badge" id="badge-tactics" style="display:none">!</span>
+                    <ul class="nav-submenu">
+                        <li data-tab="opstelling">Opstelling</li>
+                        <li data-tab="tactiek">Tactiek</li>
+                        <li data-tab="specialisten">Specialisten</li>
+                    </ul>
+                </li>
+
+                <li class="nav-group-label">Recruitment</li>
+                <li class="nav-item" data-page="transfers">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="17,1 21,5 17,9"/>
+                            <path d="M3 11V9a4 4 0 014-4h14"/>
+                            <polyline points="7,23 3,19 7,15"/>
+                            <path d="M21 13v2a4 4 0 01-4 4H3"/>
+                        </svg>
+                    </span>
+                    <span>Transfers</span>
+                </li>
+                <li class="nav-item" data-page="scout">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                    </span>
+                    <span>Scouting</span>
+                    <span class="nav-badge todo-badge" id="badge-scout" style="display:none">!</span>
+                </li>
+                <li class="nav-item" data-page="jeugdteam">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 3l1.5 4.5h4.5l-3.5 2.8 1.3 4.2L12 11.8l-3.8 2.7 1.3-4.2L6 7.5h4.5z"/>
+                            <path d="M12 17v5"/>
+                            <path d="M8 22h8"/>
+                        </svg>
+                    </span>
+                    <span>Jeugd</span>
+                    <span class="nav-badge todo-badge" id="badge-youth" style="display:none">!</span>
+                </li>
+
+                <li class="nav-group-label">Mijn Club</li>
+                <li class="nav-item" data-page="stadium">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 20h20"/>
+                            <path d="M4 20v-8l8-6 8 6v8"/>
+                            <path d="M2 12l10-8 10 8"/>
+                            <rect x="8" y="14" width="8" height="6"/>
+                        </svg>
+                    </span>
+                    <span>Sportcomplex</span>
+                </li>
+                <li class="nav-item" data-page="staff">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="8" r="4"/>
+                            <path d="M6 21v-2a4 4 0 014-4h2"/>
+                            <circle cx="18.5" cy="15.5" r="2.5"/>
+                            <path d="M20.3 17.3L22 19"/>
+                        </svg>
+                    </span>
+                    <span>Staf</span>
+                </li>
+                <li class="nav-item" data-page="sponsors">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 6L9 17l-5-5"/>
+                            <path d="M4 12a8 8 0 0116 0"/>
+                            <path d="M12 2v2"/>
+                            <path d="M4.93 4.93l1.41 1.41"/>
+                            <path d="M20 12h-2"/>
+                            <path d="M17.66 6.34l1.41-1.41"/>
+                            <path d="M4 12H2"/>
+                        </svg>
+                    </span>
+                    <span>Sponsors</span>
+                    <span class="nav-badge todo-badge" id="badge-sponsors" style="display:none">!</span>
+                </li>
+                <li class="nav-item" data-page="finances">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M15 9h-4.5a2 2 0 000 4h3a2 2 0 010 4H9"/>
+                            <path d="M12 5v2"/>
+                            <path d="M12 17v2"/>
+                        </svg>
+                    </span>
+                    <span>Financiën</span>
+                </li>
+
+                <li class="nav-group-label" id="nav-group-player-label">Mijn Speler</li>
+                <li class="nav-item has-submenu" data-page="training">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 5v14"/>
+                            <path d="M18 5v14"/>
+                            <path d="M6 12h12"/>
+                            <rect x="3" y="7" width="6" height="10" rx="1"/>
+                            <rect x="15" y="7" width="6" height="10" rx="1"/>
+                        </svg>
+                    </span>
+                    <span id="nav-player-name">Mijn Speler</span>
+                    <span class="nav-badge todo-badge" id="badge-training" style="display:none">!</span>
+                    <ul class="nav-submenu">
+                        <li data-tab="training">Training</li>
+                        <li data-tab="statistieken">Statistieken</li>
+                        <li data-tab="achievements">Achievements</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <div class="nav-bugs-wrapper">
+                <div class="nav-item nav-bugs-item" data-page="bugs">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 2l1.88 1.88"/>
+                            <path d="M14.12 3.88L16 2"/>
+                            <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/>
+                            <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/>
+                            <path d="M12 20v-9"/>
+                            <path d="M6.53 9C4.6 8.8 3 7.1 3 5"/>
+                            <path d="M6 13H2"/>
+                            <path d="M3 21c0-2.1 1.7-3.9 3.8-4"/>
+                            <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/>
+                            <path d="M22 13h-4"/>
+                            <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>
+                        </svg>
+                    </span>
+                    <span>BUGS</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Global Top Bar - Combined Player/Manager tile -->
+            <div class="global-top-tiles">
+                <div class="gcb" id="global-combined-bar">
+                    <div class="gcb-rating gtb-player-rating">
+                        <span class="gcb-rating-value" id="global-player-overall">50</span>
+                        <span class="gcb-rating-label">ALG</span>
+                    </div>
+                    <div class="gcb-tracks">
+                        <div class="gcb-track-row gcb-speler" id="global-player-bar" onclick="navigateTo('training')" style="cursor:pointer">
+                            <div class="gcb-track-header">
+                                <span class="gcb-track-icon">⚽</span>
+                                <span class="gcb-track-name">Speler</span>
+                                <span class="gcb-track-level">Niv. <span id="global-player-level">1</span></span>
+                                <span class="gcb-track-reward gcb-reward-sp" id="global-player-reward">+5 SP</span>
+                            </div>
+                            <div class="gcb-xp-track gcb-speler-track">
+                                <div class="gcb-xp-fill" id="global-player-xp-fill"></div>
+                                <span class="gcb-xp-label" id="global-player-xp-label">0 / 0 XP</span>
+                            </div>
+                        </div>
+                        <div class="gcb-track-row gcb-manager" id="global-top-bar" onclick="navigateTo('training')" style="cursor:pointer">
+                            <div class="gcb-track-header">
+                                <span class="gcb-track-icon">📋</span>
+                                <span class="gcb-track-name">Manager</span>
+                                <span class="gcb-track-level">Niv. <span id="global-manager-level">1</span></span>
+                                <span class="gcb-track-reward gcb-reward-cash" id="global-manager-reward">+€500</span>
+                            </div>
+                            <div class="gcb-xp-track gcb-manager-track">
+                                <div class="gcb-xp-fill" id="global-xp-fill"></div>
+                                <span class="gcb-xp-label" id="global-xp-label">0 / 0 XP</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gcb-budget">
+                        <span class="gcb-budget-value" id="global-budget-amount">€5.000</span>
+                    </div>
+                    <!-- Hidden for JS compat -->
+                    <span id="global-player-name" style="display:none"></span>
+                    <span id="global-manager-name" style="display:none"></span>
+                    <span id="global-player-title" style="display:none"></span>
+                    <span id="global-manager-title" style="display:none"></span>
+                </div>
+            </div>
+
+            <!-- Dashboard Page -->
+            <section id="dashboard" class="page active">
+                <!-- Page Header -->
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title dashboard-title" id="dashboard-title">Dashboard</h2>
+                        <p class="page-subtitle handwritten">Seizoen <span id="season-number">1</span> • Week <span id="week-number">4</span></p>
+                    </div>
+                </header>
+                <!-- Hidden elements for JS compatibility -->
+                <span id="header-budget" style="display:none;"></span>
+                <span id="trainer-title" style="display:none;"></span>
+                <span id="trainer-level" style="display:none;"></span>
+                <div id="xp-fill" style="display:none;"></div>
+
+                <!-- Dashboard 3x3 Grid -->
+                <div class="dash-grid">
+                    <!-- MATCH CARD - Row 1, Col 1-2 (2 wide, 1 high) -->
+                    <div class="dash-cell dash-match">
+                        <div class="match-card">
+                            <div class="card-header match-card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                                </svg>
+                                <span>Volgende Wedstrijd</span>
+                                <span class="match-meta"><span class="match-league">6e Klasse B</span> · Week <span id="poster-matchday">4</span></span>
+                            </div>
+                            <div class="match-body">
+                                <div class="match-team home">
+                                    <div class="team-badge home-badge">
+                                        <svg viewBox="0 0 60 72">
+                                            <path d="M30 3 L57 15 L57 42 Q57 60 30 69 Q3 60 3 42 L3 15 Z" fill="var(--accent-green-dim)" stroke="var(--text-primary)" stroke-width="2"/>
+                                        </svg>
+                                    </div>
+                                    <span class="team-name" id="home-team-name">FC Goals Maken</span>
+                                </div>
+                                <div class="match-center">
+                                    <div class="match-vs">VS</div>
+                                    <div class="match-timer">
+                                        <span id="timer-hours">00</span>:<span id="timer-minutes">00</span>:<span id="timer-seconds">00</span>
+                                    </div>
+                                </div>
+                                <div class="match-team away">
+                                    <div class="team-badge away-badge">
+                                        <svg viewBox="0 0 60 72">
+                                            <path d="M30 3 L57 15 L57 42 Q57 60 30 69 Q3 60 3 42 L3 15 Z" fill="#c62828" stroke="#fff" stroke-width="2"/>
+                                        </svg>
+                                    </div>
+                                    <span class="team-name" id="away-team-name">FC Rivaal</span>
+                                </div>
+                            </div>
+                            <button id="play-match-btn" class="match-play-btn">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg>
+                                SPEEL WEDSTRIJD
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STANDINGS - Row 1-2, Col 3 (1 wide, 2 high) -->
+                    <div class="dash-cell dash-standings">
+                        <div class="standings-card">
+                            <div class="card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                                <span>Competitiestand</span>
+                            </div>
+                            <div class="standings-table-wrapper">
+                                <table class="standings-table">
+                                    <thead>
+                                        <tr><th>#</th><th>Club</th><th>W</th><th>G</th><th>V</th><th>P</th></tr>
+                                    </thead>
+                                    <tbody id="standings-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STAR PLAYERS - Row 2, Col 1 (1x1) -->
+                    <div class="dash-cell dash-stars">
+                        <div class="finance-card">
+                            <div class="card-header" style="justify-content: flex-end;">
+                                <span>Financieel</span>
+                            </div>
+                            <div class="finance-body" id="dashboard-finances">
+                                <!-- Filled by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DAGELIJKS LIJSTJE - Row 2-3, Col 2 (1 wide, 2 high) -->
+                    <div class="dash-cell dash-todo">
+                        <div class="checklist-card">
+                            <div class="card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                    <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                                </svg>
+                                <span>Takenlijst</span>
+                            </div>
+                            <div class="checklist-list" id="dashboard-checklist">
+                                <!-- Filled by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TOPTALENTEN - Row 3, Col 2 (1x1) -->
+                    <div class="dash-cell dash-talents">
+                        <div class="talents-card">
+                            <div class="card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="2" width="18" height="18">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                </svg>
+                                <span>Toptalenten</span>
+                            </div>
+                            <div class="talents-list" id="dashboard-toptalents">
+                                <!-- Filled by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CHAIRMAN - Row 3, Col 3 (1x1) -->
+                    <div class="dash-cell dash-chairman">
+                        <div class="chairman-card">
+                            <div class="card-header chairman-card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                <span>Voorzitter</span>
+                            </div>
+                            <div class="chairman-body">
+                                <div class="chairman-intro-avatar" id="chairman-avatar">
+                                    <svg viewBox="0 0 55 60"><ellipse cx="27" cy="30" rx="14" ry="15" fill="#f5d0c5"/><ellipse cx="13" cy="29" rx="3" ry="4" fill="#e8bfb0"/><ellipse cx="41" cy="29" rx="3" ry="4" fill="#e8bfb0"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="#777"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="none" stroke="#666" stroke-width="0.8"/><rect x="14" y="17" width="26" height="3.5" rx="0.5" fill="#555"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="#888"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="none" stroke="#666" stroke-width="0.8"/><path d="M18 26 Q21 24 24 26" fill="none" stroke="#555" stroke-width="1.2"/><path d="M30 26 Q33 24 36 26" fill="none" stroke="#555" stroke-width="1.2"/><circle cx="21" cy="29" r="2.5" fill="white"/><circle cx="33" cy="29" r="2.5" fill="white"/><circle cx="21.5" cy="29.3" r="1.2" fill="#333"/><circle cx="33.5" cy="29.3" r="1.2" fill="#333"/><circle cx="21" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="33" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="26" y1="29" x2="28" y2="29" stroke="#333" stroke-width="1"/><path d="M27 32 L25.5 36 L28.5 36" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M23 39 Q27 41 31 39" fill="none" stroke="#a0522d" stroke-width="1.3"/><rect x="31" y="37.5" width="12" height="3" rx="1.5" fill="#8B4513"/><rect x="31" y="37.5" width="3" height="3" rx="1" fill="#cd853f"/><circle cx="43" cy="39" r="1.2" fill="#e65100" opacity="0.7"/><path d="M44 37 Q46 33 44 29" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="0.8"/><path d="M45 38 Q48 32 45 27" fill="none" stroke="rgba(200,200,200,0.35)" stroke-width="0.6"/><path d="M10 57 Q10 49 18 47 L27 50 L36 47 Q44 49 44 57 L44 60 L10 60 Z" fill="#1a365d"/><path d="M26 50 L27 58 L28 50 Z" fill="#c62828"/><path d="M22 49 L27 52 L32 49" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                                </div>
+                                <p class="chairman-intro-quote" id="chairman-tip">Welkom trainer!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden elements for JS -->
+                <span id="xp-current" style="display:none;">0</span>
+                <span id="xp-target" style="display:none;">100</span>
+                <span id="newspaper-week" style="display:none;">4</span>
+                <div id="daily-streak" style="display:none;"></div>
+            </section>
+
+
+            <!-- Mijn Team Page -->
+            <section id="mijnteam" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Mijn Team</h2>
+                        <p class="page-subtitle handwritten">Geef je club identiteit!</p>
+                    </div>
+                </header>
+
+                <div class="mijnteam-container">
+                    <!-- Team Identity Card -->
+                    <div class="team-identity-card">
+                        <div class="team-badge-preview">
+                            <svg viewBox="0 0 100 120" class="badge-preview-svg" id="badge-preview-svg">
+                                <!-- Will be populated by JS -->
+                            </svg>
+                        </div>
+
+                        <div class="team-settings-form">
+                            <h3>Club Identiteit</h3>
+
+                            <div class="settings-notice" id="settings-notice">
+                                <span class="notice-icon">⚠️</span>
+                                <p>Je kunt je clubnaam en kleuren <strong>1x per seizoen</strong> wijzigen. Kies zorgvuldig!</p>
+                            </div>
+
+                            <div class="settings-locked" id="settings-locked" style="display: none;">
+                                <span class="locked-icon">🔒</span>
+                                <p>Je hebt je club dit seizoen al aangepast. Wacht tot volgend seizoen om wijzigingen te maken.</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="team-name-input">Clubnaam</label>
+                                <input type="text" id="team-name-input" class="form-input" maxlength="25" placeholder="FC Goals Maken">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Clubkleuren</label>
+                                <div class="color-pickers">
+                                    <div class="color-picker-item">
+                                        <label for="team-primary-color">Primair</label>
+                                        <input type="color" id="team-primary-color" value="#1b5e20">
+                                    </div>
+                                    <div class="color-picker-item">
+                                        <label for="team-secondary-color">Secundair</label>
+                                        <input type="color" id="team-secondary-color" value="#f5f0e1">
+                                    </div>
+                                    <div class="color-picker-item">
+                                        <label for="team-accent-color">Accent</label>
+                                        <input type="color" id="team-accent-color" value="#ff9800">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Voorbeeld Tenue</label>
+                                <div class="kit-preview" id="kit-preview">
+                                    <svg viewBox="0 0 80 100" class="kit-svg">
+                                        <!-- Shirt -->
+                                        <path d="M20 25 L10 35 L10 50 L15 50 L15 85 L65 85 L65 50 L70 50 L70 35 L60 25 L55 15 L45 10 L35 10 L25 15 Z"
+                                              fill="var(--kit-primary)" stroke="var(--kit-secondary)" stroke-width="2" id="kit-shirt"/>
+                                        <!-- Collar -->
+                                        <path d="M35 10 Q40 15 45 10" fill="none" stroke="var(--kit-accent)" stroke-width="3"/>
+                                        <!-- Shorts -->
+                                        <path d="M20 85 L20 95 L35 95 L40 85 L45 95 L60 95 L60 85"
+                                              fill="var(--kit-secondary)" stroke="var(--kit-primary)" stroke-width="1.5"/>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary btn-save-team" id="save-team-btn">
+                                Wijzigingen Opslaan
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Club Stats -->
+                    <div class="club-stats-card">
+                        <h3>Club Statistieken</h3>
+                        <div class="club-stats-grid">
+                            <div class="club-stat-item">
+                                <span class="stat-icon">📅</span>
+                                <span class="stat-label">Opgericht</span>
+                                <span class="stat-value" id="club-founded">Seizoen 1</span>
+                            </div>
+                            <div class="club-stat-item">
+                                <span class="stat-icon">🏆</span>
+                                <span class="stat-label">Kampioenschappen</span>
+                                <span class="stat-value" id="club-titles">0</span>
+                            </div>
+                            <div class="club-stat-item">
+                                <span class="stat-icon">⬆️</span>
+                                <span class="stat-label">Hoogste Klasse</span>
+                                <span class="stat-value" id="club-highest-div">6e Klasse</span>
+                            </div>
+                            <div class="club-stat-item">
+                                <span class="stat-icon">⚽</span>
+                                <span class="stat-label">Totaal Doelpunten</span>
+                                <span class="stat-value" id="club-total-goals">0</span>
+                            </div>
+                            <div class="club-stat-item">
+                                <span class="stat-icon">🎮</span>
+                                <span class="stat-label">Wedstrijden Gespeeld</span>
+                                <span class="stat-value" id="club-total-matches">0</span>
+                            </div>
+                            <div class="club-stat-item">
+                                <span class="stat-icon">⭐</span>
+                                <span class="stat-label">Reputatie</span>
+                                <span class="stat-value" id="club-reputation">10</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Achievements Section -->
+                    <div class="achievements-section">
+                        <div class="achievements-header">
+                            <h3>🏆 Prestaties</h3>
+                            <button class="btn btn-sm btn-toggle-achievements" id="toggle-achievements">
+                                Toon Alle
+                            </button>
+                        </div>
+                        <div class="achievements-progress" id="achievements-progress">
+                            <span class="progress-text">0 / 0 behaald</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="achievements-grid" id="achievements-grid" style="display: none;">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Jeugdteam Page -->
+            <section id="jeugdteam" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Jeugdteam</h2>
+                    </div>
+                    <div class="header-right">
+                    </div>
+                </header>
+
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 55 60"><!-- Hat crown --><ellipse cx="27" cy="30" rx="14" ry="15" fill="#f5d0c5"/><ellipse cx="13" cy="29" rx="3" ry="4" fill="#e8bfb0"/><ellipse cx="41" cy="29" rx="3" ry="4" fill="#e8bfb0"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="#777"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="none" stroke="#666" stroke-width="0.8"/><rect x="14" y="17" width="26" height="3.5" rx="0.5" fill="#555"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="#888"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="none" stroke="#666" stroke-width="0.8"/><path d="M18 26 Q21 24 24 26" fill="none" stroke="#555" stroke-width="1.2"/><path d="M30 26 Q33 24 36 26" fill="none" stroke="#555" stroke-width="1.2"/><circle cx="21" cy="29" r="2.5" fill="white"/><circle cx="33" cy="29" r="2.5" fill="white"/><circle cx="21.5" cy="29.3" r="1.2" fill="#333"/><circle cx="33.5" cy="29.3" r="1.2" fill="#333"/><circle cx="21" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="33" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="26" y1="29" x2="28" y2="29" stroke="#333" stroke-width="1"/><path d="M27 32 L25.5 36 L28.5 36" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M23 39 Q27 41 31 39" fill="none" stroke="#a0522d" stroke-width="1.3"/><rect x="31" y="37.5" width="12" height="3" rx="1.5" fill="#8B4513"/><rect x="31" y="37.5" width="3" height="3" rx="1" fill="#cd853f"/><circle cx="43" cy="39" r="1.2" fill="#e65100" opacity="0.7"/><path d="M44 37 Q46 33 44 29" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="0.8"/><path d="M45 38 Q48 32 45 27" fill="none" stroke="rgba(200,200,200,0.35)" stroke-width="0.6"/><path d="M10 57 Q10 49 18 47 L27 50 L36 47 Q44 49 44 57 L44 60 L10 60 Z" fill="#1a365d"/><path d="M26 50 L27 58 L28 50 Z" fill="#c62828"/><path d="M22 49 L27 52 L32 49" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"De jeugd is de toekomst, trainer. Elke dag is er een kans dat nieuwe jeugdspelers instromen, zolang er plek is. Spelers worden elke dag een jaar ouder — vanaf 16 jaar kun je ze overhevelen naar de A-selectie. Als ze 18 worden verlaten ze automatisch de opleiding."</p>
+                </div>
+
+                <div class="youth-tabs">
+                    <button class="youth-tab active" data-age="12-13">Pupillen<span class="youth-tab-age">(12-13)</span></button>
+                    <button class="youth-tab" data-age="14-15">Junioren<span class="youth-tab-age">(14-15)</span></button>
+                    <button class="youth-tab" data-age="16-17">Aspiranten<span class="youth-tab-age">(16-17)</span></button>
+                </div>
+
+                <div class="jeugdteam-layout">
+                    <!-- Left sidebar: Academy + Scouting -->
+                    <div class="youth-sidebar">
+                        <div class="youth-academy-card" id="youth-academy-card">
+                            <!-- Filled by JS -->
+                        </div>
+                        <div class="youth-capacity-card" id="youth-capacity-card">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Main content: Players -->
+                    <div class="youth-main">
+                        <div class="youth-players-grid" id="youth-players-grid">
+                            <!-- Populated by JS -->
+                        </div>
+
+                        <div class="youth-empty-state" id="youth-empty-state" style="display: none;">
+                            <div class="empty-icon">⚽</div>
+                            <h3>Geen jeugdspelers</h3>
+                            <p>Upgrade je jeugdacademie om jeugdspelers te genereren.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Squad Page -->
+            <section id="squad" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Selectie</h2>
+                        <div class="squad-size-badge"><span id="squad-count">0</span><span class="squad-size-sep">/</span><span class="squad-size-max">18</span></div>
+                    </div>
+                </header>
+
+                <div class="squad-container" id="player-cards">
+                    <!-- Player cards grouped by position, filled by JS -->
+                </div>
+            </section>
+
+            <!-- Tactics Page -->
+            <section id="tactics" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Tactiek</h2>
+                    </div>
+                </header>
+
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 55 60"><!-- Hat crown --><ellipse cx="27" cy="30" rx="14" ry="15" fill="#f5d0c5"/><ellipse cx="13" cy="29" rx="3" ry="4" fill="#e8bfb0"/><ellipse cx="41" cy="29" rx="3" ry="4" fill="#e8bfb0"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="#777"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="none" stroke="#666" stroke-width="0.8"/><rect x="14" y="17" width="26" height="3.5" rx="0.5" fill="#555"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="#888"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="none" stroke="#666" stroke-width="0.8"/><path d="M18 26 Q21 24 24 26" fill="none" stroke="#555" stroke-width="1.2"/><path d="M30 26 Q33 24 36 26" fill="none" stroke="#555" stroke-width="1.2"/><circle cx="21" cy="29" r="2.5" fill="white"/><circle cx="33" cy="29" r="2.5" fill="white"/><circle cx="21.5" cy="29.3" r="1.2" fill="#333"/><circle cx="33.5" cy="29.3" r="1.2" fill="#333"/><circle cx="21" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="33" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="26" y1="29" x2="28" y2="29" stroke="#333" stroke-width="1"/><path d="M27 32 L25.5 36 L28.5 36" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M23 39 Q27 41 31 39" fill="none" stroke="#a0522d" stroke-width="1.3"/><rect x="31" y="37.5" width="12" height="3" rx="1.5" fill="#8B4513"/><rect x="31" y="37.5" width="3" height="3" rx="1" fill="#cd853f"/><circle cx="43" cy="39" r="1.2" fill="#e65100" opacity="0.7"/><path d="M44 37 Q46 33 44 29" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="0.8"/><path d="M45 38 Q48 32 45 27" fill="none" stroke="rgba(200,200,200,0.35)" stroke-width="0.6"/><path d="M10 57 Q10 49 18 47 L27 50 L36 47 Q44 49 44 57 L44 60 L10 60 Z" fill="#1a365d"/><path d="M26 50 L27 58 L28 50 Z" fill="#c62828"/><path d="M22 49 L27 52 L32 49" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Hier bepaal jij hoe we spelen, trainer. Kies je opstelling, stel de tactiek in en wijs specialisten aan. En onthoud: spelers die dezelfde taal spreken, spelen beter samen. Voetbal is dan wel een universele taal, maar 'hier die bal!' werkt toch beter dan gebaren."</p>
+                </div>
+
+                <!-- Subtabs -->
+                <div class="tactics-tabs">
+                    <button class="tactics-tab active" data-tab="opstelling">Opstelling</button>
+                    <button class="tactics-tab" data-tab="tactiek">Tactiek</button>
+                    <button class="tactics-tab" data-tab="specialisten">Specialisten</button>
+                </div>
+
+                <!-- Opstelling Panel -->
+                <div class="tactics-panel active" id="opstelling-panel">
+                    <div class="lineup-container">
+                        <div class="lineup-players-panel">
+                            <div class="lineup-panel-header"><h4>Beschikbare Spelers</h4><button class="btn btn-sm btn-outline lineup-clear-btn" onclick="clearLineup()" title="Opstelling leegmaken">✕ Leegmaken</button></div>
+                            <div class="lineup-player-groups" id="lineup-available-players"></div>
+                        </div>
+                        <div class="lineup-pitch-panel">
+                            <div class="formation-selector">
+                                <span class="formation-label">Formatie:</span>
+                                <select id="formation-select" class="formation-dropdown"></select>
+                                <span class="formation-drive" id="formation-drive"></span>
+                            </div>
+                            <div class="lineup-pitch" id="lineup-pitch"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tactiek Panel (+ Wedstrijdvoorbereiding) -->
+                <div class="tactics-panel" id="tactiek-panel">
+                    <div class="tactics-section-block">
+                        <h3 class="section-block-title">Tactiek</h3>
+                        <div id="tactics-options-grid" class="tactics-options-grid"></div>
+                    </div>
+
+                    <div class="tactics-section-block">
+                        <div class="team-training-panel">
+                            <div class="training-header-row">
+                                <h3 class="section-block-title">Wedstrijdvoorbereiding</h3>
+                                <span class="team-training-warning-inline" id="team-training-warning">Nog geen voorbereiding gekozen</span>
+                            </div>
+                            <div class="team-training-options" id="team-training-options">
+                                <div class="team-training-option" data-type="defense" onclick="selectTeamTraining('defense')">
+                                    <div class="tto-icon defense">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2" width="28" height="28">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="tto-info">
+                                        <h4>Verdedigende Impulsen</h4>
+                                        <p>Betere verdediging volgende wedstrijd</p>
+                                    </div>
+                                    <div class="tto-status">
+                                        <button class="btn btn-secondary btn-small">Selecteer</button>
+                                    </div>
+                                </div>
+                                <div class="team-training-option" data-type="tactics" onclick="selectTeamTraining('tactics')">
+                                    <div class="tto-icon tactics">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="#ef6c00" stroke-width="2" width="28" height="28">
+                                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                            <path d="M8 7v4l3 2 5-3v4"/>
+                                            <circle cx="8" cy="7" r="1.5" fill="#ef6c00"/>
+                                            <circle cx="16" cy="10" r="1.5" fill="#ef6c00"/>
+                                            <circle cx="11" cy="13" r="1.5" fill="#ef6c00"/>
+                                        </svg>
+                                    </div>
+                                    <div class="tto-info">
+                                        <h4>Tactische bespreking</h4>
+                                        <p>+10% bedrevenheid in huidige formatie</p>
+                                    </div>
+                                    <div class="tto-status">
+                                        <button class="btn btn-secondary btn-small">Selecteer</button>
+                                    </div>
+                                </div>
+                                <div class="team-training-option" data-type="attack" onclick="selectTeamTraining('attack')">
+                                    <div class="tto-icon attack">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="#c62828" stroke-width="2" width="28" height="28">
+                                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                                        </svg>
+                                    </div>
+                                    <div class="tto-info">
+                                        <h4>Aanvallende Bewegingen</h4>
+                                        <p>Betere aanval volgende wedstrijd</p>
+                                    </div>
+                                    <div class="tto-status">
+                                        <button class="btn btn-secondary btn-small">Selecteer</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="team-training-timer" id="team-training-timer" style="display: none;">
+                                <div class="ttt-progress">
+                                    <div class="ttt-progress-bar"></div>
+                                </div>
+                                <span class="ttt-time">Nog 04:32:15</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specialisten Panel -->
+                <div class="tactics-panel" id="specialisten-panel">
+                    <div class="tactics-section-block">
+                        <h3 class="section-block-title">Specialisten</h3>
+                        <div class="spec-list" id="specialists-grid">
+                            <div class="spec-row" data-role="captain">
+                                <div class="spec-row-icon captain">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#ffc940" stroke-width="2" width="24" height="24">
+                                        <path d="M12 2 L15 9 L22 9 L16.5 14 L18.5 21 L12 17 L5.5 21 L7.5 14 L2 9 L9 9 Z"/>
+                                    </svg>
+                                </div>
+                                <div class="spec-row-info">
+                                    <h4>Aanvoerder</h4>
+                                    <p>Leider op het veld — verhoogt moraal van het team</p>
+                                </div>
+                                <div class="spec-row-player" id="spec-display-captain">
+                                    <button class="btn btn-secondary btn-small">Selecteer</button>
+                                </div>
+                            </div>
+                            <div class="spec-row" data-role="penaltyTaker">
+                                <div class="spec-row-icon penalty">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#ff5252" stroke-width="2" width="24" height="24">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <circle cx="12" cy="12" r="2" fill="#ff5252"/>
+                                        <path d="M12 2 L12 6 M12 18 L12 22 M2 12 L6 12 M18 12 L22 12"/>
+                                    </svg>
+                                </div>
+                                <div class="spec-row-info">
+                                    <h4>Strafschopnemer</h4>
+                                    <p>Koelbloedigste speler voor penalty's</p>
+                                </div>
+                                <div class="spec-row-player" id="spec-display-penaltyTaker">
+                                    <button class="btn btn-secondary btn-small">Selecteer</button>
+                                </div>
+                            </div>
+                            <div class="spec-row" data-role="cornerTaker">
+                                <div class="spec-row-icon corner">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#52b5ff" stroke-width="2" width="24" height="24">
+                                        <path d="M3 21 L3 3 L21 3" stroke-linecap="round"/>
+                                        <path d="M3 21 Q3 12 12 12" stroke-dasharray="3 2"/>
+                                        <circle cx="17" cy="8" r="3"/>
+                                    </svg>
+                                </div>
+                                <div class="spec-row-info">
+                                    <h4>Cornernemer</h4>
+                                    <p>Speler met overzicht en een goede voorzet</p>
+                                </div>
+                                <div class="spec-row-player" id="spec-display-cornerTaker">
+                                    <button class="btn btn-secondary btn-small">Selecteer</button>
+                                </div>
+                            </div>
+                            <div class="spec-row" data-role="freekickTaker">
+                                <div class="spec-row-icon freekick">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#ff9020" stroke-width="2" width="24" height="24">
+                                        <circle cx="12" cy="12" r="5"/>
+                                        <path d="M12 7 L14 10.5 L18 11 L15 14 L16 18 L12 15.5 L8 18 L9 14 L6 11 L10 10.5Z" stroke-width="1.5"/>
+                                        <path d="M4 20 Q8 8 20 4" stroke-dasharray="3 2" stroke-width="1.5"/>
+                                    </svg>
+                                </div>
+                                <div class="spec-row-info">
+                                    <h4>Vrije trap nemer</h4>
+                                    <p>Beste schottechniek voor vrije trappen</p>
+                                </div>
+                                <div class="spec-row-player" id="spec-display-freekickTaker">
+                                    <button class="btn btn-secondary btn-small">Selecteer</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Dropdown overlay for player selection -->
+                    <div class="spec-dropdown-overlay" id="spec-dropdown-overlay" style="display:none;">
+                        <div class="spec-dropdown-panel">
+                            <div class="spec-dropdown-header">
+                                <h4 id="spec-dropdown-title">Kies speler</h4>
+                                <button class="spec-dropdown-close" id="spec-dropdown-close">&times;</button>
+                            </div>
+                            <div class="spec-dropdown-list" id="spec-dropdown-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Training Page -->
+            <section id="training" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title" id="profile-page-title">Mijn Speler</h2>
+                    </div>
+                    <div class="header-right">
+                    </div>
+                </header>
+
+                <div class="page-tabs" id="training-tabs">
+                    <button class="page-tab active" data-page-tab="training">Training</button>
+                    <button class="page-tab" data-page-tab="statistieken">Statistieken</button>
+                    <button class="page-tab" data-page-tab="achievements">Achievements</button>
+                </div>
+
+                <div id="training-page-panel" class="page-panel active">
+                    <div id="training-content"></div>
+                </div>
+                <div id="statistieken-page-panel" class="page-panel">
+                    <div id="statistieken-content"></div>
+                </div>
+                <div id="achievements-page-panel" class="page-panel">
+                    <div id="achievements-content"></div>
+                </div>
+            </section>
+
+            <!-- Wedstrijden Page -->
+            <section id="wedstrijden" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Wedstrijden</h2>
+                        <p class="page-subtitle handwritten" id="matches-season-label">Seizoen 1 · Week 1</p>
+                    </div>
+                </header>
+
+                <div class="matches-tabs">
+                    <button class="matches-tab active" data-matches-tab="verslag">Resultaat</button>
+                    <button class="matches-tab" data-matches-tab="waardering">Ratings</button>
+                    <button class="matches-tab" data-matches-tab="programma">Competitie</button>
+                </div>
+
+                <div class="matches-panel active" id="matches-verslag">
+                    <!-- Filled by JS -->
+                </div>
+                <div class="matches-panel" id="matches-waardering">
+                    <!-- Filled by JS -->
+                </div>
+                <div class="matches-panel" id="matches-programma">
+                    <div class="programma-layout">
+                        <div class="programma-schedule" id="programma-schedule">
+                            <!-- Filled by JS -->
+                        </div>
+                        <div class="programma-standings" id="programma-standings">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stadium Page -->
+            <section id="stadium" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Sportcomplex</h2>
+                    </div>
+                    <div class="header-right">
+                    </div>
+                </header>
+
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 55 60"><!-- Hat crown --><ellipse cx="27" cy="30" rx="14" ry="15" fill="#f5d0c5"/><ellipse cx="13" cy="29" rx="3" ry="4" fill="#e8bfb0"/><ellipse cx="41" cy="29" rx="3" ry="4" fill="#e8bfb0"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="#777"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="none" stroke="#666" stroke-width="0.8"/><rect x="14" y="17" width="26" height="3.5" rx="0.5" fill="#555"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="#888"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="none" stroke="#666" stroke-width="0.8"/><path d="M18 26 Q21 24 24 26" fill="none" stroke="#555" stroke-width="1.2"/><path d="M30 26 Q33 24 36 26" fill="none" stroke="#555" stroke-width="1.2"/><circle cx="21" cy="29" r="2.5" fill="white"/><circle cx="33" cy="29" r="2.5" fill="white"/><circle cx="21.5" cy="29.3" r="1.2" fill="#333"/><circle cx="33.5" cy="29.3" r="1.2" fill="#333"/><circle cx="21" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="33" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="26" y1="29" x2="28" y2="29" stroke="#333" stroke-width="1"/><path d="M27 32 L25.5 36 L28.5 36" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M23 39 Q27 41 31 39" fill="none" stroke="#a0522d" stroke-width="1.3"/><rect x="31" y="37.5" width="12" height="3" rx="1.5" fill="#8B4513"/><rect x="31" y="37.5" width="3" height="3" rx="1" fill="#cd853f"/><circle cx="43" cy="39" r="1.2" fill="#e65100" opacity="0.7"/><path d="M44 37 Q46 33 44 29" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="0.8"/><path d="M45 38 Q48 32 45 27" fill="none" stroke="rgba(200,200,200,0.35)" stroke-width="0.6"/><path d="M10 57 Q10 49 18 47 L27 50 L36 47 Q44 49 44 57 L44 60 L10 60 Z" fill="#1a365d"/><path d="M26 50 L27 58 L28 50 Z" fill="#c62828"/><path d="M22 49 L27 52 L32 49" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Dit is ons complex, trainer. Klik op een gebouw om te upgraden. Grotere tribune, beter gras, een echte kantine... het kost wat, maar de supporters en de inkomsten groeien mee."</p>
+                </div>
+
+                <div class="stadium-map-container">
+                    <div class="stadium-map-overlay">
+                        <div class="smo-stat">
+                            <svg class="smo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <span class="smo-value" id="stadium-fans">50</span>
+                            <span class="smo-label">Fans</span>
+                        </div>
+                        <div class="smo-divider"></div>
+                        <div class="smo-stat">
+                            <svg class="smo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>
+                            <span class="smo-value" id="stadium-capacity">200</span>
+                            <span class="smo-label">Capaciteit</span>
+                        </div>
+                    </div>
+                    <div class="stadium-map" id="stadium-map">
+                        <!-- SVG map rendered by JavaScript -->
+                    </div>
+                    <div class="stadium-panel-backdrop" id="stadium-panel-backdrop" style="display: none;" onclick="closeStadiumPanel()"></div>
+                    <div class="stadium-upgrade-panel" id="stadium-upgrade-panel" style="display: none;">
+                        <button class="sup-close" onclick="closeStadiumPanel()">&times;</button>
+                        <div class="sup-header">
+                            <span class="sup-icon" id="sup-icon"></span>
+                            <div class="sup-title-wrap">
+                                <h3 class="sup-title" id="sup-title"></h3>
+                                <span class="sup-level" id="sup-level"></span>
+                            </div>
+                        </div>
+                        <div class="sup-description" id="sup-description"></div>
+                        <div class="sup-levels-list" id="sup-levels-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scout Page -->
+            <section id="scout" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Scouting</h2>
+                        <p class="page-subtitle handwritten" id="scout-level-label"></p>
+                    </div>
+                    <div class="header-right">
+                    </div>
+                </header>
+
+                <div class="scout-chairman-intro" id="scout-chairman-intro">
+                    <!-- Filled by JS: voorzitter quote -->
+                </div>
+
+                <div class="scouting-layout">
+                    <!-- Left sidebar: Scout + Scoutingscentrum -->
+                    <div class="scouting-sidebar">
+                        <div class="scouting-scout-card" id="scouting-scout-card">
+                            <!-- Filled by JS: current scout info -->
+                        </div>
+
+                        <div class="scouting-centrum-card" id="scouting-centrum-card">
+                            <!-- Filled by JS: scoutingscentrum -->
+                        </div>
+                    </div>
+
+                    <!-- Main content: Tips -->
+                    <div class="scouting-main">
+                        <div class="scout-tip-section" id="scout-tip-section">
+                            <!-- Filled by JS: scout tip players -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transfers Page -->
+            <section id="transfers" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Spelerwerving</h2>
+                    </div>
+                </header>
+
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 55 60"><!-- Hat crown --><ellipse cx="27" cy="30" rx="14" ry="15" fill="#f5d0c5"/><ellipse cx="13" cy="29" rx="3" ry="4" fill="#e8bfb0"/><ellipse cx="41" cy="29" rx="3" ry="4" fill="#e8bfb0"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="#777"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="none" stroke="#666" stroke-width="0.8"/><rect x="14" y="17" width="26" height="3.5" rx="0.5" fill="#555"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="#888"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="none" stroke="#666" stroke-width="0.8"/><path d="M18 26 Q21 24 24 26" fill="none" stroke="#555" stroke-width="1.2"/><path d="M30 26 Q33 24 36 26" fill="none" stroke="#555" stroke-width="1.2"/><circle cx="21" cy="29" r="2.5" fill="white"/><circle cx="33" cy="29" r="2.5" fill="white"/><circle cx="21.5" cy="29.3" r="1.2" fill="#333"/><circle cx="33.5" cy="29.3" r="1.2" fill="#333"/><circle cx="21" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="33" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="26" y1="29" x2="28" y2="29" stroke="#333" stroke-width="1"/><path d="M27 32 L25.5 36 L28.5 36" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M23 39 Q27 41 31 39" fill="none" stroke="#a0522d" stroke-width="1.3"/><rect x="31" y="37.5" width="12" height="3" rx="1.5" fill="#8B4513"/><rect x="31" y="37.5" width="3" height="3" rx="1" fill="#cd853f"/><circle cx="43" cy="39" r="1.2" fill="#e65100" opacity="0.7"/><path d="M44 37 Q46 33 44 29" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="0.8"/><path d="M45 38 Q48 32 45 27" fill="none" stroke="rgba(200,200,200,0.35)" stroke-width="0.6"/><path d="M10 57 Q10 49 18 47 L27 50 L36 47 Q44 49 44 57 L44 60 L10 60 Z" fill="#1a365d"/><path d="M26 50 L27 58 L28 50 Z" fill="#c62828"/><path d="M22 49 L27 52 L32 49" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Hier kun je spelers binnenhalen. Maar pas op: je koopt hier al snel een kat in de zak! De ALG-rating en potentie zijn schattingen — de werkelijkheid valt vaak tegen. Het salaris is gebaseerd op wat de speler denkt waard te zijn, niet op wat hij echt waard is. Pas als ze tekenen zie je de waarheid."</p>
+                </div>
+
+                <div class="transfer-filters-panel">
+                    <!-- Position Filter -->
+                    <div class="transfer-filter-group">
+                        <span class="filter-group-label">Positie:</span>
+                        <div class="filter-buttons">
+                            <button class="filter-btn transfer-filter active" data-filter="all">Allemaal</button>
+                            <button class="filter-btn transfer-filter" data-filter="goalkeeper">Keepers</button>
+                            <button class="filter-btn transfer-filter" data-filter="defender">Verdedigers</button>
+                            <button class="filter-btn transfer-filter" data-filter="midfielder">Middenvelders</button>
+                            <button class="filter-btn transfer-filter" data-filter="attacker">Aanvallers</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="transfer-list" id="transfer-list">
+                    <!-- Transfer cards filled by JS -->
+                </div>
+            </section>
+
+            <!-- Sponsors Page -->
+            <section id="sponsors" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Sponsors</h2>
+                    </div>
+                </header>
+
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 55 60"><!-- Hat crown --><ellipse cx="27" cy="30" rx="14" ry="15" fill="#f5d0c5"/><ellipse cx="13" cy="29" rx="3" ry="4" fill="#e8bfb0"/><ellipse cx="41" cy="29" rx="3" ry="4" fill="#e8bfb0"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="#777"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="none" stroke="#666" stroke-width="0.8"/><rect x="14" y="17" width="26" height="3.5" rx="0.5" fill="#555"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="#888"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="none" stroke="#666" stroke-width="0.8"/><path d="M18 26 Q21 24 24 26" fill="none" stroke="#555" stroke-width="1.2"/><path d="M30 26 Q33 24 36 26" fill="none" stroke="#555" stroke-width="1.2"/><circle cx="21" cy="29" r="2.5" fill="white"/><circle cx="33" cy="29" r="2.5" fill="white"/><circle cx="21.5" cy="29.3" r="1.2" fill="#333"/><circle cx="33.5" cy="29.3" r="1.2" fill="#333"/><circle cx="21" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="33" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="26" y1="29" x2="28" y2="29" stroke="#333" stroke-width="1"/><path d="M27 32 L25.5 36 L28.5 36" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M23 39 Q27 41 31 39" fill="none" stroke="#a0522d" stroke-width="1.3"/><rect x="31" y="37.5" width="12" height="3" rx="1.5" fill="#8B4513"/><rect x="31" y="37.5" width="3" height="3" rx="1" fill="#cd853f"/><circle cx="43" cy="39" r="1.2" fill="#e65100" opacity="0.7"/><path d="M44 37 Q46 33 44 29" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="0.8"/><path d="M45 38 Q48 32 45 27" fill="none" stroke="rgba(200,200,200,0.35)" stroke-width="0.6"/><path d="M10 57 Q10 49 18 47 L27 50 L36 47 Q44 49 44 57 L44 60 L10 60 Z" fill="#1a365d"/><path d="M26 50 L27 58 L28 50 Z" fill="#c62828"/><path d="M22 49 L27 52 L32 49" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Zonder sponsors spelen we in hesjes van de Zeeman, trainer. Kies een shirtsponsor die bij de club past en vergeet de reclameborden niet — elke vierkante meter langs het veld is geld waard. En onthoud: hoe hoger we op de ranglijst staan, hoe betere sponsors zich melden. Dus eerst winnen, dan cashen!"</p>
+                </div>
+
+                <!-- Shirtsponsor Section -->
+                <div class="sponsor-section" id="sponsor-section-shirt">
+                    <h3 class="sponsor-section-label">Shirtsponsor</h3>
+                    <div class="sponsor-row">
+                        <div class="sponsor-visual">
+                            <div class="kit-display" id="kit-display">
+                                <div class="kit-wrapper">
+                                    <svg viewBox="0 0 100 100" class="kit-shirt-svg" id="sponsor-shirt-svg">
+                                        <path d="M20 20 L32 12 L32 5 L68 5 L68 12 L80 20 L85 38 L75 42 L75 95 L25 95 L25 42 L15 38 Z"
+                                              fill="var(--shirt-primary, #1b5e20)" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2"/>
+                                        <path d="M32 5 Q50 12 68 5" fill="none" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2.5"/>
+                                        <rect x="26" y="36" width="48" height="26" rx="2" fill="var(--shirt-secondary, #f5f0e1)" opacity="0.9"/>
+                                        <text x="50" y="47" text-anchor="middle" fill="var(--shirt-primary, #1b5e20)"
+                                              font-family="var(--font-display)" font-size="5.5" font-weight="bold" id="shirt-sponsor-line1"></text>
+                                        <text x="50" y="56" text-anchor="middle" fill="var(--shirt-primary, #1b5e20)"
+                                              font-family="var(--font-display)" font-size="5.5" font-weight="bold" id="shirt-sponsor-line2"></text>
+                                    </svg>
+                                    <svg viewBox="0 0 100 55" class="kit-shorts-svg" id="sponsor-shorts-svg">
+                                        <path d="M25 5 L75 5 L75 10 L78 50 L55 50 L50 35 L45 50 L22 50 L25 10 Z"
+                                              fill="var(--shirt-primary, #1b5e20)" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="2"/>
+                                        <line x1="50" y1="5" x2="50" y2="35" stroke="var(--shirt-secondary, #f5f0e1)" stroke-width="1.5" opacity="0.6"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="sponsor-info" id="sponsor-info-shirt"><!-- JS --></div>
+                        </div>
+                        <div class="sponsor-options" id="shirt-sponsor-grid"><!-- JS --></div>
+                    </div>
+                </div>
+
+                <!-- Bordsponsor Section -->
+                <div class="sponsor-section" id="sponsor-section-bord">
+                    <h3 class="sponsor-section-label">Bordsponsor</h3>
+                    <div class="sponsor-row">
+                        <div class="sponsor-visual">
+                            <div class="spo-reclamebord" id="spo-reclamebord">
+                                <svg viewBox="0 0 140 90" class="reclamebord-svg">
+                                    <rect x="10" y="0" width="4" height="90" rx="2" fill="#666"/>
+                                    <rect x="126" y="0" width="4" height="90" rx="2" fill="#666"/>
+                                    <rect x="6" y="8" width="128" height="52" rx="4" fill="#fff" stroke="#999" stroke-width="1.5"/>
+                                    <rect x="10" y="12" width="120" height="44" rx="2" fill="#1a365d"/>
+                                    <text x="70" y="32" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold" id="bord-sponsor-icon"></text>
+                                    <text x="70" y="48" text-anchor="middle" fill="#fff" font-size="8" font-weight="600" id="bord-sponsor-name">Geen sponsor</text>
+                                    <rect x="0" y="78" width="140" height="12" rx="1" fill="#2e7d32" opacity="0.5"/>
+                                </svg>
+                            </div>
+                            <div class="sponsor-info" id="sponsor-info-bord"><!-- JS --></div>
+                        </div>
+                        <div class="sponsor-options" id="sponsor-market-grid"><!-- JS --></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Activities Page removed -->
+
+            <!-- Finances Page -->
+            <section id="finances" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Financiën</h2>
+                    </div>
+                </header>
+
+                <!-- Budget Card -->
+                <div class="fin-budget-card">
+                    <div class="fin-budget-main">
+                        <div class="fin-budget-label">Clubbudget</div>
+                        <div class="fin-budget-value" id="fin-budget-value">€0</div>
+                        <div class="fin-budget-trend" id="fin-budget-trend"></div>
+                    </div>
+                    <div class="fin-budget-meta">
+                        <div class="fin-balance-bar">
+                            <div class="fin-bar-income" id="fin-bar-income"></div>
+                            <div class="fin-bar-expense" id="fin-bar-expense"></div>
+                        </div>
+                        <div class="fin-balance-labels">
+                            <span class="fin-balance-label income" id="fin-bar-income-label">€0</span>
+                            <span class="fin-balance-label expense" id="fin-bar-expense-label">€0</span>
+                        </div>
+                        <div class="fin-season-spending" id="fin-season-spending"></div>
+                    </div>
+                </div>
+
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 55 60"><!-- Hat crown --><ellipse cx="27" cy="30" rx="14" ry="15" fill="#f5d0c5"/><ellipse cx="13" cy="29" rx="3" ry="4" fill="#e8bfb0"/><ellipse cx="41" cy="29" rx="3" ry="4" fill="#e8bfb0"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="#777"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="none" stroke="#666" stroke-width="0.8"/><rect x="14" y="17" width="26" height="3.5" rx="0.5" fill="#555"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="#888"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="none" stroke="#666" stroke-width="0.8"/><path d="M18 26 Q21 24 24 26" fill="none" stroke="#555" stroke-width="1.2"/><path d="M30 26 Q33 24 36 26" fill="none" stroke="#555" stroke-width="1.2"/><circle cx="21" cy="29" r="2.5" fill="white"/><circle cx="33" cy="29" r="2.5" fill="white"/><circle cx="21.5" cy="29.3" r="1.2" fill="#333"/><circle cx="33.5" cy="29.3" r="1.2" fill="#333"/><circle cx="21" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="33" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="26" y1="29" x2="28" y2="29" stroke="#333" stroke-width="1"/><path d="M27 32 L25.5 36 L28.5 36" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M23 39 Q27 41 31 39" fill="none" stroke="#a0522d" stroke-width="1.3"/><rect x="31" y="37.5" width="12" height="3" rx="1.5" fill="#8B4513"/><rect x="31" y="37.5" width="3" height="3" rx="1" fill="#cd853f"/><circle cx="43" cy="39" r="1.2" fill="#e65100" opacity="0.7"/><path d="M44 37 Q46 33 44 29" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="0.8"/><path d="M45 38 Q48 32 45 27" fill="none" stroke="rgba(200,200,200,0.35)" stroke-width="0.6"/><path d="M10 57 Q10 49 18 47 L27 50 L36 47 Q44 49 44 57 L44 60 L10 60 Z" fill="#1a365d"/><path d="M26 50 L27 58 L28 50 Z" fill="#c62828"/><path d="M22 49 L27 52 L32 49" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Houd de kas in balans, trainer — zonder geld geen bitterballen bij de rust!"</p>
+                </div>
+
+                <div class="fin-week-view">
+                    <!-- Inkomsten -->
+                    <div class="fin-col fin-col-income">
+                        <div class="fin-col-header">
+                            <h4>Inkomsten</h4>
+                            <span class="fin-col-total" id="fin-total-income">+€0</span>
+                        </div>
+                        <ul class="fin-list" id="fin-income-list">
+                            <!-- Dynamically rendered -->
+                        </ul>
+                    </div>
+
+                    <!-- Uitgaven -->
+                    <div class="fin-col fin-col-expense">
+                        <div class="fin-col-header">
+                            <h4>Uitgaven</h4>
+                            <span class="fin-col-total" id="fin-total-expense">-€0</span>
+                        </div>
+                        <ul class="fin-list" id="fin-expense-list">
+                            <!-- Dynamically rendered -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Resultaat -->
+                <div class="fin-result" id="fin-result">
+                    <span>Resultaat per week</span>
+                    <span id="fin-result-amount">+€0</span>
+                </div>
+            </section>
+
+            <!-- Staff Page -->
+            <section id="staff" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Staf</h2>
+                    </div>
+                </header>
+
+                <div class="chairman-intro">
+                    <div class="chairman-intro-avatar">
+                        <svg viewBox="0 0 55 60"><!-- Hat crown --><ellipse cx="27" cy="30" rx="14" ry="15" fill="#f5d0c5"/><ellipse cx="13" cy="29" rx="3" ry="4" fill="#e8bfb0"/><ellipse cx="41" cy="29" rx="3" ry="4" fill="#e8bfb0"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="#777"/><path d="M14 20 L14 8 Q14 2 27 2 Q40 2 40 8 L40 20 Z" fill="none" stroke="#666" stroke-width="0.8"/><rect x="14" y="17" width="26" height="3.5" rx="0.5" fill="#555"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="#888"/><ellipse cx="27" cy="20" rx="22" ry="5" fill="none" stroke="#666" stroke-width="0.8"/><path d="M18 26 Q21 24 24 26" fill="none" stroke="#555" stroke-width="1.2"/><path d="M30 26 Q33 24 36 26" fill="none" stroke="#555" stroke-width="1.2"/><circle cx="21" cy="29" r="2.5" fill="white"/><circle cx="33" cy="29" r="2.5" fill="white"/><circle cx="21.5" cy="29.3" r="1.2" fill="#333"/><circle cx="33.5" cy="29.3" r="1.2" fill="#333"/><circle cx="21" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="33" cy="29" r="5" fill="none" stroke="#333" stroke-width="1.2"/><line x1="26" y1="29" x2="28" y2="29" stroke="#333" stroke-width="1"/><path d="M27 32 L25.5 36 L28.5 36" fill="none" stroke="#d4a88a" stroke-width="1"/><path d="M23 39 Q27 41 31 39" fill="none" stroke="#a0522d" stroke-width="1.3"/><rect x="31" y="37.5" width="12" height="3" rx="1.5" fill="#8B4513"/><rect x="31" y="37.5" width="3" height="3" rx="1" fill="#cd853f"/><circle cx="43" cy="39" r="1.2" fill="#e65100" opacity="0.7"/><path d="M44 37 Q46 33 44 29" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="0.8"/><path d="M45 38 Q48 32 45 27" fill="none" stroke="rgba(200,200,200,0.35)" stroke-width="0.6"/><path d="M10 57 Q10 49 18 47 L27 50 L36 47 Q44 49 44 57 L44 60 L10 60 Z" fill="#1a365d"/><path d="M26 50 L27 58 L28 50 Z" fill="#c62828"/><path d="M22 49 L27 52 L32 49" fill="none" stroke="white" stroke-width="1.5"/></svg>
+                    </div>
+                    <p class="chairman-intro-quote">"Een goede club draait niet alleen op de spelers, trainer. Een fysiotherapeut die knakkers sneller op de been krijgt, een scout die diamanten vindt in de modder, een clubarts die blessures voorkomt — dát maakt het verschil. Maar staf kost centen, dus kies slim wie je als eerste binnenhaalt."</p>
+                </div>
+
+                <!-- Unified Staff View -->
+                <div class="staff-unified-view">
+                    <div class="staff-section">
+                        <div class="staff-grid" id="staff-hire-grid">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bugs Page -->
+            <section id="bugs" class="page">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h2 class="page-title">Bug Melden</h2>
+                        <p class="page-subtitle handwritten">Iets gevonden dat niet werkt? Laat het weten!</p>
+                    </div>
+                </header>
+                <div class="bugs-container">
+                    <div class="bug-form-card">
+                        <label class="bug-label" for="bug-title">Korte omschrijving</label>
+                        <input type="text" id="bug-title" class="bug-input" placeholder="Bijv: Transfermarkt laadt niet" maxlength="120">
+                        <label class="bug-label" for="bug-description">Wat ging er mis?</label>
+                        <textarea id="bug-description" class="bug-textarea" placeholder="Beschrijf wat je deed en wat er fout ging..." rows="5" maxlength="1000"></textarea>
+                        <button class="btn btn-primary bug-submit-btn" id="bug-submit-btn">Versturen</button>
+                        <p class="bug-status" id="bug-status"></p>
+                    </div>
+                    <div class="bug-history">
+                        <h3 class="bug-history-title">Jouw meldingen</h3>
+                        <div id="bug-list"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Player Detail Modal -->
+    <div id="player-modal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content player-detail-modal">
+            <button class="modal-close">&times;</button>
+            <div class="player-detail-content" id="player-detail-content">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Match Modal -->
+    <div id="match-modal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content match-modal">
+            <div class="match-simulation" id="match-simulation">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Club Settings Modal -->
+    <!-- Training Player Select Modal -->
+    <div id="training-select-modal" class="modal">
+        <div class="modal-backdrop" onclick="closeTrainingModal()"></div>
+        <div class="modal-content training-select-modal">
+            <button class="modal-close" onclick="closeTrainingModal()">&times;</button>
+            <h3 id="training-modal-title">Selecteer Speler</h3>
+            <p class="training-modal-subtitle" id="training-modal-subtitle">Kies een speler om te trainen</p>
+            <div class="training-player-list" id="training-player-list">
+                <!-- Player cards will be rendered by JS -->
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
