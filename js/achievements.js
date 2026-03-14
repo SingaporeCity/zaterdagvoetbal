@@ -2208,7 +2208,7 @@ const ACHIEVEMENTS = {
     },
     ditVoeltAlsWerk: {
         id: 'ditVoeltAlsWerk',
-        name: 'Dit voelt als werk',
+        name: 'Louter upside',
         description: 'Bekijk de financiën',
         category: CATEGORIES.SPECIAL,
         icon: '📊',
