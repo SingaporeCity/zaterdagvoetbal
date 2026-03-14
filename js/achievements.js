@@ -2087,7 +2087,7 @@ const ACHIEVEMENTS = {
     },
     louterUpside: {
         id: 'louterUpside',
-        name: 'Louter upside',
+        name: 'Kweekvijver',
         description: 'Upgrade je jeugdacademie',
         category: CATEGORIES.SPECIAL,
         icon: '🎓',
@@ -2208,7 +2208,7 @@ const ACHIEVEMENTS = {
     },
     ditVoeltAlsWerk: {
         id: 'ditVoeltAlsWerk',
-        name: 'Louter upside',
+        name: 'Louter Upside',
         description: 'Bekijk de financiën',
         category: CATEGORIES.SPECIAL,
         icon: '📊',
