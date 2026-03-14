@@ -25224,6 +25224,13 @@ body {
         font-size: 0.82rem;
     }
 
+    .nav-group-label {
+        display: block !important;
+        padding: 8px 16px 2px;
+        font-size: 0.45rem;
+        opacity: 0.4;
+    }
+
     .club-info {
         display: flex;
         flex-direction: column;
