@@ -14035,17 +14035,24 @@ body {
 
 @media (max-width: 768px) {
     .scouting-layout {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
     }
 
     .scouting-sidebar {
-        flex-direction: row;
-        gap: 10px;
+        display: contents;
     }
 
-    .scouting-scout-card,
+    .scouting-scout-card {
+        order: 0;
+    }
+
+    .scouting-main {
+        order: 1;
+    }
+
     .scouting-centrum-card {
-        flex: 1;
+        order: 2;
     }
 }
 
