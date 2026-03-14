@@ -5727,7 +5727,9 @@ function updateMatchTimer() {
                     };
                 } else {
                     playBtn.innerHTML = message;
-                    playBtn.onclick = null;
+                    playBtn.onclick = function() {
+                        showAlert('Niet zo snel, de tegenstander is nog niet eens aangekomen!');
+                    };
                 }
             }
         };
