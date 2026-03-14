@@ -25167,6 +25167,7 @@ body {
 
     .club-info {
         display: flex;
+        flex-direction: column;
     }
 
     .sidebar-header {
