@@ -28535,6 +28535,11 @@ body {
     }
 
     /* --- STADIUM MOBILE: hide map, show facility buttons --- */
+    #stadium.page.active {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        overflow: visible !important;
+    }
     .stadium-map-container .stadium-map {
         display: none !important;
     }
