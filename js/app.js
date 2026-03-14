@@ -2243,6 +2243,34 @@ function getRoleType(role) {
     return 'midfield';
 }
 
+// Dual nationality: MA and TR players also count as NL
+const DUAL_NATIONALITY_CODES = new Set(['ma', 'MA', 'tr', 'TR']);
+
+function getDualFlag(player) {
+    const code = (typeof player.nationality === 'object' ? player.nationality?.code : player.nationality) || '';
+    const nat = NATIONALITIES.find(n => n.code === code);
+    let flag = nat?.flag || '🏳️';
+    if (DUAL_NATIONALITY_CODES.has(code.toUpperCase())) flag += '🇳🇱';
+    return flag;
+}
+
+function getPlayerNationalities(player) {
+    const code = (typeof player.nationality === 'object' ? player.nationality?.code : player.nationality) || '';
+    const normalized = code.toUpperCase();
+    const nats = new Set([normalized]);
+    if (DUAL_NATIONALITY_CODES.has(code) || DUAL_NATIONALITY_CODES.has(normalized)) {
+        nats.add('NL');
+    }
+    return nats;
+}
+
+function nationalitiesMatch(natSetA, natSetB) {
+    for (const n of natSetA) {
+        if (natSetB.has(n)) return true;
+    }
+    return false;
+}
+
 // Calculate chemistry bonuses based on nationality
 function calculateChemistryBonuses() {
     const formation = FORMATIONS[gameState.formation];
@@ -2273,14 +2301,11 @@ function calculateChemistryBonuses() {
             }
         });
 
-        // Check if all adjacent players have same nationality
+        // Check if all adjacent players share a nationality (dual nationality counts)
         if (adjacentPlayers.length > 0) {
-            const playerNat = typeof player.nationality === 'object' ? player.nationality?.code : player.nationality;
-            const allSameNationality = adjacentPlayers.every(ap => {
-                const apNat = typeof ap.nationality === 'object' ? ap.nationality?.code : ap.nationality;
-                return apNat === playerNat;
-            });
-            if (allSameNationality) {
+            const playerNats = getPlayerNationalities(player);
+            const allMatch = adjacentPlayers.every(ap => nationalitiesMatch(playerNats, getPlayerNationalities(ap)));
+            if (allMatch) {
                 bonuses[player.id] = 1; // +1 overall bonus
             }
         }
@@ -2322,6 +2347,10 @@ function renderLineupPitch() {
             const natCode = typeof player.nationality === 'object' ? player.nationality?.code : player.nationality;
             const nat = NATIONALITIES.find(n => n.code === natCode);
             nationalityFlag = nat?.flag || '🏳️';
+            // Dual nationality: MA/TR also show NL flag
+            if (natCode && DUAL_NATIONALITY_CODES.has(natCode.toUpperCase())) {
+                nationalityFlag += '🇳🇱';
+            }
             chemistryBonus = chemistryBonuses[player.id] || 0;
 
             // Check if player is in wrong position
@@ -2443,7 +2472,7 @@ function renderAvailablePlayers() {
                      draggable="${isUnavailable ? 'false' : 'true'}"
                      data-player-id="${player.id}">
                     <span class="ap-pos" style="background:${posData?.color || '#666'};color:#fff">${posData?.abbr || '??'}</span>
-                    <span class="ap-flag">${typeof player.nationality === 'object' ? (player.nationality?.flag || '🏳️') : '🏳️'}</span>
+                    <span class="ap-flag">${getDualFlag(player)}</span>
                     <span class="ap-name">${player.name}</span>
                     ${statusHTML}
                     <span class="ap-energy"><span class="ap-energy-bar" style="width:${energy}%;background:${energyColor}"></span></span>
@@ -2705,7 +2734,7 @@ function showSlotPlayerPicker(slotIndex, existingPlayer) {
     let rowsHTML = '';
     available.forEach(p => {
         const pd = POSITIONS[p.position];
-        const flag = typeof p.nationality === 'object' ? (p.nationality?.flag || '🏳️') : '🏳️';
+        const flag = getDualFlag(p);
         const energy = p.energy || 75;
         const energyColor = energy >= 70 ? '#4caf50' : energy >= 30 ? '#ff9800' : '#f44336';
         const stars = p.stars || 0;
