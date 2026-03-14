@@ -28126,30 +28126,33 @@ body {
     }
     .gcb-tracks {
         min-width: 0;
-        gap: 1px;
+        gap: 2px;
     }
     .gcb-track-row {
-        padding: 0 2px;
+        padding: 1px 2px;
         gap: 1px;
     }
     .gcb-track-header {
         gap: 3px;
     }
     .gcb-track-icon {
-        font-size: 0.55rem;
+        font-size: 0.6rem;
     }
     .gcb-track-name,
-    .gcb-track-reward,
     .gcb-xp-label {
         display: none !important;
     }
     .gcb-track-level {
         font-size: 0.5rem;
     }
+    .gcb-track-reward {
+        font-size: 0.45rem;
+        padding: 0 3px;
+    }
     .gcb-xp-track {
-        height: 7px;
-        border-radius: 3px;
-        min-width: 50px;
+        height: 8px;
+        border-radius: 4px;
+        min-width: 55px;
     }
     .gcb-xp-fill {
         border-radius: 3px;
