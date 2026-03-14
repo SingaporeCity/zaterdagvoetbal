@@ -11656,12 +11656,8 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
             </div>
         </div>
         <div class="live-match-controls" id="lm-controls">
-            <button class="live-match-btn-forward" id="lm-forward">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 15,12 5,21"/><polygon points="13,3 23,12 13,21"/></svg>
-                Verder
-            </button>
             <button class="live-match-btn-skip" id="lm-skip">
-                Sla over
+                Sla over naar resultaat
             </button>
         </div>
     `;
@@ -11678,7 +11674,6 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
     const commentaryMsg = document.getElementById('lm-commentary-msg');
     const logEl = document.getElementById('lm-log');
     const skipBtn = document.getElementById('lm-skip');
-    const forwardBtn = document.getElementById('lm-forward');
 
     // Stats elements
     const statEls = {
@@ -11967,16 +11962,9 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
         }
     }
 
-    // Forward button — skip to next event instantly
     let fastForward = false;
-    forwardBtn.addEventListener('click', () => {
-        fastForward = true;
-        // Cancel current timer and immediately tick
-        if (timer) { clearTimeout(timer); timer = null; }
-        tick();
-    });
 
-    // Skip button — show confirmation popup
+    // Skip button — jump to result
     skipBtn.addEventListener('click', () => {
         // Pause the simulation
         if (timer) { clearTimeout(timer); timer = null; }
