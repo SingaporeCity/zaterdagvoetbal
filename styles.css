@@ -25220,13 +25220,13 @@ body {
 
     .nav-item {
         justify-content: flex-start;
-        padding: 8px 16px;
+        padding: 6px 16px;
         font-size: 0.82rem;
     }
 
     .nav-group-label {
         display: block !important;
-        padding: 8px 16px 2px;
+        padding: 5px 16px 1px;
         font-size: 0.45rem;
         opacity: 0.4;
     }
