@@ -25144,15 +25144,12 @@ body {
         transform: translateX(-100%);
         transition: transform var(--transition-normal);
         z-index: 150;
+        padding-top: 56px;
+        width: var(--sidebar-width);
     }
 
     .sidebar.sidebar-open {
         transform: translateX(0);
-    }
-
-    /* Restore full sidebar width and labels when open on mobile */
-    .sidebar {
-        width: var(--sidebar-width);
     }
 
     .nav-item span:not(.nav-icon):not(.nav-badge) {
