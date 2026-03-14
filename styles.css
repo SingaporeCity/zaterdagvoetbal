@@ -28384,6 +28384,31 @@ body {
     .stadium-map-container .stadium-map {
         display: none !important;
     }
+    .stadium-map-container {
+        position: relative;
+    }
+    .stadium-map-overlay {
+        position: static !important;
+        width: 100%;
+        justify-content: center;
+        gap: 20px;
+        padding: 14px 20px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+    }
+    .smo-value {
+        font-size: 1.4rem;
+    }
+    .smo-label {
+        font-size: 0.65rem;
+    }
+    .smo-icon {
+        width: 18px;
+        height: 18px;
+    }
+    .smo-divider {
+        height: 28px;
+    }
     .stadium-mobile-facilities {
         display: flex !important;
         flex-direction: column;
