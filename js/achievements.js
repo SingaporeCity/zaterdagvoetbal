@@ -2218,7 +2218,7 @@ const ACHIEVEMENTS = {
     },
     loveYouFrans: {
         id: 'loveYouFrans',
-        name: 'Love you Frans xxx',
+        name: 'Muchas Bedankt',
         description: 'Verstuur een bugreport',
         category: CATEGORIES.SPECIAL,
         icon: '💌',
