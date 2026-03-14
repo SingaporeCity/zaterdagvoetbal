@@ -28136,24 +28136,22 @@ body {
         gap: 2px;
     }
     .gcb-track-row {
-        padding: 1px 2px;
+        display: grid;
+        grid-template-columns: 1fr;
+        padding: 0;
         gap: 1px;
     }
     .gcb-track-header {
         gap: 3px;
+        padding: 0;
     }
-    .gcb-track-icon {
-        font-size: 0.6rem;
-        width: 0.7rem;
-        text-align: center;
-    }
+    .gcb-track-icon,
     .gcb-track-name,
     .gcb-xp-label {
         display: none !important;
     }
     .gcb-track-level {
         font-size: 0.5rem;
-        min-width: 2.2em;
     }
     .gcb-track-reward {
         font-size: 0.45rem;
@@ -28632,9 +28630,6 @@ body {
     }
     .gcb {
         gap: 4px;
-    }
-    .gcb-track-icon {
-        display: none !important;
     }
     .gcb-xp-track {
         min-width: 40px;
