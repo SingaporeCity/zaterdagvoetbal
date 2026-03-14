@@ -4315,6 +4315,10 @@ body {
         display: none;
     }
 
+    .nav-submenu {
+        left: 80px !important;
+    }
+
     .sidebar-footer .stat-label {
         display: none;
     }
