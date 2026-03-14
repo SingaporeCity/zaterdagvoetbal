@@ -12449,13 +12449,18 @@ function claimAchievement(btn) {
     if (managerXP > 0) {
         const mgrAfter = getManagerLevel(gameState.manager?.xp || 0);
         if (mgrAfter.level > mgrBefore.level) {
-            const mgrLevelData = MANAGER_LEVELS.find(l => l.level === mgrAfter.level);
+            // Sum cash rewards for ALL skipped levels
+            let totalCashReward = 0;
+            for (let lvl = mgrBefore.level + 1; lvl <= mgrAfter.level; lvl++) {
+                const lvlData = MANAGER_LEVELS.find(l => l.level === lvl);
+                totalCashReward += lvlData?.cashReward || 0;
+            }
             const mgrNextData = MANAGER_LEVELS.find(l => l.level === mgrAfter.level + 1);
             setTimeout(() => queueLevelUp('manager', {
                 oldLevel: mgrBefore.level, newLevel: mgrAfter.level,
                 oldTitle: mgrBefore.title, newTitle: mgrAfter.title,
                 nextTitle: mgrNextData?.title || null,
-                cashReward: mgrLevelData?.cashReward || 0,
+                cashReward: totalCashReward,
                 oldProgress: mgrBefore.progress,
                 progress: mgrAfter.progress, xpToNext: mgrAfter.xpToNext
             }), 1200);
@@ -12464,12 +12469,15 @@ function claimAchievement(btn) {
     if (playerXP > 0) {
         const plrAfter = getPlayerLevel(gameState.myPlayer?.xp || 0, gameState.myPlayer?.stars || 1);
         if (plrAfter.level > plrBefore.level) {
+            // Skill points = delta between new and old level
+            const spPerLevel = getSPPerLevel(gameState.myPlayer?.stars || 1);
+            const totalSP = (plrAfter.level - plrBefore.level) * spPerLevel;
             const plrNextData = PLAYER_LEVELS.find(l => l.xpRequired > (gameState.myPlayer?.xp || 0));
             setTimeout(() => queueLevelUp('player', {
                 oldLevel: plrBefore.level, newLevel: plrAfter.level,
                 oldTitle: plrBefore.title, newTitle: plrAfter.title,
                 nextTitle: plrNextData?.title || null,
-                skillPoints: (plrAfter.level - 1) * 5,
+                skillPoints: totalSP,
                 oldProgress: plrBefore.progress,
                 progress: plrAfter.progress, xpToNext: plrAfter.xpToNext
             }), 1200);
@@ -12623,10 +12631,9 @@ function showLevelUpModal(type, data) {
     const label = isManager ? 'Manager' : 'Speler';
     const color = isManager ? '#1565c0' : '#2e7d32';
     const colorLight = isManager ? '#42a5f5' : '#66bb6a';
-    const spPerLevel = isManager ? 0 : getSPPerLevel(gameState.myPlayer?.stars || 1);
     const rewardText = isManager
         ? `+${formatCurrency(data.cashReward)}`
-        : `+${spPerLevel} Skillpunten`;
+        : `+${data.skillPoints || 0} Skillpunten`;
     const rewardIcon = isManager ? '💰' : '⚡';
     const progressPct = Math.round((data.progress || 0) * 100);
     const oldProgressPct = Math.round((data.oldProgress || 0) * 100);
