@@ -28278,17 +28278,27 @@ body {
     }
     .player-card.youth-card {
         grid-template-columns: auto 1fr auto auto !important;
-        grid-template-rows: auto auto !important;
-        gap: 3px 6px !important;
+        grid-template-rows: auto auto auto !important;
+        gap: 2px 6px !important;
+    }
+    .player-card.youth-card .pc-potential-stars {
+        grid-row: 2;
+        grid-column: 2;
     }
     .player-card.youth-card .yc-action {
+        grid-row: 3;
         grid-column: 1 / -1;
-        justify-content: stretch;
+        justify-content: flex-end;
     }
     .player-card.youth-card .yc-action .btn {
+        font-size: 0.7rem;
+        padding: 5px 12px;
+    }
+    .player-card.youth-card .yc-action .btn-sign-contract {
         flex: 1;
-        font-size: 0.72rem;
-        padding: 6px 8px;
+    }
+    .player-card.youth-card .yc-action .btn-dismiss-youth {
+        flex: none;
     }
     /* Lineup/tactics: vertical stack on mobile */
     .tactics-panel.active,
