@@ -9902,28 +9902,35 @@ function renderDashboardExtras() {
     if (newspaperWeek) newspaperWeek.textContent = gameState.week;
     if (posterMatchday) posterMatchday.textContent = gameState.week;
 
-    // Update team names on poster — respect home/away from schedule
+    // Update team names + badges on poster — respect home/away from schedule
     const homeTeamName = document.getElementById('home-team-name');
     const awayTeamName = document.getElementById('away-team-name');
+    const homeBadge = document.querySelector('.home-badge path');
+    const awayBadge = document.querySelector('.away-badge path');
     if (homeTeamName && awayTeamName && gameState.nextMatch) {
-        const isHome = gameState.nextMatch.isHome !== false; // default to home if unknown
+        const isHome = gameState.nextMatch.isHome !== false;
         if (isHome) {
             homeTeamName.textContent = gameState.club.name;
             awayTeamName.textContent = gameState.nextMatch.opponent || 'Tegenstander';
+            if (homeBadge) { homeBadge.setAttribute('fill', 'var(--accent-green-dim)'); homeBadge.setAttribute('stroke', 'var(--text-primary)'); }
+            if (awayBadge) { awayBadge.setAttribute('fill', '#c62828'); awayBadge.setAttribute('stroke', '#fff'); }
         } else {
             homeTeamName.textContent = gameState.nextMatch.opponent || 'Tegenstander';
             awayTeamName.textContent = gameState.club.name;
+            if (homeBadge) { homeBadge.setAttribute('fill', '#c62828'); homeBadge.setAttribute('stroke', '#fff'); }
+            if (awayBadge) { awayBadge.setAttribute('fill', 'var(--accent-green-dim)'); awayBadge.setAttribute('stroke', 'var(--text-primary)'); }
         }
     }
 
-    // Sync home-badge in match preview with sidebar badge
+    // Sync club badge to correct side based on home/away
     const sidebarBadge = document.getElementById('club-badge-svg');
-    const homeBadge = document.querySelector('.home-badge');
-    if (sidebarBadge && homeBadge) {
+    const isHomeMatch = gameState.nextMatch?.isHome !== false;
+    const myBadgeTarget = document.querySelector(isHomeMatch ? '.home-badge' : '.away-badge');
+    if (sidebarBadge && myBadgeTarget) {
         const clone = sidebarBadge.cloneNode(true);
         clone.removeAttribute('id');
-        homeBadge.innerHTML = '';
-        homeBadge.appendChild(clone);
+        myBadgeTarget.innerHTML = '';
+        myBadgeTarget.appendChild(clone);
     }
 
     // Update chalkboard stats
@@ -11059,12 +11066,20 @@ function setNextMatch() {
             const homeTeamEl = document.getElementById('home-team-name');
             const awayTeamEl = document.getElementById('away-team-name');
             // Home team always left, away team always right
+            const homeBadge = document.querySelector('.home-badge path');
+            const awayBadge = document.querySelector('.away-badge path');
             if (opp.isHome) {
+                // We're home (left): our colors left, opponent red right
                 if (homeTeamEl) homeTeamEl.textContent = gameState.club.name;
                 if (awayTeamEl) awayTeamEl.textContent = opp.name;
+                if (homeBadge) { homeBadge.setAttribute('fill', 'var(--accent-green-dim)'); homeBadge.setAttribute('stroke', 'var(--text-primary)'); }
+                if (awayBadge) { awayBadge.setAttribute('fill', '#c62828'); awayBadge.setAttribute('stroke', '#fff'); }
             } else {
+                // We're away (right): opponent colors left, our colors right
                 if (homeTeamEl) homeTeamEl.textContent = opp.name;
                 if (awayTeamEl) awayTeamEl.textContent = gameState.club.name;
+                if (homeBadge) { homeBadge.setAttribute('fill', '#c62828'); homeBadge.setAttribute('stroke', '#fff'); }
+                if (awayBadge) { awayBadge.setAttribute('fill', 'var(--accent-green-dim)'); awayBadge.setAttribute('stroke', 'var(--text-primary)'); }
             }
         }
     }).catch(() => {});
