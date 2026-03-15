@@ -1606,11 +1606,6 @@ function initMyPlayer() {
     // Migrate player XP fields
     if (gameState.myPlayer.xp === undefined) gameState.myPlayer.xp = 0;
     if (gameState.myPlayer.spentSkillPoints === undefined) gameState.myPlayer.spentSkillPoints = 0;
-    // Onboarding gives 10 free SP — subtract those from spent count
-    if (!gameState.myPlayer._spMigrated) {
-        gameState.myPlayer.spentSkillPoints = Math.max(0, (gameState.myPlayer.spentSkillPoints || 0) - 10);
-        gameState.myPlayer._spMigrated = true;
-    }
     if (!gameState.myPlayer.stars) gameState.myPlayer.stars = 1;
     // Migrate very old saves where attributes were set high without skill point tracking
     // Only run once, tracked by _attrCapMigrated flag (the old !spentSkillPoints check was broken: 0 is falsy)
