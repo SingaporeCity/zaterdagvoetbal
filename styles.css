@@ -28279,33 +28279,49 @@ body {
     .youth-capacity-card {
         display: none !important;
     }
+    .youth-academy-card {
+        display: flex !important;
+        flex-direction: row !important;
+    }
+    .youth-academy-card .acad-current {
+        flex: 1;
+        border-bottom: none;
+        border-right: 1px solid var(--border);
+    }
+    .youth-academy-card .acad-upgrade-block {
+        flex: 1;
+    }
     .youth-players-grid {
         grid-template-columns: 1fr !important;
         overflow: visible !important;
     }
     .player-card.youth-card {
         grid-template-columns: auto 1fr auto auto !important;
-        grid-template-rows: auto auto auto !important;
-        gap: 2px 6px !important;
+        grid-template-rows: auto auto !important;
+        gap: 3px 4px !important;
     }
     .player-card.youth-card .pc-potential-stars {
-        grid-row: 2;
-        grid-column: 2;
+        grid-row: 1;
+        grid-column: 4;
+        align-self: center;
     }
     .player-card.youth-card .yc-action {
-        grid-row: 3;
+        grid-row: 2;
         grid-column: 1 / -1;
-        justify-content: flex-end;
+        display: flex;
+        gap: 6px;
     }
     .player-card.youth-card .yc-action .btn {
-        font-size: 0.7rem;
-        padding: 5px 12px;
+        font-size: 0.68rem;
+        padding: 4px 10px;
     }
     .player-card.youth-card .yc-action .btn-sign-contract {
         flex: 1;
     }
     .player-card.youth-card .yc-action .btn-dismiss-youth {
         flex: none;
+        font-size: 0.6rem;
+        padding: 4px 8px;
     }
     /* Lineup/tactics: vertical stack on mobile */
     .tactics-panel.active,
