@@ -24857,7 +24857,8 @@ body {
     margin: 0 auto;
 }
 
-#wedstrijden.page.active {
+#wedstrijden.page.active,
+#bugs.page.active {
     overflow-y: auto;
 }
 
