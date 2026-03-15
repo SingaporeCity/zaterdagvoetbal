@@ -28349,12 +28349,24 @@ body {
     .player-card.youth-card .pc-overall {
         flex-shrink: 0;
     }
+    /* Force line break after ALG: stars + buttons always on row 2 */
+    .player-card.youth-card::after {
+        content: '';
+        flex-basis: 100%;
+        height: 0;
+        order: 6;
+    }
+    .player-card.youth-card .pc-overall {
+        order: 5;
+    }
     .player-card.youth-card .pc-potential-stars {
         align-items: flex-start;
         flex-direction: row;
         gap: 3px;
+        order: 10;
     }
     .player-card.youth-card .yc-action {
+        order: 11;
         margin-left: auto;
         display: flex;
         gap: 4px;
