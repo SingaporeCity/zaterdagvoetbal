@@ -1727,24 +1727,6 @@ const ACHIEVEMENTS = {
         reward: { managerXP: 15 },
         check: (state) => state.specialists?.captain === 'myplayer'
     },
-    penaltyTaker: {
-        id: 'penaltyTaker',
-        name: 'Strafschopnemer',
-        description: 'Wijs strafschopnemer aan',
-        category: CATEGORIES.PLAYERS,
-        icon: '🥅',
-        reward: { managerXP: 15 },
-        check: (state) => !!state.specialists?.penaltyTaker
-    },
-    cornerTaker: {
-        id: 'cornerTaker',
-        name: 'Cornernemer',
-        description: 'Wijs cornernemer aan',
-        category: CATEGORIES.PLAYERS,
-        icon: '🚩',
-        reward: { managerXP: 15 },
-        check: (state) => !!state.specialists?.cornerTaker
-    },
 
     // ================================================================
     // MANAGER — STADIUM (30) — managerXP
