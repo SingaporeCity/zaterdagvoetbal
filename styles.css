@@ -25229,6 +25229,10 @@ body {
         display: inline;
     }
 
+    .nav-menu {
+        overflow: visible !important;
+    }
+
     .nav-item {
         justify-content: flex-start;
         padding: 6px 16px;
