@@ -10577,14 +10577,14 @@ async function _playMultiplayerMatchInner() {
             if (mpSquad) mpSquad.energy = gameState.myPlayer.energy;
         }
 
-        // Fans
+        // Fans — calculate but DON'T apply yet (applied after live match commentary)
+        const fansBeforeMatch = gameState.club.fans || 50;
         const baseFans = resultType === 'win' ? 10 : resultType === 'draw' ? 3 : -2;
         const offensiveMultipliers = { zeer_verdedigend: 0.5, verdedigend: 0.7, gebalanceerd: 1.0, offensief: 1.5, leeroy: 2.0 };
         const offensiveMultiplier = offensiveMultipliers[gameState.tactics?.offensief] || 1.0;
         const homeMultiplier = isHome ? 1.2 : 1.0;
         const goalBonus = playerScore * 2;
         const newFans = Math.round(baseFans * offensiveMultiplier * homeMultiplier) + goalBonus;
-        gameState.club.fans = Math.max(0, (gameState.club.fans || 50) + newFans);
 
         // Formation drive
         if (!gameState.formationDrives) gameState.formationDrives = {};
@@ -10880,8 +10880,12 @@ async function _playMultiplayerMatchInner() {
         saveGame(gameState);
         forceSyncToSupabase();
 
-        // Show live match simulation
+        // Show live match simulation — fans shown as pre-match value during commentary
+        fullResult._fansBeforeMatch = fansBeforeMatch;
         showLiveMatch(fullResult, isHome, opponentName, () => {
+            // Apply fan change AFTER commentary ends
+            gameState.club.fans = Math.max(0, fansBeforeMatch + newFans);
+
             navigateToPage('wedstrijden');
             setTimeout(() => activateTabOnPage('wedstrijden', 'verslag'), 50);
 
@@ -11645,7 +11649,7 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
                         <span class="live-match-team-name away">${opponentName}</span>
                     </div>
                 </div>
-                <div class="live-match-fans">Fans: ${gameState.club.fans || 50}</div>
+                <div class="live-match-fans">Fans: ${result._fansBeforeMatch || gameState.club.fans || 50}</div>
                 <div class="live-match-stats" id="lm-stats">
                     <div class="live-match-stat">
                         <span class="live-match-stat-value home" id="lm-poss-home">50%</span>
