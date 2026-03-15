@@ -24819,10 +24819,14 @@ body {
     margin: 0 auto;
 }
 
+#wedstrijden.page.active {
+    overflow-y: auto;
+}
+
 /* Report two-column grid: left = match info, right = player ratings */
 .report-grid {
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: minmax(200px, 1fr) minmax(0, 3fr);
     gap: 16px;
     align-items: start;
 }
@@ -24836,6 +24840,8 @@ body {
     border-radius: var(--card-radius);
     box-shadow: var(--card-shadow);
     padding: 12px;
+    min-width: 0;
+    overflow: visible;
 }
 
 .report-col-right {
@@ -25291,16 +25297,13 @@ body {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.78rem;
-    table-layout: fixed;
 }
 
 .match-ratings-table th,
 .match-ratings-table td {
-    padding: 3px 4px;
+    padding: 3px 5px;
     text-align: left;
     border-bottom: 1px solid rgba(0,0,0,0.08);
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
