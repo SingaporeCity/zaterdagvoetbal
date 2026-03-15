@@ -16789,7 +16789,10 @@ function renderKantineTopscorers() {}
 /**
  * Initialize game in multiplayer mode (called after Supabase load)
  */
+let _initMultiplayerRunning = false;
 async function initMultiplayerGame(detail) {
+    if (_initMultiplayerRunning) return;
+    _initMultiplayerRunning = true;
     const { leagueId, clubId, userId, league } = detail;
 
     try {
@@ -16971,6 +16974,8 @@ async function initMultiplayerGame(detail) {
         initNavigation();
         navigateToPage('dashboard');
         showNotification('Fout bij laden multiplayer. Probeer opnieuw.', 'error');
+    } finally {
+        _initMultiplayerRunning = false;
     }
 }
 
