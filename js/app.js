@@ -10518,14 +10518,24 @@ async function _playMultiplayerMatchInner() {
         }
         gameState._pendingPlayerXP = playerXPReasons.length > 0 ? playerXPReasons : null;
 
-        // Player growth (lineup players with stars improve)
+        // Player growth (lineup players with stars improve, heavily based on match rating)
+        // Target: 0.5★ + rating 6 → ~40%, 0.5★ + rating 8 → ~75%
+        // Formula: baseGrowth(rating) * starMultiplier
+        // baseGrowth: rating 2→5%, 4→15%, 6→35%, 8→65%, 9→80%
+        // starMultiplier: 0.5★ → 1.15x, 1★ → 1.5x, 2★ → 2.5x
         const improvements = [];
         const lineupIds = new Set((gameState.lineup || []).filter(p => p).map(p => p.id));
+        const ratings = matchData.playerRatings || {};
         gameState.players.forEach(player => {
             if (!player || !lineupIds.has(player.id)) return;
             const stars = player.stars || 0;
             if (stars >= 0.5 && player.overall < 99) {
-                const growthGain = Math.round(5 + stars * 30 + Math.random() * 10);
+                const ratingData = ratings[player.id] || ratings[String(player.id)];
+                const rating = Math.round(ratingData?.rating || 5);
+                // Growth curve: exponential-ish, centered around rating
+                const baseGrowth = Math.round(5 + Math.pow(Math.max(0, rating - 2), 1.8) * 3.5);
+                const starMultiplier = 0.8 + stars * 1.4;
+                const growthGain = Math.round(baseGrowth * starMultiplier);
                 if (!player.growthProgress) player.growthProgress = 0;
                 player.growthProgress += growthGain;
                 let leveled = false;

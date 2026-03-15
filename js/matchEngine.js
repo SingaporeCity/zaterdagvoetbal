@@ -316,11 +316,12 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
     const roll = Math.random() * 100;
 
     // Determine event type based on team strength and random factors
-    const attackChance = strength.attack / (strength.attack + opposingStrength.defense * 1.1) * 100;
+    // Minimum 30% chance creation even for weak teams — kelderklasse is chaotic
+    const attackChance = Math.max(30, strength.attack / (strength.attack + opposingStrength.defense * 1.1) * 100);
     const chanceCreated = roll < attackChance;
 
     // Chaos factor — kelderklasse: anything can happen (lucky goal without a real chance)
-    if (!chanceCreated && Math.random() < 0.03) {
+    if (!chanceCreated && Math.random() < 0.05) {
         const luckyScorer = players ? selectScorer(players) : null;
         events.push({
             minute,
@@ -825,22 +826,22 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
 function generateKeyMinutes() {
     const minutes = [];
 
-    // First half
+    // First half — 40% chance per minute for more action
     for (let i = 1; i <= 45; i++) {
-        if (Math.random() < 0.30) { // ~30% chance each minute has action
+        if (Math.random() < 0.40) {
             minutes.push(i);
         }
     }
 
-    // Second half
+    // Second half — 40% chance, slightly more hectic
     for (let i = 46; i <= 90; i++) {
-        if (Math.random() < 0.30) {
+        if (Math.random() < 0.40) {
             minutes.push(i);
         }
     }
 
-    // Ensure some minimum number of events
-    while (minutes.length < 14) {
+    // Ensure minimum 20 key moments for a spectaculair match
+    while (minutes.length < 20) {
         const newMinute = random(1, 90);
         if (!minutes.includes(newMinute)) {
             minutes.push(newMinute);
