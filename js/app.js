@@ -12515,6 +12515,10 @@ function triggerAchievementCheck() {
 function showNextAchievement() {
     if (achievementQueue.length === 0) {
         achievementModalOpen = false;
+        // Check if level-ups are waiting
+        if (levelUpQueue.length > 0) {
+            showNextLevelUp();
+        }
         return;
     }
     achievementModalOpen = true;
@@ -13130,6 +13134,10 @@ function showXPModal(type, reasons, onDone, onClaim) {
                 updateGlobalManagerTile();
             }
             overlay.remove();
+            // Show queued level-ups after XP modal closes
+            if (levelUpQueue.length > 0 && !levelUpModalOpen) {
+                setTimeout(() => showNextLevelUp(), 300);
+            }
             if (onDone) setTimeout(onDone, 200);
         });
     });
