@@ -28457,6 +28457,8 @@ body {
     .nav-item.has-submenu.submenu-open .nav-submenu {
         display: block !important;
         left: var(--sidebar-width) !important;
+        min-width: 0;
+        max-width: calc(100vw - var(--sidebar-width) - 8px);
     }
 
     /* --- GLOBAL --- */
