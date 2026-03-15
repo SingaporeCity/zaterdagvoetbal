@@ -1371,7 +1371,7 @@ Afkoopsom: ${D(n)} (10x weeksalaris van ${D(s.salary||0)})`))return;o.club.budge
                             <span class="rating-growth-label-positive">+${j.gainPct}%</span>${le}
                         </div>`}else H='<span class="rating-no-growth">-</span>';const be=G[j.position]||{color:"#666"},he=Ze(X);return`<tr>
                         <td><span class="mr-pos-badge" style="background: ${be.color}">${V}</span></td>
-                        <td><span class="mr-name-wrap">${j.name} ${P}</span></td>
+                        <td><span class="mr-name-wrap"><span class="mr-name-full">${j.name}</span><span class="mr-name-short">${j.name.split(" ").slice(-1)[0]}</span> ${P}</span></td>
                         <td><span class="mr-ovr-badge" style="background: ${be.color}">${te?te.overall:"?"}</span></td>
                         <td><span class="rating-stars-cell">${he}</span></td>
                         <td><span class="match-rating-badge ${Y}">${Math.round(j.rating)}</span></td>
