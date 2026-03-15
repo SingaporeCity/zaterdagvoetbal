@@ -28342,6 +28342,9 @@ body {
         grid-row: 2;
         grid-column: 2;
         justify-self: start;
+        align-items: flex-start;
+        flex-direction: row;
+        gap: 4px;
     }
     .player-card.youth-card .yc-action {
         grid-row: 2;
