@@ -141,11 +141,11 @@ export function calculateTeamStrength(lineup, formation, tactics, players, optio
         // Calculate position fit penalty/bonus
         let fitMultiplier = 1.0;
         if (player.position === positionRole) {
-            fitMultiplier = 1.1; // Bonus for perfect fit
+            fitMultiplier = 1.15; // Bonus for perfect fit
         } else if (POSITIONS[player.position]?.group === positionGroup) {
-            fitMultiplier = 0.95; // Small penalty for same group
+            fitMultiplier = 0.90; // Penalty for same group but different role
         } else {
-            fitMultiplier = 0.75; // Bigger penalty for wrong group
+            fitMultiplier = 0.55; // Heavy penalty for wrong group (keeper as spits etc.)
         }
 
         // Energy factor: 100% = ×1.0, 50% = ×0.67 (ovr 6→4), 0% = ×0.33
@@ -322,8 +322,8 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
     const roll = Math.random() * 100;
 
     // Determine event type based on team strength and random factors
-    // Kelderklasse: very chaotic, minimum 50% chance creation
-    const attackChance = Math.max(50, strength.attack / (strength.attack + opposingStrength.defense * 1.1) * 100);
+    // Kelderklasse: chaotic but strength still matters
+    const attackChance = Math.max(35, strength.attack / (strength.attack + opposingStrength.defense * 1.1) * 100);
     const chanceCreated = roll < attackChance;
 
     // Chaos factor — kelderklasse: lucky goals happen regularly
