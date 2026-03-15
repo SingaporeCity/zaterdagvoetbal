@@ -9207,7 +9207,10 @@ function migratePlayersToZaterdag() {
 // ONBOARDING & TUTORIAL
 // ================================================
 
+let onboardingActive = false;
 function showOnboarding() {
+    if (onboardingActive) return;
+    onboardingActive = true;
     const positionOptions = [
         { key: 'keeper', name: 'Keeper', abbr: 'KEE', color: '#f9a825' },
         { key: 'linksback', name: 'Linksback', abbr: 'LB', color: '#2196f3' },
@@ -9510,6 +9513,7 @@ function showOnboarding() {
         }
 
         gameState.onboardingCompleted = true;
+        onboardingActive = false;
         saveGame(gameState);
 
         // Re-render UI
