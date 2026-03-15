@@ -83,6 +83,12 @@ const COMMENTARY = {
         '{player} trapt de corner!',
         'Hoekschop, genomen door {player}!'
     ],
+    free_kick: [
+        'Vrije trap voor {player}!',
+        '{player} legt de bal klaar voor een vrije trap!',
+        'Gevaarlijke vrije trap, genomen door {player}!',
+        '{player} staat achter de vrije trap op een mooie positie!'
+    ],
     penalty: [
         'PENALTY! De scheidsrechter wijst naar de stip!',
         '{player} gaat achter de bal staan voor de penalty...'
