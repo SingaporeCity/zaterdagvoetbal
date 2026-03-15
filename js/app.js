@@ -3733,17 +3733,31 @@ async function purchaseUpgrade(category, upgradeId) {
         gameState.club.budget -= upgrade.cost;
 
         const singularCategories = ['tribunes', 'grass', 'training', 'medical', 'academy', 'scouting', 'lighting', 'sponsoring', 'kantine', 'perszaal', 'hotel'];
+        const stateKey = category === 'tribunes' ? 'tribune' : category;
 
-        if (singularCategories.includes(category)) {
-            gameState.stadium[category === 'tribunes' ? 'tribune' : category] = upgradeId;
-            if (category === 'tribunes') {
-                gameState.stadium.capacity = upgrade.capacity;
-            }
+        // Store construction — effect applies when completed, not immediately
+        const buildTime = upgrade.buildTime || 0;
+        if (buildTime > 0 && singularCategories.includes(category)) {
+            gameState.stadium.construction = {
+                category: stateKey,
+                targetId: upgradeId,
+                previousId: gameState.stadium[stateKey],
+                completesAt: Date.now() + buildTime * 60 * 60 * 1000, // buildTime in hours
+                capacity: upgrade.capacity || null
+            };
         } else {
-            if (!Array.isArray(gameState.stadium[category])) {
-                gameState.stadium[category] = [];
+            // Instant upgrades (no build time)
+            if (singularCategories.includes(category)) {
+                gameState.stadium[stateKey] = upgradeId;
+                if (category === 'tribunes') {
+                    gameState.stadium.capacity = upgrade.capacity;
+                }
+            } else {
+                if (!Array.isArray(gameState.stadium[category])) {
+                    gameState.stadium[category] = [];
+                }
+                gameState.stadium[category].push(upgradeId);
             }
-            gameState.stadium[category].push(upgradeId);
         }
 
         updateBudgetDisplays();
@@ -10584,7 +10598,19 @@ async function _playMultiplayerMatchInner() {
         const offensiveMultiplier = offensiveMultipliers[gameState.tactics?.offensief] || 1.0;
         const homeMultiplier = isHome ? 1.2 : 1.0;
         const goalBonus = playerScore * 2;
-        const newFans = Math.round(baseFans * offensiveMultiplier * homeMultiplier) + goalBonus;
+        let newFans = Math.round(baseFans * offensiveMultiplier * homeMultiplier) + goalBonus;
+
+        // Supporters facility bonus (only for HOME matches, only if not under construction)
+        let stadiumFanBonus = 0;
+        if (isHome) {
+            const persLevel = gameState.stadium?.perszaal;
+            const isConstructingPers = gameState.stadium?.construction?.category === 'perszaal';
+            if (persLevel && !isConstructingPers) {
+                const fanBonusMap = { pers_1: 10, pers_2: 25, pers_3: 50, pers_4: 100, pers_5: 200, pers_6: 350, pers_7: 500, pers_8: 750, pers_9: 1000 };
+                stadiumFanBonus = fanBonusMap[persLevel] || 0;
+                newFans += stadiumFanBonus;
+            }
+        }
 
         // Formation drive
         if (!gameState.formationDrives) gameState.formationDrives = {};
@@ -10647,7 +10673,8 @@ async function _playMultiplayerMatchInner() {
             playerRatings: compactRatings,
             improvements,
             chairmanComments,
-            newFans
+            newFans,
+            stadiumFanBonus
         };
 
         // Push to match history (use captured week/season, not gameState which may be bumped)
@@ -11330,7 +11357,7 @@ function renderMatchReport() {
                             ${match.newFans !== undefined ? `
                                 <div class="report-footer-item fans">
                                     <span class="report-footer-label">Fans</span>
-                                    <span class="report-footer-value">${match.newFans >= 0 ? `+${match.newFans}` : match.newFans} <span class="report-footer-meta">(${gameState.club.fans} totaal)</span></span>
+                                    <span class="report-footer-value">${match.newFans >= 0 ? `+${match.newFans}` : match.newFans}${match.stadiumFanBonus ? ` <span class="report-footer-meta">(waarvan +${match.stadiumFanBonus} stadion)</span>` : ''} <span class="report-footer-meta">(${gameState.club.fans} totaal)</span></span>
                                 </div>
                             ` : ''}
                         </div>
@@ -15120,15 +15147,15 @@ const STADIUM_TILE_CONFIG = {
         description: 'Trek meer supporters naar het stadion met betere faciliteiten en sfeer.',
         levels: [
             { id: 'pers_0', name: 'Lege Grond', cost: 0, effect: 'Niet gebouwd' },
-            { id: 'pers_1', name: 'Scoreborden', cost: 2000, effect: '+10 fans per wedstrijd' },
-            { id: 'pers_2', name: 'Clubwebsite', cost: 4000, effect: '+25 fans per wedstrijd' },
-            { id: 'pers_3', name: 'Fanshop', cost: 12000, effect: '+50 fans per wedstrijd', reqCapacity: 500 },
-            { id: 'pers_4', name: 'Mascotte', cost: 30000, effect: '+100 fans per wedstrijd', reqDivision: 7 },
-            { id: 'pers_5', name: 'Seizoenskaarten', cost: 75000, effect: '+200 fans per wedstrijd', reqDivision: 6 },
-            { id: 'pers_6', name: 'Social Media Team', cost: 180000, effect: '+350 fans per wedstrijd', reqDivision: 5 },
-            { id: 'pers_7', name: 'LED-Reclameborden', cost: 400000, effect: '+500 fans per wedstrijd', reqDivision: 4 },
-            { id: 'pers_8', name: 'Sfeeracties & Tifo', cost: 1000000, effect: '+750 fans per wedstrijd', reqDivision: 3 },
-            { id: 'pers_9', name: 'Fan Experience Center', cost: 2500000, effect: '+1000 fans per wedstrijd', reqDivision: 2 }
+            { id: 'pers_1', name: 'Scoreborden', cost: 2000, effect: '+10 fans per thuiswedstrijd' },
+            { id: 'pers_2', name: 'Clubwebsite', cost: 4000, effect: '+25 fans per thuiswedstrijd' },
+            { id: 'pers_3', name: 'Fanshop', cost: 12000, effect: '+50 fans per thuiswedstrijd', reqCapacity: 500 },
+            { id: 'pers_4', name: 'Mascotte', cost: 30000, effect: '+100 fans per thuiswedstrijd', reqDivision: 7 },
+            { id: 'pers_5', name: 'Seizoenskaarten', cost: 75000, effect: '+200 fans per thuiswedstrijd', reqDivision: 6 },
+            { id: 'pers_6', name: 'Social Media Team', cost: 180000, effect: '+350 fans per thuiswedstrijd', reqDivision: 5 },
+            { id: 'pers_7', name: 'LED-Reclameborden', cost: 400000, effect: '+500 fans per thuiswedstrijd', reqDivision: 4 },
+            { id: 'pers_8', name: 'Sfeeracties & Tifo', cost: 1000000, effect: '+750 fans per thuiswedstrijd', reqDivision: 3 },
+            { id: 'pers_9', name: 'Fan Experience Center', cost: 2500000, effect: '+1000 fans per thuiswedstrijd', reqDivision: 2 }
         ],
         stateKey: 'perszaal'
     }
