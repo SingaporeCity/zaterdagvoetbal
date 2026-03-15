@@ -12862,6 +12862,7 @@ function showLevelUpModal(type, data) {
         updateGlobalManagerTile();
         updateGlobalPlayerTile();
         updateBudgetDisplays();
+        renderProfileTraining();
         saveGame(gameState);
 
         overlay.classList.remove('show');
