@@ -1606,6 +1606,11 @@ function initMyPlayer() {
     // Migrate player XP fields
     if (gameState.myPlayer.xp === undefined) gameState.myPlayer.xp = 0;
     if (gameState.myPlayer.spentSkillPoints === undefined) gameState.myPlayer.spentSkillPoints = 0;
+    // Onboarding gives 10 free SP — subtract those from spent count
+    if (!gameState.myPlayer._spMigrated) {
+        gameState.myPlayer.spentSkillPoints = Math.max(0, (gameState.myPlayer.spentSkillPoints || 0) - 10);
+        gameState.myPlayer._spMigrated = true;
+    }
     if (!gameState.myPlayer.stars) gameState.myPlayer.stars = 1;
     // Migrate very old saves where attributes were set high without skill point tracking
     // Only run once, tracked by _attrCapMigrated flag (the old !spentSkillPoints check was broken: 0 is falsy)
@@ -4445,12 +4450,6 @@ function renderProfileTraining() {
 
     const container = document.getElementById('training-content');
     if (!container) return;
-
-    // Migrate old saves: onboarding used to set spentSkillPoints=10, those should be free
-    if (!mp._spMigrated) {
-        mp.spentSkillPoints = Math.max(0, (mp.spentSkillPoints || 0) - 10);
-        mp._spMigrated = true;
-    }
 
     // --- Player XP ---
     const playerXP = mp.xp || 0;
@@ -12962,8 +12961,48 @@ function showXPModal(type, reasons, onDone, onClaim) {
         const target = document.getElementById(btn.dataset.target);
         if (!target) { overlay.remove(); return; }
 
+        // Capture levels before XP grant for level-up detection
+        const plrBefore = getPlayerLevel(gameState.myPlayer?.xp || 0, gameState.myPlayer?.stars || 1);
+        const mgrBefore = getManagerLevel(gameState.manager?.xp || 0);
+
         // Award XP on claim
         if (onClaim) onClaim();
+
+        // Detect level-ups from XP modal
+        if (isPlayer) {
+            const plrAfter = getPlayerLevel(gameState.myPlayer?.xp || 0, gameState.myPlayer?.stars || 1);
+            if (plrAfter.level > plrBefore.level) {
+                const spPerLevel = getSPPerLevel(gameState.myPlayer?.stars || 1);
+                const totalSP = (plrAfter.level - plrBefore.level) * spPerLevel;
+                const plrNextData = PLAYER_LEVELS.find(l => l.xpRequired > (gameState.myPlayer?.xp || 0));
+                setTimeout(() => queueLevelUp('player', {
+                    oldLevel: plrBefore.level, newLevel: plrAfter.level,
+                    oldTitle: plrBefore.title, newTitle: plrAfter.title,
+                    nextTitle: plrNextData?.title || null,
+                    skillPoints: totalSP,
+                    oldProgress: plrBefore.progress,
+                    progress: plrAfter.progress, xpToNext: plrAfter.xpToNext
+                }), 800);
+            }
+        } else {
+            const mgrAfter = getManagerLevel(gameState.manager?.xp || 0);
+            if (mgrAfter.level > mgrBefore.level) {
+                let totalCashReward = 0;
+                for (let lvl = mgrBefore.level + 1; lvl <= mgrAfter.level; lvl++) {
+                    const lvlData = MANAGER_LEVELS.find(l => l.level === lvl);
+                    totalCashReward += lvlData?.cashReward || 0;
+                }
+                const mgrNextData = MANAGER_LEVELS.find(l => l.level === mgrAfter.level + 1);
+                setTimeout(() => queueLevelUp('manager', {
+                    oldLevel: mgrBefore.level, newLevel: mgrAfter.level,
+                    oldTitle: mgrBefore.title, newTitle: mgrAfter.title,
+                    nextTitle: mgrNextData?.title || null,
+                    cashReward: totalCashReward,
+                    oldProgress: mgrBefore.progress,
+                    progress: mgrAfter.progress, xpToNext: mgrAfter.xpToNext
+                }), 800);
+            }
+        }
 
         const btnRect = btn.getBoundingClientRect();
 
