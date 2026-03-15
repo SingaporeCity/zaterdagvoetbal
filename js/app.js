@@ -10738,6 +10738,9 @@ async function _playMultiplayerMatchInner() {
         tickSponsorContracts();
         generateSponsorMarket();
 
+        // Process youth academy (age + growth + intake)
+        processYouthDaily();
+
         // Reset wedstrijdvoorbereiding
         if (gameState.training && gameState.training.teamTraining) {
             gameState.training.teamTraining.selected = null;
