@@ -822,11 +822,30 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
     // Result bonus: winning team gets +0.5, losing team -0.3
     const homeWon = result.homeScore > result.awayScore;
     const awayWon = result.awayScore > result.homeScore;
+    const homeConceded = result.awayScore;
+    const awayConceded = result.homeScore;
+    const homeScored = result.homeScore;
+    const awayScored = result.awayScore;
+
     for (const [id, data] of Object.entries(result.playerRatings)) {
         const isHomePlayer = homeLineup && homeLineup.some(p => p && String(p.id) === String(id));
+        const group = POSITIONS[data.player?.position]?.group;
+
         if (isHomePlayer) {
+            // Win/loss bonus
             if (homeWon) data.rating += 0.5;
             else if (awayWon) data.rating -= 0.3;
+
+            // Defenders: penalty per goal conceded, bonus for clean sheet
+            if (group === 'defender' || group === 'goalkeeper') {
+                if (homeConceded === 0) data.rating += 0.8;
+                else data.rating -= homeConceded * 0.3;
+            }
+
+            // Attackers: penalty if team scored 0
+            if (group === 'attacker' && homeScored === 0) {
+                data.rating -= 0.5;
+            }
         }
     }
 
