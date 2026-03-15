@@ -289,7 +289,7 @@ function restoreMyPlayerInLineup(lineup, cs) {
             name: mp.name,
             age: mp.age,
             position: mp.position,
-            nationality: mp.nationality,
+            nationality: mp.nationality || { code: 'NL', flag: '🇳🇱', name: 'Nederlands' },
             overall: mp.overall,
             potential: mp.potential,
             stars: mp.stars || 0,

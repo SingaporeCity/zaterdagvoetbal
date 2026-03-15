@@ -1607,6 +1607,7 @@ function initMyPlayer() {
     if (gameState.myPlayer.xp === undefined) gameState.myPlayer.xp = 0;
     if (gameState.myPlayer.spentSkillPoints === undefined) gameState.myPlayer.spentSkillPoints = 0;
     if (!gameState.myPlayer.stars) gameState.myPlayer.stars = 1;
+    if (!gameState.myPlayer.nationality) gameState.myPlayer.nationality = { code: 'NL', flag: '🇳🇱', name: 'Nederlands' };
     // Migrate very old saves where attributes were set high without skill point tracking
     // Only run once, tracked by _attrCapMigrated flag (the old !spentSkillPoints check was broken: 0 is falsy)
     if (!gameState.myPlayer._attrCapMigrated) {
