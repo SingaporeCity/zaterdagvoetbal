@@ -210,7 +210,7 @@ export async function fetchTransferMarket(leagueId) {
 /**
  * Get countdown to next match time
  */
-export function getMatchCountdown(matchTime = '20:00') {
+export function getMatchCountdown(matchTime = '23:59') {
     const now = new Date();
     const [hours, minutes] = matchTime.split(':').map(Number);
 
@@ -241,7 +241,7 @@ export function getMatchCountdown(matchTime = '20:00') {
  */
 let countdownTimer = null;
 
-export function startCountdown(matchTime = '20:00') {
+export function startCountdown(matchTime = '23:59') {
     if (countdownTimer) clearInterval(countdownTimer);
 
     const updateDisplay = () => {
