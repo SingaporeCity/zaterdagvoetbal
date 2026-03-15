@@ -11037,10 +11037,14 @@ function setNextMatch() {
             gameState.nextMatch.isHome = opp.isHome;
             const homeTeamEl = document.getElementById('home-team-name');
             const awayTeamEl = document.getElementById('away-team-name');
-            const venueTag = opp.isHome ? '(thuis)' : '(uit)';
-            // Own team always left, opponent always right
-            if (homeTeamEl) homeTeamEl.textContent = `${gameState.club.name} ${venueTag}`;
-            if (awayTeamEl) awayTeamEl.textContent = opp.name;
+            // Home team always left, away team always right
+            if (opp.isHome) {
+                if (homeTeamEl) homeTeamEl.textContent = gameState.club.name;
+                if (awayTeamEl) awayTeamEl.textContent = opp.name;
+            } else {
+                if (homeTeamEl) homeTeamEl.textContent = opp.name;
+                if (awayTeamEl) awayTeamEl.textContent = gameState.club.name;
+            }
         }
     }).catch(() => {});
 }
