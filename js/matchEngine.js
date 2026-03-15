@@ -322,12 +322,12 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
     const roll = Math.random() * 100;
 
     // Determine event type based on team strength and random factors
-    // Minimum 30% chance creation even for weak teams — kelderklasse is chaotic
-    const attackChance = Math.max(30, strength.attack / (strength.attack + opposingStrength.defense * 1.1) * 100);
+    // Kelderklasse: very chaotic, minimum 50% chance creation
+    const attackChance = Math.max(50, strength.attack / (strength.attack + opposingStrength.defense * 1.1) * 100);
     const chanceCreated = roll < attackChance;
 
-    // Chaos factor — kelderklasse: anything can happen (lucky goal without a real chance)
-    if (!chanceCreated && Math.random() < 0.05) {
+    // Chaos factor — kelderklasse: lucky goals happen regularly
+    if (!chanceCreated && Math.random() < 0.08) {
         const luckyScorer = players ? selectScorer(players) : null;
         events.push({
             minute,
@@ -345,11 +345,11 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
     }
 
     if (chanceCreated) {
-        // Direct goal probability based on attack vs defense advantage
-        // Equal teams: ~25% goal, mismatch: up to 45%, underdog: down to 5%
+        // Direct goal probability — kelderklasse: poor defending, lots of goals
+        // Equal teams: ~30% goal, mismatch: up to 50%, underdog: down to 10%
         const shotRoll = Math.random() * 100;
         const attackAdvantage = strength.attack - opposingStrength.defense;
-        const goalProb = Math.max(5, Math.min(45, 25 + attackAdvantage * 1.0));
+        const goalProb = Math.max(10, Math.min(50, 30 + attackAdvantage * 1.2));
 
         if (shotRoll < goalProb) {
             // GOAL!
@@ -396,7 +396,7 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
     }
 
     // Half-chances: corners, free kicks, dangerous situations (no shot, but exciting commentary)
-    if (!chanceCreated && Math.random() < 0.25) {
+    if (!chanceCreated && Math.random() < 0.35) {
         const halfChanceTypes = ['corner', 'free_kick', 'chance'];
         const type = randomFromArray(halfChanceTypes);
         // Use designated specialist for corners/free kicks if available
@@ -887,22 +887,22 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
 function generateKeyMinutes() {
     const minutes = [];
 
-    // First half — 40% chance per minute for more action
+    // First half — 55% chance per minute, kelderklasse is wild
     for (let i = 1; i <= 45; i++) {
-        if (Math.random() < 0.40) {
+        if (Math.random() < 0.55) {
             minutes.push(i);
         }
     }
 
-    // Second half — 40% chance, slightly more hectic
+    // Second half — 60% chance, even more hectic as players tire
     for (let i = 46; i <= 90; i++) {
-        if (Math.random() < 0.40) {
+        if (Math.random() < 0.60) {
             minutes.push(i);
         }
     }
 
-    // Ensure minimum 20 key moments for a spectaculair match
-    while (minutes.length < 20) {
+    // Ensure minimum 30 key moments
+    while (minutes.length < 30) {
         const newMinute = random(1, 90);
         if (!minutes.includes(newMinute)) {
             minutes.push(newMinute);
