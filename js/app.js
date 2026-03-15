@@ -11246,23 +11246,29 @@ function renderMatchReport() {
     const resultClass = resultType === 'win' ? 'result-win' : resultType === 'loss' ? 'result-loss' : 'result-draw';
     const resultText = resultType === 'win' ? 'Gewonnen!' : resultType === 'loss' ? 'Verloren' : 'Gelijkspel';
 
-    // Stats
-    const possHome = isHome ? (match.possession?.home ?? 50) : (match.possession?.away ?? 50);
-    const possAway = isHome ? (match.possession?.away ?? 50) : (match.possession?.home ?? 50);
-    const shotsHome = isHome ? match.shots.home : match.shots.away;
-    const shotsAway = isHome ? match.shots.away : match.shots.home;
-    const sotHome = isHome ? match.shotsOnTarget.home : match.shotsOnTarget.away;
-    const sotAway = isHome ? match.shotsOnTarget.away : match.shotsOnTarget.home;
-    const xgHome = isHome ? (match.xG?.home || 0) : (match.xG?.away || 0);
-    const xgAway = isHome ? (match.xG?.away || 0) : (match.xG?.home || 0);
-    const cornersHome = isHome ? (match.corners?.home || 0) : (match.corners?.away || 0);
-    const cornersAway = isHome ? (match.corners?.away || 0) : (match.corners?.home || 0);
-    const foulsHome = isHome ? (match.fouls?.home || 0) : (match.fouls?.away || 0);
-    const foulsAway = isHome ? (match.fouls?.away || 0) : (match.fouls?.home || 0);
-    const cardsYellowHome = isHome ? (match.cards?.home?.yellow || 0) : (match.cards?.away?.yellow || 0);
-    const cardsYellowAway = isHome ? (match.cards?.away?.yellow || 0) : (match.cards?.home?.yellow || 0);
-    const cardsRedHome = isHome ? (match.cards?.home?.red || 0) : (match.cards?.away?.red || 0);
-    const cardsRedAway = isHome ? (match.cards?.away?.red || 0) : (match.cards?.home?.red || 0);
+    // Always: home team left, away team right
+    const leftTeamName = isHome ? gameState.club.name : opponent;
+    const rightTeamName = isHome ? opponent : gameState.club.name;
+    const leftScore = isHome ? playerScore : opponentScore;
+    const rightScore = isHome ? opponentScore : playerScore;
+
+    // Stats: always real home (left) / away (right)
+    const possHome = match.possession?.home ?? 50;
+    const possAway = match.possession?.away ?? 50;
+    const shotsHome = match.shots?.home || 0;
+    const shotsAway = match.shots?.away || 0;
+    const sotHome = match.shotsOnTarget?.home || 0;
+    const sotAway = match.shotsOnTarget?.away || 0;
+    const xgHome = match.xG?.home || 0;
+    const xgAway = match.xG?.away || 0;
+    const cornersHome = match.corners?.home || 0;
+    const cornersAway = match.corners?.away || 0;
+    const foulsHome = match.fouls?.home || 0;
+    const foulsAway = match.fouls?.away || 0;
+    const cardsYellowHome = match.cards?.home?.yellow || 0;
+    const cardsYellowAway = match.cards?.away?.yellow || 0;
+    const cardsRedHome = match.cards?.home?.red || 0;
+    const cardsRedAway = match.cards?.away?.red || 0;
 
     // Goal scorers with minutes — only show OUR team's goals
     const events = match.events || [];
@@ -11384,15 +11390,15 @@ function renderMatchReport() {
                     <div class="match-result-verdict">${resultText}</div>
                     <div class="match-result-scoreboard ${resultClass}">
                         <div class="match-result-team home">
-                            <span class="match-result-team-name">${gameState.club.name}</span>
+                            <span class="match-result-team-name">${leftTeamName}</span>
                         </div>
                         <div class="match-result-score-display">
-                            <span class="match-result-score-num">${playerScore}</span>
+                            <span class="match-result-score-num">${leftScore}</span>
                             <span class="match-result-score-sep">-</span>
-                            <span class="match-result-score-num">${opponentScore}</span>
+                            <span class="match-result-score-num">${rightScore}</span>
                         </div>
                         <div class="match-result-team away">
-                            <span class="match-result-team-name">${opponent}</span>
+                            <span class="match-result-team-name">${rightTeamName}</span>
                         </div>
                     </div>
                     ${goalSummaryHtml}
