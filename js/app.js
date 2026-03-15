@@ -11529,6 +11529,20 @@ async function renderMatchProgram() {
 function showLiveMatch(result, isHome, opponentName, onComplete) {
     const playerTeam = gameState.club.name;
 
+    // Fix preview events: replace tactics line with THIS player's tactics (not home team's)
+    const myTactics = gameState.tactics?.offensief || 'gebalanceerd';
+    const tacticsLabels = { zeer_verdedigend: 'zeer verdedigend', verdedigend: 'verdedigend', gebalanceerd: 'gebalanceerd', offensief: 'offensief', leeroy: 'vol in de aanval — Leeroy Jenkins-stijl' };
+    const myTacticsLine = `We spelen vandaag ${tacticsLabels[myTactics] || 'gebalanceerd'}. Laten we hopen dat het werkt!`;
+    result.events.forEach(ev => {
+        if (ev.type === 'preview' && ev.commentary?.startsWith('⚽ We spelen vandaag')) {
+            ev.commentary = `⚽ ${myTacticsLine}`;
+        }
+        // Fix team names in preview for away perspective
+        if (ev.type === 'preview' && ev.commentary?.startsWith('📋 Voorbeschouwing') && !isHome) {
+            ev.commentary = `📋 Voorbeschouwing — ${playerTeam} vs ${opponentName}`;
+        }
+    });
+
     // Build events timeline: map events to minutes, track running score
     const eventsByMinute = {};
     let runningHome = 0;

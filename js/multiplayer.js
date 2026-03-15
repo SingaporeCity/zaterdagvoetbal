@@ -1534,7 +1534,7 @@ export async function simulateWeek(leagueId, season, week, simulateMatchFn, calc
         // Initialise away team playerRatings (fix: away players now have real IDs)
         awayTeam.lineup.filter(p => p).forEach(player => {
             if (!result.playerRatings[player.id]) {
-                const quality = Math.min(1, Math.max(0, (player.overall || 50) / 100));
+                const quality = Math.min(1, Math.max(0, (player.overall || 5) / 10));
                 const perf = (Math.random() + Math.random()) / 2;
                 result.playerRatings[player.id] = {
                     player: { name: player.name, id: player.id, position: player.position },
