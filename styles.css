@@ -24865,7 +24865,7 @@ body {
 /* Report two-column grid: left = match info, right = player ratings */
 .report-grid {
     display: grid;
-    grid-template-columns: minmax(220px, 1.2fr) minmax(0, 2fr);
+    grid-template-columns: minmax(240px, 1.5fr) minmax(0, 2fr);
     gap: 16px;
     align-items: start;
 }
@@ -25445,8 +25445,8 @@ body {
 
 /* Growth bar */
 .rating-growth-cell {
-    min-width: 55px;
-    max-width: 90px;
+    min-width: 40px;
+    max-width: 65px;
 }
 
 .rating-growth-wrap {
