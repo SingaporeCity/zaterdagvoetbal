@@ -389,6 +389,21 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
         }
     }
 
+    // Half-chances: corners, free kicks, dangerous situations (no shot, but exciting commentary)
+    if (!chanceCreated && Math.random() < 0.25) {
+        const halfChanceTypes = ['corner', 'free_kick', 'chance'];
+        const type = randomFromArray(halfChanceTypes);
+        const player = players ? randomFromArray(players.filter(p => p)) : null;
+        events.push({
+            minute,
+            type,
+            team,
+            player: player?.name || 'Speler',
+            playerId: player?.id,
+            commentary: formatCommentary(type, { player: player?.name || 'Speler' })
+        });
+    }
+
     // Random events (fouls, cards) — influenced by mentaliteit
     const mentaliteitMod = tactics ? (TACTICS.mentaliteit.find(t => t.id === tactics.mentaliteit)?.effect || {}) : {};
     const foulChance = 0.08 + (mentaliteitMod.foulChance || 0);
@@ -641,11 +656,12 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
     }
 
     // Initialize player ratings — base influenced by player quality + random match performance
+    // overall is 1-10 scale, not 1-100
     if (homeLineup) {
         homeLineup.filter(p => p).forEach(player => {
-            const quality = Math.min(1, Math.max(0, (player.overall || 50) / 100));
+            const quality = Math.min(1, Math.max(0, (player.overall || 5) / 10));
             const perf = (Math.random() + Math.random()) / 2; // 0-1, centered around 0.5
-            const base = 3.5 + quality * 1.5 + perf * 2.5;
+            const base = 4.0 + quality * 2.0 + perf * 2.0;
             result.playerRatings[player.id] = {
                 player,
                 rating: base,
@@ -802,6 +818,17 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
             awayScore: result.awayScore
         })
     });
+
+    // Result bonus: winning team gets +0.5, losing team -0.3
+    const homeWon = result.homeScore > result.awayScore;
+    const awayWon = result.awayScore > result.homeScore;
+    for (const [id, data] of Object.entries(result.playerRatings)) {
+        const isHomePlayer = homeLineup && homeLineup.some(p => p && String(p.id) === String(id));
+        if (isHomePlayer) {
+            if (homeWon) data.rating += 0.5;
+            else if (awayWon) data.rating -= 0.3;
+        }
+    }
 
     // Determine man of the match
     let bestRating = 0;
