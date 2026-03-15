@@ -11348,7 +11348,7 @@ function renderMatchReport() {
                     const stars = actualPlayer ? (actualPlayer.stars || 0) : (p.potStars || 0);
                     let growthHTML;
                     if (isMyPlayer) {
-                        growthHTML = `<a class="rating-myplayer-link" onclick="navigateTo('training')">Check voortgang</a>`;
+                        growthHTML = `<a class="rating-myplayer-link" onclick="navigateTo('training')">Voortgang</a>`;
                     } else if (p.gainPct > 0) {
                         const levelUpIcon = p.leveled ? ' <span class="rating-levelup">+1 ALG!</span>' : '';
                         growthHTML = `<div class="rating-growth-wrap">
