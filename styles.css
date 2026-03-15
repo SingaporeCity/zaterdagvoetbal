@@ -25291,13 +25291,17 @@ body {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.78rem;
+    table-layout: fixed;
 }
 
 .match-ratings-table th,
 .match-ratings-table td {
-    padding: 4px 6px;
+    padding: 3px 4px;
     text-align: left;
     border-bottom: 1px solid rgba(0,0,0,0.08);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .match-ratings-table th {

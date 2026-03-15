@@ -11289,7 +11289,13 @@ function renderMatchReport() {
                     const posAbbr = POSITIONS[p.position]?.abbr || p.position;
                     const actualPlayer = gameState.players.find(pl => pl && pl.id === p.id);
                     const injuryIcon = actualPlayer && actualPlayer.injuredUntil && actualPlayer.injuredUntil > gameState.week ? `<span class="mr-injury">🏥${actualPlayer.injuredUntil - gameState.week}</span>` : '';
-                    const icons = injuryIcon + (p.goals ? '⚽'.repeat(p.goals) : '') + (p.assists ? '🅰️'.repeat(p.assists) : '') + (p.yellowCards ? '🟨'.repeat(p.yellowCards) : '') + (p.redCards ? '🟥'.repeat(p.redCards) : '');
+                    const iconParts = [];
+                    if (injuryIcon) iconParts.push(injuryIcon);
+                    if (p.goals) iconParts.push(`⚽${p.goals > 1 ? p.goals : ''}`);
+                    if (p.assists) iconParts.push(`🅰️${p.assists > 1 ? p.assists : ''}`);
+                    if (p.yellowCards) iconParts.push('🟨');
+                    if (p.redCards) iconParts.push('🟥');
+                    const icons = iconParts.join('');
                     const isMyPlayer = actualPlayer && actualPlayer.isMyPlayer;
                     const stars = actualPlayer ? (actualPlayer.stars || 0) : (p.potStars || 0);
                     let growthHTML;
