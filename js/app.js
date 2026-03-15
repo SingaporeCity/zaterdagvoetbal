@@ -11035,8 +11035,17 @@ function setNextMatch() {
         if (opp) {
             gameState.nextMatch.opponent = opp.name;
             gameState.nextMatch.isHome = opp.isHome;
-            const awayTeamName = document.getElementById('away-team-name');
-            if (awayTeamName) awayTeamName.textContent = opp.name;
+            const homeTeamEl = document.getElementById('home-team-name');
+            const awayTeamEl = document.getElementById('away-team-name');
+            if (opp.isHome) {
+                // We play at home: our name left, opponent right
+                if (homeTeamEl) homeTeamEl.textContent = gameState.club.name;
+                if (awayTeamEl) awayTeamEl.textContent = opp.name;
+            } else {
+                // We play away: opponent left (home), our name right (away)
+                if (homeTeamEl) homeTeamEl.textContent = opp.name;
+                if (awayTeamEl) awayTeamEl.textContent = gameState.club.name + ' (uit)';
+            }
         }
     }).catch(() => {});
 }
@@ -11555,9 +11564,10 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
         if (ev.type === 'preview' && ev.commentary?.startsWith('⚽ We spelen vandaag')) {
             ev.commentary = `⚽ ${myTacticsLine}`;
         }
-        // Fix team names in preview for away perspective
-        if (ev.type === 'preview' && ev.commentary?.startsWith('📋 Voorbeschouwing') && !isHome) {
-            ev.commentary = `📋 Voorbeschouwing — ${playerTeam} vs ${opponentName}`;
+        // Fix team names and show home/away indicator
+        if (ev.type === 'preview' && ev.commentary?.startsWith('📋 Voorbeschouwing')) {
+            const venueTag = isHome ? '(thuis)' : '(uit)';
+            ev.commentary = `📋 Voorbeschouwing — ${playerTeam} ${venueTag} vs ${opponentName}`;
         }
     });
 
