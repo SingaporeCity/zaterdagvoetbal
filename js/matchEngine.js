@@ -345,11 +345,11 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
     }
 
     if (chanceCreated) {
-        // Direct goal probability — kelderklasse: poor defending, lots of goals
-        // Equal teams: ~30% goal, mismatch: up to 50%, underdog: down to 10%
+        // Direct goal probability — kelderklasse: lots of shots, poor finishing
+        // Equal teams: ~18% goal per shot, mismatch: up to 35%, underdog: down to 8%
         const shotRoll = Math.random() * 100;
         const attackAdvantage = strength.attack - opposingStrength.defense;
-        const goalProb = Math.max(10, Math.min(50, 30 + attackAdvantage * 1.2));
+        const goalProb = Math.max(8, Math.min(35, 18 + attackAdvantage * 1.0));
 
         if (shotRoll < goalProb) {
             // GOAL!
