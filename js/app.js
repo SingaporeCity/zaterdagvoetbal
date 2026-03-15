@@ -9902,11 +9902,19 @@ function renderDashboardExtras() {
     if (newspaperWeek) newspaperWeek.textContent = gameState.week;
     if (posterMatchday) posterMatchday.textContent = gameState.week;
 
-    // Update team names on poster
+    // Update team names on poster — respect home/away from schedule
     const homeTeamName = document.getElementById('home-team-name');
     const awayTeamName = document.getElementById('away-team-name');
-    if (homeTeamName) homeTeamName.textContent = gameState.club.name;
-    if (awayTeamName && gameState.nextMatch) awayTeamName.textContent = gameState.nextMatch.opponent;
+    if (homeTeamName && awayTeamName && gameState.nextMatch) {
+        const isHome = gameState.nextMatch.isHome !== false; // default to home if unknown
+        if (isHome) {
+            homeTeamName.textContent = gameState.club.name;
+            awayTeamName.textContent = gameState.nextMatch.opponent || 'Tegenstander';
+        } else {
+            homeTeamName.textContent = gameState.nextMatch.opponent || 'Tegenstander';
+            awayTeamName.textContent = gameState.club.name;
+        }
+    }
 
     // Sync home-badge in match preview with sidebar badge
     const sidebarBadge = document.getElementById('club-badge-svg');
@@ -11581,6 +11589,10 @@ async function renderMatchProgram() {
 function showLiveMatch(result, isHome, opponentName, onComplete) {
     const playerTeam = gameState.club.name;
 
+    // Home team always left, away team always right
+    const leftTeam = isHome ? playerTeam : opponentName;
+    const rightTeam = isHome ? opponentName : playerTeam;
+
     // Fix preview events: replace tactics line with THIS player's tactics (not home team's)
     const myTactics = gameState.tactics?.offensief || 'gebalanceerd';
     const tacticsLabels = { zeer_verdedigend: 'zeer verdedigend', verdedigend: 'verdedigend', gebalanceerd: 'gebalanceerd', offensief: 'offensief', leeroy: 'vol in de aanval — Leeroy Jenkins-stijl' };
@@ -11719,10 +11731,6 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
     // Possession: always real home/away (left/right matches scoreboard)
     const finalPossHome = result.possession?.home ?? 50;
     const finalPossAway = result.possession?.away ?? 50;
-
-    // Scoreboard: home team always left, away team always right
-    const leftTeam = isHome ? playerTeam : opponentName;
-    const rightTeam = isHome ? opponentName : playerTeam;
 
     overlay.innerHTML = `
         <div class="live-match-body">
