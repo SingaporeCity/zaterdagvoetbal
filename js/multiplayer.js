@@ -1389,6 +1389,29 @@ function buildTeamFromClub(club, players) {
         }
     });
 
+    // Inject myPlayer from client_state (myPlayer is NOT in the players table)
+    const cs = club.client_state;
+    if (cs?.myPlayer && cs.myPlayerLineupPos !== undefined && cs.myPlayerLineupPos >= 0 && cs.myPlayerLineupPos < 11) {
+        const mp = cs.myPlayer;
+        const mpOverall = mp.attributes
+            ? Math.round((
+                (mp.attributes.SNE || 5) + (mp.attributes.TEC || 5) + (mp.attributes.PAS || 5) +
+                (mp.attributes.SCH || 5) + (mp.attributes.VER || 5) + (mp.attributes.FYS || 5)
+            ) / 6)
+            : 5;
+        lineup[cs.myPlayerLineupPos] = {
+            id: 'myplayer',
+            name: mp.name || 'Speler',
+            position: mp.position || 'centraleMid',
+            overall: mpOverall,
+            energy: mp.energy || 100,
+            morale: 80,
+            stars: mp.stars || 1,
+            isMyPlayer: true,
+            nationality: mp.nationality || { code: 'NL', flag: '🇳🇱' }
+        };
+    }
+
     // Fallback: if no lineup set (AI teams from before auto-lineup fix), auto-assign by position
     if (lineup.every(p => p === null) && players.length > 0) {
         const fallbackRoles = [
