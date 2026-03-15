@@ -11295,7 +11295,20 @@ function renderMatchReport() {
                 ${sortedRatings.map(p => {
                     const ratingClass = p.rating >= 8 ? 'good' : p.rating >= 6 ? 'okay' : 'poor';
                     const posAbbr = POSITIONS[p.position]?.abbr || p.position;
-                    const actualPlayer = gameState.players.find(pl => pl && pl.id === p.id);
+                    let actualPlayer = gameState.players.find(pl => pl && pl.id === p.id);
+                    // myPlayer is not in gameState.players — check separately
+                    if (!actualPlayer && (p.id === 'myplayer' || String(p.id).startsWith('myplayer_'))) {
+                        const mp = gameState.myPlayer;
+                        if (mp) {
+                            const a = mp.attributes || {};
+                            actualPlayer = {
+                                ...mp,
+                                id: 'myplayer',
+                                overall: mp.overall || Math.round(((a.SNE||0)+(a.TEC||0)+(a.PAS||0)+(a.SCH||0)+(a.VER||0)+(a.FYS||0))/6),
+                                isMyPlayer: true
+                            };
+                        }
+                    }
                     const injuryIcon = actualPlayer && actualPlayer.injuredUntil && actualPlayer.injuredUntil > gameState.week ? `<span class="mr-injury">🏥${actualPlayer.injuredUntil - gameState.week}</span>` : '';
                     const iconParts = [];
                     if (injuryIcon) iconParts.push(injuryIcon);
