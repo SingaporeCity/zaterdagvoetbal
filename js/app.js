@@ -56,7 +56,7 @@ import {
 } from './storage.js';
 
 // Import multiplayer systems
-import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent, findPlayerCurrentWeek, getClubPlayers, insertPlayerToSupabase, getFullSchedule, generateSchedule } from './multiplayer.js';
+import { initMultiplayerUI, checkAuthAndRoute, showLeagueOverlay, hideAllOverlays, getMyMatch, getMatchResult, simulateWeek, getScheduledOpponent, getClubPlayers, insertPlayerToSupabase, getFullSchedule, generateSchedule } from './multiplayer.js';
 import { subscribeToLeague, unsubscribeAll, fetchStandings } from './realtime.js';
 import { supabase, isSupabaseAvailable } from './supabase.js';
 
@@ -10678,6 +10678,7 @@ async function _playMultiplayerMatchInner() {
 
         // Mark week as played — prevents replaying until next round
         gameState._weekPlayed = true;
+        gameState.lastPlayedWeek = week; // Track which week this player last completed
         // Track when last match was played (daily limit: 1 per day)
         gameState.lastMatchPlayedAt = Date.now();
         // Update timer to count down to tomorrow's match time
@@ -10806,8 +10807,9 @@ async function _playMultiplayerMatchInner() {
                     }
                 }
 
-                // Reset season spending
+                // Reset season spending + played week tracker
                 gameState.stats.seasonSpending = 0;
+                gameState.lastPlayedWeek = 0;
             }
 
             // Archive season
@@ -16774,6 +16776,7 @@ async function initMultiplayerGame(detail) {
             };
             gameState.season = league.season || 1;
             gameState.week = league.week || 1;
+            gameState.lastPlayedWeek = 0;
             console.warn('No saved state found — using defaults');
         }
 
@@ -16784,22 +16787,19 @@ async function initMultiplayerGame(detail) {
         gameState.nextMatch = gameState.nextMatch || {};
         gameState.nextMatch.time = getNextMatchTime();
 
-        // Check if player has unseen match results from a previous week
-        // The league.week may have advanced (another player simulated), but THIS player
-        // hasn't seen their result yet. We need to find the right week for this player.
+        // Determine which week this player should be on.
+        // lastPlayedWeek tracks the last week this player completed (saw results + processed).
+        // If league.week advanced (another player simulated), we set back to lastPlayedWeek + 1.
         if (gameState.multiplayer.clubId) {
-            try {
-                const playerWeek = await findPlayerCurrentWeek(
-                    leagueId,
-                    gameState.season || 1,
-                    gameState.week || 1,
-                    gameState.multiplayer.clubId,
-                    gameState.lastMatchPlayedAt
-                );
-                gameState.week = playerWeek.week;
-                gameState._weekPlayed = playerWeek.alreadyPlayed;
-            } catch (e) {
+            const lastPlayed = gameState.lastPlayedWeek || 0;
+            const leagueWeek = gameState.week || 1;
+            if (lastPlayed < leagueWeek) {
+                // Player hasn't played this week yet (or a previous week)
+                gameState.week = lastPlayed + 1;
                 gameState._weekPlayed = false;
+            } else {
+                // Player is caught up
+                gameState._weekPlayed = true;
             }
 
             // Fetch scheduled opponent
