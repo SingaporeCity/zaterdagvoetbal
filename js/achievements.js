@@ -1720,12 +1720,12 @@ const ACHIEVEMENTS = {
     },
     captainAppointed: {
         id: 'captainAppointed',
-        name: 'Aanvoerder Gekozen',
-        description: 'Wijs aanvoerder aan',
+        name: 'Ik ben de baas hier',
+        description: 'Maak jezelf aanvoerder',
         category: CATEGORIES.PLAYERS,
         icon: '\u00a9',
         reward: { managerXP: 15 },
-        check: (state) => !!state.specialists?.captain
+        check: (state) => state.specialists?.captain === 'myplayer'
     },
     penaltyTaker: {
         id: 'penaltyTaker',
