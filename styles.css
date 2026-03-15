@@ -27209,44 +27209,111 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
+    .live-match-overlay {
+        padding: 0;
+    }
     .live-match-body {
         flex-direction: column;
-        align-items: center;
-        padding: 0 0.5rem;
-        gap: 0.3rem;
+        align-items: stretch;
+        padding: 0;
+        gap: 0;
     }
     .live-match-left {
         flex: 0 0 auto;
         width: 100%;
-        flex-direction: row;
-        gap: 0.5rem;
-        justify-content: center;
+        flex-direction: column;
+        gap: 0;
+        padding: 0 0.5rem;
     }
-    .live-match-field {
-        width: 45%;
-        max-width: 200px;
-    }
-    .live-match-stats {
-        width: 45%;
-        margin: 0;
-    }
+    /* Hide pitch + fans on mobile */
+    .live-match-field,
     .live-match-fans {
-        display: none;
+        display: none !important;
     }
+    /* Scoreboard: prominent top bar */
+    .live-match-scoreboard {
+        margin: 0.4rem 0 0.2rem;
+    }
+    .live-match-scoreboard-inner {
+        width: 100%;
+        border-radius: 10px;
+        padding: 0.5rem 0.8rem;
+    }
+    .live-match-team-name {
+        font-size: 0.6rem;
+        padding: 0 0.4rem;
+    }
+    .live-match-score-num {
+        font-size: 1.3rem;
+    }
+    /* Minute: inline, compact */
+    .live-match-minute {
+        font-size: 1.1rem;
+        margin: 0.2rem 0;
+        text-align: center;
+    }
+    /* Stats: compact horizontal row */
+    .live-match-stats {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2px;
+        width: 100%;
+        margin: 0 0 0.3rem;
+        padding: 0.3rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+    }
+    .live-match-stat {
+        padding: 2px 0;
+    }
+    .live-match-stat-value {
+        font-size: 0.65rem;
+    }
+    .live-match-stat-label {
+        font-size: 0.5rem;
+    }
+    /* Commentary: compact bubble */
     .live-match-right {
         width: 100%;
         flex: 1;
+        padding: 0 0.5rem;
+        min-height: 0;
     }
     .live-match-commentary {
         margin: 0 0 0.3rem;
+        padding: 0.6rem 0.8rem;
+        gap: 0.6rem;
     }
+    .live-match-commentary-avatar {
+        width: 40px;
+        height: 40px;
+    }
+    .live-match-commentary-text {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    .live-match-commentary-text .speaker {
+        font-size: 0.7rem;
+        margin-bottom: 2px;
+    }
+    /* Event log: fills remaining space */
+    .live-match-log {
+        flex: 1;
+        min-height: 80px;
+    }
+    .live-match-log-entry {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.5rem;
+        padding-left: 0.6rem;
+    }
+    .live-match-log-minute {
+        font-size: 0.65rem;
+        min-width: 2.5ch;
+    }
+    /* Controls: bottom */
     .live-match-controls {
         gap: 8px;
         margin: 0.3rem auto 0.5rem;
-    }
-    .live-match-btn-forward {
-        padding: 0.5rem 1.2rem;
-        font-size: 0.8rem;
     }
     .live-match-btn-skip {
         padding: 0.5rem 1rem;
