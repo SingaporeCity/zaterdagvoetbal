@@ -28733,19 +28733,25 @@ body {
     /* --- MATCH RATINGS MOBILE --- */
     .mr-name-full { display: none; }
     .mr-name-short { display: inline; }
-    .match-ratings-table th:nth-child(4),
-    .match-ratings-table td:nth-child(4),
-    .match-ratings-table th:nth-child(6),
-    .match-ratings-table td:nth-child(6) {
-        display: none;
-    }
     .match-ratings-table {
-        font-size: 0.7rem;
+        font-size: 0.65rem;
     }
     .match-ratings-table th,
     .match-ratings-table td {
-        padding: 3px 3px;
+        padding: 2px 2px;
     }
+    .match-ratings-table th:nth-child(3),
+    .match-ratings-table td:nth-child(3) {
+        display: none;
+    }
+    .rating-stars-cell .star { font-size: 0.55rem; }
+    .match-rating-badge { font-size: 0.65rem; min-width: 24px; padding: 1px 4px; }
+    .mr-pos-badge { font-size: 0.5rem; padding: 1px 3px; }
+    .mr-ovr-badge { font-size: 0.55rem; padding: 1px 3px; }
+    .rating-growth-cell { min-width: 30px; max-width: 50px; }
+    .rating-growth-bar { height: 6px; }
+    .rating-growth-label-positive { font-size: 0.5rem; }
+    .rating-myplayer-link { font-size: 0.45rem; padding: 1px 4px; }
 
     /* --- STADIUM MOBILE: hide map, show facility buttons --- */
     #stadium.page.active {
