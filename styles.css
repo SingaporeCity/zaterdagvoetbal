@@ -24475,6 +24475,8 @@ body {
     text-align: center;
 }
 
+.mr-name-short { display: none; }
+
 .match-result-team-name {
     font-family: var(--font-display);
     font-size: 0.85rem;
@@ -28726,6 +28728,23 @@ body {
     }
     .gcb-budget-value {
         font-size: 1rem;
+    }
+
+    /* --- MATCH RATINGS MOBILE --- */
+    .mr-name-full { display: none; }
+    .mr-name-short { display: inline; }
+    .match-ratings-table th:nth-child(4),
+    .match-ratings-table td:nth-child(4),
+    .match-ratings-table th:nth-child(6),
+    .match-ratings-table td:nth-child(6) {
+        display: none;
+    }
+    .match-ratings-table {
+        font-size: 0.7rem;
+    }
+    .match-ratings-table th,
+    .match-ratings-table td {
+        padding: 3px 3px;
     }
 
     /* --- STADIUM MOBILE: hide map, show facility buttons --- */

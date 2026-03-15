@@ -11362,7 +11362,7 @@ function renderMatchReport() {
                     const starsHtml = renderStarsHTML(stars);
                     return `<tr>
                         <td><span class="mr-pos-badge" style="background: ${posData2.color}">${posAbbr}</span></td>
-                        <td><span class="mr-name-wrap">${p.name} ${icons}</span></td>
+                        <td><span class="mr-name-wrap"><span class="mr-name-full">${p.name}</span><span class="mr-name-short">${p.name.split(' ').slice(-1)[0]}</span> ${icons}</span></td>
                         <td><span class="mr-ovr-badge" style="background: ${posData2.color}">${actualPlayer ? actualPlayer.overall : '?'}</span></td>
                         <td><span class="rating-stars-cell">${starsHtml}</span></td>
                         <td><span class="match-rating-badge ${ratingClass}">${Math.round(p.rating)}</span></td>
