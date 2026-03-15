@@ -28333,29 +28333,35 @@ body {
         overflow: visible !important;
     }
     .player-card.youth-card {
-        grid-template-columns: auto 1fr auto !important;
-        grid-template-rows: auto auto !important;
-        gap: 2px 4px !important;
-        align-items: center;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 4px 6px !important;
+        padding: 6px 10px !important;
+    }
+    .player-card.youth-card .pc-left {
+        flex-shrink: 0;
+    }
+    .player-card.youth-card .pc-name {
+        flex: 1;
+        min-width: 60px;
+    }
+    .player-card.youth-card .pc-overall {
+        flex-shrink: 0;
     }
     .player-card.youth-card .pc-potential-stars {
-        grid-row: 2;
-        grid-column: 2;
-        justify-self: start;
         align-items: flex-start;
         flex-direction: row;
-        gap: 4px;
+        gap: 3px;
     }
     .player-card.youth-card .yc-action {
-        grid-row: 2;
-        grid-column: 3;
+        margin-left: auto;
         display: flex;
         gap: 4px;
-        justify-self: end;
     }
     .player-card.youth-card .yc-action .btn {
-        font-size: 0.6rem;
-        padding: 3px 8px;
+        font-size: 0.62rem;
+        padding: 4px 8px;
         white-space: nowrap;
     }
     /* Lineup/tactics: vertical stack on mobile */
