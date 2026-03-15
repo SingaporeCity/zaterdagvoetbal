@@ -1529,7 +1529,7 @@ export async function simulateWeek(leagueId, season, week, simulateMatchFn, calc
             formation,
             tactics,
             true, // isHomeGame
-            { grassLevel: homeClub.stadium?.grass || 0 }
+            { grassLevel: homeClub.stadium?.grass || 0, specialists: homeClub.specialists || {} }
         );
 
         // Initialise away team playerRatings (fix: away players now have real IDs)

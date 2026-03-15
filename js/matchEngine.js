@@ -313,7 +313,7 @@ function generateOpponentRoster() {
 /**
  * Simulate a single match event
  */
-function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore, players, tactics) {
+function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore, players, tactics, options = {}) {
     const team = isHome ? 'home' : 'away';
     const strength = isHome ? homeStrength : awayStrength;
     const opposingStrength = isHome ? awayStrength : homeStrength;
@@ -399,7 +399,15 @@ function simulateEvent(minute, homeStrength, awayStrength, isHome, currentScore,
     if (!chanceCreated && Math.random() < 0.25) {
         const halfChanceTypes = ['corner', 'free_kick', 'chance'];
         const type = randomFromArray(halfChanceTypes);
-        const player = players ? randomFromArray(players.filter(p => p)) : null;
+        // Use designated specialist for corners/free kicks if available
+        let player = null;
+        const specialists = options?.specialists;
+        if (type === 'corner' && specialists?.cornerTaker && players) {
+            player = players.find(p => p && (p.id === specialists.cornerTaker || String(p.id) === String(specialists.cornerTaker)));
+        } else if (type === 'free_kick' && specialists?.freekickTaker && players) {
+            player = players.find(p => p && (p.id === specialists.freekickTaker || String(p.id) === String(specialists.freekickTaker)));
+        }
+        if (!player) player = players ? randomFromArray(players.filter(p => p)) : null;
         events.push({
             minute,
             type,
@@ -753,7 +761,8 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
             isHomePossession,
             currentScore,
             isPlayerPossession ? homeLineup : (opponentTeam.roster || null),
-            isPlayerPossession ? tactics : null
+            isPlayerPossession ? tactics : null,
+            isPlayerPossession ? options : {}
         );
 
         for (const event of events) {
