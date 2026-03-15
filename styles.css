@@ -28459,6 +28459,13 @@ body {
         left: var(--sidebar-width) !important;
         min-width: 0;
         max-width: calc(100vw - var(--sidebar-width) - 8px);
+        right: 4px !important;
+        width: auto;
+    }
+    .nav-item.has-submenu.submenu-open .nav-submenu li {
+        white-space: normal;
+        font-size: 0.8rem;
+        padding: 8px 12px;
     }
 
     /* --- GLOBAL --- */
