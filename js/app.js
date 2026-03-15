@@ -11589,10 +11589,9 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
         if (ev.type === 'preview' && ev.commentary?.startsWith('⚽ We spelen vandaag')) {
             ev.commentary = `⚽ ${myTacticsLine}`;
         }
-        // Fix team names and show home/away indicator
+        // Fix team names: always show home vs away (left vs right)
         if (ev.type === 'preview' && ev.commentary?.startsWith('📋 Voorbeschouwing')) {
-            const venueTag = isHome ? '(thuis)' : '(uit)';
-            ev.commentary = `📋 Voorbeschouwing — ${playerTeam} ${venueTag} vs ${opponentName}`;
+            ev.commentary = `📋 Voorbeschouwing — ${leftTeam} (thuis) vs ${rightTeam} (uit)`;
         }
     });
 
@@ -11717,8 +11716,13 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
     const overlay = document.createElement('div');
     overlay.className = 'live-match-overlay';
 
-    const finalPossHome = isHome ? (result.possession?.home ?? 50) : (result.possession?.away ?? 50);
-    const finalPossAway = 100 - finalPossHome;
+    // Possession: always real home/away (left/right matches scoreboard)
+    const finalPossHome = result.possession?.home ?? 50;
+    const finalPossAway = result.possession?.away ?? 50;
+
+    // Scoreboard: home team always left, away team always right
+    const leftTeam = isHome ? playerTeam : opponentName;
+    const rightTeam = isHome ? opponentName : playerTeam;
 
     overlay.innerHTML = `
         <div class="live-match-body">
@@ -11736,13 +11740,13 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
                 <div class="live-match-minute" id="lm-minute">0'</div>
                 <div class="live-match-scoreboard">
                     <div class="live-match-scoreboard-inner">
-                        <span class="live-match-team-name home">${playerTeam}</span>
+                        <span class="live-match-team-name home">${leftTeam}</span>
                         <div class="live-match-score">
                             <span class="live-match-score-num" id="lm-score-home">0</span>
                             <span class="live-match-score-sep">-</span>
                             <span class="live-match-score-num" id="lm-score-away">0</span>
                         </div>
-                        <span class="live-match-team-name away">${opponentName}</span>
+                        <span class="live-match-team-name away">${rightTeam}</span>
                     </div>
                 </div>
                 <div class="live-match-fans">Fans: ${result._fansBeforeMatch || gameState.club.fans || 50}</div>
@@ -11885,9 +11889,8 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
     }
 
     function updateStats(ev) {
-        // Map to display side: left = player team, right = opponent
-        const isPlayerTeam = (isHome && ev.team === 'home') || (!isHome && ev.team === 'away');
-        const side = isPlayerTeam ? 'Home' : 'Away';
+        // Map to display side: home (left) / away (right) — matches scoreboard
+        const side = ev.team === 'home' ? 'Home' : 'Away';
 
         // Count shots
         if (['goal', 'shot', 'shot_saved', 'shot_missed', 'penalty', 'penalty_miss', 'chance'].includes(ev.type)) {
@@ -12036,16 +12039,14 @@ function showLiveMatch(result, isHome, opponentName, onComplete) {
 
         // Handle goals
         if (ev.scoreAfter) {
-            const playerHomeScore = isHome ? ev.scoreAfter.home : ev.scoreAfter.away;
-            const playerAwayScore = isHome ? ev.scoreAfter.away : ev.scoreAfter.home;
-
-            if (playerHomeScore !== displayHome) {
-                displayHome = playerHomeScore;
+            // Scores always show real home (left) / away (right)
+            if (ev.scoreAfter.home !== displayHome) {
+                displayHome = ev.scoreAfter.home;
                 scoreHomeEl.textContent = displayHome;
                 flashScore(scoreHomeEl);
             }
-            if (playerAwayScore !== displayAway) {
-                displayAway = playerAwayScore;
+            if (ev.scoreAfter.away !== displayAway) {
+                displayAway = ev.scoreAfter.away;
                 scoreAwayEl.textContent = displayAway;
                 flashScore(scoreAwayEl);
             }
