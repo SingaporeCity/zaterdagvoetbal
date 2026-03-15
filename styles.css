@@ -9997,6 +9997,17 @@ body {
     overflow: hidden;
 }
 
+.chemistry-lines {
+    position: absolute;
+    top: 5%;
+    left: 5%;
+    right: 5%;
+    bottom: 5%;
+    z-index: 1;
+    pointer-events: none;
+    overflow: visible;
+}
+
 .pitch-field {
     position: absolute;
     top: 5%;

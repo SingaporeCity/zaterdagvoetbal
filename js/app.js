@@ -2395,6 +2395,41 @@ function renderLineupPitch() {
         `;
     });
 
+    // Chemistry lines: dotted lines between adjacent players that share nationality
+    let chemLines = '';
+    const adjacencyThreshold = 30;
+    const drawnPairs = new Set();
+    formation.positions.forEach((pos, i) => {
+        const playerA = gameState.lineup[i];
+        if (!playerA) return;
+        const natsA = getPlayerNationalities(playerA);
+
+        formation.positions.forEach((otherPos, j) => {
+            if (i >= j) return; // avoid duplicates
+            const playerB = gameState.lineup[j];
+            if (!playerB) return;
+
+            const dx = pos.x - otherPos.x;
+            const dy = pos.y - otherPos.y;
+            if (Math.sqrt(dx * dx + dy * dy) > adjacencyThreshold) return;
+
+            const natsB = getPlayerNationalities(playerB);
+            if (!nationalitiesMatch(natsA, natsB)) return;
+
+            // Transform to landscape coordinates (same as slot positioning)
+            const x1 = 100 - pos.y;
+            const y1 = pos.x;
+            const x2 = 100 - otherPos.y;
+            const y2 = otherPos.x;
+
+            chemLines += `<line x1="${x1}%" y1="${y1}%" x2="${x2}%" y2="${y2}%" stroke="rgba(255,215,0,0.5)" stroke-width="2" stroke-dasharray="5,4"/>`;
+        });
+    });
+
+    if (chemLines) {
+        html += `<svg class="chemistry-lines" viewBox="0 0 100 100" preserveAspectRatio="none">${chemLines}</svg>`;
+    }
+
     html += '</div>';
     container.innerHTML = html;
 
