@@ -3954,10 +3954,23 @@ function renderScoutPage() {
         if (unc.isExact) {
             overallDisplay = `<span class="pc-overall-value">${player.overall}</span>`;
             starsHTML = renderStarsHTML(player.stars);
+            progressHTML = `<div class="scout-progress-bar-wrap">
+                <div class="scout-progress-steps">
+                    <span class="scout-step done"></span><span class="scout-step done"></span><span class="scout-step done"></span>
+                </div>
+                <span class="scout-progress-label scout-complete">✓ Volledig gescout</span>
+            </div>`;
         } else {
             overallDisplay = `<span class="pc-overall-value scout-overall-range">${unc.overallMin} - ${unc.overallMax}</span>`;
             starsHTML = renderScoutStarsHTML(unc.starsMin, unc.starsMax);
-            progressHTML = `<div class="scout-progress-indicator">Week ${unc.weeksScouted}/3 🔍</div>`;
+            const steps = [0, 1, 2].map(i =>
+                `<span class="scout-step ${i < unc.weeksScouted ? 'done' : ''}"></span>`
+            ).join('');
+            const labels = ['Onbekend', 'Indicatie', 'Redelijk', 'Exact'];
+            progressHTML = `<div class="scout-progress-bar-wrap">
+                <div class="scout-progress-steps">${steps}</div>
+                <span class="scout-progress-label">${labels[unc.weeksScouted]} — ${unc.weeksScouted}/3 weken</span>
+            </div>`;
         }
 
         return `

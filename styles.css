@@ -13813,6 +13813,43 @@ body {
     letter-spacing: -0.5px;
 }
 
+.scout-progress-bar-wrap {
+    padding: 5px 8px 3px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.scout-progress-steps {
+    display: flex;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.scout-step {
+    width: 20px;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: background 0.3s;
+}
+
+.scout-step.done {
+    background: var(--accent-amber);
+}
+
+.scout-progress-label {
+    font-size: 0.58rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.scout-progress-label.scout-complete {
+    color: var(--accent-green-dim);
+    font-weight: 600;
+}
+
 .scout-progress-indicator {
     font-size: 0.6rem;
     color: var(--text-muted);
