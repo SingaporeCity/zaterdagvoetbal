@@ -1390,6 +1390,7 @@ function buildTeamFromClub(club, players) {
     });
 
     // Inject myPlayer from client_state (myPlayer is NOT in the players table)
+    // Use club-specific ID to avoid collision when two human teams play each other
     const cs = club.client_state;
     if (cs?.myPlayer && cs.myPlayerLineupPos !== undefined && cs.myPlayerLineupPos >= 0 && cs.myPlayerLineupPos < 11) {
         const mp = cs.myPlayer;
@@ -1400,7 +1401,7 @@ function buildTeamFromClub(club, players) {
             ) / 6)
             : 5;
         lineup[cs.myPlayerLineupPos] = {
-            id: 'myplayer',
+            id: `myplayer_${club.id}`,
             name: mp.name || 'Speler',
             position: mp.position || 'centraleMid',
             overall: mpOverall,

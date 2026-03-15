@@ -933,7 +933,7 @@ export function applyMatchResults(players, matchResult, isHomeGame, currentWeek)
     players.forEach(player => {
         if (!player) return;
 
-        const rating = matchResult.playerRatings[player.id];
+        const rating = matchResult.playerRatings[player.id] || matchResult.playerRatings[player._ratingId];
         if (!rating) return;
 
         // Update goals and assists

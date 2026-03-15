@@ -10370,6 +10370,12 @@ async function _playMultiplayerMatchInner() {
         const matchData = existingResult.match_data || {};
         const resultType = getMatchResultType(existingResult.home_score, existingResult.away_score, isHome);
 
+        // Tag myPlayer with club-specific rating ID for lookup in playerRatings
+        const mpInLineupRef = gameState.lineup.find(p => p && (p.id === 'myplayer' || p.isMyPlayer));
+        if (mpInLineupRef && myClubId) {
+            mpInLineupRef._ratingId = `myplayer_${myClubId}`;
+        }
+
         // Apply match results to player stats (morale, energy, cards, etc.)
         // Use captured `week` (not gameState.week) — realtime handler may bump it mid-function
         applyMatchResults(gameState.lineup, {
@@ -10538,6 +10544,11 @@ async function _playMultiplayerMatchInner() {
         // starMultiplier: 0.5★ → 1.15x, 1★ → 1.5x, 2★ → 2.5x
         const improvements = [];
         const lineupIds = new Set((gameState.lineup || []).filter(p => p).map(p => p.id));
+        // Also add club-specific myplayer ID for matching with server-simulated ratings
+        const myClubIdForRatings = gameState.multiplayer?.clubId;
+        if (lineupIds.has('myplayer') && myClubIdForRatings) {
+            lineupIds.add(`myplayer_${myClubIdForRatings}`);
+        }
         const ratings = matchData.playerRatings || {};
         gameState.players.forEach(player => {
             if (!player || !lineupIds.has(player.id)) return;
