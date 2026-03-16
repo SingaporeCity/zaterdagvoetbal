@@ -137,6 +137,7 @@ function gameStateToClubRecord(gameState) {
             extraSponsors: gameState.extraSponsors || [],
             lastMatchPlayedAt: gameState.lastMatchPlayedAt || null,
             lastPlayedWeek: gameState.lastPlayedWeek || 0,
+            matchViewed: gameState._matchViewed !== false,
             myPlayerLineupPos: gameState.lineup
                 ? gameState.lineup.findIndex(p => p && (p.id === 'myplayer' || p.isMyPlayer))
                 : -1,
@@ -188,6 +189,7 @@ function clubRecordToGameState(club, players, standings, leagueData) {
         week: leagueData?.week || 1,
         lastMatchPlayedAt: cs.lastMatchPlayedAt || null,
         lastPlayedWeek: cs.lastPlayedWeek || 0,
+        _matchViewed: cs.matchViewed !== false,
         nextMatch: { opponent: 'TBD', time: Date.now() },
         standings: standings || [],
         scoutSearch: { minAge: 16, maxAge: 35, position: 'all', results: [] },

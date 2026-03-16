@@ -217,12 +217,12 @@ export function getMatchCountdown(matchTime = '23:59') {
     const target = new Date(now);
     target.setHours(hours, minutes, 0, 0);
 
-    // If past today's match time, target tomorrow
+    // Target the next match_time (could be today or tomorrow)
     if (now >= target) {
         target.setDate(target.getDate() + 1);
     }
 
-    const diff = target - now;
+    const diff = Math.max(0, target - now);
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     const s = Math.floor((diff % 60000) / 1000);
