@@ -652,9 +652,9 @@ export function simulateMatch(homeTeam, awayTeam, homeLineup, formation, tactics
         awayStrength.defense += mentMod.defense;
     }
 
-    // Home advantage — percentage-based, scales with grass level
+    // Home advantage — small edge, scales slightly with grass level
     const grassLevel = options.grassLevel || 0;
-    const homeMultiplier = 1.06 + grassLevel * 0.01;
+    const homeMultiplier = 1.02 + grassLevel * 0.005;
     homeStrength.attack = Math.round(homeStrength.attack * homeMultiplier);
     homeStrength.defense = Math.round(homeStrength.defense * homeMultiplier);
     homeStrength.midfield = Math.round(homeStrength.midfield * (1 + (homeMultiplier - 1) * 0.5));
